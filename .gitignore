@@ -39,3 +39,8 @@ target/
 *.wallet
 
 out/
+
+*.tmp
+
+*.wallet
+*.spvchain
