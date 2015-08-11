@@ -12,6 +12,14 @@ Donations appreciated:
 
 ##Build
 
+You need to call 
+
+```
+mvn clean install
+```
+
+on the parent first, such that the dependencies for all the modules are built first.
+
 ###Wallet
 
 Call
