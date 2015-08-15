@@ -46,6 +46,18 @@ import org.eclipse.jetty.server.handler.ResourceHandler;
 /**
  * The Class Server.
  */
+
+/**
+ * TODO: Implement a push-system for real time updates on the clients.
+ *          We will use WebSockets for this, as it's a fairly distributed technology that can be
+ *              used for all plattforms.
+ *          Additionally, we can also use Jetty to do all the background stuff of WebSockets
+ *              for us. For now, we will use these to notify a client of a receiving payment,
+ *              such that he can add it to the channel and clear it again.
+ *          This will lead to an interface MUCH MORE common to any bitcoin wallet currently.
+ *          Furthermore, it will lead to much faster channel clearance.
+ *          Example Code to implement here:     https://github.com/jetty-project/embedded-jetty-websocket-examples/tree/master/native-jetty-websocket-example/src/main/java/org/eclipse/jetty/demo
+ */
 public class Server {
 
 	/**
