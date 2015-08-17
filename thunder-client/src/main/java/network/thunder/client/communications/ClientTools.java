@@ -15,16 +15,13 @@
  *  You should have received a copy of the GNU Affero General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package network.thunder.client.etc;
+package network.thunder.client.communications;
 
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
 
 import network.thunder.client.api.ThunderContext;
-import network.thunder.client.communications.HTTPS;
-import network.thunder.client.communications.Message;
-import network.thunder.client.communications.Type;
 import network.thunder.client.communications.addkeys.AddKeysHandler;
 import network.thunder.client.communications.closechannel.CloseChannelHandler;
 import network.thunder.client.communications.establishchannel.EstablishChannelHandlerOne;
@@ -68,6 +65,9 @@ import network.thunder.client.database.MySQLConnection;
 import network.thunder.client.database.objects.Channel;
 import network.thunder.client.database.objects.Payment;
 
+import network.thunder.client.etc.PerformanceLogger;
+import network.thunder.client.etc.ScriptTools;
+import network.thunder.client.etc.Tools;
 import org.bitcoinj.core.PeerGroup;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Wallet;

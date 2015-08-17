@@ -1,6 +1,5 @@
 package wallettemplate;
 
-import network.thunder.*;
 import network.thunder.client.api.ThunderContext;
 
 import com.google.common.util.concurrent.*;

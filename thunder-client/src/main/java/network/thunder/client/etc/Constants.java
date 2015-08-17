@@ -35,9 +35,10 @@ public class Constants {
 	public static int getTimeFrameForValidation() {
 		return 60;
 	}
-	
-	
-	public static final String SERVER_URL = "thunder.network";
+
+
+//    public static final String SERVER_URL = "thunder.network";
+    public static final String SERVER_URL = "localhost";
 
 	
 	public static long MAX_CHANNEL_VALUE = 1000000000;

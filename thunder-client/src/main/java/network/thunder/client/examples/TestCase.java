@@ -17,19 +17,9 @@
  */
 package network.thunder.client.examples;
 
-import java.sql.Connection;
-
-import javax.sql.DataSource;
-
-import network.thunder.client.api.PaymentRequest;
-import network.thunder.client.api.ThunderContext;
 import network.thunder.client.database.MySQLConnection;
-import network.thunder.client.database.objects.Channel;
-import network.thunder.client.database.objects.Payment;
-import network.thunder.client.etc.ClientTools;
 import network.thunder.client.etc.Tools;
 import network.thunder.client.wallet.KeyChain;
-import network.thunder.client.wallet.TransactionStorage;
 
 import org.bitcoinj.utils.BriefLogFormatter;
 

@@ -2181,6 +2181,7 @@ public class MySQLConnection {
 		try {
 			stmt = conn.prepareStatement("SELECT * FROM channels WHERE pub_key_client=?");		
 			stmt.setString(1, pubKey);
+            System.out.println(stmt);
 					
 			ResultSet result = stmt.executeQuery();
 			result.first();

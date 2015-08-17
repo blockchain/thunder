@@ -20,10 +20,7 @@ package network.thunder.server.communications;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -1145,13 +1142,12 @@ public class RequestHandler extends AbstractHandler {
 				responseContainer.fill(response);
 				responseContainer.success = true;
 				responseContainer.type = Type.SEND_PAYMENT_FOUR_RESPONSE;
-				
-				
-		        System.out.println(Tools.byteToString58(channel.getOpeningTx().bitcoinSerialize()));
-		        System.out.println("test");
 
-
-				
+                /**
+                 * For the real-time updates, we push this payment towards the receiving channel
+                 *  if he is online currently..
+                 */
+				WebSocketHandler.sendPayment(newPayment.getChannelIdReceiver(), newPayment);
 				
 			} else if (message.type == Type.ADD_KEYS_REQUEST) {
 				long time = System.currentTimeMillis();
@@ -1340,6 +1336,7 @@ public class RequestHandler extends AbstractHandler {
 				 * If he has produced the correct secret, the amount of the payment should be
 				 * 		deducted from our balance.
 				 */
+                Set<Integer> receiverSet = new LinkedHashSet<>();
 				for(Secret secret : m.secretList) {
 					if(!secret.verify())
 						throw new Exception("Secret does not hash to correct value");
@@ -1354,6 +1351,7 @@ public class RequestHandler extends AbstractHandler {
 								addAmountToServer += Tools.calculateServerFee(p.getAmount());
 								p.setSecret(secret.secret);
 								paymentsToUpdate.add(p);
+                                receiverSet.add(p.getChannelIdSender());
 								break;
 							}
 						}
@@ -1361,6 +1359,9 @@ public class RequestHandler extends AbstractHandler {
 				}	
 				
 				MySQLConnection.updatePayment(conn, paymentList);
+
+                for(Integer sendingChannelId : receiverSet)
+                    WebSocketHandler.newSecret(sendingChannelId);
 				
 				/**
 				 * Add all payments to the channel, that have no secret attached
@@ -1845,7 +1846,7 @@ public class RequestHandler extends AbstractHandler {
 				 * 		- Swap the TXIDs of all payments and of the channel
 				 * 		- Change phase=5 into phase=6
 				 */
-				ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), channel.getChannelTxServerTemp().getOutputs().size()-2);
+				ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), channel.getChannelTxServerTemp().getOutputs().size() - 2);
 				ArrayList<Payment> oldPayments = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
 				ArrayList<Payment> oldPaymentsToUpdate = new ArrayList<Payment>();
 
@@ -1893,8 +1894,8 @@ public class RequestHandler extends AbstractHandler {
 //				System.out.println("Update complete! New channel transaction on server: ");
 //				System.out.println(channel.getChannelTxServerTemp().toString());
 				
-				channel.setAmountClient(channel.getAmountClient() + addAmountToClient );
-				channel.setAmountServer(channel.getAmountServer() + addAmountToServer );
+				channel.setAmountClient(channel.getAmountClient() + addAmountToClient);
+				channel.setAmountServer(channel.getAmountServer() + addAmountToServer);
 				
 				for(Payment p : paymentList) {
 					if(p.paymentToServer) {

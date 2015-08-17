@@ -100,6 +100,13 @@ public class Tools {
 		}
 		return null;
 	}
+
+    public static Message getMessage(String data) throws IOException {
+        data = java.net.URLDecoder.decode(data, "UTF-8");
+        Gson gson = new Gson();
+        Message message = gson.fromJson(data, Message.class);
+        return message;
+    }
 	
 	
 	public static long calculateServerFee(long amount) {
