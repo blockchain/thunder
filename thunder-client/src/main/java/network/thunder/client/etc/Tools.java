@@ -129,14 +129,19 @@ public class Tools {
 		if(fee<feeShouldBe) return 1;
 		return -1;
 	}
-	
-	public static String getFourCharacterHash(String s) throws NoSuchAlgorithmException {
-		MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-		messageDigest.update(s.getBytes());
-		String encryptedString = Tools.byteToString58(messageDigest.digest());
-		
-		return encryptedString.substring(0, 4);
-	}
+
+    public static String getFourCharacterHash(String s) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(s.getBytes());
+        String encryptedString = Tools.byteToString58(messageDigest.digest());
+        return encryptedString.substring(0, 4);
+    }
+
+    public static byte[] getSha256Hash(byte[] message) throws NoSuchAlgorithmException {
+        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+        messageDigest.update(message);
+        return messageDigest.digest();
+    }
 
 	
 	public static String stacktraceToString(Exception e) {

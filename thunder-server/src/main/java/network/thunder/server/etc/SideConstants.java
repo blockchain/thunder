@@ -36,7 +36,7 @@ public class SideConstants {
 	/**
 	 * The database connection.
 	 */
-	public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true";
+	public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true&autoReconnect=true";
 	
 	
 	/**

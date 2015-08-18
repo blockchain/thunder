@@ -505,8 +505,14 @@ public class RequestHandler extends AbstractHandler {
 				if(channel.getChannelTxClientID() != 0) 
 					if(m.amount + 2 * Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX) > channel.getChannelTxClient().getOutput(0).getValue().value)
 						throw new Exception("Too many uncleared payments in the channel. Current Client change not sufficient.");
-				
-				int receiverChannelId = MySQLConnection.checkChannelForReceiving(conn, m.receipient);
+
+                /**
+                 * TODO: We get the first 8 byte of the pubkey of the receiver, base64 encoded. As it is truncated and as we compare it to the
+                 *      base64 encoded value in our db, the last couple characters don't match.
+                 */
+                String receiver = m.receipient.substring(0, 6);
+                System.out.println(receiver);
+				int receiverChannelId = MySQLConnection.checkChannelForReceiving(conn, receiver);
 				if(receiverChannelId == 0)
 					throw new Exception("Receiver does not exist or is not ready for receiving payments..");
 				

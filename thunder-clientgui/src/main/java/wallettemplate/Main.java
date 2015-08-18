@@ -54,6 +54,7 @@ public class Main extends Application {
     public Stage mainWindow;
 
     public static int CLIENTID = 1;
+    public static String REQUEST;
 
 
 
@@ -109,10 +110,16 @@ public class Main extends Application {
         setupWalletKit(null);
 
         if (bitcoin.isChainFileLocked()) {
+            if(REQUEST != null) {
+                PaymentProtocolClientSocket.sendPaymentRequest(REQUEST);
+                Platform.exit();
+                return;
+            }
             informationalAlert("Already running", "This application is already running and cannot be started twice.");
             Platform.exit();
             return;
         }
+        PaymentProtocolServerSocket.init();
 
         mainWindow.show();
 
@@ -144,7 +151,7 @@ public class Main extends Application {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File("."), APP_NAME + "-" + params.getPaymentProtocolId()+CLIENTID) {
+        bitcoin = new WalletAppKit(params, new File(System.getProperty("user.home")+"\\Documents"), APP_NAME + "-" + params.getPaymentProtocolId()+CLIENTID) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it
@@ -293,7 +300,13 @@ public class Main extends Application {
         try {
             int id = Integer.parseInt(args[0]);
             CLIENTID = id;
-        } catch (Exception e ) {}
+        } catch (Exception e ) {
+            try {
+                REQUEST = args[0];
+            } catch(Exception f) { }
+
+
+        }
 
 
         launch(args);

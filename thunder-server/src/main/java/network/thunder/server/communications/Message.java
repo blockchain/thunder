@@ -138,7 +138,6 @@ public class Message {
 	 * @return the signature message
 	 */
 	private String getSignatureMessage() {
-        System.out.println(type+pubkey+success+timestamp+data);
         return type+pubkey+success+timestamp+data;
 	}
 	
@@ -189,7 +188,6 @@ public class Message {
 		}
 
 		ECKey key = ECKey.fromPublicOnly(Tools.stringToByte(pubkey));
-        System.out.println(key);
 		try {
 			key.verifyMessage(this.getSignatureMessage(), signature);
 			

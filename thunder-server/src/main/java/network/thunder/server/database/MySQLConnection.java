@@ -2036,7 +2036,7 @@ public class MySQLConnection {
 			
 			String sql = "";
 			
-			if(receiver.length() == 10) {
+			if(receiver.length() == 6) {
 				address = receiver+"%";
 				sql = "SELECT id FROM channels WHERE pub_key_client LIKE ? AND is_ready=1";
 			} else {
