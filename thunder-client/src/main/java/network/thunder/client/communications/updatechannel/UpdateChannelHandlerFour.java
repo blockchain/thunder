@@ -167,6 +167,8 @@ public class UpdateChannelHandlerFour {
 		/**
 		 * TODO: This loop is the bottleneck here, probably a way to improve it.
 		 */
+
+        System.out.println("Total payment amount: "+newPaymentsTotal.size());
 		for(int i=0; i<newPaymentsTotal.size(); ++i) {
 			Payment payment = newPaymentsTotal.get(i);
 			Transaction refund = refundList.get(i);

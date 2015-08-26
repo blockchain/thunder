@@ -56,7 +56,7 @@ public class PaymentProtocolServerSocket {
                             }
 
                             try {
-                                ThunderContext.makePayment(Long.valueOf(list.get("amount")), list.get("address"));
+                                ThunderContext.instance.makePayment(Long.valueOf(list.get("amount")), list.get("address"));
                             } catch (Exception e) {
                                 e.printStackTrace();
                             };

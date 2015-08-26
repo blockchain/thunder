@@ -225,7 +225,6 @@ public class Message {
 
         httpExchange.setContentType("application/json;charset=utf-8");
         httpExchange.getWriter().println(response);
-        System.out.println(response);
 
 //		OutputStream os = httpExchange.getResponseBody();
 //		os.write(response.getBytes());

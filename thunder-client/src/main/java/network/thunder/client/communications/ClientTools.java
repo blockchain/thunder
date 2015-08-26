@@ -63,6 +63,7 @@ import network.thunder.client.communications.updatechannel.UpdateChannelHandlerT
 import network.thunder.client.communications.updatechannel.UpdateChannelHandlerTwo;
 import network.thunder.client.database.MySQLConnection;
 import network.thunder.client.database.objects.Channel;
+import network.thunder.client.database.objects.Output;
 import network.thunder.client.database.objects.Payment;
 
 import network.thunder.client.etc.PerformanceLogger;
@@ -77,8 +78,8 @@ import com.google.gson.Gson;
 public class ClientTools {
 	
 	
-	public static Channel createChannel(Connection conn, Wallet wallet, PeerGroup peerGroup, long clientAmount, long serverAmount, int timeInDays) throws Exception {
-		ThunderContext.progressUpdated(1, 10);
+	public static Channel createChannel(Connection conn, Wallet wallet, PeerGroup peerGroup, ArrayList<Output> outputArrayListlist, long clientAmount, long serverAmount, int timeInDays) throws Exception {
+		ThunderContext.instance.progressUpdated(1, 10);
 		
 //		DataSource dataSource1 = MySQLConnection.getDataSource(1);
 //        Connection conn = dataSource1.getConnection();
@@ -86,7 +87,7 @@ public class ClientTools {
     	conn.setAutoCommit(false);
     	MySQLConnection.cleanUpDatabase(conn);
 		
-		ThunderContext.progressUpdated(2, 10);
+		ThunderContext.instance.progressUpdated(2, 10);
 
 		/**
 		 * First request..
@@ -101,7 +102,7 @@ public class ClientTools {
         
         EstablishChannelHandlerOne requestOne = new EstablishChannelHandlerOne();
         
-		ThunderContext.progressUpdated(3, 10);
+		ThunderContext.instance.progressUpdated(3, 10);
 
         
         requestOne.channel = channel;
@@ -111,7 +112,7 @@ public class ClientTools {
         EstablishChannelRequestOne request = requestOne.request();
         Message requestWrapper = new Message(request, Type.ESTABLISH_CHANNEL_ONE_REQUEST, channel.getClientKeyOnClient(), channel.getTimestampOpen());
 
-		ThunderContext.progressUpdated(4, 10);
+		ThunderContext.instance.progressUpdated(4, 10);
 
 
 		channel.setTimestampOpen( requestWrapper.timestamp );
@@ -123,7 +124,7 @@ public class ClientTools {
     	EstablishChannelResponseOne responseMessage = new Gson().fromJson(responseOne.data, EstablishChannelResponseOne.class);
     	
 
-		ThunderContext.progressUpdated(5, 10);
+		ThunderContext.instance.progressUpdated(5, 10);
     	
     	requestOne.evaluateResponse(responseMessage);
 //    	System.out.println("First request successful..");
@@ -136,6 +137,7 @@ public class ClientTools {
         
         requestTwo.channel = channel;
         requestTwo.conn = conn;
+        requestTwo.outputArrayListlist = outputArrayListlist;
         
         conn.commit();
         EstablishChannelRequestTwo request2 = requestTwo.request();
@@ -143,7 +145,7 @@ public class ClientTools {
     	response = HTTPS.postToApi(requestWrapper);
     	Message responseTwo = new Message(response, conn);
         
-		ThunderContext.progressUpdated(6, 10);
+		ThunderContext.instance.progressUpdated(6, 10);
 
     	
     	EstablishChannelResponseTwo responseMessage2 = new Gson().fromJson(responseTwo.data, EstablishChannelResponseTwo.class);
@@ -151,7 +153,7 @@ public class ClientTools {
     	MySQLConnection.updateChannel(conn, channel);
 //    	System.out.println("Second request successful..");
     	
-		ThunderContext.progressUpdated(7, 10);
+		ThunderContext.instance.progressUpdated(7, 10);
 
     	
 		/**
@@ -161,20 +163,20 @@ public class ClientTools {
         
         requestThree.channel = channel;
         requestThree.conn = conn;
-        requestThree.transactionStorage = ThunderContext.transactionStorage;
+        requestThree.transactionStorage = ThunderContext.instance.transactionStorage;
         
         EstablishChannelResponseThree request3 = requestThree.request();
         requestWrapper = new Message(request3, Type.ESTABLISH_CHANNEL_THREE_REQUEST, channel.getClientKeyOnClient());
     	response = HTTPS.postToApi(requestWrapper);
     	Message responseThree = new Message(response, conn);
         
-		ThunderContext.progressUpdated(8, 10);
+		ThunderContext.instance.progressUpdated(8, 10);
 
     	
     	EstablishChannelRequestThree responseMessage3 = new Gson().fromJson(responseThree.data, EstablishChannelRequestThree.class);
     	requestThree.evaluateResponse(responseMessage3);
     	
-		ThunderContext.progressUpdated(9, 10);
+		ThunderContext.instance.progressUpdated(9, 10);
 
     	
     	channel.setReady(true);
@@ -182,7 +184,7 @@ public class ClientTools {
     	
     	MySQLConnection.updateChannel(conn, channel);
     	
-		ThunderContext.progressUpdated(10, 10);
+		ThunderContext.instance.progressUpdated(10, 10);
 
     	
     	return channel;
@@ -192,8 +194,10 @@ public class ClientTools {
 	
 	
 	public static Channel makePayment(Connection conn, Channel channel, Payment payment) throws Exception {
-		
-		ThunderContext.progressUpdated(1, 20);
+        System.out.println(channel.getPubKeyClient() + "   Make Payment");
+
+
+        ThunderContext.instance.progressUpdated(1, 20);
 
 		
 //		Connection conn = MySQLConnection.getInstance();
@@ -203,11 +207,12 @@ public class ClientTools {
 		
 		payment.setSecret(null);
 		payment.paymentToServer = true;
-		MySQLConnection.addPayment(conn, payment);
-		
+		int id = MySQLConnection.addPayment(conn, payment);
+        payment.setId(id);
+
 		PerformanceLogger performance = new PerformanceLogger();
 
-		ThunderContext.progressUpdated(2, 20);
+		ThunderContext.instance.progressUpdated(2, 20);
 
 		
 		/**
@@ -219,7 +224,7 @@ public class ClientTools {
 		
 		performance.measure("requestKeys");		
 		
-		ThunderContext.progressUpdated(3, 20);
+		ThunderContext.instance.progressUpdated(3, 20);
 
 		
 		
@@ -242,7 +247,7 @@ public class ClientTools {
 			paymentList = tempList;
 		}
 		
-		ThunderContext.progressUpdated(4, 20);
+		ThunderContext.instance.progressUpdated(4, 20);
 
 		
 		paymentList.add(payment);
@@ -256,13 +261,13 @@ public class ClientTools {
 
         conn.commit();
         
-		ThunderContext.progressUpdated(5, 20);
+		ThunderContext.instance.progressUpdated(5, 20);
 
         
         SendPaymentRequestOne request = requestOne.request();
         Message requestWrapper = new Message(request, Type.SEND_PAYMENT_ONE_REQUEST, channel.getClientKeyOnClient());
 
-		ThunderContext.progressUpdated(6, 20);
+		ThunderContext.instance.progressUpdated(6, 20);
 
 
 		performance.measure("First Request Request");		
@@ -270,7 +275,7 @@ public class ClientTools {
     	
     	String response = HTTPS.postToApi(requestWrapper);
     	
-		ThunderContext.progressUpdated(7, 20);
+		ThunderContext.instance.progressUpdated(7, 20);
 
     	
     	
@@ -281,7 +286,7 @@ public class ClientTools {
     	SendPaymentResponseOne responseMessage = new Gson().fromJson(responseOne.data, SendPaymentResponseOne.class);
     	requestOne.evaluateResponse(responseMessage);
     	
-		ThunderContext.progressUpdated(8, 20);
+		ThunderContext.instance.progressUpdated(8, 20);
 
     	
 		performance.measure("First Request Evaluate");		
@@ -301,7 +306,7 @@ public class ClientTools {
         SendPaymentRequestTwo request2 = requestTwo.request();
         requestWrapper = new Message(request2, Type.SEND_PAYMENT_TWO_REQUEST, channel.getClientKeyOnClient());
         
-		ThunderContext.progressUpdated(9, 20);
+		ThunderContext.instance.progressUpdated(9, 20);
 
         
 		performance.measure("Second Request Request");		
@@ -316,7 +321,7 @@ public class ClientTools {
     	
     	conn.commit();
         
-		ThunderContext.progressUpdated(10, 20);
+		ThunderContext.instance.progressUpdated(10, 20);
 
     	
     	SendPaymentResponseTwo responseMessage2 = new Gson().fromJson(responseTwo.data, SendPaymentResponseTwo.class);
@@ -336,7 +341,7 @@ public class ClientTools {
         
         SendPaymentRequestThree request3 = requestThree.request();
         
-		ThunderContext.progressUpdated(11, 20);
+		ThunderContext.instance.progressUpdated(11, 20);
 
         
 		performance.measure("Third Request Request");		
@@ -349,7 +354,7 @@ public class ClientTools {
         
     	response = HTTPS.postToApi(requestWrapper);
     	
-		ThunderContext.progressUpdated(12, 20);
+		ThunderContext.instance.progressUpdated(12, 20);
 
 
 		performance.measure("Third Request Server");		
@@ -370,7 +375,7 @@ public class ClientTools {
 
 		performance.measure("Third Request Evaluate");		
 
-		ThunderContext.progressUpdated(13, 20);
+		ThunderContext.instance.progressUpdated(13, 20);
 
     	
 		/**
@@ -384,7 +389,7 @@ public class ClientTools {
         
         conn.commit();
         
-		ThunderContext.progressUpdated(14, 20);
+		ThunderContext.instance.progressUpdated(14, 20);
 
     	/**
     	 * Payment is final.
@@ -402,7 +407,7 @@ public class ClientTools {
 		MySQLConnection.updatePayment(conn, paymentList);
 		MySQLConnection.getKeysOfUsToBeExposed(conn, channel, true);
 		
-		ThunderContext.progressUpdated(15, 20);
+		ThunderContext.instance.progressUpdated(15, 20);
 
 		
     	MySQLConnection.updateChannel(conn, channel);
@@ -416,7 +421,7 @@ public class ClientTools {
 		MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
 		MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
 		
-		ThunderContext.progressUpdated(16, 20);
+		ThunderContext.instance.progressUpdated(16, 20);
 
         
         
@@ -427,7 +432,7 @@ public class ClientTools {
         try {
 	    	response = HTTPS.postToApi(requestWrapper);
 	    	
-			ThunderContext.progressUpdated(17, 20);
+			ThunderContext.instance.progressUpdated(17, 20);
 
 	    	
 
@@ -444,33 +449,34 @@ public class ClientTools {
     	
     	conn.commit();
     	
-		ThunderContext.progressUpdated(18, 20);
+		ThunderContext.instance.progressUpdated(18, 20);
 
     	
 
     	channel = MySQLConnection.getChannel(conn, channel.getPubKeyClient());
     	channel.conn = conn;
     	
-		ThunderContext.progressUpdated(19, 20);
+		ThunderContext.instance.progressUpdated(19, 20);
 
 
-    	System.out.println("Current channeltx:"+channel.getChannelTxClient());
-    	System.out.println("Temp channeltx:"+channel.getChannelTxClientTemp());
+//    	System.out.println("Current channeltx:"+channel.getChannelTxClient());
+//    	System.out.println("Temp channeltx:"+channel.getChannelTxClientTemp());
     	
     	
-//    	System.out.println("Payment requested successful..");
-    	logger.measure("Amount: "+paymentList.size()+" Total Payment");
+//    	logger.measure("Amount: "+paymentList.size()+" Total Payment");
     	
-		ThunderContext.progressUpdated(20, 20);
+		ThunderContext.instance.progressUpdated(20, 20);
 
 
     	return channel;
 	}
 	
-	public static void requestKeys(Connection conn, Channel channel, int amountClient, int amountServer) throws Exception {	
-		/**
-		 * First request..
-		 */        
+	public static void requestKeys(Connection conn, Channel channel, int amountClient, int amountServer) throws Exception {
+        System.out.println(channel.getPubKeyClient() + "   Request Keys");
+
+        /**
+         * First request..
+         */
         AddKeysHandler requestOne = new AddKeysHandler();
         
         requestOne.channel = channel;
@@ -497,10 +503,12 @@ public class ClientTools {
     	requestOne.evaluateResponse(responseMessage);
 	}
 	
-	public static void closeChannel(Connection conn, Channel channel, PeerGroup peerGroup) throws Exception {	
-		/**
-		 * First request..
-		 */        
+	public static void closeChannel(Connection conn, Channel channel, PeerGroup peerGroup) throws Exception {
+        System.out.println(channel.getPubKeyClient() + "   Close Channel");
+
+        /**
+         * First request..
+         */
         CloseChannelHandler requestOne = new CloseChannelHandler();
         
         requestOne.channel = channel;
@@ -521,10 +529,14 @@ public class ClientTools {
     	requestOne.evaluateResponse(responseMessage);
     	
     	peerGroup.broadcastTransaction(requestOne.receivedTransaction);
+
+        channel.setReady(false);
+        MySQLConnection.updateChannel(conn, channel);
 	}
 	
 	
 	public static Channel updateChannel(Connection conn, Channel channel, boolean force) throws Exception {
+        System.out.println(channel.getPubKeyClient() + "   Update Channel");
 //		Connection conn = MySQLConnection.getInstance();
 //    	conn.setAutoCommit(false);
 		
@@ -541,14 +553,13 @@ public class ClientTools {
 //    	UpdateChannelResponseOne responseMessage = new Gson().fromJson(responseOne.data, UpdateChannelResponseOne.class);
 //    	requestOne.evaluate(responseMessage);
 
-		ThunderContext.progressUpdated(1, 10);
+		ThunderContext.instance.progressUpdated(1, 10);
 
     	
 		UpdateChannelHandlerTwo requestTwo = new UpdateChannelHandlerTwo();
 		requestTwo.channel = channel;
 		requestTwo.conn = conn;
-//		requestTwo.totalAmountOfPayments = requestOne.totalAmountOfPayments;
-		
+
 		
         UpdateChannelRequestTwo request2 = requestTwo.request();
         Message requestWrapper = new Message(request2, Type.UPDATE_CHANNEL_TWO_REQUEST, channel.getClientKeyOnClient());
@@ -560,12 +571,10 @@ public class ClientTools {
     	Message responseOne = new Message(response, conn);
     	UpdateChannelResponseTwo responseMessage2 = new Gson().fromJson(responseOne.data, UpdateChannelResponseTwo.class);
     	requestTwo.evaluate(responseMessage2);
-    	
-    	System.out.println("New Payments: "+requestTwo.amountNewPayments);
-    	
+
 
     	
-		ThunderContext.progressUpdated(2, 10);
+		ThunderContext.instance.progressUpdated(2, 10);
 
 
 		UpdateChannelHandlerThree requestThree = new UpdateChannelHandlerThree();
@@ -583,7 +592,7 @@ public class ClientTools {
     	UpdateChannelResponseThree responseMessage3 = new Gson().fromJson(responseOne.data, UpdateChannelResponseThree.class);
     	requestThree.evaluate(responseMessage3);
     	
-		ThunderContext.progressUpdated(3, 10);
+		ThunderContext.instance.progressUpdated(3, 10);
 
 
     	
@@ -597,7 +606,7 @@ public class ClientTools {
         UpdateChannelRequestFour request4 = requestFour.request();
         requestWrapper = new Message(request4, Type.UPDATE_CHANNEL_FOUR_REQUEST, channel.getClientKeyOnClient());
         
-		ThunderContext.progressUpdated(4, 10);
+		ThunderContext.instance.progressUpdated(4, 10);
 
 
     	response = HTTPS.postToApi(requestWrapper);
@@ -610,7 +619,7 @@ public class ClientTools {
 		requestFive.channel = channel;
 		requestFive.conn = conn;
 		
-		ThunderContext.progressUpdated(5, 10);
+		ThunderContext.instance.progressUpdated(5, 10);
 
 		
 		
@@ -622,7 +631,7 @@ public class ClientTools {
     	UpdateChannelResponseFive responseMessage5 = new Gson().fromJson(responseOne.data, UpdateChannelResponseFive.class);
     	requestFive.evaluate(responseMessage5);
     	
-		ThunderContext.progressUpdated(6, 10);
+		ThunderContext.instance.progressUpdated(6, 10);
 
 
     	
@@ -635,6 +644,7 @@ public class ClientTools {
 		ArrayList<Payment> paymentList = requestFour.newPaymentsTotal;
 		ArrayList<Payment> oldPayments = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
 		ArrayList<Payment> oldPaymentsToUpdate = new ArrayList<Payment>();
+
 
 		
 		long addAmountToServer = 0;
@@ -673,7 +683,7 @@ public class ClientTools {
 			}
 		}
 		
-		ThunderContext.progressUpdated(7, 10);
+		ThunderContext.instance.progressUpdated(7, 10);
 
 		
 //		System.out.println("Update complete! New channel transaction on client: ");
@@ -683,7 +693,6 @@ public class ClientTools {
 		channel.setAmountServer(channel.getAmountServer() + addAmountToServer );
 		
 		for(Payment p : paymentList) {
-			System.out.println(p.toString());
 			if(!p.paymentToServer)
 				if(p.getTimestampAddedToReceiver() == 0) 
 					p.setTimestampAddedToReceiver(Tools.currentTime());
@@ -698,12 +707,13 @@ public class ClientTools {
 		MySQLConnection.updateChannel(conn, channel);
 		channel.replaceCurrentTransactionsWithTemporary();
 		
-		ThunderContext.progressUpdated(8, 10);
+		ThunderContext.instance.progressUpdated(8, 10);
 
 		
 		MySQLConnection.updatePayment(conn, paymentList);
 		MySQLConnection.updatePayment(conn, oldPaymentsToUpdate);
 		MySQLConnection.updatePaymentRefunds(conn, channel);
+        conn.commit();
 
 		
 
@@ -712,7 +722,7 @@ public class ClientTools {
 		MySQLConnection.updateChannel(conn, channel);
 		channel = MySQLConnection.getChannel(conn, channel.getPubKeyClient());
     	
-		ThunderContext.progressUpdated(9, 10);
+		ThunderContext.instance.progressUpdated(9, 10);
     	
     	return channel;
     	

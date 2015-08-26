@@ -55,7 +55,7 @@ public class Constants {
 	
 	public static int MAX_CHANNEL_CREATION_TIME = 10;
 	public static int MAX_CHANNEL_KEEP_TIME_AFTER_CLOSED = 24 * 60 * 60 * 20;
-	public static int MIN_CONFIRMATION_TIME = 1;
+	public static int MIN_CONFIRMATION_TIME = 0;
 	public static int MIN_CONFIRMATION_TIME_FOR_CHANNEL = 0;
 	public static int MIN_KEYS_ON_CHANNEL_CREATION = 0;
 	
@@ -70,12 +70,12 @@ public class Constants {
 	public static int KEYS_PER_PAYMENT_CLIENTSIDE = 1;
 	
 	public static int TIMEFRAME_PER_KEY_DEPTH = 60 * 60 * 24 ;
-	
+
 	public static double SERVER_FEE_PERCENTAGE = 0.01;
 	public static long SERVER_FEE_FLAT = 100;
 	public static long SERVER_FEE_MIN = 10;
 	public static long SERVER_FEE_MAX = 1000;
-	public static int[] LOG_LEVELS =  { 1,2,3,4,5 };
+	public static int[] LOG_LEVELS =  { 2,3,4,5 };
 	
 	/**
 	 * If channelEnd-currentTime>this, refuse to accept new payments

@@ -57,18 +57,18 @@ public class BitcoinUIModel {
             }
         }, Platform::runLater);
 
-        ThunderContext.addListener(new ThunderContext.ChangeListener() {
+        ThunderContext.instance.addListener(new ThunderContext.ChangeListener() {
             @Override
             public void channelListChanged() {
                 update(wallet);
             }
         });
 
-        ThunderContext.setProgressUpdateListener(new ThunderContext.ProgressUpdateListener() {
+        ThunderContext.instance.setProgressUpdateListener(new ThunderContext.ProgressUpdateListener() {
             @Override
             public void progressUpdated(int count, int max) {
 
-                if(max == count) {
+                if (max == count) {
                     Platform.runLater(() -> {
                         syncProgress.set(1.0);
                         System.out.println("Hide notification bar");
@@ -100,28 +100,28 @@ public class BitcoinUIModel {
             transactions.setAll(wallet.getTransactionsByTime());
 
             ObservableList<Node> items1 = FXCollections.observableArrayList();
-            for (Payment p : ThunderContext.getPaymentListIncluded()) {
+            for (Payment p : ThunderContext.instance.getPaymentListIncluded()) {
                 Label label = new Label(p.toString());
                 items1.add(label);
             }
             transactionsThunderIncluded.setAll(items1);
 
             ObservableList<Node> items2 = FXCollections.observableArrayList();
-            for (Payment p : ThunderContext.getPaymentListSettled()) {
+            for (Payment p : ThunderContext.instance.getPaymentListSettled()) {
                 Label label = new Label(p.toString());
                 items2.add(label);
             }
             transactionsThunderSettled.setAll(items2);
 
             ObservableList<Node> items3 = FXCollections.observableArrayList();
-            for (Payment p : ThunderContext.getPaymentListRefunded()) {
+            for (Payment p : ThunderContext.instance.getPaymentListRefunded()) {
                 Label label = new Label(p.toString());
                 items3.add(label);
             }
             transactionsThunderRefunded.setAll(items3);
 
             ObservableList<Node> items4 = FXCollections.observableArrayList();
-            for (Payment p : ThunderContext.getPaymentListOpen()) {
+            for (Payment p : ThunderContext.instance.getPaymentListOpen()) {
                 Label label = new Label(p.toString());
                 items4.add(label);
             }
@@ -143,7 +143,7 @@ public class BitcoinUIModel {
                 Platform.runLater(() -> {
                     try {
                         syncProgress.set(1.0);
-                        ThunderContext.init(bitcoin.wallet(), bitcoin.peerGroup(), Main.CLIENTID);
+                        ThunderContext.init(bitcoin.wallet(), bitcoin.peerGroup(), Main.CLIENTID, false);
                     } catch (SQLException e) {
                         e.printStackTrace();
                     } catch (IOException e) {

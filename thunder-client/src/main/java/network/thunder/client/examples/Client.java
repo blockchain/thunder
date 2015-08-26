@@ -75,7 +75,7 @@ public class Client {
         
         
       if(createNewChannels) {
-    	  ThunderContext.openChannel(10000, 10000, 50);
+    	  ThunderContext.instance.openChannel(10000, 10000, 50);
 //    	  ThunderContext.openChannel(10000, 10000, 50);
 //	      ClientTools.createChannel(conn1, keyChain.wallet, keyChain.peerGroup, 10000, 10000, 50);
 //	      ClientTools.createChannel(conn1, keyChain.wallet, keyChain.peerGroup, 10000, 10000, 50);

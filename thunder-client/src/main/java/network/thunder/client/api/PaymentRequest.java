@@ -64,7 +64,7 @@ public class PaymentRequest {
         String secretHashB64 = Tools.byteToString(secretHash);
         String idB64 = Tools.byteToString(id);
 
-		System.out.println("SecretHash: "+secretHashB64);
+//		System.out.println("SecretHash: "+secretHashB64);
 
 		payment = new Payment(channel.getId(), idB64, amount, secretHashB64);
 		
@@ -95,7 +95,7 @@ public class PaymentRequest {
 
         String secretHashB64 = Tools.byteToString(secretHash);
 
-        System.out.println("SecretHash: " + secretHashB64);
+//        System.out.println("SecretHash: " + secretHashB64);
 
         byte[] totalWithHash = new byte[33];
 

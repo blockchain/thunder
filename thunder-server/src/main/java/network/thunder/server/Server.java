@@ -100,25 +100,26 @@ public class Server {
      * @throws Exception the exception
      */
     public static void main(String[] args) throws Exception {
+        System.out.println("Starting ThunderNetwork Server..");
     	dataSource = MySQLConnection.getDataSource();
-    	Connection conn = dataSource.getConnection();
+        WebSocketHandler.init(dataSource);
+        Connection conn = dataSource.getConnection();
         try {
             MySQLConnection.getActiveChannels(conn);
         } catch(SQLException e) {
             MySQLConnection.resetToBackup();
         }
     	MySQLConnection.cleanUpDatabase(conn);
-    	KeyChain keyChain = new KeyChain(conn);       
+        System.out.println("Syncing our Wallet..");
+    	KeyChain keyChain = new KeyChain(conn);
+        keyChain.startUp();
 
-    	TransactionStorage.initialize(conn, keyChain.peerGroup);
-        WebSocketHandler.init(dataSource);
-    	
-    	keyChain.transactionStorage = TransactionStorage.instance;
-    	keyChain.start();
-    	
-    	TransactionStorage.instance.peerGroup = keyChain.peerGroup;
 
-        
+        TransactionStorage.initialize(conn, keyChain.peerGroup);
+        TransactionStorage.instance.peerGroup = keyChain.peerGroup;
+        System.out.println("Checking old Transactions..");
+        keyChain.run();
+
 //        Peer peer = keyChain.peerGroup.get;
         
         Thread.sleep(3000);
@@ -174,15 +175,16 @@ public class Server {
 
 
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[] { context0, context1, context2 });
+        handlers.setHandlers(new Handler[]{context0, context1, context2});
         server.setHandler(handlers);
 
 
-        
+        System.out.println("Server ready!");
         server.start();
         server.join();
-        
-    	   	
+
+
+
         BriefLogFormatter.init();
         
 

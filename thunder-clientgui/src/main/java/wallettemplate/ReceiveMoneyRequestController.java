@@ -94,7 +94,7 @@ public class ReceiveMoneyRequestController {
     public void initData(Coin amount) {
 
         try {
-            PaymentRequest paymentRequest = ThunderContext.getPaymentReceiveRequest(amount.value);
+            PaymentRequest paymentRequest = ThunderContext.instance.getPaymentReceiveRequest(amount.value);
 
             FieldAddress.setText(paymentRequest.getAddress());
 

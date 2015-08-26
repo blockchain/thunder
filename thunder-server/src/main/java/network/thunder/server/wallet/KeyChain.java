@@ -20,6 +20,7 @@ package network.thunder.server.wallet;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -55,36 +56,17 @@ import com.lambdaworks.codec.Base64;
  */
 public class KeyChain {
 	
-	/**
-	 * The kit.
-	 */
+
 	public WalletAppKit kit;
-	
-	/**
-	 * The wallet.
-	 */
 	public Wallet wallet;
-	
-	/**
-	 * The peer group.
-	 */
 	public PeerGroup peerGroup;
-	
-	/**
-	 * The peer group2.
-	 */
 	public PeerGroup peerGroup2;
-	
-	/**
-	 * The transaction storage.
-	 */
-	public TransactionStorage transactionStorage;
-	
-	/**
-	 * The conn.
-	 */
 	public Connection conn;
-	
+
+    private boolean isRunning = false;
+    private ArrayList<Transaction> checkTransactionList = new ArrayList<>();
+    private ArrayList<Transaction> confidenceChangedTransactionList = new ArrayList<>();
+
 	/**
 	 * The key.
 	 */
@@ -106,55 +88,44 @@ public class KeyChain {
 	 *
 	 * @throws Exception the exception
 	 */
-	public void start() throws Exception {
+	public void startUp() throws Exception {
 
-		
-		kit = new WalletAppKit(Constants.getNetwork(), new File("."), SideConstants.WALLET_FILE);
-		kit.setAutoSave(true);
-//		kit.restoreWalletFromSeed(seed);
 
-//        kit.connectToLocalHost();
-        
-        kit.startAsync();
-        kit.awaitRunning();
+        kit = new WalletAppKit(Constants.getNetwork(), new File("."), SideConstants.WALLET_FILE);
+        kit.setAutoSave(true);
+        kit.startAndWait();
+//        kit.awaitRunning();
 //      kit.wallet().reset();
         peerGroup = kit.peerGroup();
-		wallet = kit.wallet();
+        wallet = kit.wallet();
 
-
-        
-		/**
-		 * TODO: Can't get it working with the peergroup within the WalletAppKit, use a new one for now..
-		 * Somehow, onTransaction does not get called on the WalletAppKit peerGroup Listener..
-		 */
+        /**
+         * TODO: Can't get it working with the peergroup within the WalletAppKit, use a new one for now..
+         * Somehow, onTransaction does not get called on the WalletAppKit peerGroup Listener..
+         */
         peerGroup2 = new PeerGroup(Constants.getNetwork(), null /* no chain */);
         peerGroup2.setUserAgent("PeerMonitor", "1.0");
         peerGroup2.setMaxConnections(4);
         peerGroup2.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
         peerGroup2.addEventListener(new PeerListener());
         peerGroup2.start();
-        
+
 
         kit.wallet().addEventListener(new WalletListener());
-
-
         System.out.println(kit.wallet().toString(false, false, false, null));
-//        System.out.println(kit.wallet().getBalance().toFriendlyString());
-//        System.out.println("send money to: " + kit.wallet().freshReceiveAddress().toString());
-		
-//        System.out.println(Tools.byteToString58(kit.wallet().getKeyChainSeed().getSeedBytes()));
-//        System.out.println(Tools.byteToString58(kit.wallet().getKeyChainSeed().getSecretBytes()));
-//        System.out.println(kit.wallet().getKeyChainSeed().getMnemonicCode());
 
-        
+    }
+
+    public void run() throws Exception {
 
 		MySQLConnection.deleteAllOutputs(conn);
 		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
+            if(o.getValue().value == 0)
+                continue;
 			System.out.println(o.getParentTransaction().getConfidence().getDepthInBlocks() + " " +o);
         	try {
-				transactionStorage.onTransaction(o.getParentTransaction());
+				TransactionStorage.instance.onTransaction(o.getParentTransaction());
 			} catch (SQLException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 			if(o.getParentTransaction().getConfidence().getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME) {
@@ -165,7 +136,6 @@ public class KeyChain {
 			    	output.setValue(o.getValue().value);
 			    	output.setPrivateKey(new String(Base64.encode(wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160()).getPrivKeyBytes())));
 			    	output.setTransactionOutput(o);
-					
 			    	MySQLConnection.addOutput(conn, output);
 	
 		    	} catch(Exception e) {
@@ -173,8 +143,14 @@ public class KeyChain {
 		    	}
 			}
 		}
+        for(Transaction tx : checkTransactionList) {
+            TransactionStorage.instance.onTransaction(tx);
+        }
+        for(Transaction tx : confidenceChangedTransactionList) {
+            TransactionStorage.instance.onConfidenceChanged(tx);
+        }
 
-	}
+    }
 	
 	 /**
  	 * The listener interface for receiving wallet events.
@@ -184,21 +160,20 @@ public class KeyChain {
  	 * component's <code>addWalletListener<code> method. When
  	 * the wallet event occurs, that object's appropriate
  	 * method is invoked.
- 	 *
- 	 * @see WalletEvent
  	 */
  	class WalletListener extends AbstractWalletEventListener {
 
-	        /* (non-Javadoc)
-        	 * @see org.bitcoinj.core.AbstractWalletEventListener#onCoinsReceived(org.bitcoinj.core.Wallet, org.bitcoinj.core.Transaction, org.bitcoinj.core.Coin, org.bitcoinj.core.Coin)
-        	 */
         	@Override
 	        public void onCoinsReceived(Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
 	            System.out.println("-----> coins resceived: " + tx.getHashAsString());
 	            System.out.println("received: " + tx.getValue(wallet));
 	            System.out.println("send money to: " + kit.wallet().freshReceiveAddress().toString());
 				try {
-					transactionStorage.onTransaction(tx);
+                    if(isRunning) {
+                        TransactionStorage.instance.onTransaction(tx);
+                    } else {
+                        checkTransactionList.add(tx);
+                    }
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -206,14 +181,15 @@ public class KeyChain {
 
 	        }
 
-	        /* (non-Javadoc)
-        	 * @see org.bitcoinj.core.AbstractWalletEventListener#onTransactionConfidenceChanged(org.bitcoinj.core.Wallet, org.bitcoinj.core.Transaction)
-        	 */
         	@Override
 	        public void onTransactionConfidenceChanged(Wallet wallet, Transaction tx) {
 	        	
 	        	try {
-					transactionStorage.onConfidenceChanged(tx);
+                    if(isRunning) {
+                        TransactionStorage.instance.onConfidenceChanged(tx);
+                    } else {
+                        confidenceChangedTransactionList.add(tx);
+                    }
 				} catch (SQLException e1) {
 					// TODO Auto-generated catch block
 					e1.printStackTrace();
@@ -240,7 +216,7 @@ public class KeyChain {
 					    	output.setTransactionOutput(o);
 	
 							MySQLConnection.addOutput(conn, output);
-			        	} catch(Exception e) { 	}
+			        	} catch(Exception ignored) { 	}
 		        	}
 	            }
 	        }
@@ -284,7 +260,6 @@ public class KeyChain {
  	 * the peer event occurs, that object's appropriate
  	 * method is invoked.
  	 *
- 	 * @see PeerEvent
  	 */
  	class PeerListener implements PeerEventListener {
 
@@ -330,10 +305,14 @@ public class KeyChain {
 		/* (non-Javadoc)
 		 * @see org.bitcoinj.core.PeerEventListener#onTransaction(org.bitcoinj.core.Peer, org.bitcoinj.core.Transaction)
 		 */
-		public void onTransaction(Peer peer, Transaction t) {
+		public void onTransaction(Peer peer, Transaction tx) {
 			try {
-				transactionStorage.onTransaction(t);
-			} catch (Exception e) {
+                if(isRunning) {
+                    TransactionStorage.instance.onTransaction(tx);
+                } else {
+                    checkTransactionList.add(tx);
+                }
+            } catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}			

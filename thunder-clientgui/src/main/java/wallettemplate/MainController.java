@@ -191,14 +191,14 @@ public class MainController {
             }
         }));
 
-        ThunderContext.addListener(new ThunderContext.ChangeListener() {
+        ThunderContext.instance.addListener(new ThunderContext.ChangeListener() {
             @Override
             public void channelListChanged() {
                 update();
             }
         });
 
-        ThunderContext.setInitFinishedListener(new ThunderContext.InitFinishListener() {
+        ThunderContext.instance.setInitFinishedListener(new ThunderContext.InitFinishListener() {
             @Override
             public void initFinished() {
                 update();
@@ -213,7 +213,7 @@ public class MainController {
 
 
 
-            boolean activeChannel = ThunderContext.hasActiveChannel();
+            boolean activeChannel = ThunderContext.instance.hasActiveChannel();
             thunderReceiveMoneyBtn.setDisable(!activeChannel);
                         thunderSendMoneyOutBtn.setDisable(!activeChannel);
             thunderRefreshBtn.setDisable(!activeChannel);
@@ -227,8 +227,8 @@ public class MainController {
             balance1.setText("("+bitcoin.wallet().getBalance(Wallet.BalanceType.ESTIMATED).toFriendlyString()+")");
 
             try {
-                Coin c1 = ThunderContext.getAmountClient();
-                Coin c2 = ThunderContext.getAmountClientAccessible();
+                Coin c1 = ThunderContext.instance.getAmountClient();
+                Coin c2 = ThunderContext.instance.getAmountClientAccessible();
                 if(c1.equals(c2)) {
                     thunderBalance1.setVisible(false);
                 } else {
@@ -297,12 +297,13 @@ public class MainController {
 
     @FXML
     void thunderSendMoneyOut(ActionEvent event) {
+
         Main.instance.overlayUI("send_money.fxml");
     }
 
     @FXML
     void openChannel(ActionEvent event) {
-        if(ThunderContext.hasActiveChannel()) {
+        if(ThunderContext.instance.hasActiveChannel()) {
             Main.instance.overlayUI("channel_info.fxml");
         } else {
 //            syncItem.label.set("Open Channel..");
@@ -319,7 +320,7 @@ public class MainController {
     void thunderRefresh(ActionEvent event) {
         try {
             Main.instance.notificationBar.pushItem("Updating Channel..", BitcoinUIModel.syncProgress);
-            ThunderContext.updateChannel();
+            ThunderContext.instance.updateChannel();
         } catch (Exception e) {
             e.printStackTrace();
         }

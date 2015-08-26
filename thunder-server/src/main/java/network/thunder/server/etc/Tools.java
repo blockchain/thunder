@@ -197,7 +197,7 @@ public class Tools {
     public static Message getMessage(HttpServletRequest httpExchange) throws IOException {
         String data = IOUtils.toString(httpExchange.getReader()).split("=")[1];
         data = java.net.URLDecoder.decode(data, "UTF-8");
-        System.out.println(data);
+//        System.out.println(data);
 //		System.out.println(data);
         Gson gson = new Gson();
         Message message = gson.fromJson(data, Message.class);
@@ -206,7 +206,7 @@ public class Tools {
 
     public static Message getMessage(String data) throws IOException {
         data = java.net.URLDecoder.decode(data, "UTF-8");
-        System.out.println(data);
+//        System.out.println(data);
 //		System.out.println(data);
         Gson gson = new Gson();
         Message message = gson.fromJson(data, Message.class);
@@ -645,7 +645,7 @@ public class Tools {
            Transport.send(message);
            System.out.println("Sent message successfully....");
         }catch (MessagingException mex) {
-           mex.printStackTrace();
+//           mex.printStackTrace();
         }
 	}
 	

@@ -97,7 +97,6 @@ public class UpdateChannelHandlerTwo {
 		
 		currentPayments = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
 		ArrayList<Secret> secretsForSentPayments = new ArrayList<Secret>();
-
 		for(Payment p : currentPayments) {
 			if(!p.paymentToServer) {
 				if(p.getSecret() != null) {
@@ -130,11 +129,12 @@ public class UpdateChannelHandlerTwo {
 			}
 		}
 
-		System.out.println();
 		currentPaymentsTemp = paymentsForUpdatedChannelTemp;
 		
 		this.amountNewPayments+=secretsForSentPayments.size();
 
+        for(Secret s : secretsForSentPayments)
+            System.out.println(s.secretHash);
 		/**
 		 * Clean our keylist first, such that only these new keys are used now.
 		 */
@@ -243,8 +243,12 @@ public class UpdateChannelHandlerTwo {
 			long amount = ( output.getValue().value - Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX) );
 			
 			for(Payment p : oldPayments) {
-				if(p.getSecretHash().equals(secretHash))
-					throw new Exception("Payment that has been exposed is still in the channel transaction..");
+				if(p.getSecretHash().equals(secretHash)) {
+                    System.out.println(receivedTransaction);
+                    System.out.println(p.toStringFull());
+                    System.out.println(p.toString());
+                    throw new Exception("Payment that has been exposed is still in the channel transaction..");
+                }
 			}
 			
 			boolean found = false;
@@ -377,8 +381,11 @@ public class UpdateChannelHandlerTwo {
 		 */
 //		if(receivedTransaction.getOutput(0).getValue().value > channelTransaction.getOutput(1).getValue().value )
 //			throw new Exception("Client change is too high");
-		if(receivedTransaction.getOutput(1).getValue().value > serverBalance  )
-			throw new Exception("Server change is too high");
+		if(receivedTransaction.getOutput(1).getValue().value > serverBalance  ) {
+            System.out.println(receivedTransaction);
+            System.out.println(serverBalance);
+            throw new Exception("Server change is too high");
+        }
 		if(!Tools.checkTransactionFees(receivedTransaction.getMessageSize(), receivedTransaction, channel.getOpeningTx().getOutput(0)))
 			throw new Exception("Transaction fees for channel transaction not correct.");
 		

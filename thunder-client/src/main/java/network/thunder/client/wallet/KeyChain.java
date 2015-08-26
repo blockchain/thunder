@@ -52,11 +52,12 @@ public class KeyChain {
 	public Connection conn;
 	
 	String KEY = "episode slice essence biology cream broccoli agree poverty sentence piano eyebrow air";
-	
-	
-	public KeyChain(Connection conn) throws Exception {
-		this.conn = conn;		
-	}
+
+
+    public KeyChain(Connection conn) throws Exception {
+        this.conn = conn;
+    }
+
 	
 	public void start() throws Exception {
 		

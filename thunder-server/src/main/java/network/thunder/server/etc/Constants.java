@@ -106,7 +106,7 @@ public class Constants {
 	/**
 	 * The min confirmation time.
 	 */
-	public static int MIN_CONFIRMATION_TIME = 1;
+	public static int MIN_CONFIRMATION_TIME = 0;
 	
 	/**
 	 * The min confirmation time for channel.

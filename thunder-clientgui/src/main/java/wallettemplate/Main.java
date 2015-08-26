@@ -133,7 +133,7 @@ public class Main extends Application {
         }, Platform::runLater);
         bitcoin.startAsync();
 
-        ThunderContext.setErrorListener(s -> Platform.runLater(() -> {
+        ThunderContext.instance.setErrorListener(s -> Platform.runLater(() -> {
             NotificationBarPane.Item item = Main.instance.notificationBar.getItem();
             BitcoinUIModel.syncProgress.set(1.0);
             if (item != null) {

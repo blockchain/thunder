@@ -36,7 +36,7 @@ public class SideConstants {
 	/**
 	 * The database connection.
 	 */
-	public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true&autoReconnect=true";
+	public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true&autoReconnect=true&allowMultiQueries=true";
 	
 	
 	/**
@@ -47,7 +47,7 @@ public class SideConstants {
 	/**
 	 * The wallet file.
 	 */
-	public static String WALLET_FILE = "wallet4";
+	public static String WALLET_FILE = "wallet6";
 	
 	/**
 	 * The KE y_ b58.

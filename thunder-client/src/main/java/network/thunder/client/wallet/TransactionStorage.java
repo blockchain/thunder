@@ -59,12 +59,15 @@ public class TransactionStorage implements WalletEventListener {
 	HashMap<Integer, TransactionTimerTask> channelTransactionList = new HashMap<Integer, TransactionTimerTask>();
 	
 	Timer timer;
+
+    ArrayList<Output> outputList = new ArrayList<>();
 	
 	private TransactionStorage() {}
 	
-	public static TransactionStorage initialize(Connection conn)  throws SQLException {
+	public static TransactionStorage initialize(Connection conn, ArrayList<Output> outputList)  throws SQLException {
 		TransactionStorage storage = new TransactionStorage();
 		storage.conn = conn;
+        storage.outputList = outputList;
 		
 		
 		storage.channelTransactions = MySQLConnection.getChannelTransactions(conn);
@@ -100,7 +103,7 @@ public class TransactionStorage implements WalletEventListener {
 		}
 	}
 	
-	public static void updateOutputs(Wallet wallet) {
+	public void updateOutputs(Wallet wallet) {
 		boolean update = false;
 		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
 			if(o.getParentTransaction().getConfidence().getDepthInBlocks() < 10) {
@@ -110,11 +113,10 @@ public class TransactionStorage implements WalletEventListener {
 		if(!update && !first) 
 			return;
 		first = false;
-		ThunderContext.outputList.clear();
+		outputList.clear();
 		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
 			if(o.getParentTransaction().getConfidence().getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME) {
-//				System.out.println(o);
-				ThunderContext.outputList.add(new Output(o, wallet));
+				outputList.add(new Output(o, wallet));
 			}
 		}
 	}
