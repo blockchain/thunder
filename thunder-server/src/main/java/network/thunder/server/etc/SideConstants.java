@@ -47,7 +47,7 @@ public class SideConstants {
 	/**
 	 * The wallet file.
 	 */
-	public static String WALLET_FILE = "wallet6";
+	public static String WALLET_FILE = "wallet";
 	
 	/**
 	 * The KE y_ b58.

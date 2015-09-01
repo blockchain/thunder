@@ -103,8 +103,8 @@ public class TransactionStorage implements WalletEventListener {
 		}
 	}
 	
-	public void updateOutputs(Wallet wallet) {
-		boolean update = false;
+	public void updateOutputs(Wallet wallet, boolean forceUpdate) {
+		boolean update = forceUpdate;
 		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
 			if(o.getParentTransaction().getConfidence().getDepthInBlocks() < 10) {
 				update = true;
@@ -202,7 +202,7 @@ public class TransactionStorage implements WalletEventListener {
 	@Override
 	public void onWalletChanged(Wallet arg0) {
 		// TODO Auto-generated method stub
-		updateOutputs(arg0);
+		updateOutputs(arg0, false);
 
 	}
 

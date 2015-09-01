@@ -38,7 +38,7 @@ public class Constants {
 
 
 //    public static final String SERVER_URL = "thunder.network";
-    public static final String SERVER_URL = "localhost";
+    public static final String SERVER_URL = "thunder.network";
 
 	
 	public static long MAX_CHANNEL_VALUE = 1000000000;
@@ -69,7 +69,7 @@ public class Constants {
 	public static int KEYS_PER_PAYMENT_SERVERSIDE = 2;
 	public static int KEYS_PER_PAYMENT_CLIENTSIDE = 1;
 	
-	public static int TIMEFRAME_PER_KEY_DEPTH = 60 * 60 * 24 ;
+	public static int TIMEFRAME_PER_KEY_DEPTH = 60*60*24;
 
 	public static double SERVER_FEE_PERCENTAGE = 0.01;
 	public static long SERVER_FEE_FLAT = 100;

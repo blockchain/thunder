@@ -139,7 +139,7 @@ public class ClientTools {
         requestTwo.conn = conn;
         requestTwo.outputArrayListlist = outputArrayListlist;
         
-        conn.commit();
+//        conn.commit();
         EstablishChannelRequestTwo request2 = requestTwo.request();
         requestWrapper = new Message(request2, Type.ESTABLISH_CHANNEL_TWO_REQUEST, channel.getClientKeyOnClient());
     	response = HTTPS.postToApi(requestWrapper);
@@ -194,7 +194,7 @@ public class ClientTools {
 	
 	
 	public static Channel makePayment(Connection conn, Channel channel, Payment payment) throws Exception {
-        System.out.println(channel.getPubKeyClient() + "   Make Payment");
+//        System.out.println(channel.getPubKeyClient() + "   Make Payment");
 
 
         ThunderContext.instance.progressUpdated(1, 20);
@@ -472,7 +472,7 @@ public class ClientTools {
 	}
 	
 	public static void requestKeys(Connection conn, Channel channel, int amountClient, int amountServer) throws Exception {
-        System.out.println(channel.getPubKeyClient() + "   Request Keys");
+//        System.out.println(channel.getPubKeyClient() + "   Request Keys");
 
         /**
          * First request..
@@ -536,7 +536,7 @@ public class ClientTools {
 	
 	
 	public static Channel updateChannel(Connection conn, Channel channel, boolean force) throws Exception {
-        System.out.println(channel.getPubKeyClient() + "   Update Channel");
+//        System.out.println(channel.getPubKeyClient() + "   Update Channel");
 //		Connection conn = MySQLConnection.getInstance();
 //    	conn.setAutoCommit(false);
 		

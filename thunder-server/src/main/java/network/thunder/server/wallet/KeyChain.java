@@ -116,6 +116,12 @@ public class KeyChain {
 
     }
 
+    public void shutdown() {
+        kit.stopAndWait();
+    }
+
+
+
     public void run() throws Exception {
 
 		MySQLConnection.deleteAllOutputs(conn);

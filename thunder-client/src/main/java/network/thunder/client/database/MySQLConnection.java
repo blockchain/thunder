@@ -1028,7 +1028,7 @@ public class MySQLConnection {
 			ResultSet set = stmt.executeQuery();
 			
 			if(!set.first()) {
-				System.out.println("getKey return null..: "+stmt.toString());
+				System.out.println("getKey return null..: " + stmt.toString());
 				set.close();
 				return null;
 			}
@@ -1184,14 +1184,12 @@ public class MySQLConnection {
 				Key masterKey = newKeys.get(0);
 				channel.newMasterKey(masterKey);
 				newKeys.remove(0);
-			}
+
 			
 
-			/**
-			 * Remove unneeded keys
-			 */
-			if(channel.getMasterPrivateKeyClient() != null && oldMasterDepth != channel.getMasterChainDepth()) {
-
+                /**
+                 * Remove unneeded keys
+                 */
 				ArrayList<Key> exposedKeys = MySQLConnection.getKeysExposed(conn, channel, false, channel.getMasterChainDepth());		
 
 				if(exposedKeys != null) {
@@ -1208,7 +1206,7 @@ public class MySQLConnection {
 
 					for(Key k : exposedKeys) {
 						if(k.privateKey != null) {
-							if(k.depth > channel.getMasterChainDepth()) {
+							if(k.depth >= channel.getMasterChainDepth()) {
 								
 								List<ChildNumber> list = KeyDerivation.getChildList(k.depth-channel.getMasterChainDepth());
 								ChildNumber number = new ChildNumber(k.child, true);
@@ -1219,6 +1217,10 @@ public class MySQLConnection {
 								if(k.privateKey.equals(Tools.byteToString(keyDerived.getPrivKeyBytes()))) {
 									keysToDelete.add(k);
 								} else {
+                                    System.out.println("Key does not match?");
+                                    System.out.println(k.privateKey);
+                                    System.out.println(Tools.byteToString(keyDerived.getPrivKeyBytes()));
+                                    System.out.println(keyDerived);
 									/**
 									 * A key that was provided does not matched the path..
 									 * I don't know if this could happen accidently, but we should 
@@ -1496,7 +1498,7 @@ public class MySQLConnection {
 			String sql;
 			
 	
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=? AND key_chain_depth>?)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=? AND key_chain_depth>=?)";
 			
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, channel.getId());
@@ -1517,14 +1519,13 @@ public class MySQLConnection {
 				key.depth = set.getInt("key_chain_depth");
 				key.publicKey = set.getString("pub_key");
 				key.privateKey = set.getString("priv_key");
-				
-				
+
 				keys.add(key);
 				
 	
 				set.next();
 			}
-	
+
 			return keys;
 		} finally {
 			if(set != null) set.close();
@@ -1682,7 +1683,7 @@ public class MySQLConnection {
             /**
              * Workaround for now. Also limits the maximum key iterations to 9999
              */
-            stmt.setInt(6, 9999);
+            stmt.setInt(6, 9999999);
 
 			
 		    stmt.execute();
@@ -2092,7 +2093,7 @@ public class MySQLConnection {
 				keyList.add(k);
 			}
 	
-			System.out.println("UPDATE channels SET key_chain_depth="+depth+", key_chain_child="+(child+amount)+" WHERE id='"+channel.getId()+ "'");
+//			System.out.println("UPDATE channels SET key_chain_depth="+depth+", key_chain_child="+(child+amount)+" WHERE id='"+channel.getId()+ "'");
 			query.execute("UPDATE channels SET key_chain_depth="+depth+", key_chain_child="+(child+amount)+" WHERE id='"+channel.getId()+ "'");
 			conn.commit();
 			
@@ -2229,10 +2230,13 @@ public class MySQLConnection {
 			} else {
 				value = myShare;
 			}
-			
-			
+
+            /**
+             * TODO: I changed >= to >, such that there will always be a change.
+             *          In the future it would be nice to pay exact amounts whenever possible.
+             */
 			for(Output o : list) {
-				if(o.getValue() >= value && transaction == null) {
+				if(o.getValue() > value && transaction == null) {
 					/**
 					 * Ok, found a suitable output, need to split the change
 					 */

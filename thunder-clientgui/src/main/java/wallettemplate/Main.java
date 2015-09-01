@@ -151,7 +151,8 @@ public class Main extends Application {
 
     public void setupWalletKit(@Nullable DeterministicSeed seed) {
         // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File(System.getProperty("user.home")+"\\Documents"), APP_NAME + "-" + params.getPaymentProtocolId()+CLIENTID) {
+//        bitcoin = new WalletAppKit(params, new File(System.getProperty("user.home")+"\\Documents"), APP_NAME + "-" + params.getPaymentProtocolId()+CLIENTID) {
+        bitcoin = new WalletAppKit(params, new File("."), APP_NAME + "-" + params.getPaymentProtocolId()+CLIENTID) {
             @Override
             protected void onSetupCompleted() {
                 // Don't make the user wait for confirmations for now, as the intention is they're sending it

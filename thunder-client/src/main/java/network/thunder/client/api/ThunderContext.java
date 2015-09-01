@@ -64,6 +64,7 @@ public class ThunderContext {
     private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
     private InitFinishListener initListener;
     private ProgressUpdateListener updateListener;
+    private UpdateStartListener updateStartListener;
     private ErrorListener errorListener;
 
     private boolean initFinished = false;
@@ -101,7 +102,6 @@ public class ThunderContext {
         } catch (SQLException e) {
             MySQLConnection.buildDatabase(context.conn);
         }
-        MySQLConnection.buildDatabase(context.conn);
 
 
         context.wallet = w;
@@ -117,7 +117,7 @@ public class ThunderContext {
         context.wallet.addEventListener(context.transactionStorage);
         System.out.println("Finished init! Active channels: " + context.channelList.size());
 
-        context.transactionStorage.updateOutputs(context.wallet);
+        context.transactionStorage.updateOutputs(context.wallet, true);
         if (context.initListener != null)
             context.initListener.initFinished();
 
@@ -126,6 +126,14 @@ public class ThunderContext {
         }
         context.initFinished = true;
         instance = context;
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                System.out.println("Closing down the wallet gracefully..");
+                instance.wallet.shutdownAutosaveAndWait();
+                System.out.println("Closing down the wallet gracefully successful..");
+            }
+        });
 
         return context;
     }
@@ -201,6 +209,9 @@ public class ThunderContext {
     public void setErrorListener(ErrorListener listener) {
         errorListener = listener;
     }
+    public void setUpdateStartListener(UpdateStartListener listener) {
+        updateStartListener = listener;
+    }
 
     public PaymentRequest getPaymentReceiveRequest(long amount) throws Exception {
 
@@ -226,7 +237,6 @@ public class ThunderContext {
             public void run() {
 
                 try {
-                    System.out.println("New Thread..");
                     Channel channel = currentChannel;
 
                     channel = ClientTools.createChannel(conn, wallet, peerGroup, outputList, clientAmount, serverAmount, timeInDays);
@@ -234,11 +244,11 @@ public class ThunderContext {
                     channelList.put(channel.getId(), channel);
                     currentChannel = channel;
 
-                    webSocketHandler.connectToServer(currentChannel, thisReference);
-
-
                     for (ChangeListener listener : changeListeners)
                         listener.channelListChanged();
+
+                    webSocketHandler.connectToServer(currentChannel, thisReference);
+
                 } catch (Exception e) {
                     throwError(Tools.stacktraceToString(e));
                     e.printStackTrace();
@@ -309,6 +319,8 @@ public class ThunderContext {
     }
 
     public void updateChannel() throws Exception {
+        if(updateStartListener != null)
+            updateStartListener.updateStart();
         latestFuture = executorService.submit(new Runnable() {
             @Override
             public void run() {
@@ -385,6 +397,10 @@ public class ThunderContext {
 
     public interface ErrorListener {
         public void error(String error);
+    }
+
+    public interface UpdateStartListener {
+        public void updateStart();
     }
 
 

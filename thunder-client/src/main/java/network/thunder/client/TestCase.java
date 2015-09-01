@@ -56,7 +56,7 @@ public class TestCase {
         BriefLogFormatter.init();
 
 
-//        for (int i=0; i<10; ++i)
+//        for (int i=0; i<3; ++i)
             testPaymentsWithUpdates(10);
 //        testPaymentsWithRefunds(10);
 
@@ -90,67 +90,72 @@ public class TestCase {
             context1.setErrorListener(new ThunderContext.ErrorListener() {
                 @Override
                 public void error(String error) {
+                    System.out.println(error);
                     System.exit(0);
                 }
             });
             context2.setErrorListener(new ThunderContext.ErrorListener() {
                 @Override
                 public void error(String error) {
+                    System.out.println(error);
                     System.exit(0);
                 }
             });
 
-            context1.openChannel(100000, 100000, 30);
-            context2.openChannel(100000, 100000, 30);
+            context1.openChannel(100000, 100000, 1);
+            context2.openChannel(100000, 100000, 1);
 
             context1.waitUntilReady();
             context2.waitUntilReady();
 
-            int i=0;
 
-            i=0;
-            while(i<amount) {
-                PaymentRequest newPayment = context1.getPaymentReceiveRequest(1000);
-                context2.makePayment(1000, newPayment.getAddress());
-                i++;
+            for(int j=0; j<10; ++j) {
+                int i = 0;
+                i = 0;
+                while (i < amount) {
+                    PaymentRequest newPayment = context1.getPaymentReceiveRequest(1000);
+                    context2.makePayment(1000, newPayment.getAddress());
+                    i++;
+
+                }
+
+                context1.waitUntilReady();
+                context2.waitUntilReady();
+
+
+                i = 0;
+                while (i < amount) {
+                    PaymentRequest newPayment = context2.getPaymentReceiveRequest(1000);
+                    context1.makePayment(1000, newPayment.getAddress());
+                    i++;
+
+                }
+
+                context1.waitUntilReady();
+                context2.waitUntilReady();
+
+                i = 0;
+                while (i < amount) {
+                    PaymentRequest newPayment1 = context1.getPaymentReceiveRequest(1000);
+                    PaymentRequest newPayment2 = context2.getPaymentReceiveRequest(1000);
+                    context1.makePayment(1000, newPayment2.getAddress());
+                    context2.makePayment(1000, newPayment1.getAddress());
+                    i++;
+
+                }
+
+                context1.waitUntilReady();
+                context2.waitUntilReady();
+
+                context1.updateChannel();
+                context2.updateChannel();
+
+                context1.waitUntilReady();
+                context2.waitUntilReady();
+
+                Thread.sleep(60000);
 
             }
-
-            context1.waitUntilReady();
-            context2.waitUntilReady();
-
-
-            i=0;
-            while(i<amount) {
-                PaymentRequest newPayment = context2.getPaymentReceiveRequest(1000);
-                context1.makePayment(1000, newPayment.getAddress());
-                i++;
-
-            }
-
-            context1.waitUntilReady();
-            context2.waitUntilReady();
-
-            i=0;
-            while(i<amount) {
-                PaymentRequest newPayment1 = context1.getPaymentReceiveRequest(1000);
-                PaymentRequest newPayment2 = context2.getPaymentReceiveRequest(1000);
-                context1.makePayment(1000, newPayment2.getAddress());
-                context2.makePayment(1000, newPayment1.getAddress());
-                i++;
-
-            }
-
-            context1.waitUntilReady();
-            context2.waitUntilReady();
-
-            context1.updateChannel();
-            context2.updateChannel();
-
-            context1.waitUntilReady();
-            context2.waitUntilReady();
-
-//            Thread.sleep(200);
 
             context1.closeChannel();
             context2.closeChannel();

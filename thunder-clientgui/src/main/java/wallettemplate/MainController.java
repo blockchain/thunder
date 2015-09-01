@@ -175,12 +175,12 @@ public class MainController {
             public String toString(Transaction tx) {
                 Coin value = tx.getValue(Main.bitcoin.wallet());
                 if (value.isPositive()) {
-                    return tx.getConfidence().getDepthInBlocks()+" Incoming payment of " + MonetaryFormat.BTC.format(value);
+                    return tx.getConfidence().getDepthInBlocks() + " Incoming payment of " + MonetaryFormat.BTC.format(value);
                 } else if (value.isNegative()) {
                     Address address = tx.getOutput(0).getAddressFromP2PKHScript(Main.params);
-                    if(address == null)
-                        return tx.getConfidence().getDepthInBlocks()+" Outbound payment to ThunderChannel of "+value.toFriendlyString().substring(1);
-                    return tx.getConfidence().getDepthInBlocks()+" Outbound payment to " + address;
+                    if (address == null)
+                        return tx.getConfidence().getDepthInBlocks() + " Outbound payment to ThunderChannel of " + value.toFriendlyString().substring(1);
+                    return tx.getConfidence().getDepthInBlocks() + " Outbound payment to " + address;
                 }
                 return "Payment with id " + tx.getHash();
             }
@@ -204,6 +204,12 @@ public class MainController {
                 update();
             }
         });
+
+        ThunderContext.instance.setUpdateStartListener( () -> {
+            Platform.runLater(() ->
+                Main.instance.notificationBar.pushItem("Updating Channel..", BitcoinUIModel.syncProgress));
+                    }
+            );
 
     }
 

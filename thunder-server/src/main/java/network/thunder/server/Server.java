@@ -120,6 +120,16 @@ public class Server {
         System.out.println("Checking old Transactions..");
         keyChain.run();
 
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run() {
+                System.out.println("Closing down the wallet gracefully..");
+                keyChain.shutdown();
+                System.out.println("Closing down the wallet gracefully successful..");
+            }
+        });
+
+
+
 //        Peer peer = keyChain.peerGroup.get;
         
         Thread.sleep(3000);

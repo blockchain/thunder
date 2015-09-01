@@ -236,6 +236,7 @@ public class Channel {
 	}
 	
 	public void newMasterKey(Key masterKey) throws Exception {
+        System.out.println("New Masterkey: "+ masterKey.privateKey + " . " + masterKey.depth + " : " + masterKey.child);
 		if( (SideConstants.RUNS_ON_SERVER && getMasterPrivateKeyClient() != null ) || (!SideConstants.RUNS_ON_SERVER && getMasterPrivateKeyServer() != null ) ) {
 			/**
 			 * Make sure the old masterPrivateKey is a child of this one..
@@ -247,8 +248,11 @@ public class Channel {
 			List<ChildNumber> childList = KeyDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
 			DeterministicKey keyDerived = hierachy.get(childList, true, true);
 
-			if(!KeyDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient()))
-				throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
+			if(!KeyDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
+                System.out.println(keyDerived);
+                System.out.println(getMasterPrivateKeyClient());
+                throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
+            }
 		}
 		
 		if(SideConstants.RUNS_ON_SERVER) {

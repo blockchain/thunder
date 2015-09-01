@@ -2843,10 +2843,13 @@ public class MySQLConnection {
 			} else {
 				value = myShare;
 			}
-			
-			
+
+            /**
+             * TODO: I changed >= to >, such that there will always be a change.
+             *          In the future it would be nice to pay exact amounts whenever possible.
+             */
 			for(Output o : list) {
-				if(o.getValue() >= value && transaction == null) {
+				if(o.getValue() > value && transaction == null) {
 					/**
 					 * Ok, found a suitable output, need to split the change
 					 */
