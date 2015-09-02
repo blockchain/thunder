@@ -18,11 +18,13 @@
 package network.thunder.client.communications.establishchannel;
 
 import java.sql.Connection;
+import java.util.ArrayList;
 
 import network.thunder.client.communications.objects.EstablishChannelRequestTwo;
 import network.thunder.client.communications.objects.EstablishChannelResponseTwo;
 import network.thunder.client.database.MySQLConnection;
 import network.thunder.client.database.objects.Channel;
+import network.thunder.client.database.objects.Output;
 import network.thunder.client.etc.Constants;
 import network.thunder.client.etc.Tools;
 
@@ -47,6 +49,7 @@ public class EstablishChannelHandlerTwo {
 	
 	public Connection conn;
 	public Channel channel;
+    public ArrayList<Output> outputArrayListlist;
 	
 	public EstablishChannelRequestTwo request() throws Exception {
 		
@@ -55,7 +58,7 @@ public class EstablishChannelHandlerTwo {
 		 */
 		Transaction transactionFromServer = channel.getOpeningTx();
 		
-		Transaction signedTransaction = MySQLConnection.getOutAndInputsForChannel(conn, channel.getId(), channel.getInitialAmountClient(), transactionFromServer, channel.getChangeAddressClientAsAddress(), true, true);				
+		Transaction signedTransaction = MySQLConnection.getOutAndInputsForChannel(conn, outputArrayListlist, channel.getId(), channel.getInitialAmountClient(), transactionFromServer, channel.getChangeAddressClientAsAddress(), true, true);
 		
 //		System.out.println(signedTransaction.toString());
 		

@@ -106,7 +106,7 @@ public class Constants {
 	/**
 	 * The min confirmation time.
 	 */
-	public static int MIN_CONFIRMATION_TIME = 1;
+	public static int MIN_CONFIRMATION_TIME = 0;
 	
 	/**
 	 * The min confirmation time for channel.
@@ -156,7 +156,7 @@ public class Constants {
 	/**
 	 * The timeframe per key depth.
 	 */
-	public static int TIMEFRAME_PER_KEY_DEPTH = 60 * 60 * 24 ;
+    public static int TIMEFRAME_PER_KEY_DEPTH = 60*60*24;
 	
 	/**
 	 * The server fee percentage.

@@ -37,6 +37,28 @@ import org.bitcoinj.crypto.ChildNumber;
 import org.bitcoinj.crypto.DeterministicHierarchy;
 import org.bitcoinj.crypto.DeterministicKey;
 
+
+/**
+ * TODO: We probably want very flexible rules for channels in the future. Currently, these rules are set as Constants in Constants.class.
+ *          Add all those constants as columns to the Channels table.
+ *          Seeing the channel table growing, it will become less and less clear.
+ *          This change also has to be done on client side.
+ *          Adding it here will mean that we have constant terms for the entirety of the channel, but with different terms for different channels.
+ *          We can also - at a later point - include the possibility to change these terms with a protocol change.
+ *
+ * TODO: Add a 'Domain' field to the channels table (and consequently to this Class).
+ *          This will allow the choice of the payment hub, and will also prepare for Multi-Hop solutions.
+ *
+ *          Other necessary work for Multi-Hop:
+ *              - Have some system for routing payments in place
+ *              - Have symmetric channels (requires a no-trust solution)
+ *              - Have a INFO API, such that
+ *                  - Users can see the terms, at which they will open a channel
+ *                  - Other Payment Hubs can check, to which payment hubs this hub is connected to
+ *
+ * Communications for Payments from one Channel to another Channel will still follow the same rules we have in place currently.
+ */
+
 public class Channel {
 	
 	public Connection conn;
@@ -214,6 +236,7 @@ public class Channel {
 	}
 	
 	public void newMasterKey(Key masterKey) throws Exception {
+        System.out.println("New Masterkey: "+ masterKey.privateKey + " . " + masterKey.depth + " : " + masterKey.child);
 		if( (SideConstants.RUNS_ON_SERVER && getMasterPrivateKeyClient() != null ) || (!SideConstants.RUNS_ON_SERVER && getMasterPrivateKeyServer() != null ) ) {
 			/**
 			 * Make sure the old masterPrivateKey is a child of this one..
@@ -225,8 +248,11 @@ public class Channel {
 			List<ChildNumber> childList = KeyDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
 			DeterministicKey keyDerived = hierachy.get(childList, true, true);
 
-			if(!KeyDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient()))
-				throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
+			if(!KeyDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
+                System.out.println(keyDerived);
+                System.out.println(getMasterPrivateKeyClient());
+                throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
+            }
 		}
 		
 		if(SideConstants.RUNS_ON_SERVER) {

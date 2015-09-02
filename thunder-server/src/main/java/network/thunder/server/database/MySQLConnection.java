@@ -94,15 +94,16 @@ public class MySQLConnection {
 	 */
 	public static DataSource getDataSource() throws PropertyVetoException {
 		ComboPooledDataSource cpds = new ComboPooledDataSource();
-		cpds.setDriverClass( "com.mysql.jdbc.Driver" ); //loads the jdbc driver            
-		cpds.setJdbcUrl( SideConstants.DATABASE_CONNECTION );
+		cpds.setDriverClass("com.mysql.jdbc.Driver"); //loads the jdbc driver
+		cpds.setJdbcUrl(SideConstants.DATABASE_CONNECTION);
                                 
 			
 		// the settings below are optional -- c3p0 can work with defaults
 		cpds.setMinPoolSize(2);                                     
 		cpds.setAcquireIncrement(5);
-		cpds.setMaxPoolSize(8);
-		
+		cpds.setMaxPoolSize(80);
+        cpds.setMaxIdleTime(28800);
+
 		return cpds;
 	}
 	
@@ -521,38 +522,54 @@ public class MySQLConnection {
 	 * @param payment the payment
 	 * @throws SQLException the SQL exception
 	 */
-	public static void addPayment(Connection conn, Payment payment) throws SQLException {
+	public static int addPayment(Connection conn, Payment payment) throws SQLException {
 		PreparedStatement stmt = null;
 		try {
 			payment.updateTransactionsToDatabase(conn);
-			stmt = conn.prepareStatement("INSERT INTO payments values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-			
-			stmt.setString(1, null);
-			stmt.setInt(2, payment.getChannelIdSender());
-			stmt.setInt(3, payment.getChannelIdReceiver());
-			stmt.setLong(4, payment.getAmount());
-			stmt.setInt(5, payment.getPhase());
-			stmt.setInt(6, Tools.boolToInt(payment.isIncludeInSenderChannel()));
-			stmt.setInt(7, Tools.boolToInt(payment.isIncludeInReceiverChannel()));
-			stmt.setString(8, payment.getSecretHash());
-			stmt.setString(9, payment.getSecret());
-			stmt.setInt(10, payment.getSettlementTxSenderID());
-			stmt.setInt(11, payment.getSettlementTxSenderTempID());
-			stmt.setInt(12, payment.getRefundTxSenderID());
-			stmt.setInt(13, payment.getRefundTxSenderTempID());
-			stmt.setInt(14, payment.getAddTxSenderID());
-			stmt.setInt(15, payment.getAddTxSenderTempID());
-			stmt.setInt(16, payment.getSettlementTxReceiverID());
-			stmt.setInt(17, payment.getSettlementTxReceiverTempID());
-			stmt.setInt(18, payment.getRefundTxReceiverID());
-			stmt.setInt(19, payment.getRefundTxReceiverTempID());
-			stmt.setInt(20, payment.getAddTxReceiverID());
-			stmt.setInt(21, payment.getAddTxReceiverTempID());
-			stmt.setInt(22, payment.getTimestampCreated());
-			stmt.setInt(23, payment.getTimestampAddedToReceiver());		
-			stmt.setInt(24, payment.getTimestampSettled());
+			stmt = conn.prepareStatement("INSERT INTO payments values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", Statement.RETURN_GENERATED_KEYS);
+
+            int i=1;
+			stmt.setString(i++, null);
+			stmt.setInt(i++, payment.getChannelIdSender());
+			stmt.setInt(i++, payment.getChannelIdReceiver());
+            stmt.setLong(i++, payment.getAmount());
+            stmt.setLong(i++, payment.getFee());
+            stmt.setInt(i++, payment.getPhaseSender());
+            stmt.setInt(i++, payment.getPhaseReceiver());
+            stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInSenderChannel()));
+            stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInReceiverChannel()));
+            /**
+             * TODO: check back here, if we really can always set this true..
+             */
+//            stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInSenderChannelTemp()));
+            stmt.setInt(i++, 1);
+            stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInReceiverChannelTemp()));
+			stmt.setString(i++, payment.getSecretHash());
+			stmt.setString(i++, payment.getSecret());
+			stmt.setInt(i++, payment.getSettlementTxSenderID());
+			stmt.setInt(i++, payment.getSettlementTxSenderTempID());
+			stmt.setInt(i++, payment.getRefundTxSenderID());
+			stmt.setInt(i++, payment.getRefundTxSenderTempID());
+			stmt.setInt(i++, payment.getAddTxSenderID());
+			stmt.setInt(i++, payment.getAddTxSenderTempID());
+			stmt.setInt(i++, payment.getSettlementTxReceiverID());
+			stmt.setInt(i++, payment.getSettlementTxReceiverTempID());
+			stmt.setInt(i++, payment.getRefundTxReceiverID());
+			stmt.setInt(i++, payment.getRefundTxReceiverTempID());
+			stmt.setInt(i++, payment.getAddTxReceiverID());
+			stmt.setInt(i++, payment.getAddTxReceiverTempID());
+			stmt.setInt(i++, payment.getTimestampCreated());
+			stmt.setInt(i++, payment.getTimestampAddedToReceiver());
+            stmt.setInt(i++, payment.getTimestampSettledReceiver());
+            stmt.setInt(i++, payment.getTimestampSettledSender());
 
 			stmt.executeUpdate();
+
+            ResultSet rs = stmt.getGeneratedKeys();
+            rs.first();
+            int id = rs.getInt(1);
+            payment.setId(id);
+            return id;
 		} finally {
 			if(stmt != null) stmt.close();
 		}
@@ -566,45 +583,9 @@ public class MySQLConnection {
 	 * @throws SQLException the SQL exception
 	 */
 	public static void updatePayment(Connection conn, Payment payment) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			payment.updateTransactionsToDatabase(conn);
-			stmt = conn.prepareStatement("UPDATE payments SET channel_id_sender=?, channel_id_receiver=?, amount=?, phase=?, secret=?, settlement_tx_sender=?, refund_tx_sender=?, settlement_tx_receiver=?, refund_tx_receiver=?, timestamp_created=?, timestamp_settled=?, include_in_sender_channel=?, include_in_receiver_channel=?, add_tx_sender=?, add_tx_receiver=?, settlement_tx_sender_temp=?, refund_tx_sender_temp=?, add_tx_sender_temp=?, settlement_tx_receiver_temp=?, refund_tx_receiver_temp=?, add_tx_receiver_temp=?, timestamp_added_to_receiver=? WHERE secret_hash=?");
-			
-	
-			stmt.setInt(1, payment.getChannelIdSender());
-			stmt.setInt(2, payment.getChannelIdReceiver());
-			stmt.setLong(3, payment.getAmount());
-			stmt.setInt(4, payment.getPhase());
-			stmt.setString(5, payment.getSecret());
-			stmt.setInt(6, payment.getSettlementTxSenderID());
-			stmt.setInt(7, payment.getRefundTxSenderID());
-			stmt.setInt(8, payment.getSettlementTxReceiverID());
-			stmt.setInt(9, payment.getRefundTxReceiverID());
-			stmt.setInt(10, payment.getTimestampCreated());
-			stmt.setInt(11, payment.getTimestampSettled());	
-			
-			stmt.setInt(12, Tools.boolToInt(payment.isIncludeInSenderChannel()));
-			stmt.setInt(13, Tools.boolToInt(payment.isIncludeInReceiverChannel()));
-			
-			stmt.setInt(14, payment.getAddTxSenderID());
-			stmt.setInt(15, payment.getAddTxReceiverID());
-		
-			stmt.setInt(16, payment.getSettlementTxSenderTempID());
-			stmt.setInt(17, payment.getRefundTxSenderTempID());
-			stmt.setInt(18, payment.getAddTxSenderTempID());
-			stmt.setInt(19, payment.getSettlementTxReceiverTempID());
-			stmt.setInt(20, payment.getRefundTxReceiverTempID());
-			stmt.setInt(21, payment.getAddTxReceiverTempID());
-			stmt.setInt(22, payment.getTimestampAddedToReceiver());
 
-			
-			stmt.setString(23, payment.getSecretHash());
-					
-		    stmt.executeUpdate();
-		} finally {
-			if(stmt != null) stmt.close();
-		}
+        ArrayList<Payment> paymentList = new ArrayList<>();
+        updatePayment(conn, paymentList);
 	}
 	
 	/**
@@ -656,18 +637,31 @@ public class MySQLConnection {
 	 * @param channel the channel
 	 * @throws SQLException the SQL exception
 	 */
-	public static void updatePaymentRefunds(Connection conn, Channel channel) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			stmt = conn.prepareStatement("UPDATE payments SET phase=6 WHERE phase=5 AND channel_id_receiver=?");
-			
-	
-			stmt.setInt(1, channel.getId());
-			stmt.executeUpdate();
-		} finally {
-			if(stmt != null) stmt.close();
-		}
-	}
+    public static void updatePaymentRefunds(Connection conn, Channel channel) throws SQLException {
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("UPDATE payments SET phase_receiver=6 WHERE phase_receiver=5 AND channel_id_receiver=?");
+
+
+            stmt.setInt(1, channel.getId());
+            stmt.executeUpdate();
+        } finally {
+            if(stmt != null) stmt.close();
+        }
+    }
+
+    public static void updatePaymentsResetTemp(Connection conn, Channel channel) throws SQLException {
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("UPDATE payments SET include_in_sender_channel_temp=0 WHERE channel_id_sender=?; " +
+                                        "UPDATE payments SET include_in_receiver_channel_temp=0 WHERE channel_id_receiver=?");
+            stmt.setInt(1, channel.getId());
+            stmt.setInt(2, channel.getId());
+            stmt.executeUpdate();
+        } finally {
+            if(stmt != null) stmt.close();
+        }
+    }
 	
 	
 	/**
@@ -678,46 +672,74 @@ public class MySQLConnection {
 	 * @throws SQLException the SQL exception
 	 */
 	public static void updatePayment(Connection conn, ArrayList<Payment> paymentList) throws SQLException {
+        /**
+         * Design of this function should reflect the separation between sender of receiver.
+         * It should be impossible to overwrite changes on a payment between these two instances (race attack..)
+         *
+         * Furthermore, we don't change the secret here anymore, as this could lead to removing it.
+         */
 		PreparedStatement stmt = null;
 		try {
-			stmt = conn.prepareStatement("UPDATE payments SET channel_id_sender=?, channel_id_receiver=?, amount=?, phase=?, secret=?, settlement_tx_sender=?, refund_tx_sender=?, settlement_tx_receiver=?, refund_tx_receiver=?, timestamp_created=?, timestamp_settled=?, include_in_sender_channel=?, include_in_receiver_channel=?, add_tx_sender=?, add_tx_receiver=?, settlement_tx_sender_temp=?, refund_tx_sender_temp=?, add_tx_sender_temp=?, settlement_tx_receiver_temp=?, refund_tx_receiver_temp=?, add_tx_receiver_temp=?, timestamp_added_to_receiver=? WHERE secret_hash=?");
-	
-			for(Payment payment : paymentList) {
-				payment.updateTransactionsToDatabase(conn);
-				
-		
-				stmt.setInt(1, payment.getChannelIdSender());
-				stmt.setInt(2, payment.getChannelIdReceiver());
-				stmt.setLong(3, payment.getAmount());
-				stmt.setInt(4, payment.getPhase());
-				stmt.setString(5, payment.getSecret());
-				stmt.setInt(6, payment.getSettlementTxSenderID());
-				stmt.setInt(7, payment.getRefundTxSenderID());
-				stmt.setInt(8, payment.getSettlementTxReceiverID());
-				stmt.setInt(9, payment.getRefundTxReceiverID());
-				stmt.setInt(10, payment.getTimestampCreated());
-				stmt.setInt(11, payment.getTimestampSettled());	
-				
-				stmt.setInt(12, Tools.boolToInt(payment.isIncludeInSenderChannel()));
-				stmt.setInt(13, Tools.boolToInt(payment.isIncludeInReceiverChannel()));
-				
-				stmt.setInt(14, payment.getAddTxSenderID());
-				stmt.setInt(15, payment.getAddTxReceiverID());
-			
-				stmt.setInt(16, payment.getSettlementTxSenderTempID());
-				stmt.setInt(17, payment.getRefundTxSenderTempID());
-				stmt.setInt(18, payment.getAddTxSenderTempID());
-				stmt.setInt(19, payment.getSettlementTxReceiverTempID());
-				stmt.setInt(20, payment.getRefundTxReceiverTempID());
-				stmt.setInt(21, payment.getAddTxReceiverTempID());
-				stmt.setInt(22, payment.getTimestampAddedToReceiver());
-		
-				
-				stmt.setString(23, payment.getSecretHash());
-				stmt.addBatch();
-			}
-			
-			stmt.executeBatch();
+
+            stmt = conn.prepareStatement("UPDATE payments SET phase_sender=?, settlement_tx_sender=?, " +
+                    "refund_tx_sender=?, timestamp_settled_sender=?, include_in_sender_channel=?, include_in_sender_channel_temp=?, add_tx_sender=?, " +
+                    "settlement_tx_sender_temp=?, refund_tx_sender_temp=?, add_tx_sender_temp=? WHERE id=?");
+
+            for(Payment payment : paymentList) {
+                if(payment.paymentToServer) {
+                    payment.updateTransactionsToDatabase(conn);
+
+                    int i=1;
+                    stmt.setInt(i++, payment.getPhaseSender());
+                    stmt.setInt(i++, payment.getSettlementTxSenderID());
+                    stmt.setInt(i++, payment.getRefundTxSenderID());
+                    stmt.setInt(i++, payment.getTimestampSettledSender());
+                    stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInSenderChannel()));
+                    stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInSenderChannelTemp()));
+
+                    stmt.setInt(i++, payment.getAddTxSenderID());
+                    stmt.setInt(i++, payment.getSettlementTxSenderTempID());
+                    stmt.setInt(i++, payment.getRefundTxSenderTempID());
+                    stmt.setInt(i++, payment.getAddTxSenderTempID());
+
+                    stmt.setInt(i++, payment.getId());
+                    stmt.addBatch();
+
+                }
+            }
+            stmt.executeBatch();
+
+            stmt = conn.prepareStatement("UPDATE payments SET phase_receiver=?, settlement_tx_receiver=?, " +
+                    "refund_tx_receiver=?, timestamp_settled_receiver=?, include_in_receiver_channel=?, include_in_receiver_channel_temp=?, add_tx_receiver=?, " +
+                    "settlement_tx_receiver_temp=?, refund_tx_receiver_temp=?, add_tx_receiver_temp=?, " +
+                    "timestamp_added_to_receiver=? WHERE id=?");
+
+            for(Payment payment : paymentList) {
+                if(!payment.paymentToServer) {
+                    payment.updateTransactionsToDatabase(conn);
+
+                    int i=1;
+                    stmt.setInt(i++, payment.getPhaseReceiver());
+                    stmt.setInt(i++, payment.getSettlementTxReceiverID());
+                    stmt.setInt(i++, payment.getRefundTxReceiverID());
+                    stmt.setInt(i++, payment.getTimestampSettledReceiver());
+                    stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInReceiverChannel()));
+                    stmt.setInt(i++, Tools.boolToInt(payment.isIncludeInReceiverChannelTemp()));
+
+                    stmt.setInt(i++, payment.getAddTxReceiverID());
+                    stmt.setInt(i++, payment.getSettlementTxReceiverTempID());
+                    stmt.setInt(i++, payment.getRefundTxReceiverTempID());
+                    stmt.setInt(i++, payment.getAddTxReceiverTempID());
+
+                    stmt.setInt(i++, payment.getTimestampAddedToReceiver());
+
+
+                    stmt.setInt(i++, payment.getId());
+                    stmt.addBatch();
+                }
+            }
+            stmt.executeBatch();
+
 			conn.commit();
 
 
@@ -734,43 +756,81 @@ public class MySQLConnection {
 	 * @return the payments included in channel
 	 * @throws SQLException the SQL exception
 	 */
-	public static ArrayList<Payment> getPaymentsIncludedInChannel(Connection conn, int channelId) throws SQLException {
-		PreparedStatement stmt = null;
-		try {
-			ArrayList<Payment> list = new ArrayList<Payment>();
-	
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE (channel_id_sender=? AND include_in_sender_channel=1) OR (channel_id_receiver=? AND include_in_receiver_channel=1) ORDER BY id ASC");
-			stmt.setInt(1, channelId);
-			stmt.setInt(2, channelId);
-			ResultSet results = stmt.executeQuery();
-			
-			if(results.first()) {
-				
-				while(!results.isAfterLast() ) {
-					
-					Payment payment = new Payment(results);
-					
-					if(payment.getChannelIdReceiver() == channelId) {
-						payment.paymentToServer = false;
-					} else {
-						payment.paymentToServer = true;
-					}
-					
-					list.add(payment);
-						
-					
-					results.next();
-				}
-				
-			}
-			results.close();
+    public static ArrayList<Payment> getPaymentsIncludedInChannel(Connection conn, int channelId) throws SQLException {
+        PreparedStatement stmt = null;
+        try {
+            ArrayList<Payment> list = new ArrayList<Payment>();
 
-			return list;
-	
-		} finally {
-			if(stmt != null) stmt.close();
-		}		
-	}
+            stmt = conn.prepareStatement("SELECT * FROM payments WHERE (channel_id_sender=? AND include_in_sender_channel=1) OR (channel_id_receiver=? AND include_in_receiver_channel=1) ORDER BY id ASC");
+            stmt.setInt(1, channelId);
+            stmt.setInt(2, channelId);
+            ResultSet results = stmt.executeQuery();
+
+            if(results.first()) {
+
+                while(!results.isAfterLast() ) {
+
+                    Payment payment = new Payment(results);
+
+                    if(payment.getChannelIdReceiver() == channelId) {
+                        payment.paymentToServer = false;
+                    } else {
+                        payment.paymentToServer = true;
+                    }
+
+                    list.add(payment);
+
+
+                    results.next();
+                }
+
+            }
+            results.close();
+
+            return list;
+
+        } finally {
+            if(stmt != null) stmt.close();
+        }
+    }
+
+    public static ArrayList<Payment> getPaymentsIncludedInChannelTemp(Connection conn, int channelId) throws SQLException {
+        PreparedStatement stmt = null;
+        try {
+            ArrayList<Payment> list = new ArrayList<Payment>();
+
+            stmt = conn.prepareStatement("SELECT * FROM payments WHERE (channel_id_sender=? AND include_in_sender_channel_temp=1) OR (channel_id_receiver=? AND include_in_receiver_channel_temp=1) ORDER BY id ASC");
+            stmt.setInt(1, channelId);
+            stmt.setInt(2, channelId);
+            ResultSet results = stmt.executeQuery();
+
+            if(results.first()) {
+
+                while(!results.isAfterLast() ) {
+
+                    Payment payment = new Payment(results);
+
+                    if(payment.getChannelIdReceiver() == channelId) {
+                        payment.paymentToServer = false;
+                    } else {
+                        payment.paymentToServer = true;
+                    }
+
+                    list.add(payment);
+
+
+                    results.next();
+                }
+
+            }
+            results.close();
+
+            return list;
+
+        } finally {
+            if(stmt != null) stmt.close();
+        }
+    }
 	
 	/**
 	 * Gets the payments included in channel with no secret.
@@ -785,9 +845,12 @@ public class MySQLConnection {
 		try {
 			ArrayList<Payment> list = new ArrayList<Payment>();
 	
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( ( (channel_id_sender=? AND include_in_sender_channel=1 AND phase!=6) OR (channel_id_receiver=? AND include_in_receiver_channel=1 AND phase!=5 AND phase!=6) ) AND secret IS NULL) ORDER BY id ASC");
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE " +
+                    "( ( (channel_id_sender=? AND include_in_sender_channel=1 AND phase_sender!=6) OR " +
+                    "(channel_id_receiver=? AND include_in_receiver_channel=1 AND phase_receiver!=5 AND phase_receiver!=6) ) " +
+                    "AND secret IS NULL) ORDER BY id ASC");
 			stmt.setInt(1, channelId);
-			stmt.setInt(2, channelId);
+            stmt.setInt(2, channelId);
 			ResultSet results = stmt.executeQuery();
 			
 			if(results.first()) {
@@ -828,8 +891,14 @@ public class MySQLConnection {
 	 * @throws SQLException the SQL exception
 	 */
 	public static ArrayList<Payment> getPaymentsForUpdatingChannelOrdered(Connection conn, int channelId, int amount) throws SQLException {
+        if(amount == 0)
+            return new ArrayList<Payment>();
 		ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelWithNoSecret(conn, channelId);
-		paymentList.addAll(MySQLConnection.getPaymentsIncludedInChannelWithPaymentsNotAddedYet(conn, channelId, (amount - paymentList.size())));
+        if(amount == paymentList.size())
+            return paymentList;
+        System.out.println(amount + " - " + paymentList.size());
+        ArrayList<Payment> addPayments = MySQLConnection.getPaymentsIncludedInChannelWithPaymentsNotAddedYet(conn, channelId, (amount - paymentList.size()));
+		paymentList.addAll(addPayments);
 		
 		paymentList.sort(new Comparator<Payment>() {
 			public int compare(Payment arg0, Payment arg1) {
@@ -853,9 +922,12 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		try {
 			ArrayList<Payment> list = new ArrayList<Payment>();
-	
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( (channel_id_receiver=? AND include_in_receiver_channel=0) AND phase != 6 AND secret IS NULL) ORDER BY id ASC");
+
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE " +
+                    "( (channel_id_receiver=? AND include_in_receiver_channel=0) AND phase_receiver != 6 AND phase_sender != 6 AND secret IS NULL) " +
+                    "ORDER BY id ASC LIMIT ?");
 			stmt.setInt(1, channelId);
+            stmt.setInt(2, amount);
 			ResultSet results = stmt.executeQuery();
 			
 			if(results.first()) {
@@ -949,7 +1021,7 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		try {
 	
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE channel_id_sender=? AND phase=0 ORDER BY id DESC LIMIT 1");
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE channel_id_sender=? AND phase_sender=0 ORDER BY id DESC LIMIT 1");
 			stmt.setInt(1, channelId);
 			
 			ResultSet results = stmt.executeQuery();
@@ -1324,7 +1396,7 @@ public class MySQLConnection {
 	public static ECKey getKeyCurrentlyUsed(Connection conn, Channel channel) throws Exception  {
 		PreparedStatement stmt = null;
 		try {
-			String sql = "SELECT priv_key FROM storedkeys WHERE (channel_id=? AND used=1 AND exposed=0 AND owner=1)";
+			String sql = "SELECT priv_key FROM storedkeys WHERE (channel_id=? AND used=1 AND exposed=0 AND owner=1) FOR UPDATE";
 	
 		
 			stmt = conn.prepareStatement(sql);
@@ -1360,7 +1432,7 @@ public class MySQLConnection {
 		ResultSet set = null;
 		try {
 			String sql;
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=0 AND priv_key IS NOT NULL)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=0 AND priv_key IS NOT NULL) FOR UPDATE";
 			/**
 			 * Actually we can send also unused keys, as we produce new keys with every connection anyways..
 			 */
@@ -1466,7 +1538,6 @@ public class MySQLConnection {
 				return keysToBeExposedNew;
 			}		
 			
-			performanceLogger.measure("getKeysOfUsToBeExposed");
 
 			return keysToBeExposed;
 		} finally {
@@ -1484,14 +1555,12 @@ public class MySQLConnection {
 	 * @throws Exception the exception
 	 */
 	public static void checkKeysFromOtherSide(Connection conn, Channel channel, ArrayList<Key> newKeys) throws Exception {
-		PerformanceLogger performance = new PerformanceLogger();
 		if(newKeys == null)
 			throw new Exception("keyList is null");
 		if(newKeys.size() == 0)
 			throw new Exception("keyList is empty");
 		PreparedStatement stmt = null;
 		ResultSet set = null;
-		performance.measure("checkKeysFromOtherSide 1");
 		try {
 			/**
 			 * Check each key, whether it is corrupted.
@@ -1500,7 +1569,6 @@ public class MySQLConnection {
 				if(!k.check())
 					throw new Exception("Private Key does not match with pubkey..");
 			}
-			performance.measure("checkKeysFromOtherSide 11");
 			int oldMasterDepth = channel.getMasterChainDepth();
 			if(newKeys.get(0).child == 0) {
 				/**
@@ -1516,10 +1584,8 @@ public class MySQLConnection {
 			 * Remove unneeded keys
 			 */
 			if(channel.getMasterPrivateKeyClient() != null && oldMasterDepth != channel.getMasterChainDepth()) {
-				performance.measure("checkKeysFromOtherSide 2");
 
 				ArrayList<Key> exposedKeys = MySQLConnection.getKeysExposed(conn, channel, false, channel.getMasterChainDepth());		
-				performance.measure("checkKeysFromOtherSide 21");
 
 				if(exposedKeys != null) {
 					
@@ -1532,7 +1598,6 @@ public class MySQLConnection {
 					} else {
 						hierachy = channel.getHierachyServer();
 					}
-					performance.measure("checkKeysFromOtherSide 3");
 
 					for(Key k : exposedKeys) {
 						if(k.privateKey != null) {
@@ -1559,26 +1624,19 @@ public class MySQLConnection {
 							}
 						}
 					}
-					System.out.println("Delete "+keysToDelete.size()+" keys because we know the masterkey.");
-					
-					MySQLConnection.deleteKey(conn, channel, keysToDelete);
-					performance.measure("checkKeysFromOtherSide 4");
+					System.out.println("Delete " + keysToDelete.size() + " keys because we know the masterkey.");
 
-				}
+                    MySQLConnection.deleteKey(conn, channel, keysToDelete);
+
+                }
 			
 			}
-//			performance.measure("checkKeysFromOtherSide 401");
 
 			conn.commit();
-			
-//			performance.measure("checkKeysFromOtherSide 402");
 
 			
 			MySQLConnection.updateKey(conn, channel, newKeys, true, true);
-			
-//			performance.measure("checkKeysFromOtherSide 403");
-			
-			stmt = conn.prepareStatement("UPDATE storedkeys SET current_channel=0 WHERE current_channel=1 AND channel_id=?");
+            stmt = conn.prepareStatement("UPDATE storedkeys SET current_channel=0 WHERE current_channel=1 AND channel_id=?");
 			stmt.setInt(1, channel.getId());
 			stmt.execute();
 			stmt.close();
@@ -1703,20 +1761,18 @@ public class MySQLConnection {
 		ResultSet set = null;
 		try {
 			String sql;
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND used=1 AND priv_key IS NULL)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND used=1 AND priv_key IS NULL) FOR UPDATE";
 		
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, channel.getId());
 
 			set = stmt.executeQuery();
-			performance.measure("getKeysOfOtherSideToBeExposed 1");
-			
+
 			if(!set.first())
 				return null;
 			ArrayList<Key> keysToBeExposed = new ArrayList<Key>();
 			ArrayList<String> currentKeys = ScriptTools.getPubKeysOfChannel(channel, !SideConstants.RUNS_ON_SERVER, true);
 			
-			performance.measure("getKeysOfOtherSideToBeExposed 2");
 
 			while(!set.isAfterLast()) {
 				
@@ -1741,7 +1797,6 @@ public class MySQLConnection {
 	
 				set.next();
 			}
-			performance.measure("getKeysOfOtherSideToBeExposed 3");
 
 	
 			return keysToBeExposed;
@@ -1765,7 +1820,7 @@ public class MySQLConnection {
 		ResultSet set = null;
 		try {
 			String sql;
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND owner=?)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND owner=?) FOR UPDATE";
 			
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, channel.getId());
@@ -1808,7 +1863,7 @@ public class MySQLConnection {
 			String sql;
 			
 	
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=?)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=?) FOR UPDATE";
 			
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, channel.getId());
@@ -1861,7 +1916,7 @@ public class MySQLConnection {
 			String sql;
 			
 	
-			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=? AND key_chain_depth>?)";
+			sql = "SELECT * FROM storedkeys WHERE (channel_id=? AND exposed=1 AND owner=? AND key_chain_depth>?) FOR UPDATE";
 			
 			stmt = conn.prepareStatement(sql);
 			stmt.setInt(1, channel.getId());
@@ -2036,15 +2091,15 @@ public class MySQLConnection {
 			
 			String sql = "";
 			
-			if(receiver.length() == 10) {
+			if(receiver.length() == 6) {
 				address = receiver+"%";
-				sql = "SELECT id FROM channels WHERE pub_key_client LIKE ? AND is_ready=1";
+				sql = "SELECT id FROM channels WHERE pub_key_client LIKE ? AND is_ready=1 FOR UPDATE";
 			} else {
 			
 				if(isAddress) {
-					sql = "SELECT id FROM channels WHERE change_address_client=? AND is_ready=1";
+					sql = "SELECT id FROM channels WHERE change_address_client=? AND is_ready=1 FOR UPDATE";
 				} else {
-					sql = "SELECT id FROM channels WHERE pub_key_client=? AND is_ready=1";
+					sql = "SELECT id FROM channels WHERE pub_key_client=? AND is_ready=1 FOR UPDATE";
 				}
 			}
 			
@@ -2179,10 +2234,10 @@ public class MySQLConnection {
 	public static Channel getChannel(Connection conn, String pubKey) throws SQLException {
 		PreparedStatement stmt = null;
 		try {
-			stmt = conn.prepareStatement("SELECT * FROM channels WHERE pub_key_client=?");		
+			stmt = conn.prepareStatement("SELECT * FROM channels WHERE pub_key_client=? FOR UPDATE");
 			stmt.setString(1, pubKey);
-					
-			ResultSet result = stmt.executeQuery();
+
+            ResultSet result = stmt.executeQuery();
 			result.first();
 			Channel c = new Channel(result);
 			c.conn = conn;
@@ -2204,7 +2259,7 @@ public class MySQLConnection {
 	public static Channel getChannel(Connection conn, int id) throws SQLException {
 		PreparedStatement stmt = null;
 		try {
-			stmt = conn.prepareStatement("SELECT * FROM channels WHERE id=?");		
+			stmt = conn.prepareStatement("SELECT * FROM channels WHERE id=? FOR UPDATE");
 			stmt.setInt(1, id);
 					
 			ResultSet result = stmt.executeQuery();
@@ -2255,7 +2310,7 @@ public class MySQLConnection {
 		try {
 			BiMap<Integer, String> list = HashBiMap.create();
 	
-			String query = "SELECT opening_tx_hash, id FROM channels WHERE is_ready=?";
+			String query = "SELECT opening_tx_hash, id FROM channels WHERE is_ready=? AND opening_tx_hash IS NOT NULL";
 			stmt = conn.prepareStatement(query);
 			stmt.setInt(1, Tools.boolToInt(ready));
 			ResultSet results = stmt.executeQuery();
@@ -2355,8 +2410,7 @@ public class MySQLConnection {
 		ArrayList<Channel> channelList = new ArrayList<Channel>();
 		try {
 			stmt = conn.prepareStatement("SELECT * FROM channels WHERE is_ready=1");	
-			System.out.println(stmt.toString());
-					
+
 			ResultSet result = stmt.executeQuery();
 			
 			if(!result.first())
@@ -2387,8 +2441,7 @@ public class MySQLConnection {
 		ArrayList<Channel> channelList = new ArrayList<Channel>();
 		try {
 			stmt = conn.prepareStatement("SELECT * FROM channels WHERE establish_phase=4 AND is_ready=0");	
-			System.out.println(stmt.toString());
-					
+
 			ResultSet result = stmt.executeQuery();
 			
 			if(!result.first())
@@ -2419,7 +2472,7 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		try {
 			ArrayList<Payment> list = new ArrayList<Payment>();
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( channel_id_receiver=? AND include_in_receiver_channel=0 AND phase=0 ) ORDER BY id DESC");
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( channel_id_receiver=? AND include_in_receiver_channel=0 AND phase_receiver=0 ) ORDER BY id DESC");
 			stmt.setInt(1, channelId);
 			ResultSet results = stmt.executeQuery();
 			
@@ -2455,7 +2508,7 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		try {
 			ArrayList<Payment> list = new ArrayList<Payment>();
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( ( (channel_id_sender=? AND include_in_sender_channel=0 AND phase=1) OR (channel_id_receiver=? AND include_in_receiver_channel=0 AND phase=2) ) ) ORDER BY id DESC");
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( ( (channel_id_sender=? AND include_in_sender_channel=0 AND phase_sender=1) OR (channel_id_receiver=? AND include_in_receiver_channel=0 AND phase_receiver=2) ) ) ORDER BY id DESC");
 			stmt.setInt(1, channelId);
 			stmt.setInt(2, channelId);
 			ResultSet results = stmt.executeQuery();
@@ -2492,7 +2545,7 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		try {
 			ArrayList<Payment> list = new ArrayList<Payment>();
-			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( ( (channel_id_sender=? AND include_in_sender_channel=0 AND phase=6) OR (channel_id_receiver=? AND include_in_receiver_channel=0 AND phase=6) ) ) ORDER BY id DESC");
+			stmt = conn.prepareStatement("SELECT * FROM payments WHERE ( ( (channel_id_sender=? AND include_in_sender_channel=0 AND phase_sender=6) OR (channel_id_receiver=? AND include_in_receiver_channel=0 AND phase_receiver=6) ) ) ORDER BY id DESC");
 			stmt.setInt(1, channelId);
 			stmt.setInt(2, channelId);
 			ResultSet results = stmt.executeQuery();
@@ -2677,10 +2730,11 @@ public class MySQLConnection {
 		PreparedStatement stmt = null;
 		ResultSet set = null;
 		try {
-			stmt = conn.prepareStatement("SELECT count(*) FROM payments WHERE ( ( channel_id_sender=? OR channel_id_receiver=? ) AND phase=?)");
+			stmt = conn.prepareStatement("SELECT count(*) FROM payments WHERE ( ( channel_id_sender=? AND phase_sender=? ) OR ( channel_id_receiver=? AND phase_receiver=? ) ) ");
 			stmt.setInt(1, channel.getId());
-			stmt.setInt(2, channel.getId());
-			stmt.setInt(3, phase);
+            stmt.setInt(2, phase);
+            stmt.setInt(3, channel.getId());
+			stmt.setInt(4, phase);
 	
 			set = stmt.executeQuery();
 			set.first();
@@ -2789,15 +2843,20 @@ public class MySQLConnection {
 			} else {
 				value = myShare;
 			}
-			
-			
+
+            /**
+             * TODO: I changed >= to >, such that there will always be a change.
+             *          In the future it would be nice to pay exact amounts whenever possible.
+             */
 			for(Output o : list) {
-				if(o.getValue() >= value && transaction == null) {
+				if(o.getValue() > value && transaction == null) {
 					/**
 					 * Ok, found a suitable output, need to split the change
 					 */
 					transaction  = transactionOld;
-	
+                    /**
+                     * TODO: Change (a few things), such that there will be no output < 500...
+                     */
 					if(withFees) {
 						transaction.addOutput(Coin.valueOf( o.getValue() - myShare - Tools.getTransactionFees(transactionOld.getInputs().size()+1, transactionOld.getOutputs().size() + 1)), changeAddress);
 					} else {
@@ -2930,7 +2989,7 @@ public class MySQLConnection {
 		try {
 			if(id == 0) return null;
 
-			stmt = conn.prepareStatement("SELECT * FROM transactions WHERE id=?");
+			stmt = conn.prepareStatement("SELECT * FROM transactions WHERE id=? FOR UPDATE");
 			stmt.setInt(1, id);
 			set = stmt.executeQuery();
 	
@@ -2958,7 +3017,7 @@ public class MySQLConnection {
 		ResultSet set = null;
 		try {
 
-			stmt = conn.prepareStatement("SELECT data FROM transactions WHERE hash=?");
+			stmt = conn.prepareStatement("SELECT data FROM transactions WHERE hash=? FOR UPDATE");
 			stmt.setString(1, hash);
 			set = stmt.executeQuery();
 	
@@ -3051,7 +3110,7 @@ public class MySQLConnection {
 				stmt = conn.createStatement();
 		
 				String sql = "DELETE FROM transactions WHERE id="+id;
-				stmt.execute(sql);
+//				stmt.execute(sql);
 				
 			} finally {
 				if(stmt != null) stmt.close();

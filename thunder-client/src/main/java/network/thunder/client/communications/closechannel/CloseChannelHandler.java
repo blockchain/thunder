@@ -73,8 +73,7 @@ public class CloseChannelHandler {
 		channelTransaction.getInput(0).setScriptSig(inputScript);
 
 
-		System.out.println(channelTransaction);
-		
+
 		request.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
 		return request;		
 		
@@ -84,8 +83,7 @@ public class CloseChannelHandler {
 	public void evaluateResponse(CloseChannelResponse m) throws Exception {	
 		receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
 		
-		System.out.println(receivedTransaction);
-		
+
 
 	}
 }

@@ -252,7 +252,6 @@ public class SendPaymentHandlerOne {
 		 */
 		
 		TransactionOutput paymentOutput = receivedTransaction.getOutputs().get(receivedTransaction.getOutputs().size()-1);
-		System.out.println(Tools.byteToString58(paymentOutput.bitcoinSerialize()));
 		String secretHash = ScriptTools.getRofPaymentScript(paymentOutput);
 		if(!secretHash.equals(newPayment.getSecretHash()))
 			throw new Exception("SecretHash is not correct..");

@@ -194,15 +194,24 @@ public class Tools {
 	 * @return the message
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public static Message getMessage(HttpServletRequest httpExchange) throws IOException {
-		String data = IOUtils.toString(httpExchange.getReader()).split("=")[1];
-		data = java.net.URLDecoder.decode(data, "UTF-8");
-		System.out.println(data);
+    public static Message getMessage(HttpServletRequest httpExchange) throws IOException {
+        String data = IOUtils.toString(httpExchange.getReader()).split("=")[1];
+        data = java.net.URLDecoder.decode(data, "UTF-8");
+//        System.out.println(data);
 //		System.out.println(data);
-		Gson gson = new Gson();
-		Message message = gson.fromJson(data, Message.class);
-		return message;
-	}
+        Gson gson = new Gson();
+        Message message = gson.fromJson(data, Message.class);
+        return message;
+    }
+
+    public static Message getMessage(String data) throws IOException {
+        data = java.net.URLDecoder.decode(data, "UTF-8");
+//        System.out.println(data);
+//		System.out.println(data);
+        Gson gson = new Gson();
+        Message message = gson.fromJson(data, Message.class);
+        return message;
+    }
 	
 	/**
 	 * Send message.
@@ -636,7 +645,7 @@ public class Tools {
            Transport.send(message);
            System.out.println("Sent message successfully....");
         }catch (MessagingException mex) {
-           mex.printStackTrace();
+//           mex.printStackTrace();
         }
 	}
 	

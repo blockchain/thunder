@@ -110,12 +110,23 @@ public class KeyDerivation {
 	 * @param days the days
 	 * @return the deterministic key
 	 */
-	public static DeterministicKey calculateKeyChain(DeterministicKey key, int days) {
-		List<ChildNumber> list = getChildList(days);
-    	DeterministicHierarchy hi = new DeterministicHierarchy(key);
-    	DeterministicKey returnKey = hi.get(list, true, true);
-    	return returnKey;
-	}
+    public static DeterministicKey calculateKeyChain(DeterministicKey key, int days) {
+        DeterministicKey keyTemp = key;
+        ChildNumber childNumber = new ChildNumber(0, true);
+        List<ChildNumber> childList = new ArrayList<ChildNumber>();
+        childList.add(childNumber);
+
+        for(int i=0; i<days; ++i) {
+            DeterministicHierarchy hi = new DeterministicHierarchy(keyTemp);
+            keyTemp = hi.get(childList, true, true);
+        }
+
+//        System.out.println(keyTemp.getPathAsString());
+//		List<ChildNumber> list = getChildList(days);
+//    	DeterministicHierarchy hi = new DeterministicHierarchy(key);
+//    	DeterministicKey returnKey = hi.get(list, true, true);
+        return keyTemp;
+    }
 	
 	/**
 	 * Get the Key for x days ahead.

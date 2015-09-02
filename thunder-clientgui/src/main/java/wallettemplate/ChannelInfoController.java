@@ -73,11 +73,11 @@ public class ChannelInfoController {
         assert cancelBtn != null : "fx:id=\"cancelBtn\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert cancelBtn1 != null : "fx:id=\"cancelBtn1\" was not injected: check your FXML file 'channel_info.fxml'.";
 
-        Channel channel = ThunderContext.getCurrentChannel();
+        Channel channel = ThunderContext.instance.getCurrentChannel();
 
         balanceClient.setText(Coin.valueOf(channel.getAmountClient()).toFriendlyString());
         balanceServer.setText(Coin.valueOf(channel.getAmountServer()).toFriendlyString());
-        balanceClientAcc.setText(ThunderContext.getAmountClientAccessible().toFriendlyString());
+        balanceClientAcc.setText(ThunderContext.instance.getAmountClientAccessible().toFriendlyString());
 
         labelClose.setText(new Date(((long)channel.getTimestampClose())*1000).toString());
         labelOpen.setText(new Date(((long)channel.getTimestampOpen())*1000).toString());
@@ -100,7 +100,7 @@ public class ChannelInfoController {
     @FXML
     void closeChannel(ActionEvent event) throws Exception {
         overlayUI.done();
-        ThunderContext.closeChannel();
+        ThunderContext.instance.closeChannel();
     }
 
 }

@@ -99,10 +99,28 @@ public class KeyDerivation {
 	 * @return
 	 */
 	public static DeterministicKey calculateKeyChain(DeterministicKey key, int days) {
-		List<ChildNumber> list = getChildList(days);
-    	DeterministicHierarchy hi = new DeterministicHierarchy(key);
-    	DeterministicKey returnKey = hi.get(list, true, true);
-    	return returnKey;
+        /**
+         * TODO: This change makes it possible for near-infinite depth, however, doing so will lead to poor performance.
+         *          Save the depth-masterkey into the database aswell, this will save its computation every time,
+         *          computing it only when we 'climb' up one depth..
+         */
+//        PerformanceLogger log = new PerformanceLogger(4);
+        DeterministicKey keyTemp = key;
+        ChildNumber childNumber = new ChildNumber(0, true);
+        List<ChildNumber> childList = new ArrayList<ChildNumber>();
+        childList.add(childNumber);
+
+        for(int i=0; i<days; ++i) {
+            DeterministicHierarchy hi = new DeterministicHierarchy(keyTemp);
+            keyTemp = hi.get(childList, true, true);
+        }
+//        log.measure("calculateKeyChain");
+
+//        System.out.println(keyTemp.getPathAsString());
+//		List<ChildNumber> list = getChildList(days);
+//    	DeterministicHierarchy hi = new DeterministicHierarchy(key);
+//    	DeterministicKey returnKey = hi.get(list, true, true);
+    	return keyTemp;
 	}
 	
 	/**

@@ -37,7 +37,7 @@ public class SendMoneyController {
     // Called by FXMLLoader
     public void initialize() throws SQLException {
 
-        Coin balance = ThunderContext.getAmountClientAccessible();
+        Coin balance = ThunderContext.instance.getAmountClientAccessible();
 //        Coin balance = Coin.valueOf(1000);
         checkState(!balance.isZero());
         new ThunderAddressValidator(Main.params, address, sendBtn);
@@ -57,7 +57,7 @@ public class SendMoneyController {
         try {
             Main.instance.notificationBar.pushItem("Sending Payment..", BitcoinUIModel.syncProgress);
 
-            ThunderContext.makePayment(amount.getValue(), address.getText());
+            ThunderContext.instance.makePayment(amount.getValue(), address.getText());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -44,3 +44,4 @@ out/
 
 *.wallet
 *.spvchain
+*.db

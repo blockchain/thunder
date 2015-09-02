@@ -79,7 +79,10 @@ public class Payment {
 	 * 		6 - receiver refunded/timeouted
 	 * 		12 - receiver and sender refunded (so it's settled aswell..)
 	 */
-	int phase;
+	int phaseReceiver;
+    int phaseSender;
+
+    long fee;
 	
 	/**
 	 * The secret hash.
@@ -99,8 +102,9 @@ public class Payment {
 	/**
 	 * The timestamp settled.
 	 */
-	int timestampSettled;
-	
+    int timestampSettledReceiver;
+    int timestampSettledSender;
+
 	/**
 	 * The timestamp added to receiver.
 	 */
@@ -120,7 +124,10 @@ public class Payment {
 	 * The include in receiver channel.
 	 */
 	boolean includeInReceiverChannel;
-	
+
+    boolean includeInReceiverChannelTemp;
+    boolean includeInSenderChannelTemp;
+
 	/**
 	 * The payment to server.
 	 */
@@ -309,9 +316,9 @@ public class Payment {
 	/**
 	 * The add tx receiver temp changed.
 	 */
-	boolean addTxReceiverTempChanged; 
-	
-	
+	boolean addTxReceiverTempChanged;
+
+
 	/**
 	 * Instantiates a new payment.
 	 *
@@ -322,8 +329,10 @@ public class Payment {
 		id = result.getInt("id");
 		channelIdReceiver = result.getInt("channel_id_receiver");
 		channelIdSender = result.getInt("channel_id_sender");
-		amount = result.getLong("amount");
-		phase = result.getInt("phase");
+        amount = result.getLong("amount");
+        fee = result.getLong("fee");
+        phaseSender = result.getInt("phase_sender");
+        phaseReceiver = result.getInt("phase_receiver");
 		secretHash = result.getString("secret_hash");
 		secret = result.getString("secret");
 
@@ -342,12 +351,16 @@ public class Payment {
 		addTxSenderTempID = result.getInt("add_tx_sender_temp");
 		
 		timestampCreated = result.getInt("timestamp_created");
-		timestampSettled = result.getInt("timestamp_settled");
+        timestampSettledReceiver = result.getInt("timestamp_settled_receiver");
+        timestampSettledSender = result.getInt("timestamp_settled_sender");
 		timestampAddedToReceiver = result.getInt("timestamp_added_to_receiver");
 
-		
-		includeInReceiverChannel = Tools.intToBool(result.getInt("include_in_receiver_channel"));
-		includeInSenderChannel = Tools.intToBool(result.getInt("include_in_sender_channel"));
+
+        includeInReceiverChannel = Tools.intToBool(result.getInt("include_in_receiver_channel"));
+        includeInSenderChannel = Tools.intToBool(result.getInt("include_in_sender_channel"));
+
+        includeInReceiverChannelTemp = Tools.intToBool(result.getInt("include_in_receiver_channel_temp"));
+        includeInSenderChannelTemp = Tools.intToBool(result.getInt("include_in_sender_channel_temp"));
 	}
 	
 	/**
@@ -366,7 +379,10 @@ public class Payment {
 		this.timestampCreated = Tools.currentTime();
 		this.includeInReceiverChannel = false;
 		this.includeInSenderChannel = false;
-		this.phase = 0;
+        this.phaseSender = 0;
+        this.phaseReceiver = 0;
+
+        this.fee = Tools.calculateServerFee(this.amount);
 	}
 	
 	/**
@@ -390,8 +406,9 @@ public class Payment {
 		this.timestampCreated = Tools.currentTime();
 		this.includeInReceiverChannel = false;
 		this.includeInSenderChannel = false;
-		this.phase = 0;
-	}
+        this.phaseSender = 0;
+        this.phaseReceiver = 0;
+    }
 	
 	/**
 	 * Instantiates a new payment.
@@ -409,8 +426,9 @@ public class Payment {
 		this.timestampCreated = Tools.currentTime();
 		this.includeInReceiverChannel = false;
 		this.includeInSenderChannel = false;
-		this.phase = 0;
-		
+        this.phaseSender = 0;
+        this.phaseReceiver = 0;
+
 		byte[] b = new byte[20];
 		new Random().nextBytes(b);
 		secret = Tools.byteToString(b);
@@ -424,27 +442,31 @@ public class Payment {
 	 * Replace current transactions with temporary.
 	 */
 	public void replaceCurrentTransactionsWithTemporary() {
+        /**
+         * Only update the transactions corresponding to that client..
+         */
+        if(paymentToServer) {
+            int temp2 = settlementTxSenderID;
+            int temp4 = refundTxSenderID;
+            int temp6 = addTxSenderID;
+            settlementTxSenderID = settlementTxSenderTempID;
+            refundTxSenderID = refundTxSenderTempID;
+            addTxSenderID = addTxSenderTempID;
+            settlementTxSenderTempID = temp2;
+            refundTxSenderTempID = temp4;
+            addTxSenderTempID = temp6;
+        } else {
+            int temp1 = settlementTxReceiverID;
+            int temp3 = refundTxReceiverID;
+            int temp5 = addTxReceiverID;
+            settlementTxReceiverID = settlementTxReceiverTempID;
+            refundTxReceiverID = refundTxReceiverTempID;
+            addTxReceiverID = addTxReceiverTempID;
+            settlementTxReceiverTempID = temp1;
+            refundTxReceiverTempID = temp3;
+            addTxReceiverTempID = temp5;
+        }
 
-		int temp1 = settlementTxReceiverID;
-		int temp2 = settlementTxSenderID;
-		int temp3 = refundTxReceiverID;
-		int temp4 = refundTxSenderID;
-		int temp5 = addTxReceiverID;
-		int temp6 = addTxSenderID;		
-		
-		settlementTxReceiverID = settlementTxReceiverTempID;
-		settlementTxSenderID = settlementTxSenderTempID;
-		refundTxReceiverID = refundTxReceiverTempID;
-		refundTxSenderID = refundTxSenderTempID;
-		addTxReceiverID = addTxReceiverTempID;
-		addTxSenderID = addTxSenderTempID;
-		
-		settlementTxReceiverTempID = temp1;
-		settlementTxSenderTempID = temp2;
-		refundTxReceiverTempID = temp3;
-		refundTxSenderTempID = temp4;
-		addTxReceiverTempID = temp5;
-		addTxSenderTempID = temp6;
 	}
 	
 	/**
@@ -454,43 +476,48 @@ public class Payment {
 	 * @throws SQLException the SQL exception
 	 */
 	public void updateTransactionsToDatabase(Connection conn) throws SQLException {
-		if(settlementTxSenderChanged){
-			settlementTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxSender, channelIdSender, settlementTxSenderID));
-		}
-		if(settlementTxReceiverChanged){
-			settlementTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxReceiver, channelIdReceiver, settlementTxReceiverID));
-		}
-		if(refundTxSenderChanged){
-			refundTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxSender, channelIdSender, refundTxSenderID));
-		}
-		if(refundTxReceiverChanged){
-			refundTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxReceiver, channelIdReceiver, refundTxReceiverID));
-		}
-		if(addTxSenderChanged){
-			addTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxSender, channelIdSender, addTxSenderID));
-		}
-		if(addTxReceiverChanged){
-			addTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxReceiver, channelIdReceiver, addTxReceiverID));
-		}
-		if(settlementTxSenderTempChanged){
-			settlementTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxSenderTemp, channelIdSender, settlementTxSenderTempID));
-		}
-		if(settlementTxReceiverTempChanged){
-			settlementTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxReceiverTemp, channelIdReceiver, settlementTxReceiverTempID));
-		}
-		if(refundTxSenderTempChanged){
-			refundTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxSenderTemp, channelIdSender, refundTxSenderTempID));
-		}
-		if(refundTxReceiverTempChanged){
-			refundTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxReceiverTemp, channelIdReceiver, refundTxReceiverTempID));
-		}
-		if(addTxSenderTempChanged){
-			addTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxSenderTemp, channelIdSender, addTxSenderTempID));
-		}
-		if(addTxReceiverTempChanged){
-			addTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxReceiverTemp, channelIdReceiver, addTxReceiverTempID));
-		}
-		
+        /**
+         * Only update the transactions corresponding to that client..
+         */
+        if(paymentToServer) {
+            if(settlementTxSenderChanged){
+                settlementTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxSender, channelIdSender, settlementTxSenderID));
+            }
+            if(refundTxSenderChanged){
+                refundTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxSender, channelIdSender, refundTxSenderID));
+            }
+            if(addTxSenderChanged){
+                addTxSenderID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxSender, channelIdSender, addTxSenderID));
+            }
+            if(settlementTxSenderTempChanged){
+                settlementTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxSenderTemp, channelIdSender, settlementTxSenderTempID));
+            }
+            if(refundTxSenderTempChanged){
+                refundTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxSenderTemp, channelIdSender, refundTxSenderTempID));
+            }
+            if(addTxSenderTempChanged){
+                addTxSenderTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxSenderTemp, channelIdSender, addTxSenderTempID));
+            }
+        } else {
+            if(settlementTxReceiverChanged){
+                settlementTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxReceiver, channelIdReceiver, settlementTxReceiverID));
+            }
+            if(refundTxReceiverChanged){
+                refundTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxReceiver, channelIdReceiver, refundTxReceiverID));
+            }
+            if(addTxReceiverChanged){
+                addTxReceiverID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxReceiver, channelIdReceiver, addTxReceiverID));
+            }
+            if(settlementTxReceiverTempChanged){
+                settlementTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(settlementTxReceiverTemp, channelIdReceiver, settlementTxReceiverTempID));
+            }
+            if(refundTxReceiverTempChanged){
+                refundTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(refundTxReceiverTemp, channelIdReceiver, refundTxReceiverTempID));
+            }
+            if(addTxReceiverTempChanged){
+                addTxReceiverTempID = MySQLConnection.addOrUpdateTransaction(conn, new TransactionWrapper(addTxReceiverTemp, channelIdReceiver, addTxReceiverTempID));
+            }
+        }
 	}
 	
 	
@@ -746,23 +773,7 @@ public class Payment {
 		this.amount = amount;
 	}
 
-	/**
-	 * Gets the phase.
-	 *
-	 * @return the phase
-	 */
-	public int getPhase() {
-		return phase;
-	}
 
-	/**
-	 * Sets the phase.
-	 *
-	 * @param phase the new phase
-	 */
-	public void setPhase(int phase) {
-		this.phase = phase;
-	}
 
 	/**
 	 * Gets the secret hash.
@@ -818,25 +829,23 @@ public class Payment {
 		this.timestampCreated = timestampCreated;
 	}
 
-	/**
-	 * Gets the timestamp settled.
-	 *
-	 * @return the timestamp settled
-	 */
-	public int getTimestampSettled() {
-		return timestampSettled;
-	}
+    public int getTimestampSettledReceiver() {
+        return timestampSettledReceiver;
+    }
 
-	/**
-	 * Sets the timestamp settled.
-	 *
-	 * @param timestampSettled the new timestamp settled
-	 */
-	public void setTimestampSettled(int timestampSettled) {
-		this.timestampSettled = timestampSettled;
-	}
+    public void setTimestampSettledReceiver(int timestampSettledReceiver) {
+        this.timestampSettledReceiver = timestampSettledReceiver;
+    }
 
-	/**
+    public int getTimestampSettledSender() {
+        return timestampSettledSender;
+    }
+
+    public void setTimestampSettledSender(int timestampSettledSender) {
+        this.timestampSettledSender = timestampSettledSender;
+    }
+
+    /**
 	 * Checks if is include in sender channel.
 	 *
 	 * @return true, if is include in sender channel
@@ -1232,14 +1241,38 @@ public class Payment {
 		this.receiver = receiver;
 	}
 
-	@Override
+    public int getPhaseReceiver() {
+        return phaseReceiver;
+    }
+
+    public void setPhaseReceiver(int phaseReceiver) {
+        this.phaseReceiver = phaseReceiver;
+    }
+
+    public int getPhaseSender() {
+        return phaseSender;
+    }
+
+    public void setPhaseSender(int phaseSender) {
+        this.phaseSender = phaseSender;
+    }
+
+    public long getFee() {
+        return fee;
+    }
+
+    public void setFee(long fee) {
+        this.fee = fee;
+    }
+
+    @Override
 	public String toString() {
 		return "Payment\n\tconn=" + conn + "\n\tid=" + id
 				+ "\n\tchannelIdSender=" + channelIdSender
 				+ "\n\tchannelIdReceiver=" + channelIdReceiver + "\n\tamount="
-				+ amount + "\n\tphase=" + phase + "\n\tsecretHash="
+				+ amount + "\n\tphase=" + phaseReceiver + "\n\tphase=" + phaseSender + "\n\tsecretHash="
 				+ secretHash + "\n\tsecret=" + secret + "\n\ttimestampCreated="
-				+ timestampCreated + "\n\ttimestampSettled=" + timestampSettled
+				+ timestampCreated
 				+ "\n\ttimestampAddedToReceiver=" + timestampAddedToReceiver
 				+ "\n\treceiver=" + receiver + "\n\tincludeInSenderChannel="
 				+ includeInSenderChannel + "\n\tincludeInReceiverChannel="
@@ -1282,7 +1315,52 @@ public class Payment {
 				+ "\n\taddTxReceiverTemp=" + addTxReceiverTemp
 				+ "\n\taddTxReceiverTempChanged=" + addTxReceiverTempChanged;
 	}
-	
-	
-	
+
+    public boolean isIncludeInReceiverChannelTemp() {
+        return includeInReceiverChannelTemp;
+    }
+
+    public void setIncludeInReceiverChannelTemp(boolean includeInReceiverChannelTemp) {
+        this.includeInReceiverChannelTemp = includeInReceiverChannelTemp;
+    }
+
+    public boolean isIncludeInSenderChannelTemp() {
+        return includeInSenderChannelTemp;
+    }
+
+    public void setIncludeInSenderChannelTemp(boolean includeInSenderChannelTemp) {
+        this.includeInSenderChannelTemp = includeInSenderChannelTemp;
+    }
+
+    public void setIncludedInChannelTemp(boolean includedInChannelTemp) {
+        if(paymentToServer) {
+            setIncludeInSenderChannelTemp(includedInChannelTemp);
+        } else {
+            setIncludeInReceiverChannelTemp(includedInChannelTemp);
+        }
+    }
+
+    public void setIncludedInChannel(boolean includedInChannelTemp) {
+        if(paymentToServer) {
+            setIncludeInSenderChannel(includedInChannelTemp);
+        } else {
+            setIncludeInReceiverChannel(includedInChannelTemp);
+        }
+    }
+
+    public void setPhase(int phase) {
+        if(paymentToServer) {
+            this.phaseSender = phase;
+        } else {
+            this.phaseReceiver = phase;
+        }
+    }
+
+    public int getPhase() {
+        if(paymentToServer) {
+            return this.phaseSender;
+        } else {
+            return this.phaseReceiver;
+        }
+    }
 }

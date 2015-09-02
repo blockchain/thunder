@@ -8,7 +8,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<Pane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="352.0" prefWidth="502.0" style="" xmlns="http://javafx.com/javafx/null" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ReceiveMoneyRequestController">
+<Pane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="352.0" prefWidth="502.0" style="" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ReceiveMoneyRequestController">
   <children>
       <Pane minHeight="350.0" minWidth="500.0" prefHeight="350.0" prefWidth="500.0" style="-fx-background-color: white;">
          <children>
@@ -64,6 +64,16 @@
                                  <children>
                                     <Label text="Address" />
                                     <TextField fx:id="FieldAddress" editable="false" prefHeight="25.0" prefWidth="200.0">
+                                       <HBox.margin>
+                                          <Insets left="10.0" />
+                                       </HBox.margin>
+                                    </TextField>
+                                 </children>
+                              </HBox>
+                              <HBox layoutX="25.0" layoutY="158.0">
+                                 <children>
+                                    <Label text="Request" />
+                                    <TextField fx:id="FieldRequest" editable="false" prefHeight="25.0" prefWidth="200.0">
                                        <HBox.margin>
                                           <Insets left="10.0" />
                                        </HBox.margin>

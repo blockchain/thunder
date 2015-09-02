@@ -20,9 +20,13 @@ package network.thunder.client.etc;
 public class SideConstants {
 	public static String WALLET_FILE = "client_wallet";
 	public static String DATABASE_CONNECTION_SERVER = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true";
-	public static String DATABASE_CONNECTION = "jdbc:h2:~/bitnet_client_t2;MODE=MySQL;MVCC=true";
-	public static String DATABASE_CONNECTION2 = "jdbc:h2:~/bitnet_client2_t2;MODE=MySQL;MVCC=true";
+	public static String DATABASE_CONNECTION = "jdbc:h2:./bitnet_client_t2;MODE=MySQL;MVCC=true";
+	public static String DATABASE_CONNECTION2 = "jdbc:h2:./bitnet_client2_t2;MODE=MySQL;MVCC=true";
 
+
+    /* There seems to be an issue with writing in the current directory,
+     *      so we will write in home for now.
+     */
 	public static String getDatabaseConnection(int id)  {
 		return "jdbc:h2:./thunder_wallet_db_"+id+"_t2;MODE=MySQL;MVCC=true";
 	}
@@ -30,7 +34,7 @@ public class SideConstants {
 	
 	
 	
-	public static String DATABASE_CONNECTION_WITHOUT_DB = "jdbc:h2:~/bitnet_client_t2;MODE=MySQL;MVCC=true";
+	public static String DATABASE_CONNECTION_WITHOUT_DB = "jdbc:h2:./bitnet_client_t2;MODE=MySQL;MVCC=true";
 	
 	
 	public static boolean RUNS_ON_SERVER = false;

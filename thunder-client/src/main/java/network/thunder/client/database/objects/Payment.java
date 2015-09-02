@@ -635,9 +635,62 @@ public class Payment {
 				s+= "	(	"+this.getSecret()+"	)";
 			}
 		}
-		
-		
 		return s;
 	}
-	
+
+    public String toStringFull() {
+        return "Payment{" +
+                "conn=" + conn +
+                ", id=" + id +
+                ", channelIdSender=" + channelIdSender +
+                ", channelIdReceiver=" + channelIdReceiver +
+                ", amount=" + amount +
+                ", phase=" + phase +
+                ", secretHash='" + secretHash + '\'' +
+                ", secret='" + secret + '\'' +
+                ", timestampCreated=" + timestampCreated +
+                ", timestampSettled=" + timestampSettled +
+                ", timestampAddedToReceiver=" + timestampAddedToReceiver +
+                ", receiver='" + receiver + '\'' +
+                ", includeInSenderChannel=" + includeInSenderChannel +
+                ", includeInReceiverChannel=" + includeInReceiverChannel +
+                ", paymentToServer=" + paymentToServer +
+                ", settlementTxSenderID=" + settlementTxSenderID +
+                ", settlementTxSender=" + settlementTxSender +
+                ", settlementTxSenderChanged=" + settlementTxSenderChanged +
+                ", settlementTxReceiverID=" + settlementTxReceiverID +
+                ", settlementTxReceiver=" + settlementTxReceiver +
+                ", settlementTxReceiverChanged=" + settlementTxReceiverChanged +
+                ", refundTxSenderID=" + refundTxSenderID +
+                ", refundTxSender=" + refundTxSender +
+                ", refundTxSenderChanged=" + refundTxSenderChanged +
+                ", refundTxReceiverID=" + refundTxReceiverID +
+                ", refundTxReceiver=" + refundTxReceiver +
+                ", refundTxReceiverChanged=" + refundTxReceiverChanged +
+                ", addTxSenderID=" + addTxSenderID +
+                ", addTxSender=" + addTxSender +
+                ", addTxSenderChanged=" + addTxSenderChanged +
+                ", addTxReceiverID=" + addTxReceiverID +
+                ", addTxReceiver=" + addTxReceiver +
+                ", addTxReceiverChanged=" + addTxReceiverChanged +
+                ", settlementTxSenderTempID=" + settlementTxSenderTempID +
+                ", settlementTxSenderTemp=" + settlementTxSenderTemp +
+                ", settlementTxSenderTempChanged=" + settlementTxSenderTempChanged +
+                ", settlementTxReceiverTempID=" + settlementTxReceiverTempID +
+                ", settlementTxReceiverTemp=" + settlementTxReceiverTemp +
+                ", settlementTxReceiverTempChanged=" + settlementTxReceiverTempChanged +
+                ", refundTxSenderTempID=" + refundTxSenderTempID +
+                ", refundTxSenderTemp=" + refundTxSenderTemp +
+                ", refundTxSenderTempChanged=" + refundTxSenderTempChanged +
+                ", refundTxReceiverTempID=" + refundTxReceiverTempID +
+                ", refundTxReceiverTemp=" + refundTxReceiverTemp +
+                ", refundTxReceiverTempChanged=" + refundTxReceiverTempChanged +
+                ", addTxSenderTempID=" + addTxSenderTempID +
+                ", addTxSenderTemp=" + addTxSenderTemp +
+                ", addTxSenderTempChanged=" + addTxSenderTempChanged +
+                ", addTxReceiverTempID=" + addTxReceiverTempID +
+                ", addTxReceiverTemp=" + addTxReceiverTemp +
+                ", addTxReceiverTempChanged=" + addTxReceiverTempChanged +
+                '}';
+    }
 }

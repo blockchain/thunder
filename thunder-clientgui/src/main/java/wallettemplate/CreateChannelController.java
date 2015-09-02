@@ -71,9 +71,9 @@ public class CreateChannelController {
                 Coin c1 = Coin.parseCoin(amountEdit.getText());
                 Coin c2 = Coin.parseCoin(amountEdit1.getText());
                 int days = Integer.parseInt(amountEdit2.getText());
-                ThunderContext.openChannel(c1.getValue(), c2.getValue(), days);
+                ThunderContext.instance.openChannel(c1.getValue(), c2.getValue(), days);
             } catch(NumberFormatException e) {
-                ThunderContext.openChannel(10000, 10000, 100);
+                ThunderContext.instance.openChannel(10000, 10000, 100);
             }
         } catch (Exception e) {
             e.printStackTrace();

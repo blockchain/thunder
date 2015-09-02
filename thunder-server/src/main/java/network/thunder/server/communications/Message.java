@@ -138,7 +138,7 @@ public class Message {
 	 * @return the signature message
 	 */
 	private String getSignatureMessage() {
-		return type+pubkey+success+timestamp+data;
+        return type+pubkey+success+timestamp+data;
 	}
 	
 	/**
@@ -208,7 +208,8 @@ public class Message {
 	public void prepare(Connection conn) throws Exception {
 		if(!this.validate()) throw new Exception("Validation failed..");
 		if(!this.success) throw new Exception(this.data);
-		MySQLConnection.saveMessage(conn, this);
+        if(conn != null)
+		    MySQLConnection.saveMessage(conn, this);
 	}
 	
 	/**
@@ -217,19 +218,24 @@ public class Message {
 	 * @param httpExchange the http exchange
 	 * @throws IOException Signals that an I/O exception has occurred.
 	 */
-	public void sendMessage(HttpServletResponse httpExchange) throws IOException {
-		this.sign();
-		String response = new Gson().toJson(this);
+    public void sendMessage(HttpServletResponse httpExchange) throws IOException {
+        this.sign();
+        String response = new Gson().toJson(this);
 //		httpExchan.sendResponseHeaders(200, response.length());
-		
-		httpExchange.setContentType("application/json;charset=utf-8");
-		httpExchange.getWriter().println(response);
-		System.out.println(response);
-		
+
+        httpExchange.setContentType("application/json;charset=utf-8");
+        httpExchange.getWriter().println(response);
+
 //		OutputStream os = httpExchange.getResponseBody();
 //		os.write(response.getBytes());
 //		os.close();
-	}
+    }
+
+    public String getDataString() {
+        this.sign();
+        return new Gson().toJson(this);
+
+    }
 
 	@Override
 	public String toString() {

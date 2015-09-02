@@ -53,5 +53,8 @@ public class Type {
 	public static int CLOSE_CHANNEL_REQUEST = 510;
 	public static int CLOSE_CHANNEL_RESPONSE = 511;
 
+    public static int WEBSOCKET_OPEN = 610;
+    public static int WEBSOCKET_NEW_PAYMENT = 620;
+
 
 }

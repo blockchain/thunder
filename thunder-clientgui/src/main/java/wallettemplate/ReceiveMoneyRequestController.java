@@ -21,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
+import network.thunder.client.etc.Tools;
 import org.bitcoinj.core.Coin;
 
 public class ReceiveMoneyRequestController {
@@ -58,6 +59,9 @@ public class ReceiveMoneyRequestController {
     @FXML // fx:id="cancelBtn"
     private Button cancelBtn; // Value injected by FXMLLoader
 
+    @FXML
+    private TextField FieldRequest;
+
     public Main.OverlayUI overlayUI;
 
 
@@ -90,12 +94,13 @@ public class ReceiveMoneyRequestController {
     public void initData(Coin amount) {
 
         try {
-            PaymentRequest paymentRequest = ThunderContext.getPaymentReceiveRequest(amount.value);
+            PaymentRequest paymentRequest = ThunderContext.instance.getPaymentReceiveRequest(amount.value);
 
             FieldAddress.setText(paymentRequest.getAddress());
 
-            FieldUserId.setText(paymentRequest.getId());
-            FieldHash.setText(paymentRequest.getSecretHash58());
+            FieldUserId.setText(Tools.byteToString(paymentRequest.getId()));
+            FieldHash.setText(Tools.byteToString(paymentRequest.getSecretHash()));
+            FieldRequest.setText(paymentRequest.getPaymentURI());
 
 
             final byte[] imageBytes = QRCode
