@@ -55,5 +55,5 @@ public class SideConstants {
 	public static String KEY_B58 = "tprv8dBsuaYzXZKmPEHjg5xvbD81ghiKMjZqF3UGANYXGofwhD4B375XGiEN8Bqhfv6WADnYKje3GwciwbcZ1GYLHrcDRLmtPTXNNMZnqcZFGqF";
 	
 	
-	
+	public static boolean DEBUG = false;
 }

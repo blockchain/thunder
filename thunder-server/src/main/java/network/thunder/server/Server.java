@@ -17,6 +17,8 @@
  */
 package network.thunder.server;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -35,19 +37,20 @@ import network.thunder.server.communications.Message;
 import network.thunder.server.communications.RequestHandler;
 import network.thunder.server.communications.WebSocketHandler;
 import network.thunder.server.database.MySQLConnection;
+import network.thunder.server.etc.SideConstants;
 import network.thunder.server.etc.Tools;
 import network.thunder.server.wallet.KeyChain;
 import network.thunder.server.wallet.TransactionStorage;
 
 import org.bitcoinj.utils.BriefLogFormatter;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
@@ -137,6 +140,9 @@ public class Server {
         
         
 //        transactionStorage.rebroadcastOpeningTransactions(peer);
+
+
+
     	
     	RequestHandler establishChannelHandler = new RequestHandler();
     	establishChannelHandler.transactionStorage = TransactionStorage.instance;
@@ -144,11 +150,48 @@ public class Server {
     	establishChannelHandler.wallet = keyChain.kit.wallet();
     	establishChannelHandler.peerGroup = keyChain.peerGroup;
 
-        org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server(80);
+        org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server();
 
-        ServerConnector connector = new ServerConnector(server);
-        connector.setPort(80);
-        server.setConnectors(new Connector[] { connector });
+        HttpConfiguration http_config = new HttpConfiguration();
+        http_config.setSecureScheme("https");
+        http_config.setSecurePort(443);
+
+
+        ServerConnector httpConnector = new ServerConnector(server);
+        httpConnector.addConnectionFactory(new HttpConnectionFactory(http_config));
+        httpConnector.setPort(80);
+
+
+
+
+        if(!SideConstants.DEBUG) {
+            String keystorePath = System.getProperty(
+                    "user.home");
+            File keystoreFile = new File(keystorePath, "keystore");
+            if (!keystoreFile.exists())
+            {
+                throw new FileNotFoundException(keystoreFile.getAbsolutePath());
+            }
+
+            SslContextFactory sslContextFactory = new SslContextFactory();
+            sslContextFactory.setKeyStorePath(keystoreFile.getAbsolutePath());
+            sslContextFactory.setKeyStorePassword("000000"); //Set correct password here for deployed system..
+            sslContextFactory.setKeyManagerPassword("000000"); //Set correct password here for deployed system..
+            sslContextFactory.setCertAlias("jetty");
+            HttpConfiguration https_config = new HttpConfiguration(http_config);
+            https_config.addCustomizer(new SecureRequestCustomizer());
+            ServerConnector https = new ServerConnector(server,
+                    new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
+                    new HttpConnectionFactory(https_config));
+            https.setPort(443);
+            https.setIdleTimeout(500000);
+            server.setConnectors(new Connector[]{ httpConnector, https});
+
+        } else {
+            server.setConnectors(new Connector[] { httpConnector });
+        }
+
+
 
 
         ContextHandler context0 = new ContextHandler("/api");
