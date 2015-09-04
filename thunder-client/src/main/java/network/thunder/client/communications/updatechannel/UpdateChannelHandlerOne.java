@@ -17,24 +17,24 @@
  */
 package network.thunder.client.communications.updatechannel;
 
-import java.sql.Connection;
-
 import network.thunder.client.communications.objects.UpdateChannelRequestOne;
 import network.thunder.client.communications.objects.UpdateChannelResponseOne;
 import network.thunder.client.database.objects.Channel;
 
+import java.sql.Connection;
+
 public class UpdateChannelHandlerOne {
 	public Connection conn;
-	public Channel channel;	
-	
+	public Channel channel;
+
 	public int totalAmountOfPayments = 0;
-	
-	public UpdateChannelRequestOne request() throws Exception {
-		
-		return new UpdateChannelRequestOne();
-	}
-	
-	public void evaluate(UpdateChannelResponseOne m) {
+
+	public void evaluate (UpdateChannelResponseOne m) {
 		totalAmountOfPayments += m.amountCurrentPayments + m.amountNewPayments;
+	}
+
+	public UpdateChannelRequestOne request () throws Exception {
+
+		return new UpdateChannelRequestOne();
 	}
 }

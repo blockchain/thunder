@@ -17,23 +17,24 @@
  */
 package network.thunder.client.database.objects;
 
+import network.thunder.client.etc.Tools;
+
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
-
-import network.thunder.client.etc.Tools;
 
 public class Secret {
 	public String secret;
 	public String secretHash;
-	
-	
-	public boolean verify() throws UnsupportedEncodingException, NoSuchAlgorithmException {
-		return secretHash.equals(Tools.hashSecret(Tools.stringToByte(secret)));
+
+	public Secret () {
 	}
-	
-	public Secret() {}
-	public Secret(String secretHash, String secret) {
+
+	public Secret (String secretHash, String secret) {
 		this.secret = secret;
 		this.secretHash = secretHash;
+	}
+
+	public boolean verify () throws UnsupportedEncodingException, NoSuchAlgorithmException {
+		return secretHash.equals(Tools.hashSecret(Tools.stringToByte(secret)));
 	}
 }

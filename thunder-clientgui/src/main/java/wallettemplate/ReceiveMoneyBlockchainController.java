@@ -8,28 +8,24 @@ import javafx.scene.layout.HBox;
 
 public class ReceiveMoneyBlockchainController {
 
-    public Main.OverlayUI overlayUI;
+	public Main.OverlayUI overlayUI;
 
+	@FXML
+	private HBox topHBox;
 
-    @FXML
-    private HBox topHBox;
+	@FXML
+	private TextField textfieldAmount;
 
-    @FXML
-    private TextField textfieldAmount;
+	@FXML
+	private Button cancelBtn;
 
-    @FXML
-    private Button cancelBtn;
+	public void cancel (ActionEvent event) {
+		overlayUI.done();
+	}
 
+	@FXML
+	void initialize () {
+		textfieldAmount.setText(Main.bitcoin.wallet().currentReceiveAddress().toString());
 
-
-    public void cancel(ActionEvent event) {
-        overlayUI.done();
-    }
-
-
-    @FXML
-    void initialize() {
-        textfieldAmount.setText(Main.bitcoin.wallet().currentReceiveAddress().toString());
-
-    }
+	}
 }

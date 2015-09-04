@@ -18,15 +18,15 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class UpdateChannelResponseThree.
  */
 public class UpdateChannelResponseThree {
-	
+
 	/**
 	 * The transaction hash.
 	 */
 	public String transactionHash;
-	
 
 }

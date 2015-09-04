@@ -17,52 +17,53 @@
  */
 package network.thunder.server.database.objects;
 
+import network.thunder.server.etc.Tools;
+
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
-import network.thunder.server.etc.Tools;
-
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class Secret.
  */
 public class Secret {
-	
+
 	/**
 	 * The secret.
 	 */
 	public String secret;
-	
+
 	/**
 	 * The secret hash.
 	 */
 	public String secretHash;
-	
-	
+
+	/**
+	 * Instantiates a new secret.
+	 */
+	public Secret () {
+	}
+
+	/**
+	 * Instantiates a new secret.
+	 *
+	 * @param secretHash the secret hash
+	 * @param secret     the secret
+	 */
+	public Secret (String secretHash, String secret) {
+		this.secret = secret;
+		this.secretHash = secretHash;
+	}
+
 	/**
 	 * Verify.
 	 *
 	 * @return true, if successful
 	 * @throws UnsupportedEncodingException the unsupported encoding exception
-	 * @throws NoSuchAlgorithmException the no such algorithm exception
+	 * @throws NoSuchAlgorithmException     the no such algorithm exception
 	 */
-	public boolean verify() throws UnsupportedEncodingException, NoSuchAlgorithmException {
+	public boolean verify () throws UnsupportedEncodingException, NoSuchAlgorithmException {
 		return secretHash.equals(Tools.hashSecret(Tools.stringToByte(secret)));
-	}
-	
-	/**
-	 * Instantiates a new secret.
-	 */
-	public Secret() {}
-	
-	/**
-	 * Instantiates a new secret.
-	 *
-	 * @param secretHash the secret hash
-	 * @param secret the secret
-	 */
-	public Secret(String secretHash, String secret) {
-		this.secret = secret;
-		this.secretHash = secretHash;
 	}
 }

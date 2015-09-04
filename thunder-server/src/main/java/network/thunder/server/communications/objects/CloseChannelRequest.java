@@ -17,13 +17,13 @@
  */
 package network.thunder.server.communications.objects;
 
-
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class CloseChannelRequest.
  */
 public class CloseChannelRequest {
-	
+
 	/**
 	 * The channel transaction.
 	 */

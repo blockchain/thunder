@@ -20,11 +20,10 @@ package network.thunder.client.communications.objects;
 import java.util.ArrayList;
 
 public class SendPaymentResponseTwo {
-	
+
 	public String revokeTransaction;
 	public ArrayList<String> paymentSettlements;
 	public ArrayList<String> paymentRefunds;
 	public ArrayList<String> paymentAdditionals;
-	
 
 }

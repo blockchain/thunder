@@ -17,16 +17,17 @@
  */
 package network.thunder.server.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.server.database.objects.Key;
 
+import java.util.ArrayList;
+
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class UpdateChannelResponseFive.
  */
 public class UpdateChannelResponseFive {
-	
+
 	/**
 	 * The key list.
 	 */

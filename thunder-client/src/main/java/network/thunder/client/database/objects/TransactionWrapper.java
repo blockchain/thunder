@@ -27,52 +27,53 @@ public class TransactionWrapper {
 	int channelId;
 	int paymentId;
 	byte[] data;
-	
+
 	Transaction transaction;
 	ECDSASignature signature;
-	
-	public TransactionWrapper(Transaction transaction, ECDSASignature signature) {
+
+	public TransactionWrapper (Transaction transaction, ECDSASignature signature) {
 		this.transaction = transaction;
 		this.signature = signature;
 	}
-	
-	public Transaction getTransaction() {
-		return transaction;
-	}
 
-	public ECDSASignature getSignature() {
-		return signature;
-	}
-
-	public TransactionWrapper(Transaction t, int channelId) {
+	public TransactionWrapper (Transaction t, int channelId) {
 		this.hash = t.getHashAsString();
 		this.channelId = channelId;
 		this.data = t.bitcoinSerialize();
 	}
-	public TransactionWrapper(Transaction t, int channelId, int id) {
+
+	public TransactionWrapper (Transaction t, int channelId, int id) {
 		this.hash = t.getHashAsString();
 		this.channelId = channelId;
 		this.data = t.bitcoinSerialize();
 		this.id = id;
 	}
 
-	public int getId() {
-		return id;
-	}
-
-	public String getHash() {
-		return hash;
-	}
-
-	public int getChannelId() {
+	public int getChannelId () {
 		return channelId;
 	}
 
-	public int getPaymentId() {
+	public byte[] getData () {
+		return data;
+	}
+
+	public String getHash () {
+		return hash;
+	}
+
+	public int getId () {
+		return id;
+	}
+
+	public int getPaymentId () {
 		return paymentId;
 	}
 
-	public byte[] getData() {
-		return data;
+	public ECDSASignature getSignature () {
+		return signature;
+	}
+
+	public Transaction getTransaction () {
+		return transaction;
 	}
 }

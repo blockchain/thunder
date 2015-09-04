@@ -18,6 +18,5 @@
 package network.thunder.client.communications.objects;
 
 public class SendPaymentResponseFour {
-	
 
 }

@@ -17,21 +17,22 @@
  */
 package network.thunder.server.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.server.database.objects.Key;
 
+import java.util.ArrayList;
+
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class AddKeysRequest.
  */
 public class AddKeysRequest {
-	
+
 	/**
 	 * The key list.
 	 */
 	public ArrayList<Key> keyList;
-	
+
 	/**
 	 * The amount.
 	 */

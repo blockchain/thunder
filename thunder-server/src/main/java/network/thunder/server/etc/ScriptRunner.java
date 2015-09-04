@@ -28,6 +28,7 @@ import java.io.Reader;
 import java.sql.*;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * Tool to run database scripts.
  */
@@ -47,7 +48,7 @@ public class ScriptRunner {
 	 * The stop on error.
 	 */
 	private boolean stopOnError;
-	
+
 	/**
 	 * The auto commit.
 	 */
@@ -57,7 +58,7 @@ public class ScriptRunner {
 	 * The log writer.
 	 */
 	private PrintWriter logWriter = new PrintWriter(System.out);
-	
+
 	/**
 	 * The error log writer.
 	 */
@@ -67,7 +68,7 @@ public class ScriptRunner {
 	 * The delimiter.
 	 */
 	private String delimiter = DEFAULT_DELIMITER;
-	
+
 	/**
 	 * The full line delimiter.
 	 */
@@ -76,54 +77,78 @@ public class ScriptRunner {
 	/**
 	 * Default constructor.
 	 *
-	 * @param connection the connection
-	 * @param autoCommit the auto commit
+	 * @param connection  the connection
+	 * @param autoCommit  the auto commit
 	 * @param stopOnError the stop on error
 	 */
-	public ScriptRunner(Connection connection, boolean autoCommit,
-			boolean stopOnError) {
+	public ScriptRunner (Connection connection, boolean autoCommit, boolean stopOnError) {
 		this.connection = connection;
 		this.autoCommit = autoCommit;
 		this.stopOnError = stopOnError;
 	}
 
 	/**
-	 * Sets the delimiter.
-	 *
-	 * @param delimiter the delimiter
-	 * @param fullLineDelimiter the full line delimiter
+	 * Flush.
 	 */
-	public void setDelimiter(String delimiter, boolean fullLineDelimiter) {
-		this.delimiter = delimiter;
-		this.fullLineDelimiter = fullLineDelimiter;
+	private void flush () {
+		if (logWriter != null) {
+			logWriter.flush();
+		}
+		if (errorLogWriter != null) {
+			errorLogWriter.flush();
+		}
 	}
 
 	/**
-	 * Setter for logWriter property.
+	 * Gets the delimiter.
 	 *
-	 * @param logWriter            - the new value of the logWriter property
+	 * @return the delimiter
 	 */
-	public void setLogWriter(PrintWriter logWriter) {
-		this.logWriter = logWriter;
+	private String getDelimiter () {
+		return delimiter;
 	}
 
 	/**
-	 * Setter for errorLogWriter property.
+	 * Prints the.
 	 *
-	 * @param errorLogWriter            - the new value of the errorLogWriter property
+	 * @param o the o
 	 */
-	public void setErrorLogWriter(PrintWriter errorLogWriter) {
-		this.errorLogWriter = errorLogWriter;
+	private void print (Object o) {
+		if (logWriter != null) {
+			System.out.print(o);
+		}
+	}
+
+	/**
+	 * Println.
+	 *
+	 * @param o the o
+	 */
+	private void println (Object o) {
+		if (logWriter != null) {
+			logWriter.println(o);
+		}
+	}
+
+	/**
+	 * Println error.
+	 *
+	 * @param o the o
+	 */
+	private void printlnError (Object o) {
+		if (errorLogWriter != null) {
+			errorLogWriter.println(o);
+		}
 	}
 
 	/**
 	 * Runs an SQL script (read in using the Reader parameter).
 	 *
-	 * @param reader            - the source of the script
-	 * @throws IOException Signals that an I/O exception has occurred.
+	 * @param reader - the source of the script
+	 * @throws IOException  Signals that an I/O exception has occurred.
 	 * @throws SQLException the SQL exception
 	 */
-	public void runScript(Reader reader) throws IOException, SQLException {
+	public void runScript (Reader reader) throws IOException, SQLException {
 		try {
 			boolean originalAutoCommit = connection.getAutoCommit();
 			try {
@@ -147,13 +172,12 @@ public class ScriptRunner {
 	 * Runs an SQL script (read in using the Reader parameter) using the
 	 * connection passed in.
 	 *
-	 * @param conn            - the connection to use for the script
-	 * @param reader            - the source of the script
-	 * @throws IOException             if there is an error reading from the Reader
-	 * @throws SQLException             if any SQL errors occur
+	 * @param conn   - the connection to use for the script
+	 * @param reader - the source of the script
+	 * @throws IOException  if there is an error reading from the Reader
+	 * @throws SQLException if any SQL errors occur
 	 */
-	private void runScript(Connection conn, Reader reader) throws IOException,
-			SQLException {
+	private void runScript (Connection conn, Reader reader) throws IOException, SQLException {
 		StringBuffer command = null;
 		try {
 			LineNumberReader lineReader = new LineNumberReader(reader);
@@ -165,18 +189,12 @@ public class ScriptRunner {
 				String trimmedLine = line.trim();
 				if (trimmedLine.startsWith("--")) {
 					println(trimmedLine);
-				} else if (trimmedLine.length() < 1
-						|| trimmedLine.startsWith("//")) {
+				} else if (trimmedLine.length() < 1 || trimmedLine.startsWith("//")) {
 					// Do nothing
-				} else if (trimmedLine.length() < 1
-						|| trimmedLine.startsWith("--")) {
+				} else if (trimmedLine.length() < 1 || trimmedLine.startsWith("--")) {
 					// Do nothing
-				} else if (!fullLineDelimiter
-						&& trimmedLine.endsWith(getDelimiter())
-						|| fullLineDelimiter
-						&& trimmedLine.equals(getDelimiter())) {
-					command.append(line.substring(0, line
-							.lastIndexOf(getDelimiter())));
+				} else if (!fullLineDelimiter && trimmedLine.endsWith(getDelimiter()) || fullLineDelimiter && trimmedLine.equals(getDelimiter())) {
+					command.append(line.substring(0, line.lastIndexOf(getDelimiter())));
 					command.append(" ");
 					Statement statement = conn.createStatement();
 
@@ -249,56 +267,31 @@ public class ScriptRunner {
 	}
 
 	/**
-	 * Gets the delimiter.
+	 * Sets the delimiter.
 	 *
-	 * @return the delimiter
+	 * @param delimiter         the delimiter
+	 * @param fullLineDelimiter the full line delimiter
 	 */
-	private String getDelimiter() {
-		return delimiter;
+	public void setDelimiter (String delimiter, boolean fullLineDelimiter) {
+		this.delimiter = delimiter;
+		this.fullLineDelimiter = fullLineDelimiter;
 	}
 
 	/**
-	 * Prints the.
+	 * Setter for errorLogWriter property.
 	 *
-	 * @param o the o
+	 * @param errorLogWriter - the new value of the errorLogWriter property
 	 */
-	private void print(Object o) {
-		if (logWriter != null) {
-			System.out.print(o);
-		}
+	public void setErrorLogWriter (PrintWriter errorLogWriter) {
+		this.errorLogWriter = errorLogWriter;
 	}
 
 	/**
-	 * Println.
+	 * Setter for logWriter property.
 	 *
-	 * @param o the o
+	 * @param logWriter - the new value of the logWriter property
 	 */
-	private void println(Object o) {
-		if (logWriter != null) {
-			logWriter.println(o);
-		}
-	}
-
-	/**
-	 * Println error.
-	 *
-	 * @param o the o
-	 */
-	private void printlnError(Object o) {
-		if (errorLogWriter != null) {
-			errorLogWriter.println(o);
-		}
-	}
-
-	/**
-	 * Flush.
-	 */
-	private void flush() {
-		if (logWriter != null) {
-			logWriter.flush();
-		}
-		if (errorLogWriter != null) {
-			errorLogWriter.flush();
-		}
+	public void setLogWriter (PrintWriter logWriter) {
+		this.logWriter = logWriter;
 	}
 }

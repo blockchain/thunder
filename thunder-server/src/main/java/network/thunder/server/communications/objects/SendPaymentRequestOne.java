@@ -18,21 +18,22 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class SendPaymentRequestOne.
  */
 public class SendPaymentRequestOne {
-	
+
 	/**
 	 * The channel transaction.
 	 */
 	public String channelTransaction;
-	
+
 	/**
 	 * The receipient.
 	 */
 	public String receipient;
-	
+
 	/**
 	 * The amount.
 	 */

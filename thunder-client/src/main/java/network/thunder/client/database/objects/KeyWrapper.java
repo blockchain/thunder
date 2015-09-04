@@ -17,70 +17,66 @@
  */
 package network.thunder.client.database.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.client.etc.Tools;
-
 import org.bitcoinj.core.ECKey;
 
+import java.util.ArrayList;
+
 public class KeyWrapper {
-	
-	public class IKey {
-		public String pubKey;
-		public int id;
-		public boolean used;
-	}
-	
+
 	ArrayList<IKey> keyList = new ArrayList<IKey>();
-	
-	public String getKey() {
-		for(IKey k : keyList) {
-//			if(!k.used) {
-				k.used = true;
-				return k.pubKey;
-//			}
-		}
-		return null;
-	}
-	
-	public ECKey getUsedECKey(String pubKey) {
-		for(IKey k : keyList) {
-			if(k.used) {
-				if(k.pubKey.equals(pubKey)) {
-					ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
-					return key;
-				}
-			}
-		
-		}
-		return null;
-	}
-	
-	public void addKey(int id, String pubKey) {
+
+	public void addKey (int id, String pubKey) {
 		IKey k = new IKey();
 		k.id = id;
 		k.pubKey = pubKey;
 		keyList.add(k);
 	}
-	
-	public boolean checkKey(String pubKey) {
-		for(IKey k : keyList) {
-//			if(!k.used) {
-				if(k.pubKey.equals(pubKey)) {
-					k.used = true;
-					return true;
-				}
-//			}
-		
+
+	public boolean checkKey (String pubKey) {
+		for (IKey k : keyList) {
+			//			if(!k.used) {
+			if (k.pubKey.equals(pubKey)) {
+				k.used = true;
+				return true;
+			}
+			//			}
+
 		}
 		return false;
 	}
-	
-	public ArrayList<IKey> getKeyList() {
+
+	public String getKey () {
+		for (IKey k : keyList) {
+			//			if(!k.used) {
+			k.used = true;
+			return k.pubKey;
+			//			}
+		}
+		return null;
+	}
+
+	public ArrayList<IKey> getKeyList () {
 		return keyList;
 	}
 
-	
-	
+	public ECKey getUsedECKey (String pubKey) {
+		for (IKey k : keyList) {
+			if (k.used) {
+				if (k.pubKey.equals(pubKey)) {
+					ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
+					return key;
+				}
+			}
+
+		}
+		return null;
+	}
+
+	public class IKey {
+		public String pubKey;
+		public int id;
+		public boolean used;
+	}
 
 }

@@ -17,32 +17,33 @@
  */
 package network.thunder.server.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.server.database.objects.Key;
 import network.thunder.server.database.objects.Secret;
 
+import java.util.ArrayList;
+
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class UpdateChannelResponseTwo.
  */
 public class UpdateChannelResponseTwo {
-	
+
 	/**
 	 * The secret list.
 	 */
 	public ArrayList<Secret> secretList;
-	
+
 	/**
 	 * The key list.
 	 */
 	public ArrayList<Key> keyList;
-	
+
 	/**
 	 * The removed payments.
 	 */
 	public ArrayList<String> removedPayments;
-	
+
 	/**
 	 * The channel transaction.
 	 */

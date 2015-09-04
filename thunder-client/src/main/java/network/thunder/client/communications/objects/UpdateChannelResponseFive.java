@@ -17,9 +17,9 @@
  */
 package network.thunder.client.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.client.database.objects.Key;
+
+import java.util.ArrayList;
 
 public class UpdateChannelResponseFive {
 	public ArrayList<Key> keyList;

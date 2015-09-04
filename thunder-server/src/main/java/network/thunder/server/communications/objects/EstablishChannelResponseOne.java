@@ -18,21 +18,22 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class EstablishChannelResponseOne.
  */
 public class EstablishChannelResponseOne {
-	
+
 	/**
 	 * The pub key.
 	 */
 	public String pubKey;
-	
+
 	/**
 	 * The change address.
 	 */
 	public String changeAddress;
-	
+
 	/**
 	 * The tx unsigned.
 	 */

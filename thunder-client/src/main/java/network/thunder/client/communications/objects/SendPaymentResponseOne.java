@@ -18,7 +18,7 @@
 package network.thunder.client.communications.objects;
 
 public class SendPaymentResponseOne {
-	
+
 	public String channelTransaction;
 	public String channelHash;
 

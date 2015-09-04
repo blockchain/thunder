@@ -1,22 +1,22 @@
 package network.thunder.server.etc;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class Base58.
  */
 public class Base58 {
-	
+
 	/**
 	 * The Constant ALPHABET.
 	 */
-	private static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
-			.toCharArray();
-	
+	private static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
+
 	/**
 	 * The Constant BASE_58.
 	 */
 	private static final int BASE_58 = ALPHABET.length;
-	
+
 	/**
 	 * The Constant BASE_256.
 	 */
@@ -26,6 +26,7 @@ public class Base58 {
 	 * The Constant INDEXES.
 	 */
 	private static final int[] INDEXES = new int[128];
+
 	static {
 		for (int i = 0; i < INDEXES.length; i++) {
 			INDEXES[i] = -1;
@@ -34,66 +35,20 @@ public class Base58 {
 			INDEXES[ALPHABET[i]] = i;
 		}
 	}
-	
-	
 
 	/**
-	 * Encode.
+	 * Copy of range.
 	 *
-	 * @param input the input
-	 * @return the string
+	 * @param source the source
+	 * @param from   the from
+	 * @param to     the to
+	 * @return the byte[]
 	 */
-	public static String encode(byte[] input) {
-		if (input.length == 0) {
-			// paying with the same coin
-			return "";
-		}
+	private static byte[] copyOfRange (byte[] source, int from, int to) {
+		byte[] range = new byte[to - from];
+		System.arraycopy(source, from, range, 0, range.length);
 
-		//
-		// Make a copy of the input since we are going to modify it.
-		//
-		input = copyOfRange(input, 0, input.length);
-
-		//
-		// Count leading zeroes
-		//
-		int zeroCount = 0;
-		while (zeroCount < input.length && input[zeroCount] == 0) {
-			++zeroCount;
-		}
-
-		//
-		// The actual encoding
-		//
-		byte[] temp = new byte[input.length * 2];
-		int j = temp.length;
-
-		int startAt = zeroCount;
-		while (startAt < input.length) {
-			byte mod = divmod58(input, startAt);
-			if (input[startAt] == 0) {
-				++startAt;
-			}
-
-			temp[--j] = (byte) ALPHABET[mod];
-		}
-
-		//
-		// Strip extra '1' if any
-		//
-		while (j < temp.length && temp[j] == ALPHABET[0]) {
-			++j;
-		}
-
-		//
-		// Add as many leading '1' as there were leading zeros.
-		//
-		while (--zeroCount >= 0) {
-			temp[--j] = (byte) ALPHABET[0];
-		}
-
-		byte[] output = copyOfRange(temp, j, temp.length);
-		return new String(output);
+		return range;
 	}
 
 	/**
@@ -102,7 +57,7 @@ public class Base58 {
 	 * @param input the input
 	 * @return the byte[]
 	 */
-	public static byte[] decode(String input) {
+	public static byte[] decode (String input) {
 		if (input.length() == 0) {
 			// paying with the same coin
 			return new byte[0];
@@ -161,34 +116,13 @@ public class Base58 {
 	}
 
 	/**
-	 * Divmod58.
-	 *
-	 * @param number the number
-	 * @param startAt the start at
-	 * @return the byte
-	 */
-	private static byte divmod58(byte[] number, int startAt) {
-		int remainder = 0;
-		for (int i = startAt; i < number.length; i++) {
-			int digit256 = number[i] & 0xFF;
-			int temp = remainder * BASE_256 + digit256;
-
-			number[i] = (byte) (temp / BASE_58);
-
-			remainder = temp % BASE_58;
-		}
-
-		return (byte) remainder;
-	}
-
-	/**
 	 * Divmod256.
 	 *
 	 * @param number58 the number58
-	 * @param startAt the start at
+	 * @param startAt  the start at
 	 * @return the byte
 	 */
-	private static byte divmod256(byte[] number58, int startAt) {
+	private static byte divmod256 (byte[] number58, int startAt) {
 		int remainder = 0;
 		for (int i = startAt; i < number58.length; i++) {
 			int digit58 = number58[i] & 0xFF;
@@ -203,17 +137,82 @@ public class Base58 {
 	}
 
 	/**
-	 * Copy of range.
+	 * Divmod58.
 	 *
-	 * @param source the source
-	 * @param from the from
-	 * @param to the to
-	 * @return the byte[]
+	 * @param number  the number
+	 * @param startAt the start at
+	 * @return the byte
 	 */
-	private static byte[] copyOfRange(byte[] source, int from, int to) {
-		byte[] range = new byte[to - from];
-		System.arraycopy(source, from, range, 0, range.length);
+	private static byte divmod58 (byte[] number, int startAt) {
+		int remainder = 0;
+		for (int i = startAt; i < number.length; i++) {
+			int digit256 = number[i] & 0xFF;
+			int temp = remainder * BASE_256 + digit256;
 
-		return range;
+			number[i] = (byte) (temp / BASE_58);
+
+			remainder = temp % BASE_58;
+		}
+
+		return (byte) remainder;
+	}
+
+	/**
+	 * Encode.
+	 *
+	 * @param input the input
+	 * @return the string
+	 */
+	public static String encode (byte[] input) {
+		if (input.length == 0) {
+			// paying with the same coin
+			return "";
+		}
+
+		//
+		// Make a copy of the input since we are going to modify it.
+		//
+		input = copyOfRange(input, 0, input.length);
+
+		//
+		// Count leading zeroes
+		//
+		int zeroCount = 0;
+		while (zeroCount < input.length && input[zeroCount] == 0) {
+			++zeroCount;
+		}
+
+		//
+		// The actual encoding
+		//
+		byte[] temp = new byte[input.length * 2];
+		int j = temp.length;
+
+		int startAt = zeroCount;
+		while (startAt < input.length) {
+			byte mod = divmod58(input, startAt);
+			if (input[startAt] == 0) {
+				++startAt;
+			}
+
+			temp[--j] = (byte) ALPHABET[mod];
+		}
+
+		//
+		// Strip extra '1' if any
+		//
+		while (j < temp.length && temp[j] == ALPHABET[0]) {
+			++j;
+		}
+
+		//
+		// Add as many leading '1' as there were leading zeros.
+		//
+		while (--zeroCount >= 0) {
+			temp[--j] = (byte) ALPHABET[0];
+		}
+
+		byte[] output = copyOfRange(temp, j, temp.length);
+		return new String(output);
 	}
 }

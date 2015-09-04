@@ -1,108 +1,109 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.image.*?>
-<?import java.lang.*?>
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.effect.*?>
+<?import javafx.scene.effect.DropShadow?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-
-<Pane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="352.0" prefWidth="502.0" style="" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ReceiveMoneyRequestController">
-  <children>
-      <Pane minHeight="350.0" minWidth="500.0" prefHeight="350.0" prefWidth="500.0" style="-fx-background-color: white;">
-         <children>
-            <VBox alignment="CENTER" minHeight="350.0" minWidth="500.0" prefHeight="350.0" prefWidth="500.0">
-               <children>
-                  <HBox fx:id="topHBox" alignment="CENTER" spacing="15.0">
-                     <children>
-                    <Label fx:id="titleLabel" text="Receive">
-                      <font>
-                        <Font size="25.0" />
-                      </font>
-                    </Label>
-                        <Label fx:id="labelBtcAmount" text="Label">
-                           <font>
-                              <Font size="21.0" />
-                           </font>
-                        </Label>
-                        <Label fx:id="btcLabel" text="BTC">
-                           <font>
-                              <Font size="24.0" />
-                           </font>
-                        </Label>
-                     </children>
-                     <VBox.margin>
-                        <Insets top="10.0" />
-                     </VBox.margin>
-                  </HBox>
-                  <HBox>
-                     <children>
-                      <VBox alignment="CENTER_LEFT" prefHeight="231.0" prefWidth="572.0" spacing="20.0" style="-fx-background-color: white;">
-                        <children>
-                              <HBox>
-                                 <children>
-                                    <Label text="ID" />
-                                    <TextField fx:id="FieldUserId" editable="false" prefHeight="25.0" prefWidth="199.0">
-                                       <HBox.margin>
-                                          <Insets left="40.0" />
-                                       </HBox.margin>
-                                    </TextField>
-                                 </children>
-                              </HBox>
-                              <HBox>
-                                 <children>
-                                    <Label text="Hash" />
-                                    <TextField fx:id="FieldHash" editable="false" prefHeight="25.0" prefWidth="200.0">
-                                       <HBox.margin>
-                                          <Insets left="25.0" />
-                                       </HBox.margin>
-                                    </TextField>
-                                 </children>
-                              </HBox>
-                              <HBox layoutX="40.0" layoutY="141.0">
-                                 <children>
-                                    <Label text="Address" />
-                                    <TextField fx:id="FieldAddress" editable="false" prefHeight="25.0" prefWidth="200.0">
-                                       <HBox.margin>
-                                          <Insets left="10.0" />
-                                       </HBox.margin>
-                                    </TextField>
-                                 </children>
-                              </HBox>
-                              <HBox layoutX="25.0" layoutY="158.0">
-                                 <children>
-                                    <Label text="Request" />
-                                    <TextField fx:id="FieldRequest" editable="false" prefHeight="25.0" prefWidth="200.0">
-                                       <HBox.margin>
-                                          <Insets left="10.0" />
-                                       </HBox.margin>
-                                    </TextField>
-                                 </children>
-                              </HBox>
-                        </children>
-                           <padding>
-                              <Insets bottom="30.0" left="15.0" top="30.0" />
-                           </padding>
-                      </VBox>
-                        <ImageView fx:id="ImageQR" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
-                           <HBox.margin>
-                              <Insets right="15.0" top="15.0" />
-                           </HBox.margin>
-                        </ImageView>
-                     </children>
-                  </HBox>
-            <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefHeight="30.0" prefWidth="185.0" text="Close">
-                     <VBox.margin>
-                        <Insets />
-                     </VBox.margin>
-                  </Button>
-               </children>
-            </VBox>
-         </children>
-          <effect>
-              <DropShadow />
-          </effect>
-      </Pane>
-  </children>
+<?import javafx.scene.text.Font?>
+<Pane xmlns:fx="http://javafx.com/fxml/1" id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+      prefHeight="352.0" prefWidth="502.0"
+      style="" xmlns="http://javafx.com/javafx/8.0.40" fx:controller="wallettemplate.ReceiveMoneyRequestController">
+    <children>
+        <Pane minHeight="350.0" minWidth="500.0" prefHeight="350.0" prefWidth="500.0" style="-fx-background-color: white;">
+            <children>
+                <VBox alignment="CENTER" minHeight="350.0" minWidth="500.0" prefHeight="350.0" prefWidth="500.0">
+                    <children>
+                        <HBox fx:id="topHBox" alignment="CENTER" spacing="15.0">
+                            <children>
+                                <Label fx:id="titleLabel" text="Receive">
+                                    <font>
+                                        <Font size="25.0"/>
+                                    </font>
+                                </Label>
+                                <Label fx:id="labelBtcAmount" text="Label">
+                                    <font>
+                                        <Font size="21.0"/>
+                                    </font>
+                                </Label>
+                                <Label fx:id="btcLabel" text="BTC">
+                                    <font>
+                                        <Font size="24.0"/>
+                                    </font>
+                                </Label>
+                            </children>
+                            <VBox.margin>
+                                <Insets top="10.0"/>
+                            </VBox.margin>
+                        </HBox>
+                        <HBox>
+                            <children>
+                                <VBox alignment="CENTER_LEFT" prefHeight="231.0" prefWidth="572.0" spacing="20.0" style="-fx-background-color: white;">
+                                    <children>
+                                        <HBox>
+                                            <children>
+                                                <Label text="ID"/>
+                                                <TextField fx:id="FieldUserId" editable="false" prefHeight="25.0" prefWidth="199.0">
+                                                    <HBox.margin>
+                                                        <Insets left="40.0"/>
+                                                    </HBox.margin>
+                                                </TextField>
+                                            </children>
+                                        </HBox>
+                                        <HBox>
+                                            <children>
+                                                <Label text="Hash"/>
+                                                <TextField fx:id="FieldHash" editable="false" prefHeight="25.0" prefWidth="200.0">
+                                                    <HBox.margin>
+                                                        <Insets left="25.0"/>
+                                                    </HBox.margin>
+                                                </TextField>
+                                            </children>
+                                        </HBox>
+                                        <HBox layoutX="40.0" layoutY="141.0">
+                                            <children>
+                                                <Label text="Address"/>
+                                                <TextField fx:id="FieldAddress" editable="false" prefHeight="25.0" prefWidth="200.0">
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </TextField>
+                                            </children>
+                                        </HBox>
+                                        <HBox layoutX="25.0" layoutY="158.0">
+                                            <children>
+                                                <Label text="Request"/>
+                                                <TextField fx:id="FieldRequest" editable="false" prefHeight="25.0" prefWidth="200.0">
+                                                    <HBox.margin>
+                                                        <Insets left="10.0"/>
+                                                    </HBox.margin>
+                                                </TextField>
+                                            </children>
+                                        </HBox>
+                                    </children>
+                                    <padding>
+                                        <Insets bottom="30.0" left="15.0" top="30.0"/>
+                                    </padding>
+                                </VBox>
+                                <ImageView fx:id="ImageQR" fitHeight="200.0" fitWidth="200.0" pickOnBounds="true" preserveRatio="true">
+                                    <HBox.margin>
+                                        <Insets right="15.0" top="15.0"/>
+                                    </HBox.margin>
+                                </ImageView>
+                            </children>
+                        </HBox>
+                        <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefHeight="30.0" prefWidth="185.0"
+                                text="Close">
+                            <VBox.margin>
+                                <Insets/>
+                            </VBox.margin>
+                        </Button>
+                    </children>
+                </VBox>
+            </children>
+            <effect>
+                <DropShadow/>
+            </effect>
+        </Pane>
+    </children>
 </Pane>
