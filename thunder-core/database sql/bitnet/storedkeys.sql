@@ -15,15 +15,16 @@ CREATE TABLE IF NOT EXISTS `storedkeys` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `channel_id` int(11) DEFAULT NULL,
   `owner` tinyint(4) DEFAULT NULL,
-  `pub_key` varchar(60) NOT NULL,
-  `priv_key` varchar(60) DEFAULT NULL,
+  `pub_key` tinyblob NOT NULL,
+  `priv_key` tinyblob,
   `current_channel` tinyint(4) DEFAULT NULL,
+  `current_channel_temp` tinyint(4) DEFAULT NULL,
+  `channel_version` int(11) DEFAULT NULL,
   `used` tinyint(4) DEFAULT NULL,
   `exposed` tinyint(4) DEFAULT NULL,
   `key_chain_depth` int(11) DEFAULT NULL,
   `key_chain_child` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `pub_key` (`pub_key`),
   KEY `channel_pub_key` (`channel_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 

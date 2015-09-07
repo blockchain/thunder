@@ -25,10 +25,14 @@ CREATE TABLE IF NOT EXISTS `payments` (
   `include_in_receiver_channel_temp` tinyint(4) NOT NULL,
   `secret_hash` varchar(500) NOT NULL,
   `secret` varchar(500) DEFAULT NULL,
-  `timestamp_created` int(11) NOT NULL,
-  `timestamp_added_to_receiver` int(11) NOT NULL,
+  `timestamp_added_sender` int(11) NOT NULL,
+  `timestamp_added_receiver` int(11) NOT NULL,
   `timestamp_settled_receiver` int(11) NOT NULL,
   `timestamp_settled_sender` int(11) NOT NULL,
+  `version_added_sender` int(11) NOT NULL,
+  `version_added_receiver` int(11) NOT NULL,
+  `version_settled_sender` int(11) NOT NULL,
+  `version_settled_receiver` int(11) NOT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
