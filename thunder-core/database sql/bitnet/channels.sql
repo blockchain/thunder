@@ -35,10 +35,10 @@ CREATE TABLE IF NOT EXISTS `channels` (
   `opening_secret_client` varchar(500) DEFAULT NULL,
   `escape_tx_sig` blob,
   `escape_fast_tx_sig` blob,
-  `channel_tx_server_sig` blob,
-  `channel_tx_server_temp_sig` blob,
+  `channel_tx_sig` blob,
+  `channel_tx_temp_sig` blob,
   `channel_tx_version` int(11) DEFAULT NULL,
-  `phase` tinyint(4) DEFAULT NULL,
+  `phase` varchar(50) DEFAULT NULL,
   `is_ready` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
