@@ -18,28 +18,27 @@
  */
 package network.thunder.core.communication.objects;
 
-import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.ECKey;
 
 /**
  * Response to the second request for establishing a channel.
  */
 public class EstablishChannelResponseTwo {
 
-	private String escapeTx;
-	private String escapeFastTx;
+	private String escapeTxSig;
+	private String escapeFastTxSig;
 
-	public EstablishChannelResponseTwo (Transaction escapeTx, Transaction escapeFastTx) {
-		this.escapeTx = Tools.byteToString(escapeTx.bitcoinSerialize());
-		this.escapeFastTx = Tools.byteToString(escapeFastTx.bitcoinSerialize());
+	public EstablishChannelResponseTwo (ECKey.ECDSASignature escapeTxSig, ECKey.ECDSASignature escapeFastTxSig) {
+		this.escapeTxSig = Tools.byteToString(escapeTxSig.encodeToDER());
+		this.escapeFastTxSig = Tools.byteToString(escapeFastTxSig.encodeToDER());
 	}
 
-	public Transaction getEscapeTx () {
-		return new Transaction(Constants.getNetwork(), Tools.stringToByte(escapeTx));
+	public ECKey.ECDSASignature getEscapeTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeTxSig));
 	}
 
-	public Transaction getEscapeFastTx () {
-		return new Transaction(Constants.getNetwork(), Tools.stringToByte(escapeFastTx));
+	public ECKey.ECDSASignature getEscapeFastTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeFastTxSig));
 	}
 }

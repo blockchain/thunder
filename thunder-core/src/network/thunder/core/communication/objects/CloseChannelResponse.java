@@ -18,23 +18,22 @@
  */
 package network.thunder.core.communication.objects;
 
-import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.ECKey;
 
 /**
  * Response for closing the channel cooperatively.
  */
 public class CloseChannelResponse {
 
-	private String channelTransaction;
+	private String channelTxSig;
 
-	public CloseChannelResponse (Transaction channelTransaction) {
-		this.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
+	public CloseChannelResponse (ECKey.ECDSASignature channelTxSig) {
+		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
 	}
 
-	public Transaction getChannelTransaction () {
-		return new Transaction(Constants.getNetwork(), Tools.stringToByte(channelTransaction));
+	public ECKey.ECDSASignature getChannelTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
 	}
 
 }

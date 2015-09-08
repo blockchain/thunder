@@ -19,9 +19,8 @@
 package network.thunder.core.communication.objects;
 
 import network.thunder.core.communication.objects.subobjects.RevocationHash;
-import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.ECKey;
 
 /**
  * Response to the first request of making a payment.
@@ -29,18 +28,18 @@ import org.bitcoinj.core.Transaction;
 public class SendPaymentResponseOne {
 
 	private RevocationHash newHash;
-	private String channelTx;
+	private String channelTxSig;
 
-	public SendPaymentResponseOne (RevocationHash newHash, Transaction channelTx) {
+	public SendPaymentResponseOne (RevocationHash newHash, ECKey.ECDSASignature channelTxSig) {
 		this.newHash = newHash;
-		this.channelTx = Tools.byteToString(channelTx.bitcoinSerialize());
+		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
 	}
 
 	public RevocationHash getNewHash () {
 		return newHash;
 	}
 
-	public Transaction getChannelTx () {
-		return new Transaction(Constants.getNetwork(), Tools.stringToByte(channelTx));
+	public ECKey.ECDSASignature getChannelTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
 	}
 }

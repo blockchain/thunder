@@ -19,9 +19,8 @@
 package network.thunder.core.communication.objects;
 
 import network.thunder.core.communication.objects.subobjects.RevocationHash;
-import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;
 
@@ -31,16 +30,16 @@ import java.util.ArrayList;
  */
 public class SendPaymentRequestTwo {
 
-	public String channelTransaction;
+	public String channelTxSig;
 	public ArrayList<RevocationHash> oldSecrets;
 
-	public SendPaymentRequestTwo (Transaction channelTransaction, ArrayList<RevocationHash> oldSecrets) {
-		this.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
+	public SendPaymentRequestTwo (ECKey.ECDSASignature channelTxSig, ArrayList<RevocationHash> oldSecrets) {
+		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
 		this.oldSecrets = oldSecrets;
 	}
 
-	public Transaction getChannelTransaction () {
-		return new Transaction(Constants.getNetwork(), Tools.stringToByte(channelTransaction));
+	public ECKey.ECDSASignature getChannelTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
 	}
 
 	public ArrayList<RevocationHash> getOldSecrets () {

@@ -18,19 +18,22 @@
  */
 package network.thunder.core.communication.objects;
 
+import network.thunder.core.etc.Tools;
+import org.bitcoinj.core.ECKey;
+
 /**
  * Request for closing down the channel cooperatively.
  * After this request, the channel will not be usable anymore.
  */
 public class CloseChannelRequest {
 
-	private String channelTransaction;
+	private String channelTxSig;
 
-	public CloseChannelRequest (String channelTransaction) {
-		this.channelTransaction = channelTransaction;
+	public CloseChannelRequest (ECKey.ECDSASignature channelTxSig) {
+		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
 	}
 
-	public String getChannelTransaction () {
-		return channelTransaction;
+	public ECKey.ECDSASignature getChannelTxSig () {
+		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
 	}
 }
