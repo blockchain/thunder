@@ -29,11 +29,51 @@ public class PaymentSecret {
 		this.hash = hash;
 	}
 
-	public String getSecret () {
+	public String getSecretAsString () {
 		return secret;
 	}
 
-	public String getHash () {
-		return hash;
+
+	public String getSecretHashAsString () {
+		return secretHash;
+	}
+	/**
+	 * The preimage corresponding to the hash.
+	 * Losing it to the counterparty before the revocation may lead to loss of funds.
+	 */
+
+	public byte[] getSecret() {
+		return Tools.stringToByte(secret);
+	}
+	/**
+	 * The hash necessary for the transactions to be revocable.
+	 */
+	public byte[] getSecretHash() {
+		return Tools.stringToByte(secretHash);
+	}
+
+	/**
+	 * Check whether the supplied preimage does indeed hash to the correct hash.
+	 *
+	 * @return true, if successful
+	 */
+	public boolean check () {
+		/*
+		 * Child = 0 is - per convention - a new masterkey. We will check it later.
+		 */
+		if (child == 0) {
+			return true;
+		}
+
+		if (privateKey == null) {
+			return false;
+		}
+
+		if (Arrays.equals(publicKey, Tools.hashSecret(privateKey))) {
+			return true;
+		}
+
+		return false;
+
 	}
 }
