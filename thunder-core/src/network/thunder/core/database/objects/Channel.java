@@ -407,26 +407,6 @@ public class Channel {
 	}
 
 	/**
-	 * Gets the hierachy client.
-	 *
-	 * @return the hierachy client
-	 */
-	public DeterministicHierarchy getHierachyClient () {
-		DeterministicKey masterKey = DeterministicKey.deserializeB58(getMasterPrivateKeyClient(), Constants.getNetwork());
-		return new DeterministicHierarchy(masterKey);
-	}
-
-	/**
-	 * Gets the hierachy server.
-	 *
-	 * @return the hierachy server
-	 */
-	public DeterministicHierarchy getHierachyServer () {
-		DeterministicKey masterKey = DeterministicKey.deserializeB58(getMasterPrivateKeyServer(), Constants.getNetwork());
-		return new DeterministicHierarchy(masterKey);
-	}
-
-	/**
 	 * Gets the id.
 	 *
 	 * @return the id
