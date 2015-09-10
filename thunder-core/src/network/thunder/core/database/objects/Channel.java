@@ -171,29 +171,20 @@ public class Channel {
 	private int keyChainDepth;
 	private int keyChainChild;
 
-	/**
-	 * The master chain depth.
+	/*
+	 * We keep track of the key chain of the other party.
+	 * Doing so allows us to recreate and check old keys, as we know the depth of the current key we hold without poking around in the dark.
 	 */
 	private int masterChainDepth;
 
-	/**
-	 * The client key.
+	/*
+	 * Keys used for all channel transactions.
+	 * These are the keys used for the 2-of-2 multisig of the opening transactions.
+	 * We need them for any updates to sign and to check the signature of the other party.
 	 */
 	private ECKey clientKey;
-
-	/**
-	 * The client key deterministic.
-	 */
 	private DeterministicKey clientKeyDeterministic;
-
-	/**
-	 * The server key.
-	 */
 	private ECKey serverKey;
-
-	/**
-	 * The server key deterministic.
-	 */
 	private DeterministicKey serverKeyDeterministic;
 
 	public String getOpeningTxHashServer () {

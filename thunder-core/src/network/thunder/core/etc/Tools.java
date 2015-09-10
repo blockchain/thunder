@@ -521,7 +521,7 @@ public class Tools {
 	 * @throws UnsupportedEncodingException the unsupported encoding exception
 	 * @throws NoSuchAlgorithmException     the no such algorithm exception
 	 */
-	public static String hashSecret (byte[] secret) {
+	public static String hashSecretToString (byte[] secret) {
 
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -536,6 +536,26 @@ public class Tools {
 			dig.doFinal(out, 0);
 
 			return Tools.byteToString(out);
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static byte[] hashSecret (byte[] secret) {
+
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+			md.update(secret);
+			byte[] digest = md.digest();
+
+			RIPEMD160Digest dig = new RIPEMD160Digest();
+			dig.update(digest, 0, digest.length);
+
+			byte[] out = new byte[20];
+			dig.doFinal(out, 0);
+
+			return out;
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException(e);
 		}
