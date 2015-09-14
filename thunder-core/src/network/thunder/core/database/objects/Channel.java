@@ -18,6 +18,7 @@
  */
 package network.thunder.core.database.objects;
 
+import network.thunder.core.communication.objects.subobjects.RevocationHash;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.KeyDerivation;
 import network.thunder.core.etc.Tools;
@@ -243,8 +244,12 @@ public class Channel {
 
 		this.setPubKeyClient(result.getString("pub_key_client"));
 		this.setPubKeyServer(result.getString("pub_key_server"));
-		this.setChangeAddressClient(result.getString("change_address_client"));
-		this.setChangeAddressServer(result.getString("change_address_server"));
+		try {
+			this.setChangeAddressClient(new Address(Constants.getNetwork(), result.getString("change_address_client")));
+			this.setChangeAddressServer(new Address(Constants.getNetwork(), result.getString("change_address_server")));
+		} catch (AddressFormatException e) {
+			throw new RuntimeException(e);
+		}
 		this.setMasterPrivateKeyServer(result.getString("master_priv_key_server"));
 		this.setMasterPrivateKeyClient(result.getString("master_priv_key_client"));
 
@@ -253,7 +258,6 @@ public class Channel {
 		this.setAmountServer(result.getLong("amount_server"));
 		this.setAmountClient(result.getLong("amount_client"));
 
-		this.setTimestampClose(result.getInt("timestamp_close"));
 		this.setTimestampOpen(result.getInt("timestamp_open"));
 		this.setTimestampForceClose(result.getInt("timestamp_force_close"));
 
@@ -318,7 +322,7 @@ public class Channel {
 	 *
 	 * @return the change address client
 	 */
-	public String getChangeAddressClient () {
+	public Address getChangeAddressClient () {
 		return changeAddressClient;
 	}
 
@@ -327,18 +331,8 @@ public class Channel {
 	 *
 	 * @param changeAddressClient the new change address client
 	 */
-	public void setChangeAddressClient (String changeAddressClient) {
+	public void setChangeAddressClient (Address changeAddressClient) {
 		this.changeAddressClient = changeAddressClient;
-	}
-
-	/**
-	 * Gets the change address client as address.
-	 *
-	 * @return the change address client as address
-	 * @throws AddressFormatException the address format exception
-	 */
-	public Address getChangeAddressClientAsAddress () throws AddressFormatException {
-		return new Address(Constants.getNetwork(), this.getChangeAddressClient());
 	}
 
 	/**
@@ -346,7 +340,7 @@ public class Channel {
 	 *
 	 * @return the change address server
 	 */
-	public String getChangeAddressServer () {
+	public Address getChangeAddressServer () {
 		return changeAddressServer;
 	}
 
@@ -355,18 +349,8 @@ public class Channel {
 	 *
 	 * @param changeAddressServer the new change address server
 	 */
-	public void setChangeAddressServer (String changeAddressServer) {
+	public void setChangeAddressServer (Address changeAddressServer) {
 		this.changeAddressServer = changeAddressServer;
-	}
-
-	/**
-	 * Gets the change address server as address.
-	 *
-	 * @return the change address server as address
-	 * @throws AddressFormatException the address format exception
-	 */
-	public Address getChangeAddressServerAsAddress () throws AddressFormatException {
-		return new Address(Constants.getNetwork(), this.getChangeAddressServer());
 	}
 
 	/**
@@ -644,24 +628,6 @@ public class Channel {
 	}
 
 	/**
-	 * Gets the timestamp close.
-	 *
-	 * @return the timestamp close
-	 */
-	public int getTimestampClose () {
-		return timestampClose;
-	}
-
-	/**
-	 * Sets the timestamp close.
-	 *
-	 * @param timestampClose the new timestamp close
-	 */
-	public void setTimestampClose (int timestampClose) {
-		this.timestampClose = timestampClose;
-	}
-
-	/**
 	 * Gets the timestamp force close.
 	 *
 	 * @return the timestamp force close
@@ -698,15 +664,6 @@ public class Channel {
 	}
 
 	/**
-	 * Gets the timestamp refunds.
-	 *
-	 * @return the timestamp refunds
-	 */
-	public int getTimestampRefunds () {
-		return this.timestampClose - Constants.SECURITY_TIME_WINDOW_BEFORE_CHANNEL_ENDS;
-	}
-
-	/**
 	 * Checks if is ready.
 	 *
 	 * @return true, if is ready
@@ -730,7 +687,7 @@ public class Channel {
 	 * @param masterKey the master key
 	 * @throws Exception the exception
 	 */
-	public void newMasterKey (Key masterKey) throws Exception {
+	public void newMasterKey (RevocationHash masterKey) throws Exception {
 		if (getMasterPrivateKeyClient() != null) {
 			/*
 			 * Make sure the old masterPrivateKey is a child of this one..
@@ -747,8 +704,8 @@ public class Channel {
 			}
 		}
 
-		setMasterPrivateKeyClient(masterKey.privateKey);
-		setMasterChainDepth(masterKey.depth);
+		setMasterPrivateKeyClient(masterKey.getSecretAsString());
+		setMasterChainDepth(masterKey.getDepth());
 	}
 
 	public ECKey.ECDSASignature getEscapeTxSig () {
