@@ -515,4 +515,9 @@ public class Payment {
 			setIncludeInReceiverChannelTemp(includedInChannelTemp);
 		}
 	}
+
+	public int getTimestampRefund () {
+		//TODO: Get that magic number out of here and do some rounding to remove possible bugs..
+		return this.timestampCreated + 60 * 60 * 24;
+	}
 }

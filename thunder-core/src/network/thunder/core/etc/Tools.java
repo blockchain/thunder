@@ -575,6 +575,12 @@ public class Tools {
 		return a;
 	}
 
+	public static byte[] intToByte (int i) {
+		//TODO: Add functionality..
+
+		return new byte[4];
+	}
+
 	/**
 	 * Send message.
 	 *

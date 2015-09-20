@@ -18,8 +18,10 @@
  */
 package network.thunder.core.etc;
 
+import network.thunder.core.communication.objects.subobjects.RevocationHash;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.KeyWrapper;
+import network.thunder.core.database.objects.Payment;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.Transaction.SigHash;
@@ -33,12 +35,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-// TODO: Auto-generated Javadoc
-
-/**
- * The Class ScriptTools.
- */
 public class ScriptTools {
+
+	//TODO: Change these accordingly as soon as the OP-codes have been activated.
+	private final static int OP_CLTV = 105;
+	private final static int OP_CSV = 106;
 
 	/**
 	 * Adds the co signature into input script.
@@ -51,12 +52,12 @@ public class ScriptTools {
 	public static Script addCoSignatureIntoInputScript (Script script, ECDSASignature signature, boolean serverSide) {
 		ScriptBuilder builder = new ScriptBuilder(script);
 		if (serverSide) {
-			/**
+			/*
 			 * As in our convention, the clientSig is first
 			 */
 			builder.data(signature.encodeToDER());
 		} else {
-			/**
+			/*
 			 * Push the clientSig before the serverSig (that is in the script already..)
 			 */
 			builder.data(1, signature.encodeToDER());
@@ -1180,28 +1181,88 @@ public class ScriptTools {
 	/**
 	 * Gets the revoke script.
 	 *
-	 * @param keyList    the key list
 	 * @param channel    the channel
 	 * @param serverSide the server side
 	 * @return the revoke script
 	 * @throws Exception the exception
 	 */
-	public static Script getRevokeScript (KeyWrapper keyList, Channel channel, boolean serverSide) throws Exception {
+	public static Script getChangeRevocableScript (RevocationHash revocationHash, Channel channel, boolean serverSide) throws Exception {
 		ScriptBuilder builder = new ScriptBuilder();
 
+		byte[] refundKey;
+		byte[] stealKey;
 		if (serverSide) {
-			builder.smallNum(2);
-			builder.data(Tools.stringToByte(channel.getPubKeyClient()));
-			builder.data(Tools.stringToByte(keyList.getKey()));
-			builder.smallNum(2);
-			builder.op(174);
+			refundKey = Tools.stringToByte(channel.getPubKeyServer());
+			stealKey = Tools.stringToByte(channel.getPubKeyClient());
 		} else {
-			builder.smallNum(2);
-			builder.data(Tools.stringToByte(keyList.getKey()));
-			builder.data(Tools.stringToByte(channel.getPubKeyServer()));
-			builder.smallNum(2);
-			builder.op(174);
+			refundKey = Tools.stringToByte(channel.getPubKeyServer());
+			stealKey = Tools.stringToByte(channel.getPubKeyClient());
 		}
+
+		builder.data(revocationHash.getSecretHash());
+		builder.op(169);    //hash160
+		builder.op(135);    //equal
+		builder.op(99);     //if
+		builder.data(stealKey);
+		builder.op(103);    //else
+		builder.op(OP_CSV); //csv
+		builder.data(Tools.intToByte(Constants.TIME_FOR_STEALING_CHANGE_OUTPUT));
+		builder.data(refundKey);
+		builder.op(104);    //endif
+		builder.op(173);    //checksigverify
+
+		return builder.build();
+	}
+
+	public static Script getPaymentScript (RevocationHash revocationHash, Channel channel, Payment payment) {
+		ScriptBuilder builder = new ScriptBuilder();
+
+		byte[] refundKey;
+		byte[] stealKey;
+		if (payment.paymentToServer) {
+			refundKey = Tools.stringToByte(channel.getPubKeyServer());
+			stealKey = Tools.stringToByte(channel.getPubKeyClient());
+		} else {
+			refundKey = Tools.stringToByte(channel.getPubKeyServer());
+			stealKey = Tools.stringToByte(channel.getPubKeyClient());
+		}
+
+		if (payment.paymentToServer) {
+			builder.op(169);    //hash160
+			builder.op(118);    //dup
+			builder.data(Tools.stringToByte(payment.getSecretHash()));
+			builder.op(135);    //equal
+			builder.op(124);    //swap
+			builder.data(revocationHash.getSecretHash());
+			builder.op(135);    //equal
+			builder.op(147);    //add
+
+			builder.op(99);     //if
+			builder.data(stealKey);
+
+			builder.op(103);    //else
+			builder.data(Tools.intToByte(payment.getTimestampRefund()));
+			builder.op(OP_CLTV);
+			builder.data(Tools.intToByte(Constants.TIME_FOR_STEALING_PAYMENT_OUTPUT));
+			builder.op(OP_CSV);
+			builder.op(109);    //2DROP
+			builder.data(refundKey);
+			builder.op(104);    //endif
+			builder.op(173);    //checksigverify
+		} else {
+
+		}
+		builder.data(revocationHash.getSecretHash());
+		builder.op(169);    //hash160
+		builder.op(99);     //if
+		builder.data(stealKey);
+		builder.op(103);    //else
+		builder.op(OP_CSV); //csv
+		builder.data(Tools.intToByte(Constants.TIME_FOR_STEALING_CHANGE_OUTPUT));
+		builder.data(refundKey);
+		builder.op(104);    //endif
+		builder.op(173);    //checksigverify
+
 		return builder.build();
 	}
 
