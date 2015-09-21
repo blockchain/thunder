@@ -170,6 +170,9 @@ public class Constants {
 	 */
 	public static int TIME_TOTAL_PAYMENT = 7 * 24 * 60 * 60;
 
+	public static int TIME_FOR_STEALING_CHANGE_OUTPUT = 7 * 24 * 60 * 60;
+	public static int TIME_FOR_STEALING_PAYMENT_OUTPUT = 1 * 24 * 60 * 60;
+
 	/**
 	 * Get the Network we are working on..
 	 *
