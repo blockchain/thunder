@@ -577,7 +577,7 @@ public class RequestHandler {
 				TransactionOutput paymentOutput = receivedTransaction.getOutputs().get(receivedTransaction.getOutputs().size() - 1);
 				String secretHash = ScriptTools.getRofPaymentScript(paymentOutput);
 				if (MySQLConnection.getPayment(conn, secretHash, channel.getId()) != null) {
-					throw new Exception("Secret Hash must be unique..");
+					throw new Exception("Secret Hash.java must be unique..");
 				}
 
 				long amountShouldBe = m.amount + Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX);
@@ -706,7 +706,7 @@ public class RequestHandler {
 				/**
 				 * Second Request for making a payment.
 				 *
-				 * Request: 	Hash of the clientside channel tx
+				 * Request: 	Hash.java of the clientside channel tx
 				 * 				Revoke tx of the server change in the serverside channel
 				 * 				Array with settlements 	for each payment for the serverside channel
 				 * 				Array with refunds 		for each payment for the serverside channel
@@ -772,10 +772,10 @@ public class RequestHandler {
 					}
 
 					if (!Tools.compareHash(refund.getInput(0).getOutpoint().getHash(), channelHash)) {
-						throw new Exception("Refund Input Hash is not correct");
+						throw new Exception("Refund Input Hash.java is not correct");
 					}
 					if (!Tools.compareHash(settlement.getInput(0).getOutpoint().getHash(), channelHash)) {
-						throw new Exception("Settlement Input Hash is not correct");
+						throw new Exception("Settlement Input Hash.java is not correct");
 					}
 
 					if (refund.getInput(0).getOutpoint().getIndex() != (i + 2)) {
@@ -847,7 +847,7 @@ public class RequestHandler {
 					throw new Exception("Revoke Output Size is not 1");
 				}
 				if (!Tools.compareHash(revoke.getInput(0).getOutpoint().getHash(), channelHash)) {
-					throw new Exception("Revoke Input Hash is not correct");
+					throw new Exception("Revoke Input Hash.java is not correct");
 				}
 				if (revoke.getInput(0).getOutpoint().getIndex() != 1) {
 					throw new Exception("Revoke Input Index is not correct");
@@ -1442,7 +1442,7 @@ public class RequestHandler {
 				 *
 				 * Request: 	A new channel transaction
 				 *
-				 * Response: 	Hash of the now received transaction
+				 * Response: 	Hash.java of the now received transaction
 				 *
 				 */
 				UpdateChannelRequestThree m = new Gson().fromJson(message.data, UpdateChannelRequestThree.class);
@@ -1577,7 +1577,7 @@ public class RequestHandler {
 				 * Request: 	Revoke tx of the server change in the serverside channel
 				 * 				Array with settlements 	for each payment for the serverside channel
 				 * 				Array with refunds 		for each payment for the serverside channel
-				 * 				Hash of the clientside channel
+				 * 				Hash.java of the clientside channel
 				 *
 				 * Response: 	Revoke tx of the client change in the clientside channel
 				 * 				Array with settlements 	for each payment for the clientside channel

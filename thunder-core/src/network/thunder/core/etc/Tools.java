@@ -514,7 +514,7 @@ public class Tools {
 	}
 
 	/**
-	 * Hash secret.
+	 * Hash.java secret.
 	 *
 	 * @param secret the secret
 	 * @return the string

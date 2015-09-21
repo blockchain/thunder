@@ -866,7 +866,7 @@ public class ScriptTools {
 		}
 
 		if (!Tools.compareHash(transaction.getInput(0).getOutpoint().getHash(), hash)) {
-			throw new Exception("Refund Input Hash is not correct");
+			throw new Exception("Refund Input Hash.java is not correct");
 		}
 
 		if (transaction.getInput(0).getOutpoint().getIndex() != inputIndex) {
