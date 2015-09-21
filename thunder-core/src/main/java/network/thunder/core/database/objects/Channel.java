@@ -20,7 +20,7 @@ package network.thunder.core.database.objects;
 
 import network.thunder.core.communication.objects.subobjects.RevocationHash;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.KeyDerivation;
+import network.thunder.core.etc.HashDerivation;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
@@ -676,10 +676,10 @@ public class Channel {
 			DeterministicKey key = DeterministicKey.deserializeB58(masterKey.privateKey, Constants.getNetwork());
 			DeterministicHierarchy hierachy = new DeterministicHierarchy(key);
 
-			List<ChildNumber> childList = KeyDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
+			List<ChildNumber> childList = HashDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
 			DeterministicKey keyDerived = hierachy.get(childList, true, true);
 
-			if (!KeyDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
+			if (!HashDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
 				throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
 			}
 		}

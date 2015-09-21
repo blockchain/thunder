@@ -551,7 +551,7 @@ public class MySQLConnection {
 						if (k.privateKey != null) {
 							if (k.depth > channel.getMasterChainDepth()) {
 
-								List<ChildNumber> list = KeyDerivation.getChildList(k.depth - channel.getMasterChainDepth());
+								List<ChildNumber> list = HashDerivation.getChildList(k.depth - channel.getMasterChainDepth());
 								ChildNumber number = new ChildNumber(k.child, true);
 								list.add(number);
 
@@ -771,7 +771,7 @@ public class MySQLConnection {
 
 			String masterKey = set.getString("master_priv_key_server");
 
-			DeterministicKey root = KeyDerivation.calculateKeyChain(masterKey, depth);
+			DeterministicKey root = HashDerivation.calculateKeyChain(masterKey, depth);
 			DeterministicHierarchy hierachy = new DeterministicHierarchy(root);
 
 			DeterministicKey key;
@@ -823,7 +823,7 @@ public class MySQLConnection {
 					" " +
 					"?, ?, ?)");
 
-			DeterministicKey key = KeyDerivation.getMasterKey(MySQLConnection.getKeyCount(conn));
+			DeterministicKey key = HashDerivation.getMasterKey(MySQLConnection.getKeyCount(conn));
 
 			String masterKey = key.serializePrivB58(Constants.getNetwork());
 			//		String masterKey = key.serializePrivB58();
@@ -895,7 +895,7 @@ public class MySQLConnection {
 			int count = MySQLConnection.getKeyCount(conn);
 			//			count = (int) (Math.random() * 10000000);
 
-			DeterministicKey key = KeyDerivation.getMasterKey(count);
+			DeterministicKey key = HashDerivation.getMasterKey(count);
 
 			String masterKey = key.serializePrivB58(Constants.getNetwork());
 
@@ -1815,7 +1815,7 @@ public class MySQLConnection {
 				ArrayList<Key> keysToBeExposedNew = new ArrayList<Key>();
 				String masterKey = channel.getMasterPrivateKeyServer();
 
-				DeterministicKey masterKeyToExpose = KeyDerivation.calculateKeyChain(masterKey, highestDepthToKeep + 1);
+				DeterministicKey masterKeyToExpose = HashDerivation.calculateKeyChain(masterKey, highestDepthToKeep + 1);
 
 				Key key = new Key();
 				key.child = 0;

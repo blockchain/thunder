@@ -20,7 +20,7 @@ package network.thunder.core.communication;
 
 import com.google.gson.Gson;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.KeyDerivation;
+import network.thunder.core.etc.HashDerivation;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 
@@ -189,7 +189,7 @@ public class Message {
 	 * Sign.
 	 */
 	public void sign () {
-		ECKey privateKey = KeyDerivation.getMasterKey(0);
+		ECKey privateKey = HashDerivation.getMasterKey(0);
 		timestamp = Tools.currentTime();
 		pubkey = Tools.byteToString(privateKey.getPubKey());
 		signature = privateKey.signMessage(this.getSignatureMessage());

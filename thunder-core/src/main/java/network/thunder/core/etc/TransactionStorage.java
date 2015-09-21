@@ -405,7 +405,7 @@ public class TransactionStorage {
 				/**
 				 * We don't have the private key in our database anymore, so we need to reconstruct it from the masterkey..
 				 */
-				key = KeyDerivation.bruteForceKey(masterKey, pubKey);
+				key = HashDerivation.bruteForceKey(masterKey, pubKey);
 				if (key == null) {
 					System.out.println("Can't brute force.. :(");
 					return;
