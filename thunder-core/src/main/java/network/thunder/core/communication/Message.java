@@ -34,7 +34,6 @@ import java.sql.Connection;
  */
 public class Message {
 
-
 	public String signature;
 
 	/**
@@ -62,6 +61,12 @@ public class Message {
 	 */
 	public int timestamp;
 
+	private boolean hasData = false;
+
+	public boolean hasData () {
+		return hasData;
+	}
+
 	/**
 	 * Instantiates a new message.
 	 */
@@ -80,6 +85,7 @@ public class Message {
 		this.success = true;
 		this.type = type;
 		this.sign(key);
+		this.hasData = true;
 	}
 
 	/**

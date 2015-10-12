@@ -47,4 +47,8 @@ public class Type {
 	public static int WEBSOCKET_NEW_PAYMENT = 620;
 	public static int WEBSOCKET_NEW_SECRET = 630;
 
+	public static int AUTH_SEND = 1010;
+	public static int AUTH_ACCEPT = 1011;
+	public static int AUTH_FAILED = 1012;
+
 }
