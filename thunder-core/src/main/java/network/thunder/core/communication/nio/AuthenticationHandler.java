@@ -16,15 +16,14 @@
 package network.thunder.core.communication.nio;
 
 import com.google.gson.Gson;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
-import io.netty.handler.ssl.SslHandler;
+import io.netty.channel.*;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
+import org.bitcoinj.core.ECKey;
+
+import java.util.Random;
 
 /**
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
@@ -34,34 +33,57 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 	private Node node;
 	private boolean isServer = false;
 
+	private ECKey key;
+
 	private int authFailCounter = 0;
 	private static final int AUTH_FAIL_MAX_RETRIES = 3;
 
-	public AuthenticationHandler (boolean isServer) {
+	public byte[] secretOur;
+	public byte[] secretTheir;
+
+	public AuthenticationHandler (ECKey key, boolean isServer, Node node) {
+		this.key = key;
 		this.isServer = isServer;
+		secretOur = new byte[20];
+		new Random().nextBytes(secretOur);
+		this.node = node;
+
 	}
 
 	@Override
 	public void channelActive (final ChannelHandlerContext ctx) {
+		System.out.println("CHANNEL ACTIVE");
 		//The node receiving the incoming connection sends out his auth first
-		if (isServer) {
-			ctx.pipeline().get(SslHandler.class).handshakeFuture().addListener(future -> {
-				node = new Node();
-				sendAuthentication(ctx);
-			});
+		if (!isServer) {
+			sendSecret(ctx);
 		}
+		ctx.fireChannelActive();
+
+	}
+
+	public void sendSecret (ChannelHandlerContext ctx) {
+		ctx.writeAndFlush(new Message(secretOur, Type.AUTH_SEND_SECRET, key));
 	}
 
 	public void sendAuthentication (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(node.getAuthenticationObject());
+		try {
+			ctx.writeAndFlush(new Message(node.getAuthenticationObject(secretTheir), Type.AUTH_SEND, key)).sync().addListener(new ChannelFutureListener() {
+				@Override
+				public void operationComplete (ChannelFuture future) throws Exception {
+					System.out.println(future);
+				}
+			});
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public void sendFailure (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(new Message(null, Type.FAILURE, null));
+		ctx.writeAndFlush(new Message(null, Type.FAILURE, key));
 	}
 
 	public void sendAccept (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(new Message(null, Type.AUTH_ACCEPT, null));
+		ctx.writeAndFlush(new Message(null, Type.AUTH_ACCEPT, key));
 	}
 
 	@Override
@@ -72,25 +94,27 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 		} else {
 			//Check authentication first before doing anything else with the messages.
 			Message message = (Message) msg;
-			if (message.type > 1010 && message.type < 1099) {
 
-				if (message.type == Type.AUTH_ACCEPT) {
+//			System.out.println(message.type);
+
+			if (message.type >= 1010 && message.type <= 1099) {
+
+
+				if (message.type == Type.AUTH_SEND_SECRET) {
+					secretTheir = new Gson().fromJson(message.data, byte[].class);
+					sendAuthentication(ctx);
+
+				} else if (message.type == Type.AUTH_ACCEPT) {
 					if (node.hasSentAuth() && node.isAuth()) {
-						//Authentication complete. Send the node object to the next layer.
+						//Authentication complete.
 						node.finishAuth();
-						ctx.fireChannelRead(node);
 					} else {
-						//AUTH_ACCEPT is only sent after we sent auth.
-						sendFailure(ctx);
+						sendSecret(ctx);
 					}
 				} else if (message.type == Type.AUTH_SEND) {
 					AuthenticationObject authObject = new Gson().fromJson(message.data, AuthenticationObject.class);
-					if (node.processAuthentication(authObject)) {
-						if (node.hasSentAuth()) {
-							sendAccept(ctx);
-						} else {
-							sendAuthentication(ctx);
-						}
+					if (node.processAuthentication(authObject, secretOur)) {
+						sendAccept(ctx);
 					}
 				} else if (message.type == Type.AUTH_FAILED) {
 					//For some reason authentication failed. We will retry it some times.
@@ -103,6 +127,9 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 					}
 				}
 
+			} else if(message.type == 0) {
+				System.out.println("Got Failure:");
+				System.out.println(message);
 			} else {
 				//Not authenticated. Will not look at messages with wrong types.
 				sendFailure(ctx);
@@ -114,11 +141,12 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 
 	@Override
 	public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+		System.out.println("test");
 		//Make sure to not send messages accidentally when auth is not finished yet.
-		Message message = (Message) msg;
-		if (!node.isAuthFinished() && (message.type < 1010 || message.type > 1099)) {
-			throw new RuntimeException("This should not happen. Don't send messages when auth is not finished yet");
-		}
+//		Message message = (Message) msg;
+//		if (!node.isAuthFinished() && (message.type < 1010 || message.type > 1099)) {
+//			throw new RuntimeException("This should not happen. Don't send messages when auth is not finished yet");
+//		}
 
 		ctx.writeAndFlush(msg, promise);
 	}
