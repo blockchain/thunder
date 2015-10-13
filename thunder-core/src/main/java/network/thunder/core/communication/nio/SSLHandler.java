@@ -23,11 +23,11 @@ import io.netty.handler.ssl.SslContext;
 /**
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
  */
-public class AuthenticationHandler extends ChannelInitializer<SocketChannel> {
+public class SSLHandler extends ChannelInitializer<SocketChannel> {
 
     private final SslContext sslCtx;
 
-    public AuthenticationHandler (SslContext sslCtx) {
+    public SSLHandler (SslContext sslCtx) {
         this.sslCtx = sslCtx;
     }
 
