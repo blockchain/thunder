@@ -13,12 +13,17 @@ public class Node {
 	public boolean processAuthentication (AuthenticationObject authentication) {
 		//TODO: Check authentication based on the supplied pubkey
 
+		isAuth = true;
+		if (sentAuth) {
+			authFinished = true;
+		}
 		return true;
 	}
 
 	public AuthenticationObject getAuthenticationObject () {
 		//TODO: Produce a proper authentication object..
 
+		sentAuth = true;
 		return new AuthenticationObject();
 	}
 
