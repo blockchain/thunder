@@ -5,7 +5,6 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import network.thunder.core.communication.Message;
-import network.thunder.core.etc.Tools;
 
 import java.util.List;
 
@@ -16,13 +15,16 @@ public class ByteToMessageObjectHandler extends ByteToMessageDecoder {
 	@Override
 	protected void decode (ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
 		try {
-//			int length = in.readInt();
-//			in.discardReadBytes();
-			byte[] data = new byte[in.readableBytes()];
-			in.readBytes(data);
-			Message message = new Gson().fromJson(Tools.byteToString(data), Message.class);
-			out.add(message);
-		} catch(Exception e) {
+			if (in.readableBytes() > 0) {
+				byte[] data = new byte[in.readableBytes()];
+				in.readBytes(data);
+				Message message = new Gson().fromJson(new String(data), Message.class);
+
+				out.add(message);
+				System.out.println("Incoming: " + message.type);
+
+			}
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
