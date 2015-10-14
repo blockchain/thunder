@@ -13,12 +13,16 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package network.thunder.core.communication.nio;
+package network.thunder.core.communication.nio.handler.high;
 
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Node;
 import org.bitcoinj.core.ECKey;
+
+import java.util.ArrayList;
 
 /**
  *
@@ -30,6 +34,10 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
 
 	private ECKey key;
 
+	public boolean initialized = false;
+
+	ArrayList<Channel> channelList = new ArrayList<>();
+
 	public LightningChannelManagementHandler (ECKey key, boolean isServer, Node node) {
 		this.key = key;
 		this.isServer = isServer;
@@ -37,9 +45,26 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
 
 	}
 
+	public void initialize () {
+		//TODO: Add all the database stuff here to get a complete list of all channels related with this node
+		//Also, this is the place to ask for a new channel in case we don't have one yet (or want another one..)
+	}
+
 	@Override
 	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-		
+
+		if (!initialized) {
+			initialize();
+			ctx.fireChannelRead("1");
+		} else {
+			Message message = (Message) msg;
+			if (message.type >= 110 && message.type < 199) {
+				//TODO: Do all the channel opening stuff here..
+			} else {
+				ctx.fireChannelRead(msg);
+			}
+		}
+
 	}
 
 	@Override
