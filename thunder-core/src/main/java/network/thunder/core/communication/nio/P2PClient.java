@@ -24,10 +24,11 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
-import io.netty.handler.ssl.util.SelfSignedCertificate;
 import network.thunder.core.communication.Node;
+import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
+import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
+import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
+import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
 import org.bitcoinj.core.ECKey;
 
 import java.math.BigInteger;
@@ -42,50 +43,61 @@ public final class P2PClient {
 	//Furthermore, we will add a new handler for the different message types,
 	//as it will greatly improve readability and maintainability of the code.
 
-	public static Channel connectTo(String address, int port) throws Exception {
+	public void connectTo (Node node) throws Exception {
+		new Thread(new Runnable() {
+			@Override
+			public void run () {
 
-		ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(100000)));
+				while (!node.isConnected()) {
 
+					ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(100000)));
 
-		SelfSignedCertificate ssc = new SelfSignedCertificate();
-		SslContext sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+					EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+					EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
-
-		EventLoopGroup group = new NioEventLoopGroup();
-		try {
-			Bootstrap b = new Bootstrap();
-			b.group(group).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
-				@Override
-				protected void initChannel (SocketChannel ch) throws Exception {
-					Node node = new Node();
-
+					EventLoopGroup group = new NioEventLoopGroup();
+					try {
+						Bootstrap b = new Bootstrap();
+						b.group(group).channel(NioSocketChannel.class).handler(new ChannelInitializer<SocketChannel>() {
+							@Override
+							protected void initChannel (SocketChannel ch) throws Exception {
 //					ch.pipeline().addLast(new DumpHexHandler());
-					ch.pipeline().addLast(new EncryptionHandler());
+
 //					ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
-					ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
-					ch.pipeline().addLast(new LengthFieldPrepender(4));
+								ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
+								ch.pipeline().addLast(new LengthFieldPrepender(4));
 
-					ch.pipeline().addLast(new ByteToMessageObjectHandler());
-					ch.pipeline().addLast(new MessageObjectToByteHandler());
-					ch.pipeline().addLast(new AuthenticationHandler(key, false, node));
+								ch.pipeline().addLast(new EncryptionHandler(false));
+
+								ch.pipeline().addLast(new ByteToMessageObjectHandler());
+								ch.pipeline().addLast(new MessageObjectToByteHandler());
+								ch.pipeline().addLast(new AuthenticationHandler(key, false, node));
+							}
+						});
+
+						// Start the connection attempt.
+						Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
+
+					} catch (Exception e) {
+						//Not able to connect?
+						try {
+							Thread.sleep(60 * 1000);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
+						e.printStackTrace();
+					} finally {
+						bossGroup.shutdownGracefully();
+						workerGroup.shutdownGracefully();
+					}
 				}
-			});
 
-			// Start the connection attempt.
-			Channel ch = b.connect(address, port).sync().channel();
-
-			return ch;
-		} finally {
-			bossGroup.shutdownGracefully();
-			workerGroup.shutdownGracefully();
-		}
+			}
+		}).start();
 
 	}
 
-	public static void main(String[] args) throws Exception {
-		com.sun.org.apache.xml.internal.security.Init.init();
-		connectTo("127.0.0.1", 8992);
+	public static void main (String[] args) throws Exception {
+		new P2PClient().connectTo(new Node("127.0.0.1", 8992));
 	}
 }

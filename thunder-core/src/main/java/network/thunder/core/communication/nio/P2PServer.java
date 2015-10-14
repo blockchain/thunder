@@ -29,9 +29,14 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import network.thunder.core.communication.Node;
+import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
+import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
+import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
+import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
 import org.bitcoinj.core.ECKey;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 
 /**
  */
@@ -41,7 +46,7 @@ public final class P2PServer {
 	//Furthermore, we will add a new handler for the different message types,
 	//as it will greatly improve readability and maintainability of the code.
 
-	public static void startServer (int port) throws Exception {
+	public void startServer (int port, ArrayList<Node> connectedNodes) throws Exception {
 		SelfSignedCertificate ssc = new SelfSignedCertificate();
 		SslContext sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
 
@@ -56,14 +61,21 @@ public final class P2PServer {
 				@Override
 				public void initChannel (SocketChannel ch) throws Exception {
 					Node node = new Node();
+					connectedNodes.add(node);
+
 //					ch.pipeline().addLast(new DumpHexHandler());
-					ch.pipeline().addLast(new EncryptionHandler());
+
+//					ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
 					ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
 					ch.pipeline().addLast(new LengthFieldPrepender(4));
+
+					ch.pipeline().addLast(new EncryptionHandler(true));
 
 
 					ch.pipeline().addLast(new ByteToMessageObjectHandler());
 					ch.pipeline().addLast(new MessageObjectToByteHandler());
+
+
 					ch.pipeline().addLast(new AuthenticationHandler(key, true, node));
 
 				}
@@ -77,7 +89,7 @@ public final class P2PServer {
 	}
 
 	public static void main (String[] args) throws Exception {
-		startServer(8992);
+		new P2PServer().startServer(8992, new ArrayList<>());
 	}
 
 }
