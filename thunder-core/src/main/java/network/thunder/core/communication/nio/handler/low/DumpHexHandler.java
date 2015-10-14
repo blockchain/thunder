@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package network.thunder.core.communication.nio;
+package network.thunder.core.communication.nio.handler.low;
 
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -30,7 +30,7 @@ public class DumpHexHandler extends ChannelDuplexHandler {
 
 	@Override
 	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-//		System.out.println("Incoming: "+msg);
+		System.out.println("Incoming: "+msg);
 		ctx.fireChannelRead(msg);
 
 	}
@@ -38,7 +38,7 @@ public class DumpHexHandler extends ChannelDuplexHandler {
 	@Override
 	public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
 //		System.out.println("test");
-//		System.out.println("Outgoing: "+msg);
+		System.out.println("Outgoing: "+msg);
 
 		ctx.writeAndFlush(msg, promise);
 	}

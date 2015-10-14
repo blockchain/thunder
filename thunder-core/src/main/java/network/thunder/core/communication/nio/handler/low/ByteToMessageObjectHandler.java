@@ -1,4 +1,4 @@
-package network.thunder.core.communication.nio;
+package network.thunder.core.communication.nio.handler.low;
 
 import com.google.gson.Gson;
 import io.netty.buffer.ByteBuf;

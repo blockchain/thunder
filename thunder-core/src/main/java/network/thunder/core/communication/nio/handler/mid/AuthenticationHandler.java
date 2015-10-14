@@ -13,7 +13,7 @@
  * License for the specific language governing permissions and limitations
  * under the License.
  */
-package network.thunder.core.communication.nio;
+package network.thunder.core.communication.nio.handler.mid;
 
 import com.google.gson.Gson;
 import io.netty.channel.*;
@@ -84,6 +84,11 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 
 	public void sendAccept (ChannelHandlerContext ctx) {
 		ctx.writeAndFlush(new Message(null, Type.AUTH_ACCEPT, key));
+	}
+
+	public void authenticationFinished(ChannelHandlerContext ctx) {
+
+		ctx.fireChannelRead("1");
 	}
 
 	@Override
