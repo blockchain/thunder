@@ -87,6 +87,7 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 	}
 
 	public void authenticationFinished (ChannelHandlerContext ctx) {
+		node.setNettyContext(ctx);
 
 		ctx.fireChannelRead("1");
 	}
