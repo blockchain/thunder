@@ -19,6 +19,10 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Type;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.etc.crypto.CryptoTools;
+import network.thunder.core.etc.crypto.ECDH;
+import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
 import java.security.SecureRandom;
@@ -26,30 +30,31 @@ import java.security.SecureRandom;
 //TODO: Add a nonce to prevent replay attacks
 public class EncryptionHandler extends ChannelDuplexHandler {
 
-	private ECKey keyUs;
-	private ECKey keyTheir;
+	private ECKey keyServer;
+	private ECKey keyClient;
 
 	private boolean sentOurKey = false;
 	private boolean keyReceived = false;
 
-	private byte[] sharedSecret;
-
+	private ECDHKeySet ecdhKeySet;
 	private boolean isServer;
+
+	long counterIn;
+	long counterOut;
 
 	public EncryptionHandler (boolean isServer) {
 		//TODO: Probably not save yet...
-		keyUs = new ECKey(new SecureRandom());
+		keyServer = new ECKey(new SecureRandom());
 		this.isServer = isServer;
 	}
 
-	public void sendOurKey(ChannelHandlerContext ctx) {
+	public void sendOurKey (ChannelHandlerContext ctx) {
 		System.out.println("EncryptionHandler sendOurKey");
 		sentOurKey = true;
 
-		Object data = new Message(keyUs.getPubKey(), Type.KEY_ENC_SEND);
+		Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
 		ByteBuf buf = ctx.alloc().buffer();
-		buf.writeBytes(keyUs.getPubKey());
-
+		buf.writeBytes(keyServer.getPubKey());
 
 		try {
 			ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
@@ -74,31 +79,87 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 
 	@Override
 	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-		if(keyReceived) {
-			//TODO: Add Decryption
-			ctx.fireChannelRead(msg);
-		} else {
-			keyReceived = true;
-			byte[] pubkey = new byte[33];
+		try {
+			if (keyReceived) {
+				System.out.println(msg);
 
-			ByteBuf buffer = (ByteBuf) msg;
-			buffer.readBytes(pubkey);
-			keyTheir = ECKey.fromPublicOnly(pubkey);
+				ByteBuf buf = (ByteBuf) msg;
 
-			if(!sentOurKey) {
-				sendOurKey(ctx);
+				ByteBuf out = ctx.alloc().buffer();
+
+				byte[] data = new byte[buf.readableBytes()];
+				buf.readBytes(data);
+				buf.release();
+
+
+				data = CryptoTools.checkAndRemoveHMAC(data, ecdhKeySet.getHmacKey());
+
+
+				byte[] enc = CryptoTools.decryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvClient(), counterIn);
+
+
+
+				out.writeBytes(enc);
+
+				counterIn++;
+
+				//TODO: Add Decryption
+				ctx.fireChannelRead(out);
+			} else {
+				keyReceived = true;
+				byte[] pubkey = new byte[33];
+
+				ByteBuf buffer = (ByteBuf) msg;
+				buffer.readBytes(pubkey);
+				keyClient = ECKey.fromPublicOnly(pubkey);
+
+				if (!sentOurKey) {
+					sendOurKey(ctx);
+				}
+
+				try {
+					this.ecdhKeySet = ECDH.getSharedSecret(keyServer, keyClient);
+				} catch (Exception e) { e.printStackTrace(); }
+				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getEncryptionKey()));
+				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getHmacKey()));
+				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getIvClient()));
+				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getIvServer()));
+				ctx.fireChannelActive();
+
 			}
-			ctx.fireChannelActive();
-
+		} catch(Exception e) {
+			e.printStackTrace();
 		}
 
 	}
 
 	@Override
 	public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-		//TODO: Add Encryption
+		try {
+			ByteBuf buf = (ByteBuf) msg;
+
+			ByteBuf out = ctx.alloc().buffer();
+
+			byte[] data = new byte[buf.readableBytes()];
+			buf.readBytes(data);
+			buf.release();
+
+
+			byte[] enc = CryptoTools.encryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvServer(), counterOut);
+
+			enc = CryptoTools.addHMAC(enc, ecdhKeySet.getHmacKey());
+
+			out.writeBytes(enc);
+
+			counterOut++;
+
+			System.out.println(msg);
+			//TODO: Add Encryption
 //		System.out.println("test");
-		ctx.writeAndFlush(msg, promise);
+			ctx.writeAndFlush(out, promise);
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
