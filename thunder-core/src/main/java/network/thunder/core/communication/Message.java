@@ -19,12 +19,7 @@
 package network.thunder.core.communication;
 
 import com.google.gson.Gson;
-import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.HashDerivation;
-import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.ECKey;
 
-import java.security.SignatureException;
 import java.sql.Connection;
 
 // TODO: Auto-generated Javadoc
@@ -34,58 +29,18 @@ import java.sql.Connection;
  */
 public class Message {
 
-	public String signature;
-
-	/**
-	 * The pubkey.
-	 */
-	public String pubkey;
-
-	/**
-	 * The success.
-	 */
-	public boolean success;
-
-	/**
-	 * The data.
-	 */
 	public String data;
-
-	/**
-	 * The type.
-	 */
 	public int type;
-
-	/**
-	 * The timestamp.
-	 */
-	public int timestamp;
-
-	private boolean hasData = false;
-
-	public boolean hasData () {
-		return hasData;
-	}
-
-	/**
-	 * Instantiates a new message.
-	 */
-	public Message () {
-	}
 
 	/**
 	 * Instantiates a new message.
 	 *
 	 * @param o    the o
 	 * @param type the type
-	 * @param key  the key
 	 */
-	public Message (Object o, int type, ECKey key) {
+	public Message (Object o, int type) {
 		this.fill(o);
-		this.success = true;
 		this.type = type;
-		this.sign(key);
-		this.hasData = true;
 	}
 
 	/**
@@ -93,34 +48,22 @@ public class Message {
 	 *
 	 * @param o         the o
 	 * @param type      the type
-	 * @param key       the key
 	 * @param timestamp the timestamp
 	 */
-	public Message (Object o, int type, ECKey key, int timestamp) {
+	public Message (Object o, int type, int timestamp) {
 		this.fill(o);
-		this.success = true;
 		this.type = type;
-		this.timestamp = timestamp;
-		pubkey = Tools.byteToString(key.getPubKey());
-		signature = key.signMessage(this.getSignatureMessage());
 	}
 
 	/**
 	 * Instantiates a new message.
 	 *
 	 * @param response the response
-	 * @param conn     the conn
-	 * @throws Exception the exception
 	 */
-	public Message (String response, Connection conn) throws Exception {
+	public Message (String response) {
 		Message message = new Gson().fromJson(response, Message.class);
-		this.signature = message.signature;
-		this.pubkey = message.pubkey;
-		this.success = message.success;
 		this.data = message.data;
 		this.type = message.type;
-		this.timestamp = message.timestamp;
-		prepare(conn);
 	}
 
 	/**
@@ -133,18 +76,7 @@ public class Message {
 	}
 
 	public String getDataString () {
-		this.sign();
 		return new Gson().toJson(this);
-
-	}
-
-	/**
-	 * Gets the signature message.
-	 *
-	 * @return the signature message
-	 */
-	private String getSignatureMessage () {
-		return type + pubkey + success + timestamp + data;
 	}
 
 	/**
@@ -154,81 +86,14 @@ public class Message {
 	 * @throws Exception the exception
 	 */
 	public void prepare (Connection conn) throws Exception {
-		if (!this.validate()) {
-			throw new Exception("Validation failed..");
-		}
-		if (!this.success) {
+		if (this.type == Type.FAILURE) {
 			throw new Exception(this.data);
 		}
-		/**
-		 * TODO: Figure out if we want to save all messages...
-		 */
-		//		if (conn != null) {
-		//			MySQLConnection.saveMessage(conn, this);
-		//		}
-	}
-
-	/**
-	 * Sign.
-	 *
-	 * @param privateKey the private key
-	 */
-	public void sign (byte[] privateKey) {
-		timestamp = Tools.currentTime();
-		ECKey key = ECKey.fromPrivate(privateKey);
-		pubkey = Tools.byteToString(key.getPubKey());
-		signature = key.signMessage(this.getSignatureMessage());
-	}
-
-	/**
-	 * Sign.
-	 *
-	 * @param privateKey the private key
-	 */
-	public void sign (ECKey privateKey) {
-		timestamp = Tools.currentTime();
-		pubkey = Tools.byteToString(privateKey.getPubKey());
-		signature = privateKey.signMessage(this.getSignatureMessage());
-	}
-
-	/**
-	 * Sign.
-	 */
-	public void sign () {
-		ECKey privateKey = HashDerivation.getMasterKey(0);
-		timestamp = Tools.currentTime();
-		pubkey = Tools.byteToString(privateKey.getPubKey());
-		signature = privateKey.signMessage(this.getSignatureMessage());
 	}
 
 	@Override
 	public String toString () {
-		return "Message\n\tsignature=" + signature + "\n\tpubkey=" + pubkey + "\n\tsuccess=" + success + "\n\tdata=" + data + "\n\ttype=" + type +
-				"\n\ttimestamp=" + timestamp;
-	}
-
-	/**
-	 * Validate.
-	 *
-	 * @return true, if successful
-	 * @throws Exception the exception
-	 */
-	public boolean validate () throws Exception {
-
-		if (Math.abs(timestamp - Tools.currentTime()) > Constants.getTimeFrameForValidation()) {
-			throw new Exception("Timestamp does not match! Received: " + timestamp + " Current: " + Tools.currentTime());
-		}
-
-		ECKey key = ECKey.fromPublicOnly(Tools.stringToByte(pubkey));
-		try {
-			key.verifyMessage(this.getSignatureMessage(), signature);
-
-		} catch (SignatureException e) {
-			e.printStackTrace();
-			throw new Exception("Signature does not match..");
-		}
-		return true;
-
+		return "Message\n\tdata=" + data + "\n\ttype=" + type;
 	}
 
 }

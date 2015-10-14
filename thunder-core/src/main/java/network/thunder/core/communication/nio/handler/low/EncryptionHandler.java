@@ -23,9 +23,7 @@ import org.bitcoinj.core.ECKey;
 
 import java.security.SecureRandom;
 
-/**
- * Creates a newly configured {@link ChannelPipeline} for a new channel.
- */
+//TODO: Add a nonce to prevent replay attacks
 public class EncryptionHandler extends ChannelDuplexHandler {
 
 	private ECKey keyUs;
@@ -48,7 +46,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 		System.out.println("EncryptionHandler sendOurKey");
 		sentOurKey = true;
 
-		Object data = new Message(keyUs.getPubKey(), Type.KEY_ENC_SEND, keyUs);
+		Object data = new Message(keyUs.getPubKey(), Type.KEY_ENC_SEND);
 		ByteBuf buf = ctx.alloc().buffer();
 		buf.writeBytes(keyUs.getPubKey());
 

@@ -62,12 +62,12 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 	}
 
 	public void sendSecret (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(new Message(secretOur, Type.AUTH_SEND_SECRET, key));
+		ctx.writeAndFlush(new Message(secretOur, Type.AUTH_SEND_SECRET));
 	}
 
 	public void sendAuthentication (ChannelHandlerContext ctx) {
 		try {
-			ctx.writeAndFlush(new Message(node.getAuthenticationObject(secretTheir), Type.AUTH_SEND, key)).sync().addListener(new ChannelFutureListener() {
+			ctx.writeAndFlush(new Message(node.getAuthenticationObject(secretTheir), Type.AUTH_SEND)).sync().addListener(new ChannelFutureListener() {
 				@Override
 				public void operationComplete (ChannelFuture future) throws Exception {
 					System.out.println(future);
@@ -79,14 +79,14 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 	}
 
 	public void sendFailure (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(new Message(null, Type.FAILURE, key));
+		ctx.writeAndFlush(new Message(null, Type.FAILURE));
 	}
 
 	public void sendAccept (ChannelHandlerContext ctx) {
-		ctx.writeAndFlush(new Message(null, Type.AUTH_ACCEPT, key));
+		ctx.writeAndFlush(new Message(null, Type.AUTH_ACCEPT));
 	}
 
-	public void authenticationFinished(ChannelHandlerContext ctx) {
+	public void authenticationFinished (ChannelHandlerContext ctx) {
 
 		ctx.fireChannelRead("1");
 	}
@@ -103,7 +103,6 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 //			System.out.println(message.type);
 
 			if (message.type >= 1010 && message.type <= 1099) {
-
 
 				if (message.type == Type.AUTH_SEND_SECRET) {
 					secretTheir = new Gson().fromJson(message.data, byte[].class);
@@ -132,7 +131,7 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 					}
 				}
 
-			} else if(message.type == 0) {
+			} else if (message.type == 0) {
 				System.out.println("Got Failure:");
 				System.out.println(message);
 			} else {
