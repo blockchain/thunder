@@ -1,12 +1,17 @@
 package network.thunder.core.etc.crypto;
 
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
 /**
@@ -122,5 +127,21 @@ public class CryptoTools {
 
 
 
+	}
+
+	public static void verifySignature(ECKey pubkey, byte[] data, byte[] signature) throws NoSuchProviderException, NoSuchAlgorithmException {
+		MessageDigest hashHandler = MessageDigest.getInstance("SHA256", "BC");
+		hashHandler.update(data);
+		byte[] hash = hashHandler.digest();
+
+		if(!pubkey.verify(hash, signature)) {
+			System.out.println("Signature does not match..");
+			throw new RuntimeException("Signature does not match..");
+		}
+	}
+
+	public static byte[] createSignature(ECKey pubkey, byte[] data) throws NoSuchProviderException, NoSuchAlgorithmException {
+
+		return pubkey.sign(Sha256Hash.of(data)).encodeToDER();
 	}
 }
