@@ -2,7 +2,11 @@ package network.thunder.core.communication;
 
 import io.netty.channel.ChannelHandlerContext;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
+import network.thunder.core.etc.crypto.CryptoTools;
+import org.bitcoinj.core.ECKey;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -35,8 +39,14 @@ public class Node {
 
 	}
 
-	public boolean processAuthentication (AuthenticationObject authentication, byte[] secret) {
-		//TODO: Check authentication based on the supplied pubkey
+	public boolean processAuthentication (AuthenticationObject authentication, ECKey pubkeyClient, ECKey pubkeyServerTemp) throws NoSuchProviderException,
+			NoSuchAlgorithmException {
+
+		byte[] data = new byte[pubkeyClient.getPubKey().length+pubkeyServerTemp.getPubKey().length];
+		System.arraycopy(pubkeyClient.getPubKey(), 0, data, 0, pubkeyClient.getPubKey().length);
+		System.arraycopy(pubkeyServerTemp.getPubKey(), 0, data, pubkeyClient.getPubKey().length, pubkeyServerTemp.getPubKey().length);
+
+		CryptoTools.verifySignature(pubkeyClient, data, authentication.signature);
 
 		isAuth = true;
 		if (sentAuth) {
@@ -45,11 +55,18 @@ public class Node {
 		return true;
 	}
 
-	public AuthenticationObject getAuthenticationObject (byte[] secret) {
-		//TODO: Produce a proper authentication object..
+	public AuthenticationObject getAuthenticationObject (ECKey keyServer, ECKey keyClientTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
+
+		byte[] data = new byte[keyServer.getPubKey().length+keyClientTemp.getPubKey().length];
+		System.arraycopy(keyServer.getPubKey(), 0, data, 0, keyServer.getPubKey().length);
+		System.arraycopy(keyClientTemp.getPubKey(), 0, data, keyServer.getPubKey().length, keyClientTemp.getPubKey().length);
+
+		AuthenticationObject obj = new AuthenticationObject();
+		obj.pubkeyServer = keyServer.getPubKey();
+		obj.signature = CryptoTools.createSignature(keyServer, data);
 
 		sentAuth = true;
-		return new AuthenticationObject();
+		return obj;
 	}
 
 	public ChannelHandlerContext getNettyContext () {
