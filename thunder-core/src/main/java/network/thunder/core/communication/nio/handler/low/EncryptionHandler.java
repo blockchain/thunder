@@ -91,13 +91,9 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 				buf.readBytes(data);
 				buf.release();
 
-
 				data = CryptoTools.checkAndRemoveHMAC(data, ecdhKeySet.getHmacKey());
 
-
 				byte[] enc = CryptoTools.decryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvClient(), counterIn);
-
-
 
 				out.writeBytes(enc);
 
@@ -127,7 +123,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 				ctx.fireChannelActive();
 
 			}
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
@@ -144,7 +140,6 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 			buf.readBytes(data);
 			buf.release();
 
-
 			byte[] enc = CryptoTools.encryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvServer(), counterOut);
 
 			enc = CryptoTools.addHMAC(enc, ecdhKeySet.getHmacKey());
@@ -157,7 +152,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 			//TODO: Add Encryption
 //		System.out.println("test");
 			ctx.writeAndFlush(out, promise);
-		} catch(Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
@@ -166,5 +161,18 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 	public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
 		cause.printStackTrace();
 		ctx.close();
+	}
+
+	/* I don't like this design, as it wires the EncryptionHandler and the AuthenticationHandler together for eternity, but I guess that is per
+	 * product design....
+	 *
+	 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
+	 */
+	public ECKey getKeyServer () {
+		return keyServer;
+	}
+
+	public ECKey getKeyClient () {
+		return keyClient;
 	}
 }

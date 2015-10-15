@@ -1,8 +1,15 @@
 package network.thunder.core.communication.objects.subobjects;
 
 public class AuthenticationObject {
-	public byte[] pubkeyClient;
-	public byte[] pubkeyNode;
-	public int timestamp;
+	/**
+	 * The 'master' pubkey of our node
+	 */
+	public byte[] pubkeyServer;
+
+	/**
+	 * The signature for
+	 * [pubkeyServer+pubkeyClientTemp]
+	 * signed with keyServer
+	 */
 	public byte[] signature;
 }
