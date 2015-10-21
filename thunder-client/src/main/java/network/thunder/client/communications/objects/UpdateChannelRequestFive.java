@@ -22,5 +22,5 @@ import network.thunder.client.database.objects.Key;
 import java.util.ArrayList;
 
 public class UpdateChannelRequestFive {
-	public ArrayList<Key> keyList;
+    public ArrayList<Key> keyList;
 }

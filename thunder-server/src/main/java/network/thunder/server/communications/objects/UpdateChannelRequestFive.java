@@ -28,8 +28,8 @@ import java.util.ArrayList;
  */
 public class UpdateChannelRequestFive {
 
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 }

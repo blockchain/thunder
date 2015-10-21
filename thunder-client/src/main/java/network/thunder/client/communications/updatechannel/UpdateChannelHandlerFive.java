@@ -25,21 +25,21 @@ import network.thunder.client.database.objects.Channel;
 import java.sql.Connection;
 
 public class UpdateChannelHandlerFive {
-	public Connection conn;
-	public Channel channel;
+    public Connection conn;
+    public Channel channel;
 
-	public void evaluate (UpdateChannelResponseFive m) throws Exception {
-		if (channel.getChannelTxClientID() != 0) {
-			MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
-		}
-		MySQLConnection.getKeysOfUsToBeExposed(conn, channel, true);
-	}
+    public void evaluate (UpdateChannelResponseFive m) throws Exception {
+        if (channel.getChannelTxClientID() != 0) {
+            MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
+        }
+        MySQLConnection.getKeysOfUsToBeExposed(conn, channel, true);
+    }
 
-	public UpdateChannelRequestFive request () throws Exception {
-		UpdateChannelRequestFive request = new UpdateChannelRequestFive();
+    public UpdateChannelRequestFive request () throws Exception {
+        UpdateChannelRequestFive request = new UpdateChannelRequestFive();
 
-		request.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
+        request.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
 
-		return request;
-	}
+        return request;
+    }
 }

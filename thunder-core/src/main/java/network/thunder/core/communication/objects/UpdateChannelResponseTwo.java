@@ -24,14 +24,14 @@ import java.util.ArrayList;
 
 public class UpdateChannelResponseTwo {
 
-	private ArrayList<RevocationHash> oldSecrets;
+    private ArrayList<RevocationHash> oldSecrets;
 
-	public UpdateChannelResponseTwo (ArrayList<RevocationHash> oldSecrets) {
-		this.oldSecrets = oldSecrets;
-	}
+    public UpdateChannelResponseTwo (ArrayList<RevocationHash> oldSecrets) {
+        this.oldSecrets = oldSecrets;
+    }
 
-	public ArrayList<RevocationHash> getOldSecrets () {
+    public ArrayList<RevocationHash> getOldSecrets () {
 
-		return oldSecrets;
-	}
+        return oldSecrets;
+    }
 }

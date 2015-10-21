@@ -24,17 +24,17 @@ import network.thunder.client.database.objects.Channel;
 import java.sql.Connection;
 
 public class UpdateChannelHandlerOne {
-	public Connection conn;
-	public Channel channel;
+    public Connection conn;
+    public Channel channel;
 
-	public int totalAmountOfPayments = 0;
+    public int totalAmountOfPayments = 0;
 
-	public void evaluate (UpdateChannelResponseOne m) {
-		totalAmountOfPayments += m.amountCurrentPayments + m.amountNewPayments;
-	}
+    public void evaluate (UpdateChannelResponseOne m) {
+        totalAmountOfPayments += m.amountCurrentPayments + m.amountNewPayments;
+    }
 
-	public UpdateChannelRequestOne request () throws Exception {
+    public UpdateChannelRequestOne request () throws Exception {
 
-		return new UpdateChannelRequestOne();
-	}
+        return new UpdateChannelRequestOne();
+    }
 }

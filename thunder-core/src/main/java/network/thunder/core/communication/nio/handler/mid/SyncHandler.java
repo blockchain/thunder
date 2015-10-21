@@ -24,7 +24,6 @@ import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
 import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
-import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;
 
@@ -33,20 +32,21 @@ import java.util.ArrayList;
  * client send auth
  * server send auth
  */
-public class GossipHandler extends ChannelInboundHandlerAdapter {
+public class SyncHandler extends ChannelInboundHandlerAdapter {
 
     private Node node;
     private boolean isServer = false;
 
     private P2PContext context;
+    boolean justGetIpObjects;
 
-    private ECKey keyServer;
 //	private Connection conn;
 
-    public GossipHandler (boolean isServer, Node node, P2PContext context) {
+    public SyncHandler (boolean isServer, Node node, P2PContext context, boolean justGetIpObjects) {
         this.isServer = isServer;
         this.node = node;
         this.context = context;
+        this.justGetIpObjects = justGetIpObjects;
     }
 
     @Override
@@ -54,8 +54,11 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
         System.out.println("CHANNEL ACTIVE GOSSIP");
 
         if (!isServer) {
+            if (justGetIpObjects)
             //TODO: Probably should ask for IPs and stuff here..
-            sendGetAddr(ctx);
+            {
+                sendGetAddr(ctx);
+            }
         }
 
     }

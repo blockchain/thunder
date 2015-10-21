@@ -43,114 +43,114 @@ import java.util.List;
 
 public class HTTPS {
 
-	public HttpURLConnection con;
-	public HttpResponse httpResponse;
-	HttpClient httpClient;
-	//	HttpURLConnection urlConnection;
-	HttpPost httpPost;
-	HttpGet httpGet;
-	List<NameValuePair> nvps;
+    public HttpURLConnection con;
+    public HttpResponse httpResponse;
+    HttpClient httpClient;
+    //	HttpURLConnection urlConnection;
+    HttpPost httpPost;
+    HttpGet httpGet;
+    List<NameValuePair> nvps;
 
-	boolean error = false;
+    boolean error = false;
 
-	List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
+    List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
 
-	public static String postToApi (Object data) throws ClientProtocolException, IOException {
-		HTTPS connectionOne = new HTTPS();
-		connectionOne.connectPOST("http://" + Constants.SERVER_URL + "/api/");
-		//    	connectionOne.connectPOST("http://localhost/api/");
-		String d = new Gson().toJson(data);
-		//    	System.out.println("Request Size: "+d.length());
-		connectionOne.addPOSTParameter("data", d);
-		connectionOne.submitPOST();
-		return connectionOne.getContent();
-	}
+    public static String postToApi (Object data) throws ClientProtocolException, IOException {
+        HTTPS connectionOne = new HTTPS();
+        connectionOne.connectPOST("http://" + Constants.SERVER_URL + "/api/");
+        //    	connectionOne.connectPOST("http://localhost/api/");
+        String d = new Gson().toJson(data);
+        //    	System.out.println("Request Size: "+d.length());
+        connectionOne.addPOSTParameter("data", d);
+        connectionOne.submitPOST();
+        return connectionOne.getContent();
+    }
 
-	public void addPOSTParameter (String parameter, String value) {
-		nvps.add(new BasicNameValuePair(parameter, value));
-	}
+    public void addPOSTParameter (String parameter, String value) {
+        nvps.add(new BasicNameValuePair(parameter, value));
+    }
 
-	public boolean connect (String URL) {
-		try {
+    public boolean connect (String URL) {
+        try {
 
-			RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(10 * 1000).build();
-			httpClient = HttpClients.createDefault();
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(10 * 1000).build();
+            httpClient = HttpClients.createDefault();
 
-			httpGet = new HttpGet(URL);
-			httpResponse = httpClient.execute(httpGet);
+            httpGet = new HttpGet(URL);
+            httpResponse = httpClient.execute(httpGet);
 
-			return true;
+            return true;
 
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-	public boolean connectPOST (String URL) {
-		try {
+    public boolean connectPOST (String URL) {
+        try {
 
-			RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(10 * 1000).build();
-			httpClient = HttpClients.createDefault();
-			httpPost = new HttpPost(URL);
-			//			httpPost.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
-			//			httpPost.setHeader("Accept-Encoding", "gzip, deflate");
-			//		    httpPost.setHeader("Content-Type", "application/json");
-			//		    httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:39.0) Gecko/20100101 Firefox/39.0");
+            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(10 * 1000).build();
+            httpClient = HttpClients.createDefault();
+            httpPost = new HttpPost(URL);
+            //			httpPost.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+            //			httpPost.setHeader("Accept-Encoding", "gzip, deflate");
+            //		    httpPost.setHeader("Content-Type", "application/json");
+            //		    httpPost.setHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:39.0) Gecko/20100101 Firefox/39.0");
 
-			nvps = new ArrayList<NameValuePair>();
+            nvps = new ArrayList<NameValuePair>();
 
-			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
-			return false;
-		}
-	}
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
-	public String getContent () throws UnsupportedOperationException, IOException {
-		if (httpResponse != null && !error) {
+    public String getContent () throws UnsupportedOperationException, IOException {
+        if (httpResponse != null && !error) {
 
-			HttpEntity entity = httpResponse.getEntity();
+            HttpEntity entity = httpResponse.getEntity();
 
-			BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
+            BufferedReader br = new BufferedReader(new InputStreamReader(entity.getContent()));
 
-			String input;
-			String ausgabe = "";
+            String input;
+            String ausgabe = "";
 
-			while ((input = br.readLine()) != null) {
-				ausgabe += input + "\n";
-			}
-			br.close();
+            while ((input = br.readLine()) != null) {
+                ausgabe += input + "\n";
+            }
+            br.close();
 
-			return ausgabe;
+            return ausgabe;
 
-		}
-		return null;
+        }
+        return null;
 
-	}
+    }
 
-	private String getQuery (List<NameValuePair> params) throws UnsupportedEncodingException {
-		StringBuilder result = new StringBuilder();
-		boolean first = true;
+    private String getQuery (List<NameValuePair> params) throws UnsupportedEncodingException {
+        StringBuilder result = new StringBuilder();
+        boolean first = true;
 
-		for (NameValuePair pair : params) {
-			if (first) {
-				first = false;
-			} else {
-				result.append("&");
-			}
+        for (NameValuePair pair : params) {
+            if (first) {
+                first = false;
+            } else {
+                result.append("&");
+            }
 
-			result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
-			result.append("=");
-			result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
-		}
+            result.append(URLEncoder.encode(pair.getName(), "UTF-8"));
+            result.append("=");
+            result.append(URLEncoder.encode(pair.getValue(), "UTF-8"));
+        }
 
-		return result.toString();
-	}
+        return result.toString();
+    }
 
-	public void submitPOST () throws ClientProtocolException, IOException {
-		httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
-		httpResponse = httpClient.execute(httpPost);
-	}
+    public void submitPOST () throws ClientProtocolException, IOException {
+        httpPost.setEntity(new UrlEncodedFormEntity(nvps, HTTP.UTF_8));
+        httpResponse = httpClient.execute(httpPost);
+    }
 
 }

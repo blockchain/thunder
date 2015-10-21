@@ -26,37 +26,37 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * if the UI thread couldn't keep up with your background worker.
  */
 public class ThrottledRunLater implements Runnable {
-	private final Runnable runnable;
-	private final AtomicBoolean pending = new AtomicBoolean();
+    private final Runnable runnable;
+    private final AtomicBoolean pending = new AtomicBoolean();
 
-	/**
-	 * Created this way, the no-args runLater will execute this classes run method.
-	 */
-	public ThrottledRunLater () {
-		this.runnable = null;
-	}
+    /**
+     * Created this way, the no-args runLater will execute this classes run method.
+     */
+    public ThrottledRunLater () {
+        this.runnable = null;
+    }
 
-	/**
-	 * Created this way, the no-args runLater will execute the given runnable.
-	 */
-	public ThrottledRunLater (Runnable runnable) {
-		this.runnable = runnable;
-	}
+    /**
+     * Created this way, the no-args runLater will execute the given runnable.
+     */
+    public ThrottledRunLater (Runnable runnable) {
+        this.runnable = runnable;
+    }
 
-	@Override
-	public void run () {
-	}
+    @Override
+    public void run () {
+    }
 
-	public void runLater () {
-		runLater(runnable != null ? runnable : this);
-	}
+    public void runLater () {
+        runLater(runnable != null ? runnable : this);
+    }
 
-	public void runLater (Runnable runnable) {
-		if (!pending.getAndSet(true)) {
-			Platform.runLater(() -> {
-				pending.set(false);
-				runnable.run();
-			});
-		}
-	}
+    public void runLater (Runnable runnable) {
+        if (!pending.getAndSet(true)) {
+            Platform.runLater(() -> {
+                pending.set(false);
+                runnable.run();
+            });
+        }
+    }
 }

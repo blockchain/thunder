@@ -7,31 +7,31 @@ import java.nio.channels.Channel;
 import java.security.NoSuchAlgorithmException;
 
 public class PaymentReceiveRequest {
-	private static final String PREFIX = "4";
+    private static final String PREFIX = "4";
 
-	String id;
-	String typeOfId;
+    String id;
+    String typeOfId;
 
-	String secretHash;
-	Payment payment;
+    String secretHash;
+    Payment payment;
 
-	long amount;
+    long amount;
 
-	public PaymentReceiveRequest (Channel channel, Payment p) {
-		//		super(channel, p);
-		payment = p;
-		secretHash = p.getSecretHash();
+    public PaymentReceiveRequest (Channel channel, Payment p) {
+        //		super(channel, p);
+        payment = p;
+        secretHash = p.getSecretHash();
 
-		amount = p.getAmount();
+        amount = p.getAmount();
 
-		//		id = p.getPubKeyReceiver();
-	}
+        //		id = p.getPubKeyReceiver();
+    }
 
-	public String getAddress () throws NoSuchAlgorithmException {
-		String a = PREFIX + typeOfId + id + secretHash;
-		String hash = Tools.getFourCharacterHash(a);
+    public String getAddress () throws NoSuchAlgorithmException {
+        String a = PREFIX + typeOfId + id + secretHash;
+        String hash = Tools.getFourCharacterHash(a);
 
-		return a + hash;
-	}
+        return a + hash;
+    }
 
 }

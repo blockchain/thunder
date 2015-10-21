@@ -35,159 +35,159 @@ import java.util.Timer;
 
 public class TransactionStorage implements WalletEventListener {
 
-	private static boolean first = true;
-	Connection conn;
-	PeerGroup peerGroup;
-	ArrayList<Channel> openingTransactions = new ArrayList<Channel>();
-	ArrayList<Channel> channelTransactions = new ArrayList<Channel>();
+    private static boolean first = true;
+    Connection conn;
+    PeerGroup peerGroup;
+    ArrayList<Channel> openingTransactions = new ArrayList<Channel>();
+    ArrayList<Channel> channelTransactions = new ArrayList<Channel>();
 
-	HashMap<Integer, ArrayList<TransactionTimerTask>> additionalTransactionList = new HashMap<Integer, ArrayList<TransactionTimerTask>>();
-	HashMap<Integer, TransactionTimerTask> refundTransactionList = new HashMap<Integer, TransactionTimerTask>();
-	HashMap<Integer, TransactionTimerTask> channelTransactionList = new HashMap<Integer, TransactionTimerTask>();
+    HashMap<Integer, ArrayList<TransactionTimerTask>> additionalTransactionList = new HashMap<Integer, ArrayList<TransactionTimerTask>>();
+    HashMap<Integer, TransactionTimerTask> refundTransactionList = new HashMap<Integer, TransactionTimerTask>();
+    HashMap<Integer, TransactionTimerTask> channelTransactionList = new HashMap<Integer, TransactionTimerTask>();
 
-	Timer timer;
+    Timer timer;
 
-	ArrayList<Output> outputList = new ArrayList<>();
+    ArrayList<Output> outputList = new ArrayList<>();
 
-	private TransactionStorage () {
-	}
+    private TransactionStorage () {
+    }
 
-	public static TransactionStorage initialize (Connection conn, ArrayList<Output> outputList) throws SQLException {
-		TransactionStorage storage = new TransactionStorage();
-		storage.conn = conn;
-		storage.outputList = outputList;
+    public static TransactionStorage initialize (Connection conn, ArrayList<Output> outputList) throws SQLException {
+        TransactionStorage storage = new TransactionStorage();
+        storage.conn = conn;
+        storage.outputList = outputList;
 
-		storage.channelTransactions = MySQLConnection.getChannelTransactions(conn);
-		storage.openingTransactions = MySQLConnection.getOpeningTransactions(conn);
+        storage.channelTransactions = MySQLConnection.getChannelTransactions(conn);
+        storage.openingTransactions = MySQLConnection.getOpeningTransactions(conn);
 
-		return storage;
+        return storage;
 
-	}
+    }
 
-	private void addFinishedChannel (Channel channel) throws SQLException {
-		channelTransactions.add(channel);
-		int i = 0;
-		for (Channel c : openingTransactions) {
-			if (c.getPubKeyClient().equals(channel.getPubKeyClient())) {
-				openingTransactions.remove(i);
-				c.setReady(true);
-				c.setEstablishPhase(0);
-				MySQLConnection.updateChannel(conn, channel);
-				return;
-			}
-			i++;
-		}
-	}
+    private void addFinishedChannel (Channel channel) throws SQLException {
+        channelTransactions.add(channel);
+        int i = 0;
+        for (Channel c : openingTransactions) {
+            if (c.getPubKeyClient().equals(channel.getPubKeyClient())) {
+                openingTransactions.remove(i);
+                c.setReady(true);
+                c.setEstablishPhase(0);
+                MySQLConnection.updateChannel(conn, channel);
+                return;
+            }
+            i++;
+        }
+    }
 
-	public void addOpenedChannel (Channel channel) {
-		openingTransactions.add(channel);
-	}
+    public void addOpenedChannel (Channel channel) {
+        openingTransactions.add(channel);
+    }
 
-	@Override
-	public void onCoinsReceived (Wallet arg0, Transaction arg1, Coin arg2, Coin arg3) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onCoinsReceived (Wallet arg0, Transaction arg1, Coin arg2, Coin arg3) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	@Override
-	public void onCoinsSent (Wallet arg0, Transaction arg1, Coin arg2, Coin arg3) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onCoinsSent (Wallet arg0, Transaction arg1, Coin arg2, Coin arg3) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	@Override
-	public void onReorganize (Wallet arg0) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onReorganize (Wallet arg0) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	@Override
-	public void onTransactionConfidenceChanged (Wallet arg0, Transaction arg1) {
-		try {
-			onTransaction(arg1);
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+    @Override
+    public void onTransactionConfidenceChanged (Wallet arg0, Transaction arg1) {
+        try {
+            onTransaction(arg1);
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	@Override
-	public void onWalletChanged (Wallet arg0) {
-		// TODO Auto-generated method stub
-		updateOutputs(arg0, false);
+    @Override
+    public void onWalletChanged (Wallet arg0) {
+        // TODO Auto-generated method stub
+        updateOutputs(arg0, false);
 
-	}
+    }
 
-	@Override
-	public void onScriptsChanged (Wallet arg0, List<Script> arg1, boolean arg2) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onScriptsChanged (Wallet arg0, List<Script> arg1, boolean arg2) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	@Override
-	public void onKeysAdded (List<ECKey> arg0) {
-		// TODO Auto-generated method stub
+    @Override
+    public void onKeysAdded (List<ECKey> arg0) {
+        // TODO Auto-generated method stub
 
-	}
+    }
 
-	public void onTransaction (Transaction transaction) throws SQLException {
-		for (Channel c : openingTransactions) {
-			if (transaction.getHashAsString().equals(c.getOpeningTxHash())) {
+    public void onTransaction (Transaction transaction) throws SQLException {
+        for (Channel c : openingTransactions) {
+            if (transaction.getHashAsString().equals(c.getOpeningTxHash())) {
 
-				TransactionConfidence confidence = transaction.getConfidence();
+                TransactionConfidence confidence = transaction.getConfidence();
 
-				if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
-					//TODO: Remove this transaction and the channel, somehow it got overwritten..
-				}
+                if (confidence.getConfidenceType() == ConfidenceType.DEAD) {
+                    //TODO: Remove this transaction and the channel, somehow it got overwritten..
+                }
 
-				if (confidence.getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME_FOR_CHANNEL) {
-					c.setOpeningTx(transaction);
-					addFinishedChannel(c);
-					return;
-				}
+                if (confidence.getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME_FOR_CHANNEL) {
+                    c.setOpeningTx(transaction);
+                    addFinishedChannel(c);
+                    return;
+                }
 
-			}
-		}
+            }
+        }
 
-		boolean channelOutput = false;
-		for (TransactionInput input : transaction.getInputs()) {
-			if (input.getOutpoint().getIndex() == 0) {
-				for (Channel c : channelTransactions) {
-					if (c.getChannelTxServer() != null) {
-						if (input.getOutpoint().getHash().toString().equals(c.getChannelTxServer().getHashAsString())) {
-							//TODO: Somehow the channel got closed, find out how (correctly?) and act accordingly..
-						}
-					}
-				}
-			}
-		}
+        boolean channelOutput = false;
+        for (TransactionInput input : transaction.getInputs()) {
+            if (input.getOutpoint().getIndex() == 0) {
+                for (Channel c : channelTransactions) {
+                    if (c.getChannelTxServer() != null) {
+                        if (input.getOutpoint().getHash().toString().equals(c.getChannelTxServer().getHashAsString())) {
+                            //TODO: Somehow the channel got closed, find out how (correctly?) and act accordingly..
+                        }
+                    }
+                }
+            }
+        }
 
-	}
+    }
 
-	public void rebroadcastOpeningTransactions (Peer peer) throws NotYetConnectedException, SQLException {
-		for (Channel c : openingTransactions) {
-			peer.sendMessage(c.getOpeningTx());
-		}
-	}
+    public void rebroadcastOpeningTransactions (Peer peer) throws NotYetConnectedException, SQLException {
+        for (Channel c : openingTransactions) {
+            peer.sendMessage(c.getOpeningTx());
+        }
+    }
 
-	public void updateOutputs (Wallet wallet, boolean forceUpdate) {
-		boolean update = forceUpdate;
-		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
-			if (o.getParentTransaction().getConfidence().getDepthInBlocks() < 10) {
-				update = true;
-			}
-		}
-		if (!update && !first) {
-			return;
-		}
-		first = false;
-		outputList.clear();
-		for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
-			if (o.getParentTransaction().getConfidence().getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME) {
-				outputList.add(new Output(o, wallet));
-			}
-		}
-	}
+    public void updateOutputs (Wallet wallet, boolean forceUpdate) {
+        boolean update = forceUpdate;
+        for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
+            if (o.getParentTransaction().getConfidence().getDepthInBlocks() < 10) {
+                update = true;
+            }
+        }
+        if (!update && !first) {
+            return;
+        }
+        first = false;
+        outputList.clear();
+        for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
+            if (o.getParentTransaction().getConfidence().getDepthInBlocks() >= Constants.MIN_CONFIRMATION_TIME) {
+                outputList.add(new Output(o, wallet));
+            }
+        }
+    }
 
 }

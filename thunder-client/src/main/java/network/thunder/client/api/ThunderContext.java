@@ -41,365 +41,364 @@ import java.util.concurrent.Future;
 
 public class ThunderContext {
 
-	public static ThunderContext instance = new ThunderContext();
-	public Connection conn;
-	public ArrayList<Output> outputList = new ArrayList<Output>();
-	public HashMap<Integer, Channel> channelList = new HashMap<>();
-	public Channel currentChannel;
-	public TransactionStorage transactionStorage;
-	public ThunderContext thisReference;
-	public ExecutorService executorService = Executors.newSingleThreadExecutor();
-	public WebSocketHandler webSocketHandler = new WebSocketHandler();
-	Future latestFuture;
-	private ArrayList<Payment> paymentListIncluded = new ArrayList<Payment>();
-	private ArrayList<Payment> paymentListSettled = new ArrayList<Payment>();
-	private ArrayList<Payment> paymentListRefunded = new ArrayList<Payment>();
-	private ArrayList<Payment> paymentListOpen = new ArrayList<Payment>();
-	private Wallet wallet;
-	private PeerGroup peerGroup;
-	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
-	private InitFinishListener initListener;
-	private ProgressUpdateListener updateListener;
-	private UpdateStartListener updateStartListener;
-	private ErrorListener errorListener;
-	private boolean initFinished = false;
-
-	public static ThunderContext init (Wallet w, PeerGroup p, int clientId, boolean forceNew) throws SQLException, IOException, InstantiationException,
-			IllegalAccessException, ClassNotFoundException {
-		if (!forceNew && instance.initFinished) {
-			return instance;
-		}
-
-		ThunderContext context;
-		if (!instance.initFinished) {
-			context = instance;
-		} else {
-			context = new ThunderContext();
-		}
-		context.thisReference = context;
-		System.out.println("Start init!");
-		context.conn = MySQLConnection.getInstance(clientId);
-
-		/**
-		 * Hack to check if the database has been created already..
-		 */
-		try {
-			context.channelList = MySQLConnection.getActiveChannels(context.conn);
-		} catch (SQLException e) {
-			MySQLConnection.buildDatabase(context.conn);
-		}
-
-		context.wallet = w;
-		context.peerGroup = p;
-
-		context.channelList = MySQLConnection.getActiveChannels(context.conn);
-		if (context.channelList.size() > 0) {
-			context.currentChannel = context.channelList.entrySet().iterator().next().getValue();
-			context.updatePaymentLists();
-		}
-
-		context.transactionStorage = TransactionStorage.initialize(context.conn, context.outputList);
-		context.wallet.addEventListener(context.transactionStorage);
-		System.out.println("Finished init! Active channels: " + context.channelList.size());
-
-		context.transactionStorage.updateOutputs(context.wallet, true);
-		if (context.initListener != null) {
-			context.initListener.initFinished();
-		}
-
-		if (context.currentChannel != null) {
-			context.webSocketHandler.connectToServer(context.currentChannel, context);
-		}
-		context.initFinished = true;
-		instance = context;
-
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run () {
-				System.out.println("Closing down the wallet gracefully..");
-				instance.wallet.shutdownAutosaveAndWait();
-				System.out.println("Closing down the wallet gracefully successful..");
-			}
-		});
-
-		return context;
-	}
-
-	public static void init (Wallet w, PeerGroup p) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-		init(w, p, 1, false);
-	}
-
-	public void addListener (ChangeListener toAdd) {
-		System.out.println("Listener added!");
-		changeListeners.add(toAdd);
-	}
-
-	public void closeChannel () throws Exception {
-
-		latestFuture = executorService.submit(new Runnable() {
-			@Override
-			public void run () {
-				try {
-
-					ClientTools.closeChannel(conn, currentChannel, peerGroup);
-					channelList.remove(currentChannel.getId());
-					webSocketHandler.closeConnection(currentChannel.getId());
-
-					if (channelList.size() > 0) {
-						currentChannel = channelList.entrySet().iterator().next().getValue();
-					}
-
-					for (ChangeListener listener : changeListeners) {
-						listener.channelListChanged();
-					}
-
-				} catch (Exception e) {
-					throwError(Tools.stacktraceToString(e));
-					e.printStackTrace();
-				}
-
-			}
-		});
-	}
-
-	public Coin getAmountClient () {
-		if (currentChannel == null) {
-			return Coin.ZERO;
-		}
-		return Coin.valueOf(currentChannel.getAmountClient());
-	}
-
-	public Coin getAmountClientAccessible () throws SQLException {
-		if (currentChannel == null) {
-			return Coin.ZERO;
-		}
-		if (currentChannel.getChannelTxClientID() == 0) {
-			return Coin.valueOf(currentChannel.getAmountClient());
-		} else {
-			return currentChannel.getChannelTxClient().getOutput(0).getValue();
-		}
-	}
-
-	public HashMap<Integer, Channel> getChannelList () {
-		return channelList;
-	}
-
-	public Channel getCurrentChannel () {
-		return currentChannel;
-	}
-
-	public ArrayList<Payment> getPaymentListIncluded () {
-		return paymentListIncluded;
-	}
-
-	public ArrayList<Payment> getPaymentListOpen () {
-		return paymentListOpen;
-	}
-
-	public ArrayList<Payment> getPaymentListRefunded () {
-		return paymentListRefunded;
-	}
-
-	public ArrayList<Payment> getPaymentListSettled () {
-		return paymentListSettled;
-	}
-
-	public PaymentRequest getPaymentReceiveRequest (long amount) throws Exception {
-
-		Payment p = new Payment(0, currentChannel.getId(), amount);
-		p.setReceiver(currentChannel.getPubKeyClient());
-		p.paymentToServer = false;
-
-		MySQLConnection.addPayment(conn, p);
-		conn.commit();
-		PaymentRequest request = new PaymentRequest(currentChannel, p);
-
-		updatePaymentLists();
-		for (ChangeListener listener : changeListeners) {
-			listener.channelListChanged();
-		}
-
-		return request;
-
-	}
-
-	public boolean hasActiveChannel () {
-		System.out.println(channelList);
-		System.out.println(channelList.size());
-		return (channelList.size() != 0);
-	}
-
-	public void makePayment (final long amount, final String address) throws Exception {
-
-		PaymentRequest request = new PaymentRequest(currentChannel, amount, address);
-
-		latestFuture = executorService.submit(new Runnable() {
-			@Override
-			public void run () {
-				try {
-
-					currentChannel = ClientTools.makePayment(conn, currentChannel, request.getPayment());
-					updatePaymentLists();
-					for (ChangeListener listener : changeListeners) {
-						listener.channelListChanged();
-					}
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					try {
-
-						conn.rollback();
-						MySQLConnection.deletePayment(conn, request.getPayment().getId());
-						conn.commit();
-						currentChannel = MySQLConnection.getChannel(conn, currentChannel.getId());
-					} catch (SQLException e1) {
-						e1.printStackTrace();
-					}
-
-					throwError(Tools.stacktraceToString(e));
-				}
-			}
-		});
-	}
-
-	public void openChannel (final long clientAmount, final long serverAmount, final int timeInDays) throws Exception {
-		latestFuture = executorService.submit(new Runnable() {
-			@Override
-			public void run () {
-
-				try {
-					Channel channel = currentChannel;
-
-					channel = ClientTools.createChannel(conn, wallet, peerGroup, outputList, clientAmount, serverAmount, timeInDays);
-
-					channelList.put(channel.getId(), channel);
-					currentChannel = channel;
-
-					for (ChangeListener listener : changeListeners) {
-						listener.channelListChanged();
-					}
-
-					webSocketHandler.connectToServer(currentChannel, thisReference);
-
-				} catch (Exception e) {
-					throwError(Tools.stacktraceToString(e));
-					e.printStackTrace();
-				}
-
-			}
-		});
-
-	}
-
-	public void progressUpdated (int progress, int max) {
-		if (updateListener != null) {
-			updateListener.progressUpdated(progress, max);
-		}
-	}
-
-	public void setChannel (Channel channel) {
-		currentChannel = channel;
-	}
-
-	public void setErrorListener (ErrorListener listener) {
-		errorListener = listener;
-	}
-
-	public void setInitFinishedListener (InitFinishListener listener) {
-		initListener = listener;
-	}
-
-	public void setProgressUpdateListener (ProgressUpdateListener listener) {
-		updateListener = listener;
-	}
-
-	public void setUpdateStartListener (UpdateStartListener listener) {
-		updateStartListener = listener;
-	}
-
-	public void throwError (String error) {
-		if (errorListener != null) {
-			errorListener.error(error);
-		}
-	}
-
-	public void updateChannel () throws Exception {
-		if (updateStartListener != null) {
-			updateStartListener.updateStart();
-		}
-		latestFuture = executorService.submit(new Runnable() {
-			@Override
-			public void run () {
-				try {
-					/**
-					 * TODO: change protocol, such that server sends amount of new payments
-					 * 			with the first response, such that we know whether we should update
-					 * 			at all.
-					 *
-					 * TODO: Not sure how this is going to work with multiple channels, we have to check
-					 *          back here as soon as we allow more than one active channel.
-					 */
-					currentChannel = ClientTools.updateChannel(conn, currentChannel, true);
-
-					updatePaymentLists();
-					for (ChangeListener listener : changeListeners) {
-						listener.channelListChanged();
-					}
-
-					currentChannel = ClientTools.updateChannel(conn, currentChannel, false);
-
-					updatePaymentLists();
-					for (ChangeListener listener : changeListeners) {
-						listener.channelListChanged();
-					}
-
-					ThunderContext.instance.progressUpdated(10, 10);
-
-				} catch (Exception e) {
-					e.printStackTrace();
-					throwError(Tools.stacktraceToString(e));
-					try {
-						conn.rollback();
-						conn.commit();
-						currentChannel = MySQLConnection.getChannel(conn, currentChannel.getId());
-
-					} catch (SQLException e1) {
-						e1.printStackTrace();
-					}
-
-				}
-			}
-		});
-	}
-
-	private void updatePaymentLists () throws SQLException {
-		paymentListIncluded = MySQLConnection.getPaymentsIncludedInChannel(conn, currentChannel.getId());
-		paymentListSettled = MySQLConnection.getPaymentsSettled(conn, currentChannel.getId());
-		paymentListRefunded = MySQLConnection.getPaymentsRefunded(conn, currentChannel.getId());
-		paymentListOpen = MySQLConnection.getPaymentsOpen(conn, currentChannel.getId());
-	}
-
-	public void waitUntilReady () throws ExecutionException, InterruptedException {
-		latestFuture.get();
-	}
-
-	public interface ChangeListener {
-		public void channelListChanged ();
-	}
-
-	public interface InitFinishListener {
-		public void initFinished ();
-	}
-
-	public interface ProgressUpdateListener {
-		public void progressUpdated (int progress, int max);
-	}
-
-	public interface ErrorListener {
-		public void error (String error);
-	}
-
-	public interface UpdateStartListener {
-		public void updateStart ();
-	}
+    public static ThunderContext instance = new ThunderContext();
+    public Connection conn;
+    public ArrayList<Output> outputList = new ArrayList<Output>();
+    public HashMap<Integer, Channel> channelList = new HashMap<>();
+    public Channel currentChannel;
+    public TransactionStorage transactionStorage;
+    public ThunderContext thisReference;
+    public ExecutorService executorService = Executors.newSingleThreadExecutor();
+    public WebSocketHandler webSocketHandler = new WebSocketHandler();
+    Future latestFuture;
+    private ArrayList<Payment> paymentListIncluded = new ArrayList<Payment>();
+    private ArrayList<Payment> paymentListSettled = new ArrayList<Payment>();
+    private ArrayList<Payment> paymentListRefunded = new ArrayList<Payment>();
+    private ArrayList<Payment> paymentListOpen = new ArrayList<Payment>();
+    private Wallet wallet;
+    private PeerGroup peerGroup;
+    private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+    private InitFinishListener initListener;
+    private ProgressUpdateListener updateListener;
+    private UpdateStartListener updateStartListener;
+    private ErrorListener errorListener;
+    private boolean initFinished = false;
+
+    public static ThunderContext init (Wallet w, PeerGroup p, int clientId, boolean forceNew) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        if (!forceNew && instance.initFinished) {
+            return instance;
+        }
+
+        ThunderContext context;
+        if (!instance.initFinished) {
+            context = instance;
+        } else {
+            context = new ThunderContext();
+        }
+        context.thisReference = context;
+        System.out.println("Start init!");
+        context.conn = MySQLConnection.getInstance(clientId);
+
+        /**
+         * Hack to check if the database has been created already..
+         */
+        try {
+            context.channelList = MySQLConnection.getActiveChannels(context.conn);
+        } catch (SQLException e) {
+            MySQLConnection.buildDatabase(context.conn);
+        }
+
+        context.wallet = w;
+        context.peerGroup = p;
+
+        context.channelList = MySQLConnection.getActiveChannels(context.conn);
+        if (context.channelList.size() > 0) {
+            context.currentChannel = context.channelList.entrySet().iterator().next().getValue();
+            context.updatePaymentLists();
+        }
+
+        context.transactionStorage = TransactionStorage.initialize(context.conn, context.outputList);
+        context.wallet.addEventListener(context.transactionStorage);
+        System.out.println("Finished init! Active channels: " + context.channelList.size());
+
+        context.transactionStorage.updateOutputs(context.wallet, true);
+        if (context.initListener != null) {
+            context.initListener.initFinished();
+        }
+
+        if (context.currentChannel != null) {
+            context.webSocketHandler.connectToServer(context.currentChannel, context);
+        }
+        context.initFinished = true;
+        instance = context;
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run () {
+                System.out.println("Closing down the wallet gracefully..");
+                instance.wallet.shutdownAutosaveAndWait();
+                System.out.println("Closing down the wallet gracefully successful..");
+            }
+        });
+
+        return context;
+    }
+
+    public static void init (Wallet w, PeerGroup p) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        init(w, p, 1, false);
+    }
+
+    public void addListener (ChangeListener toAdd) {
+        System.out.println("Listener added!");
+        changeListeners.add(toAdd);
+    }
+
+    public void closeChannel () throws Exception {
+
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+                try {
+
+                    ClientTools.closeChannel(conn, currentChannel, peerGroup);
+                    channelList.remove(currentChannel.getId());
+                    webSocketHandler.closeConnection(currentChannel.getId());
+
+                    if (channelList.size() > 0) {
+                        currentChannel = channelList.entrySet().iterator().next().getValue();
+                    }
+
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                } catch (Exception e) {
+                    throwError(Tools.stacktraceToString(e));
+                    e.printStackTrace();
+                }
+
+            }
+        });
+    }
+
+    public Coin getAmountClient () {
+        if (currentChannel == null) {
+            return Coin.ZERO;
+        }
+        return Coin.valueOf(currentChannel.getAmountClient());
+    }
+
+    public Coin getAmountClientAccessible () throws SQLException {
+        if (currentChannel == null) {
+            return Coin.ZERO;
+        }
+        if (currentChannel.getChannelTxClientID() == 0) {
+            return Coin.valueOf(currentChannel.getAmountClient());
+        } else {
+            return currentChannel.getChannelTxClient().getOutput(0).getValue();
+        }
+    }
+
+    public HashMap<Integer, Channel> getChannelList () {
+        return channelList;
+    }
+
+    public Channel getCurrentChannel () {
+        return currentChannel;
+    }
+
+    public ArrayList<Payment> getPaymentListIncluded () {
+        return paymentListIncluded;
+    }
+
+    public ArrayList<Payment> getPaymentListOpen () {
+        return paymentListOpen;
+    }
+
+    public ArrayList<Payment> getPaymentListRefunded () {
+        return paymentListRefunded;
+    }
+
+    public ArrayList<Payment> getPaymentListSettled () {
+        return paymentListSettled;
+    }
+
+    public PaymentRequest getPaymentReceiveRequest (long amount) throws Exception {
+
+        Payment p = new Payment(0, currentChannel.getId(), amount);
+        p.setReceiver(currentChannel.getPubKeyClient());
+        p.paymentToServer = false;
+
+        MySQLConnection.addPayment(conn, p);
+        conn.commit();
+        PaymentRequest request = new PaymentRequest(currentChannel, p);
+
+        updatePaymentLists();
+        for (ChangeListener listener : changeListeners) {
+            listener.channelListChanged();
+        }
+
+        return request;
+
+    }
+
+    public boolean hasActiveChannel () {
+        System.out.println(channelList);
+        System.out.println(channelList.size());
+        return (channelList.size() != 0);
+    }
+
+    public void makePayment (final long amount, final String address) throws Exception {
+
+        PaymentRequest request = new PaymentRequest(currentChannel, amount, address);
+
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+                try {
+
+                    currentChannel = ClientTools.makePayment(conn, currentChannel, request.getPayment());
+                    updatePaymentLists();
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    try {
+
+                        conn.rollback();
+                        MySQLConnection.deletePayment(conn, request.getPayment().getId());
+                        conn.commit();
+                        currentChannel = MySQLConnection.getChannel(conn, currentChannel.getId());
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
+
+                    throwError(Tools.stacktraceToString(e));
+                }
+            }
+        });
+    }
+
+    public void openChannel (final long clientAmount, final long serverAmount, final int timeInDays) throws Exception {
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+
+                try {
+                    Channel channel = currentChannel;
+
+                    channel = ClientTools.createChannel(conn, wallet, peerGroup, outputList, clientAmount, serverAmount, timeInDays);
+
+                    channelList.put(channel.getId(), channel);
+                    currentChannel = channel;
+
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                    webSocketHandler.connectToServer(currentChannel, thisReference);
+
+                } catch (Exception e) {
+                    throwError(Tools.stacktraceToString(e));
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+    }
+
+    public void progressUpdated (int progress, int max) {
+        if (updateListener != null) {
+            updateListener.progressUpdated(progress, max);
+        }
+    }
+
+    public void setChannel (Channel channel) {
+        currentChannel = channel;
+    }
+
+    public void setErrorListener (ErrorListener listener) {
+        errorListener = listener;
+    }
+
+    public void setInitFinishedListener (InitFinishListener listener) {
+        initListener = listener;
+    }
+
+    public void setProgressUpdateListener (ProgressUpdateListener listener) {
+        updateListener = listener;
+    }
+
+    public void setUpdateStartListener (UpdateStartListener listener) {
+        updateStartListener = listener;
+    }
+
+    public void throwError (String error) {
+        if (errorListener != null) {
+            errorListener.error(error);
+        }
+    }
+
+    public void updateChannel () throws Exception {
+        if (updateStartListener != null) {
+            updateStartListener.updateStart();
+        }
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+                try {
+                    /**
+                     * TODO: change protocol, such that server sends amount of new payments
+                     * 			with the first response, such that we know whether we should update
+                     * 			at all.
+                     *
+                     * TODO: Not sure how this is going to work with multiple channels, we have to check
+                     *          back here as soon as we allow more than one active channel.
+                     */
+                    currentChannel = ClientTools.updateChannel(conn, currentChannel, true);
+
+                    updatePaymentLists();
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                    currentChannel = ClientTools.updateChannel(conn, currentChannel, false);
+
+                    updatePaymentLists();
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                    ThunderContext.instance.progressUpdated(10, 10);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    throwError(Tools.stacktraceToString(e));
+                    try {
+                        conn.rollback();
+                        conn.commit();
+                        currentChannel = MySQLConnection.getChannel(conn, currentChannel.getId());
+
+                    } catch (SQLException e1) {
+                        e1.printStackTrace();
+                    }
+
+                }
+            }
+        });
+    }
+
+    private void updatePaymentLists () throws SQLException {
+        paymentListIncluded = MySQLConnection.getPaymentsIncludedInChannel(conn, currentChannel.getId());
+        paymentListSettled = MySQLConnection.getPaymentsSettled(conn, currentChannel.getId());
+        paymentListRefunded = MySQLConnection.getPaymentsRefunded(conn, currentChannel.getId());
+        paymentListOpen = MySQLConnection.getPaymentsOpen(conn, currentChannel.getId());
+    }
+
+    public void waitUntilReady () throws ExecutionException, InterruptedException {
+        latestFuture.get();
+    }
+
+    public interface ChangeListener {
+        public void channelListChanged ();
+    }
+
+    public interface InitFinishListener {
+        public void initFinished ();
+    }
+
+    public interface ProgressUpdateListener {
+        public void progressUpdated (int progress, int max);
+    }
+
+    public interface ErrorListener {
+        public void error (String error);
+    }
+
+    public interface UpdateStartListener {
+        public void updateStart ();
+    }
 
 }

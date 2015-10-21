@@ -36,111 +36,108 @@ import java.util.TimerTask;
 
 public class TransactionTimerTask extends TimerTask {
 
-	PeerGroup peerGroup;
-	Transaction transaction;
+    PeerGroup peerGroup;
+    Transaction transaction;
 
-	String secretHash;
-	int channelId;
-	Connection conn;
-	boolean serverIssuedTransaction;
-	TransactionOutput output;
-	Transaction settlementTransaction;
+    String secretHash;
+    int channelId;
+    Connection conn;
+    boolean serverIssuedTransaction;
+    TransactionOutput output;
+    Transaction settlementTransaction;
 
-	Timer timer;
+    Timer timer;
 
-	public TransactionTimerTask (PeerGroup peerGroup, Transaction transaction) {
-		this.peerGroup = peerGroup;
-		this.transaction = transaction;
-	}
+    public TransactionTimerTask (PeerGroup peerGroup, Transaction transaction) {
+        this.peerGroup = peerGroup;
+        this.transaction = transaction;
+    }
 
-	public TransactionTimerTask (Timer timer, Connection conn, PeerGroup peerGroup, Transaction transaction, String secretHash, int channelId, boolean
-			serverIssuedTransaction, TransactionOutput output, Transaction settlementTransaction) {
-		this.peerGroup = peerGroup;
-		this.transaction = transaction;
-		this.conn = conn;
-		this.secretHash = secretHash;
-		this.channelId = channelId;
-		this.serverIssuedTransaction = serverIssuedTransaction;
-		this.output = output;
-		this.settlementTransaction = settlementTransaction;
-		this.timer = timer;
-	}
+    public TransactionTimerTask (Timer timer, Connection conn, PeerGroup peerGroup, Transaction transaction, String secretHash, int channelId, boolean serverIssuedTransaction, TransactionOutput output, Transaction settlementTransaction) {
+        this.peerGroup = peerGroup;
+        this.transaction = transaction;
+        this.conn = conn;
+        this.secretHash = secretHash;
+        this.channelId = channelId;
+        this.serverIssuedTransaction = serverIssuedTransaction;
+        this.output = output;
+        this.settlementTransaction = settlementTransaction;
+        this.timer = timer;
+    }
 
-	@Override
-	public void run () {
-		if (secretHash != null) {
-			/**
-			 * Before we actually broadcasts a refund tx, check if we really don't have the secret,
-			 * 	as it's possible we collected it somewhere else..
-			 */
-			try {
-				Payment payment = MySQLConnection.getPayment(conn, secretHash, channelId);
-				if (payment.getSecret() != null) {
-					/**
-					 * We actually got the secret for this payment..
-					 */
-					Channel channel = MySQLConnection.getChannel(conn, channelId);
-					ECKey key = MySQLConnection.getKeyCurrentlyUsed(conn, channel);
+    @Override
+    public void run () {
+        if (secretHash != null) {
+            /**
+             * Before we actually broadcasts a refund tx, check if we really don't have the secret,
+             * 	as it's possible we collected it somewhere else..
+             */
+            try {
+                Payment payment = MySQLConnection.getPayment(conn, secretHash, channelId);
+                if (payment.getSecret() != null) {
+                    /**
+                     * We actually got the secret for this payment..
+                     */
+                    Channel channel = MySQLConnection.getChannel(conn, channelId);
+                    ECKey key = MySQLConnection.getKeyCurrentlyUsed(conn, channel);
 
-					ECDSASignature signature1;
-					try {
-						signature1 = ScriptTools.getSignatureOufOfMultisigInput(settlementTransaction.getInput(0));
-					} catch (Exception e) {
-						signature1 = null;
-					}
-					ECDSASignature signature2 = Tools.getSignature(settlementTransaction, 0, output, key);
-					Script inputScript;
+                    ECDSASignature signature1;
+                    try {
+                        signature1 = ScriptTools.getSignatureOufOfMultisigInput(settlementTransaction.getInput(0));
+                    } catch (Exception e) {
+                        signature1 = null;
+                    }
+                    ECDSASignature signature2 = Tools.getSignature(settlementTransaction, 0, output, key);
+                    Script inputScript;
 
-					if (payment.paymentToServer) {
-						/**
-						 * Payments towards the server that has been revealed by the receiver
-						 *  and should thus be paid to the server aswell..
-						 *
-						 * If the Server issued this transaction, he is the only one who can claim the settlement.
-						 */
-						if (serverIssuedTransaction && !SideConstants.RUNS_ON_SERVER) {
-							return;
-						}
-					} else {
-						/**
-						 * Payments towards the client, that he revealed the secret for.
-						 * Usually this should no longer be in the channel, but it might happen.
-						 * We pay these out to the client for now, I can't think of a case, where we get here
-						 * 	and are allowed to claim these funds..
-						 *
-						 * If the Client issued this transaction, he is the only one who can claim the settlement.
-						 */
-						if (!serverIssuedTransaction && SideConstants.RUNS_ON_SERVER) {
-							return;
-						}
-					}
-					if (SideConstants.RUNS_ON_SERVER) {
-						inputScript = ScriptTools.getSettlementScriptSig(channel, signature1, signature2, payment.getSecret(), serverIssuedTransaction,
-								payment.paymentToServer);
-					} else {
-						inputScript = ScriptTools.getSettlementScriptSig(channel, signature2, signature1, payment.getSecret(), serverIssuedTransaction,
-								payment.paymentToServer);
-					}
-					/**
-					 * Settlements have no locktime, therefore we should broadcast them straight-away.
-					 * TODO: This might be a problem if we come back here very often..
-					 */
-					settlementTransaction.getInput(0).setScriptSig(inputScript);
-					peerGroup.broadcastTransaction(settlementTransaction);
+                    if (payment.paymentToServer) {
+                        /**
+                         * Payments towards the server that has been revealed by the receiver
+                         *  and should thus be paid to the server aswell..
+                         *
+                         * If the Server issued this transaction, he is the only one who can claim the settlement.
+                         */
+                        if (serverIssuedTransaction && !SideConstants.RUNS_ON_SERVER) {
+                            return;
+                        }
+                    } else {
+                        /**
+                         * Payments towards the client, that he revealed the secret for.
+                         * Usually this should no longer be in the channel, but it might happen.
+                         * We pay these out to the client for now, I can't think of a case, where we get here
+                         * 	and are allowed to claim these funds..
+                         *
+                         * If the Client issued this transaction, he is the only one who can claim the settlement.
+                         */
+                        if (!serverIssuedTransaction && SideConstants.RUNS_ON_SERVER) {
+                            return;
+                        }
+                    }
+                    if (SideConstants.RUNS_ON_SERVER) {
+                        inputScript = ScriptTools.getSettlementScriptSig(channel, signature1, signature2, payment.getSecret(), serverIssuedTransaction, payment.paymentToServer);
+                    } else {
+                        inputScript = ScriptTools.getSettlementScriptSig(channel, signature2, signature1, payment.getSecret(), serverIssuedTransaction, payment.paymentToServer);
+                    }
+                    /**
+                     * Settlements have no locktime, therefore we should broadcast them straight-away.
+                     * TODO: This might be a problem if we come back here very often..
+                     */
+                    settlementTransaction.getInput(0).setScriptSig(inputScript);
+                    peerGroup.broadcastTransaction(settlementTransaction);
 
-				} else {
-					TransactionTimerTask newTask = new TransactionTimerTask(peerGroup, transaction);
-					timer.schedule(newTask, 2 * 60 * 1000);
-					return;
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+                } else {
+                    TransactionTimerTask newTask = new TransactionTimerTask(peerGroup, transaction);
+                    timer.schedule(newTask, 2 * 60 * 1000);
+                    return;
+                }
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
 
-		}
+        }
 
-		peerGroup.broadcastTransaction(transaction);
-	}
+        peerGroup.broadcastTransaction(transaction);
+    }
 
 }

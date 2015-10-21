@@ -11,37 +11,37 @@ import wallettemplate.utils.TextFieldValidator;
  * if the address is invalid for those params, and enable/disable the nodes.
  */
 public class ThunderAddressValidator {
-	private NetworkParameters params;
-	private Node[] nodes;
+    private NetworkParameters params;
+    private Node[] nodes;
 
-	public ThunderAddressValidator (NetworkParameters params, TextField field, Node... nodes) {
-		this.params = params;
-		this.nodes = nodes;
+    public ThunderAddressValidator (NetworkParameters params, TextField field, Node... nodes) {
+        this.params = params;
+        this.nodes = nodes;
 
-		// Handle the red highlighting, but don't highlight in red just when the field is empty because that makes
-		// the example/prompt address hard to read.
-		new TextFieldValidator(field, text -> text.isEmpty() || testAddr(text));
-		// However we do want the buttons to be disabled when empty so we apply a different test there.
-		field.textProperty().addListener((observableValue, prev, current) -> {
-			toggleButtons(current);
-		});
-		toggleButtons(field.getText());
-	}
+        // Handle the red highlighting, but don't highlight in red just when the field is empty because that makes
+        // the example/prompt address hard to read.
+        new TextFieldValidator(field, text -> text.isEmpty() || testAddr(text));
+        // However we do want the buttons to be disabled when empty so we apply a different test there.
+        field.textProperty().addListener((observableValue, prev, current) -> {
+            toggleButtons(current);
+        });
+        toggleButtons(field.getText());
+    }
 
-	private boolean testAddr (String text) {
-		//        try {
-		//TODO: write a test-method to check the address of a syntax, probably some lengthy regex..
-		PaymentRequest.checkAddress(text);
-		return true;
-		//        } catch (AddressFormatException e) {
-		//            return false;
-		//        }
-	}
+    private boolean testAddr (String text) {
+        //        try {
+        //TODO: write a test-method to check the address of a syntax, probably some lengthy regex..
+        PaymentRequest.checkAddress(text);
+        return true;
+        //        } catch (AddressFormatException e) {
+        //            return false;
+        //        }
+    }
 
-	private void toggleButtons (String current) {
-		boolean valid = testAddr(current);
-		for (Node n : nodes) {
-			n.setDisable(!valid);
-		}
-	}
+    private void toggleButtons (String current) {
+        boolean valid = testAddr(current);
+        for (Node n : nodes) {
+            n.setDisable(!valid);
+        }
+    }
 }

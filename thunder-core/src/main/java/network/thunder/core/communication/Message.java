@@ -29,71 +29,71 @@ import java.sql.Connection;
  */
 public class Message {
 
-	public String data;
-	public int type;
+    public String data;
+    public int type;
 
-	/**
-	 * Instantiates a new message.
-	 *
-	 * @param o    the o
-	 * @param type the type
-	 */
-	public Message (Object o, int type) {
-		this.fill(o);
-		this.type = type;
-	}
+    /**
+     * Instantiates a new message.
+     *
+     * @param o    the o
+     * @param type the type
+     */
+    public Message (Object o, int type) {
+        this.fill(o);
+        this.type = type;
+    }
 
-	/**
-	 * Instantiates a new message.
-	 *
-	 * @param o         the o
-	 * @param type      the type
-	 * @param timestamp the timestamp
-	 */
-	public Message (Object o, int type, int timestamp) {
-		this.fill(o);
-		this.type = type;
-	}
+    /**
+     * Instantiates a new message.
+     *
+     * @param o         the o
+     * @param type      the type
+     * @param timestamp the timestamp
+     */
+    public Message (Object o, int type, int timestamp) {
+        this.fill(o);
+        this.type = type;
+    }
 
-	/**
-	 * Instantiates a new message.
-	 *
-	 * @param response the response
-	 */
-	public Message (String response) {
-		Message message = new Gson().fromJson(response, Message.class);
-		this.data = message.data;
-		this.type = message.type;
-	}
+    /**
+     * Instantiates a new message.
+     *
+     * @param response the response
+     */
+    public Message (String response) {
+        Message message = new Gson().fromJson(response, Message.class);
+        this.data = message.data;
+        this.type = message.type;
+    }
 
-	/**
-	 * Fill.
-	 *
-	 * @param o the o
-	 */
-	public void fill (Object o) {
-		data = new Gson().toJson(o);
-	}
+    /**
+     * Fill.
+     *
+     * @param o the o
+     */
+    public void fill (Object o) {
+        data = new Gson().toJson(o);
+    }
 
-	public String getDataString () {
-		return new Gson().toJson(this);
-	}
+    public String getDataString () {
+        return new Gson().toJson(this);
+    }
 
-	/**
-	 * Call this method right after receiving it.
-	 *
-	 * @param conn the conn
-	 * @throws Exception the exception
-	 */
-	public void prepare (Connection conn) throws Exception {
-		if (this.type == Type.FAILURE) {
-			throw new Exception(this.data);
-		}
-	}
+    /**
+     * Call this method right after receiving it.
+     *
+     * @param conn the conn
+     * @throws Exception the exception
+     */
+    public void prepare (Connection conn) throws Exception {
+        if (this.type == Type.FAILURE) {
+            throw new Exception(this.data);
+        }
+    }
 
-	@Override
-	public String toString () {
-		return "Message\n\tdata=" + data + "\n\ttype=" + type;
-	}
+    @Override
+    public String toString () {
+        return "Message\n\tdata=" + data + "\n\ttype=" + type;
+    }
 
 }

@@ -26,24 +26,24 @@ import java.util.ArrayList;
  */
 public class SendPaymentRequestTwo {
 
-	/**
-	 * The revoke transaction.
-	 */
-	public String revokeTransaction;
+    /**
+     * The revoke transaction.
+     */
+    public String revokeTransaction;
 
-	/**
-	 * The payment settlements.
-	 */
-	public ArrayList<String> paymentSettlements;
+    /**
+     * The payment settlements.
+     */
+    public ArrayList<String> paymentSettlements;
 
-	/**
-	 * The payment refunds.
-	 */
-	public ArrayList<String> paymentRefunds;
+    /**
+     * The payment refunds.
+     */
+    public ArrayList<String> paymentRefunds;
 
-	/**
-	 * The channel hash.
-	 */
-	public String channelHash;
+    /**
+     * The channel hash.
+     */
+    public String channelHash;
 
 }

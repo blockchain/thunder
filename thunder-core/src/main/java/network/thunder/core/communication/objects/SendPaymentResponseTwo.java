@@ -28,13 +28,13 @@ import java.util.ArrayList;
  */
 public class SendPaymentResponseTwo {
 
-	public ArrayList<RevocationHash> oldSecrets;
+    public ArrayList<RevocationHash> oldSecrets;
 
-	public SendPaymentResponseTwo (ArrayList<RevocationHash> oldSecrets) {
-		this.oldSecrets = oldSecrets;
-	}
+    public SendPaymentResponseTwo (ArrayList<RevocationHash> oldSecrets) {
+        this.oldSecrets = oldSecrets;
+    }
 
-	public ArrayList<RevocationHash> getOldSecrets () {
-		return oldSecrets;
-	}
+    public ArrayList<RevocationHash> getOldSecrets () {
+        return oldSecrets;
+    }
 }

@@ -23,9 +23,9 @@ import network.thunder.client.database.objects.Secret;
 import java.util.ArrayList;
 
 public class UpdateChannelResponseTwo {
-	public ArrayList<Secret> secretList;
-	public ArrayList<Key> keyList;
-	public ArrayList<String> removedPayments;
+    public ArrayList<Secret> secretList;
+    public ArrayList<Key> keyList;
+    public ArrayList<String> removedPayments;
 
-	public String channelTransaction;
+    public String channelTransaction;
 }

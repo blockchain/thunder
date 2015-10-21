@@ -30,19 +30,19 @@ import java.util.ArrayList;
  */
 public class SendPaymentRequestTwo {
 
-	public String channelTxSig;
-	public ArrayList<RevocationHash> oldSecrets;
+    public String channelTxSig;
+    public ArrayList<RevocationHash> oldSecrets;
 
-	public SendPaymentRequestTwo (ECKey.ECDSASignature channelTxSig, ArrayList<RevocationHash> oldSecrets) {
-		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
-		this.oldSecrets = oldSecrets;
-	}
+    public SendPaymentRequestTwo (ECKey.ECDSASignature channelTxSig, ArrayList<RevocationHash> oldSecrets) {
+        this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
+        this.oldSecrets = oldSecrets;
+    }
 
-	public ECKey.ECDSASignature getChannelTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
-	}
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
+    }
 
-	public ArrayList<RevocationHash> getOldSecrets () {
-		return oldSecrets;
-	}
+    public ArrayList<RevocationHash> getOldSecrets () {
+        return oldSecrets;
+    }
 }

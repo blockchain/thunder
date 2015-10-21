@@ -7,14 +7,14 @@ import network.thunder.core.communication.Node;
  */
 public class ClientMain {
 
-	public static void main(String[] args) throws Exception {
-		P2PContext context = new P2PContext(8993);
+    public static void main (String[] args) throws Exception {
+        P2PContext context = new P2PContext(8993);
 
-		Node node = new Node();
-		node.setHost("127.0.0.1");
-		node.setPort(8992);
+        Node node = new Node();
+        node.setHost("127.0.0.1");
+        node.setPort(8992);
 
-		context.activeNodes.add(node);
-		context.startConnections();
-	}
+        context.activeNodes.add(node);
+        context.startConnections();
+    }
 }

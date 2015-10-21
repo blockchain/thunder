@@ -68,141 +68,140 @@ import java.util.HashMap;
 
 public class Server {
 
-	static DataSource dataSource;
-	/**
-	 * The keychain.
-	 */
-	KeyChain keychain;
-	/**
-	 * The server.
-	 */
-	org.eclipse.jetty.server.Server server;
-	/**
-	 * The establish channel handler.
-	 */
-	RequestHandler establishChannelHandler;
-	HashMap<Integer, Session> websocketList = new HashMap<>();
+    static DataSource dataSource;
+    /**
+     * The keychain.
+     */
+    KeyChain keychain;
+    /**
+     * The server.
+     */
+    org.eclipse.jetty.server.Server server;
+    /**
+     * The establish channel handler.
+     */
+    RequestHandler establishChannelHandler;
+    HashMap<Integer, Session> websocketList = new HashMap<>();
 
-	/**
-	 * The main method.
-	 *
-	 * @param args the arguments
-	 * @throws Exception the exception
-	 */
-	public static void main (String[] args) throws Exception {
-		System.out.println("Starting ThunderNetwork Server..");
-		dataSource = MySQLConnection.getDataSource();
-		WebSocketHandler.init(dataSource);
-		Connection conn = dataSource.getConnection();
-		try {
-			MySQLConnection.getActiveChannels(conn);
-		} catch (SQLException e) {
-			MySQLConnection.resetToBackup();
-		}
-		MySQLConnection.cleanUpDatabase(conn);
-		System.out.println("Syncing our Wallet..");
-		KeyChain keyChain = new KeyChain(conn);
-		keyChain.startUp();
+    /**
+     * The main method.
+     *
+     * @param args the arguments
+     * @throws Exception the exception
+     */
+    public static void main (String[] args) throws Exception {
+        System.out.println("Starting ThunderNetwork Server..");
+        dataSource = MySQLConnection.getDataSource();
+        WebSocketHandler.init(dataSource);
+        Connection conn = dataSource.getConnection();
+        try {
+            MySQLConnection.getActiveChannels(conn);
+        } catch (SQLException e) {
+            MySQLConnection.resetToBackup();
+        }
+        MySQLConnection.cleanUpDatabase(conn);
+        System.out.println("Syncing our Wallet..");
+        KeyChain keyChain = new KeyChain(conn);
+        keyChain.startUp();
 
-		TransactionStorage.initialize(conn, keyChain.peerGroup);
-		TransactionStorage.instance.peerGroup = keyChain.peerGroup;
-		System.out.println("Checking old Transactions..");
-		keyChain.run();
+        TransactionStorage.initialize(conn, keyChain.peerGroup);
+        TransactionStorage.instance.peerGroup = keyChain.peerGroup;
+        System.out.println("Checking old Transactions..");
+        keyChain.run();
 
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			public void run () {
-				System.out.println("Closing down the wallet gracefully..");
-				keyChain.shutdown();
-				System.out.println("Closing down the wallet gracefully successful..");
-			}
-		});
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            public void run () {
+                System.out.println("Closing down the wallet gracefully..");
+                keyChain.shutdown();
+                System.out.println("Closing down the wallet gracefully successful..");
+            }
+        });
 
-		//        Peer peer = keyChain.peerGroup.get;
+        //        Peer peer = keyChain.peerGroup.get;
 
-		Thread.sleep(3000);
+        Thread.sleep(3000);
 
-		//        transactionStorage.rebroadcastOpeningTransactions(peer);
+        //        transactionStorage.rebroadcastOpeningTransactions(peer);
 
-		RequestHandler establishChannelHandler = new RequestHandler();
-		establishChannelHandler.transactionStorage = TransactionStorage.instance;
-		establishChannelHandler.dataSource = dataSource;
-		establishChannelHandler.wallet = keyChain.kit.wallet();
-		establishChannelHandler.peerGroup = keyChain.peerGroup;
+        RequestHandler establishChannelHandler = new RequestHandler();
+        establishChannelHandler.transactionStorage = TransactionStorage.instance;
+        establishChannelHandler.dataSource = dataSource;
+        establishChannelHandler.wallet = keyChain.kit.wallet();
+        establishChannelHandler.peerGroup = keyChain.peerGroup;
 
-		org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server();
+        org.eclipse.jetty.server.Server server = new org.eclipse.jetty.server.Server();
 
-		HttpConfiguration http_config = new HttpConfiguration();
-		http_config.setSecureScheme("https");
-		http_config.setSecurePort(443);
+        HttpConfiguration http_config = new HttpConfiguration();
+        http_config.setSecureScheme("https");
+        http_config.setSecurePort(443);
 
-		ServerConnector httpConnector = new ServerConnector(server);
-		httpConnector.addConnectionFactory(new HttpConnectionFactory(http_config));
-		httpConnector.setPort(80);
+        ServerConnector httpConnector = new ServerConnector(server);
+        httpConnector.addConnectionFactory(new HttpConnectionFactory(http_config));
+        httpConnector.setPort(80);
 
-		if (!SideConstants.DEBUG) {
-			String keystorePath = System.getProperty("user.home");
-			File keystoreFile = new File(keystorePath, "keystore");
-			if (!keystoreFile.exists()) {
-				throw new FileNotFoundException(keystoreFile.getAbsolutePath());
-			}
+        if (!SideConstants.DEBUG) {
+            String keystorePath = System.getProperty("user.home");
+            File keystoreFile = new File(keystorePath, "keystore");
+            if (!keystoreFile.exists()) {
+                throw new FileNotFoundException(keystoreFile.getAbsolutePath());
+            }
 
-			SslContextFactory sslContextFactory = new SslContextFactory();
-			sslContextFactory.setKeyStorePath(keystoreFile.getAbsolutePath());
-			sslContextFactory.setKeyStorePassword("000000"); //Set correct password here for deployed system..
-			sslContextFactory.setKeyManagerPassword("000000"); //Set correct password here for deployed system..
-			sslContextFactory.setCertAlias("jetty");
-			HttpConfiguration https_config = new HttpConfiguration(http_config);
-			https_config.addCustomizer(new SecureRequestCustomizer());
-			ServerConnector https = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()), new
-					HttpConnectionFactory(https_config));
-			https.setPort(443);
-			https.setIdleTimeout(500000);
-			server.setConnectors(new Connector[]{httpConnector, https});
+            SslContextFactory sslContextFactory = new SslContextFactory();
+            sslContextFactory.setKeyStorePath(keystoreFile.getAbsolutePath());
+            sslContextFactory.setKeyStorePassword("000000"); //Set correct password here for deployed system..
+            sslContextFactory.setKeyManagerPassword("000000"); //Set correct password here for deployed system..
+            sslContextFactory.setCertAlias("jetty");
+            HttpConfiguration https_config = new HttpConfiguration(http_config);
+            https_config.addCustomizer(new SecureRequestCustomizer());
+            ServerConnector https = new ServerConnector(server, new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()), new HttpConnectionFactory(https_config));
+            https.setPort(443);
+            https.setIdleTimeout(500000);
+            server.setConnectors(new Connector[]{httpConnector, https});
 
-		} else {
-			server.setConnectors(new Connector[]{httpConnector});
-		}
+        } else {
+            server.setConnectors(new Connector[]{httpConnector});
+        }
 
-		ContextHandler context0 = new ContextHandler("/api");
-		context0.setContextPath("/api");
-		context0.setHandler(establishChannelHandler);
+        ContextHandler context0 = new ContextHandler("/api");
+        context0.setContextPath("/api");
+        context0.setHandler(establishChannelHandler);
 
-		ContextHandler context1 = new ContextHandler("/");
-		context1.setContextPath("/");
-		ResourceHandler rh0 = new ResourceHandler();
-		rh0.setWelcomeFiles(new String[]{"index.html"});
-		//        rh0.setDirectoriesListed(true);
-		rh0.setResourceBase("");
+        ContextHandler context1 = new ContextHandler("/");
+        context1.setContextPath("/");
+        ResourceHandler rh0 = new ResourceHandler();
+        rh0.setWelcomeFiles(new String[]{"index.html"});
+        //        rh0.setDirectoriesListed(true);
+        rh0.setResourceBase("");
 
-		context1.setHandler(rh0);
+        context1.setHandler(rh0);
 
-		ServletContextHandler context2 = new ServletContextHandler(ServletContextHandler.SESSIONS);
-		context2.setContextPath("/");
-		//        server.setHandler(context2);
-		ServletHolder holderEvents = new ServletHolder("websocket", new WebSocketServlet() {
-			@Override
-			public void configure (WebSocketServletFactory webSocketServletFactory) {
-				//                webSocketServletFactory.getPolicy().setIdleTimeout(10000);
-				webSocketServletFactory.register(EventSocket.class);
-			}
+        ServletContextHandler context2 = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context2.setContextPath("/");
+        //        server.setHandler(context2);
+        ServletHolder holderEvents = new ServletHolder("websocket", new WebSocketServlet() {
+            @Override
+            public void configure (WebSocketServletFactory webSocketServletFactory) {
+                //                webSocketServletFactory.getPolicy().setIdleTimeout(10000);
+                webSocketServletFactory.register(EventSocket.class);
+            }
 
-			@Override
-			public void doGet (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-				response.getWriter().println("HTTP GET method not implemented.");
-			}
-		});
-		context2.addServlet(holderEvents, "/websocket");
+            @Override
+            public void doGet (HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+                response.getWriter().println("HTTP GET method not implemented.");
+            }
+        });
+        context2.addServlet(holderEvents, "/websocket");
 
-		HandlerList handlers = new HandlerList();
-		handlers.setHandlers(new Handler[]{context0, context1, context2});
-		server.setHandler(handlers);
+        HandlerList handlers = new HandlerList();
+        handlers.setHandlers(new Handler[]{context0, context1, context2});
+        server.setHandler(handlers);
 
-		System.out.println("Server ready!");
-		server.start();
-		server.join();
+        System.out.println("Server ready!");
+        server.start();
+        server.join();
 
-		BriefLogFormatter.init();
+        BriefLogFormatter.init();
 
-	}
+    }
 
 }

@@ -13,61 +13,61 @@ import java.util.HashMap;
  * Created by PC on 17.08.2015.
  */
 public class WebSocketHandler {
-	public static HashMap<Integer, Session> websocketList = new HashMap<>();
-	public static DataSource dataSource;
+    public static HashMap<Integer, Session> websocketList = new HashMap<>();
+    public static DataSource dataSource;
 
-	public static Class<?> getEventSocket () {
-		return EventSocket.class;
-	}
+    public static Class<?> getEventSocket () {
+        return EventSocket.class;
+    }
 
-	public static void init (DataSource ds) {
-		dataSource = ds;
-	}
+    public static void init (DataSource ds) {
+        dataSource = ds;
+    }
 
-	public static void newSecret (int channelIdReceiver) {
-		WebSocketNewSecret request = new WebSocketNewSecret();
+    public static void newSecret (int channelIdReceiver) {
+        WebSocketNewSecret request = new WebSocketNewSecret();
 
-		Session session = websocketList.get(channelIdReceiver);
-		/**
-		 * Check if there is a client listening for updates on this channel..
-		 */
-		if (session == null) {
-			return;
-		}
-		Message message = new Message();
-		message.type = Type.WEBSOCKET_NEW_SECRET;
-		message.success = true;
+        Session session = websocketList.get(channelIdReceiver);
+        /**
+         * Check if there is a client listening for updates on this channel..
+         */
+        if (session == null) {
+            return;
+        }
+        Message message = new Message();
+        message.type = Type.WEBSOCKET_NEW_SECRET;
+        message.success = true;
 
-		try {
-			session.getRemote().sendString(message.getDataString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        try {
+            session.getRemote().sendString(message.getDataString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	public static void sendPayment (int channelIdReceiver, Payment payment) {
-		WebSocketUpdatePayment request = new WebSocketUpdatePayment();
-		request.amount = payment.getAmount();
-		request.hash = payment.getSecretHash();
+    public static void sendPayment (int channelIdReceiver, Payment payment) {
+        WebSocketUpdatePayment request = new WebSocketUpdatePayment();
+        request.amount = payment.getAmount();
+        request.hash = payment.getSecretHash();
 
-		Session session = websocketList.get(channelIdReceiver);
-		/**
-		 * Check if there is a client listening for updates on this channel..
-		 */
-		if (session == null) {
-			return;
-		}
-		Message message = new Message();
-		message.type = Type.WEBSOCKET_NEW_PAYMENT;
-		message.success = true;
+        Session session = websocketList.get(channelIdReceiver);
+        /**
+         * Check if there is a client listening for updates on this channel..
+         */
+        if (session == null) {
+            return;
+        }
+        Message message = new Message();
+        message.type = Type.WEBSOCKET_NEW_PAYMENT;
+        message.success = true;
 
-		try {
-			session.getRemote().sendString(message.getDataString());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+        try {
+            session.getRemote().sendString(message.getDataString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
 }

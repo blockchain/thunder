@@ -26,55 +26,55 @@ import network.thunder.client.database.objects.Key;
 import java.sql.Connection;
 
 public class AddKeysHandler {
-	public Connection conn;
-	public int amountClient;
-	public int amountServer;
-	public Channel channel;
+    public Connection conn;
+    public int amountClient;
+    public int amountServer;
+    public Channel channel;
 
-	public void evaluateResponse (AddKeysResponse m) throws Exception {
-		/**
-		 * Check if the keys are provided and save them..
-		 */
-		if (m.keyList == null) {
-			throw new Exception("keyList is null");
-		}
-		if (m.keyList.size() == 0) {
-			throw new Exception("keyList is empty");
-		}
+    public void evaluateResponse (AddKeysResponse m) throws Exception {
+        /**
+         * Check if the keys are provided and save them..
+         */
+        if (m.keyList == null) {
+            throw new Exception("keyList is null");
+        }
+        if (m.keyList.size() == 0) {
+            throw new Exception("keyList is empty");
+        }
 
-		for (Key key : m.keyList) {
-			key.privateKey = null;
-			//			MySQLConnection.addKey(conn, key, channel.getPubKeyClient(), false);
-		}
+        for (Key key : m.keyList) {
+            key.privateKey = null;
+            //			MySQLConnection.addKey(conn, key, channel.getPubKeyClient(), false);
+        }
 
-		//		System.out.println("New Keys to add: "+m.keyList.size());
+        //		System.out.println("New Keys to add: "+m.keyList.size());
 
-		MySQLConnection.addKey(conn, m.keyList, channel.getId(), false);
+        MySQLConnection.addKey(conn, m.keyList, channel.getId(), false);
 
-	}
+    }
 
-	public AddKeysRequest request () throws Exception {
+    public AddKeysRequest request () throws Exception {
 
-		AddKeysRequest request = new AddKeysRequest();
-		long time = System.currentTimeMillis();
-		long time1 = System.currentTimeMillis();
+        AddKeysRequest request = new AddKeysRequest();
+        long time = System.currentTimeMillis();
+        long time1 = System.currentTimeMillis();
 
-		request.keyList = MySQLConnection.createKeys(conn, channel, amountClient);
-		request.amount = amountServer;
+        request.keyList = MySQLConnection.createKeys(conn, channel, amountClient);
+        request.amount = amountServer;
 
-		//		time1 = System.currentTimeMillis();
-		//		System.out.println("requestKeys request 1 1: "+(time1-time) );
-		//		time = System.currentTimeMillis();
+        //		time1 = System.currentTimeMillis();
+        //		System.out.println("requestKeys request 1 1: "+(time1-time) );
+        //		time = System.currentTimeMillis();
 
-		for (Key key : request.keyList) {
-			key.privateKey = null;
-		}
+        for (Key key : request.keyList) {
+            key.privateKey = null;
+        }
 
-		//		time1 = System.currentTimeMillis();
-		//		System.out.println("requestKeys request 1 2: "+(time1-time) );
-		//		time = System.currentTimeMillis();
+        //		time1 = System.currentTimeMillis();
+        //		System.out.println("requestKeys request 1 2: "+(time1-time) );
+        //		time = System.currentTimeMillis();
 
-		return request;
+        return request;
 
-	}
+    }
 }

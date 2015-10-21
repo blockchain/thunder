@@ -26,62 +26,62 @@ import org.spongycastle.util.Arrays;
  */
 public class PerformanceLogger {
 
-	/**
-	 * The time1.
-	 */
-	long time1;
+    /**
+     * The time1.
+     */
+    long time1;
 
-	/**
-	 * The time2.
-	 */
-	long time2;
+    /**
+     * The time2.
+     */
+    long time2;
 
-	/**
-	 * The title.
-	 */
-	String title;
+    /**
+     * The title.
+     */
+    String title;
 
-	/**
-	 * The i.
-	 */
-	int i = 0;
+    /**
+     * The i.
+     */
+    int i = 0;
 
-	/**
-	 * Instantiates a new performance logger.
-	 */
-	public PerformanceLogger () {
-		time1 = System.currentTimeMillis();
-	}
+    /**
+     * Instantiates a new performance logger.
+     */
+    public PerformanceLogger () {
+        time1 = System.currentTimeMillis();
+    }
 
-	/**
-	 * Instantiates a new performance logger.
-	 *
-	 * @param title the title
-	 */
-	public PerformanceLogger (String title) {
-		time1 = System.currentTimeMillis();
-	}
+    /**
+     * Instantiates a new performance logger.
+     *
+     * @param title the title
+     */
+    public PerformanceLogger (String title) {
+        time1 = System.currentTimeMillis();
+    }
 
-	/**
-	 * Measure.
-	 *
-	 * @param event the event
-	 */
-	public void measure (String event) {
+    /**
+     * Measure.
+     *
+     * @param event the event
+     */
+    public void measure (String event) {
 
-		time2 = System.currentTimeMillis();
-		if (Arrays.contains(Constants.LOG_LEVELS, 1)) {
-			System.out.println((time2 - time1) + "		" + event);
-		}
-		time1 = System.currentTimeMillis();
-	}
+        time2 = System.currentTimeMillis();
+        if (Arrays.contains(Constants.LOG_LEVELS, 1)) {
+            System.out.println((time2 - time1) + "		" + event);
+        }
+        time1 = System.currentTimeMillis();
+    }
 
-	/**
-	 * Measure.
-	 */
-	public void measure () {
-		i++;
-		measure(title + " " + i);
+    /**
+     * Measure.
+     */
+    public void measure () {
+        i++;
+        measure(title + " " + i);
 
-	}
+    }
 }

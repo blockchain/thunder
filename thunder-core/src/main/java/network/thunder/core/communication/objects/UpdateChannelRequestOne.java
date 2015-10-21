@@ -28,25 +28,25 @@ import java.util.ArrayList;
  */
 public class UpdateChannelRequestOne {
 
-	private RevocationHash newHash;
-	private ArrayList<PaymentSecret> revealedSecrets;
-	private ArrayList<PaymentSecret> removedPayments;
+    private RevocationHash newHash;
+    private ArrayList<PaymentSecret> revealedSecrets;
+    private ArrayList<PaymentSecret> removedPayments;
 
-	public UpdateChannelRequestOne (RevocationHash newHash, ArrayList<PaymentSecret> revealedSecrets, ArrayList<PaymentSecret> removedPayments) {
-		this.newHash = newHash;
-		this.revealedSecrets = revealedSecrets;
-		this.removedPayments = removedPayments;
-	}
+    public UpdateChannelRequestOne (RevocationHash newHash, ArrayList<PaymentSecret> revealedSecrets, ArrayList<PaymentSecret> removedPayments) {
+        this.newHash = newHash;
+        this.revealedSecrets = revealedSecrets;
+        this.removedPayments = removedPayments;
+    }
 
-	public RevocationHash getNewHash () {
-		return newHash;
-	}
+    public RevocationHash getNewHash () {
+        return newHash;
+    }
 
-	public ArrayList<PaymentSecret> getRevealedSecrets () {
-		return revealedSecrets;
-	}
+    public ArrayList<PaymentSecret> getRevealedSecrets () {
+        return revealedSecrets;
+    }
 
-	public ArrayList<PaymentSecret> getRemovedPayments () {
-		return removedPayments;
-	}
+    public ArrayList<PaymentSecret> getRemovedPayments () {
+        return removedPayments;
+    }
 }

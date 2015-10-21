@@ -19,6 +19,6 @@ package network.thunder.client.communications.objects;
 
 public class EstablishChannelRequestTwo {
 
-	public String transaction;
+    public String transaction;
 
 }

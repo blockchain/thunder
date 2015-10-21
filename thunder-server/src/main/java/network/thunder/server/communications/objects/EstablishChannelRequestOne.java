@@ -24,34 +24,34 @@ package network.thunder.server.communications.objects;
  */
 public class EstablishChannelRequestOne {
 
-	/**
-	 * The pub key.
-	 */
-	public String pubKey;
+    /**
+     * The pub key.
+     */
+    public String pubKey;
 
-	/**
-	 * The time in days.
-	 */
-	public int timeInDays;
+    /**
+     * The time in days.
+     */
+    public int timeInDays;
 
-	/**
-	 * The total amount.
-	 */
-	public long totalAmount;
+    /**
+     * The total amount.
+     */
+    public long totalAmount;
 
-	/**
-	 * The client amount.
-	 */
-	public long clientAmount;
+    /**
+     * The client amount.
+     */
+    public long clientAmount;
 
-	/**
-	 * The transaction unsigned.
-	 */
-	public String transactionUnsigned;
+    /**
+     * The transaction unsigned.
+     */
+    public String transactionUnsigned;
 
-	/**
-	 * The change address.
-	 */
-	public String changeAddress;
+    /**
+     * The change address.
+     */
+    public String changeAddress;
 
 }

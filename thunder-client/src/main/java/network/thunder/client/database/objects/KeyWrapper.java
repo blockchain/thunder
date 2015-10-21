@@ -24,59 +24,59 @@ import java.util.ArrayList;
 
 public class KeyWrapper {
 
-	ArrayList<IKey> keyList = new ArrayList<IKey>();
+    ArrayList<IKey> keyList = new ArrayList<IKey>();
 
-	public void addKey (int id, String pubKey) {
-		IKey k = new IKey();
-		k.id = id;
-		k.pubKey = pubKey;
-		keyList.add(k);
-	}
+    public void addKey (int id, String pubKey) {
+        IKey k = new IKey();
+        k.id = id;
+        k.pubKey = pubKey;
+        keyList.add(k);
+    }
 
-	public boolean checkKey (String pubKey) {
-		for (IKey k : keyList) {
-			//			if(!k.used) {
-			if (k.pubKey.equals(pubKey)) {
-				k.used = true;
-				return true;
-			}
-			//			}
+    public boolean checkKey (String pubKey) {
+        for (IKey k : keyList) {
+            //			if(!k.used) {
+            if (k.pubKey.equals(pubKey)) {
+                k.used = true;
+                return true;
+            }
+            //			}
 
-		}
-		return false;
-	}
+        }
+        return false;
+    }
 
-	public String getKey () {
-		for (IKey k : keyList) {
-			//			if(!k.used) {
-			k.used = true;
-			return k.pubKey;
-			//			}
-		}
-		return null;
-	}
+    public String getKey () {
+        for (IKey k : keyList) {
+            //			if(!k.used) {
+            k.used = true;
+            return k.pubKey;
+            //			}
+        }
+        return null;
+    }
 
-	public ArrayList<IKey> getKeyList () {
-		return keyList;
-	}
+    public ArrayList<IKey> getKeyList () {
+        return keyList;
+    }
 
-	public ECKey getUsedECKey (String pubKey) {
-		for (IKey k : keyList) {
-			if (k.used) {
-				if (k.pubKey.equals(pubKey)) {
-					ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
-					return key;
-				}
-			}
+    public ECKey getUsedECKey (String pubKey) {
+        for (IKey k : keyList) {
+            if (k.used) {
+                if (k.pubKey.equals(pubKey)) {
+                    ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
+                    return key;
+                }
+            }
 
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-	public class IKey {
-		public String pubKey;
-		public int id;
-		public boolean used;
-	}
+    public class IKey {
+        public String pubKey;
+        public int id;
+        public boolean used;
+    }
 
 }

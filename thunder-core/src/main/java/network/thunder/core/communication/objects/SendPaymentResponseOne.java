@@ -27,19 +27,19 @@ import org.bitcoinj.core.ECKey;
  */
 public class SendPaymentResponseOne {
 
-	private RevocationHash newHash;
-	private String channelTxSig;
+    private RevocationHash newHash;
+    private String channelTxSig;
 
-	public SendPaymentResponseOne (RevocationHash newHash, ECKey.ECDSASignature channelTxSig) {
-		this.newHash = newHash;
-		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
-	}
+    public SendPaymentResponseOne (RevocationHash newHash, ECKey.ECDSASignature channelTxSig) {
+        this.newHash = newHash;
+        this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
+    }
 
-	public RevocationHash getNewHash () {
-		return newHash;
-	}
+    public RevocationHash getNewHash () {
+        return newHash;
+    }
 
-	public ECKey.ECDSASignature getChannelTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
-	}
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
+    }
 }

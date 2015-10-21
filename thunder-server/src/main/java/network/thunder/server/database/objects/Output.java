@@ -34,235 +34,234 @@ import java.sql.SQLException;
  */
 public class Output {
 
-	/**
-	 * The hash.
-	 */
-	String hash;
+    /**
+     * The hash.
+     */
+    String hash;
 
-	/**
-	 * The vout.
-	 */
-	int vout;
+    /**
+     * The vout.
+     */
+    int vout;
 
-	/**
-	 * The value.
-	 */
-	long value;
+    /**
+     * The value.
+     */
+    long value;
 
-	/**
-	 * The private key.
-	 */
-	String privateKey;
+    /**
+     * The private key.
+     */
+    String privateKey;
 
-	/**
-	 * The lock.
-	 */
-	int lock;
+    /**
+     * The lock.
+     */
+    int lock;
 
-	/**
-	 * The channel id.
-	 */
-	int channelId;
+    /**
+     * The channel id.
+     */
+    int channelId;
 
-	/**
-	 * The transaction output.
-	 */
-	TransactionOutput transactionOutput;
-	/**
-	 * The key.
-	 */
-	ECKey key;
+    /**
+     * The transaction output.
+     */
+    TransactionOutput transactionOutput;
+    /**
+     * The key.
+     */
+    ECKey key;
 
-	/**
-	 * Instantiates a new output.
-	 */
-	public Output () {
-	}
+    /**
+     * Instantiates a new output.
+     */
+    public Output () {
+    }
 
-	/**
-	 * Instantiates a new output.
-	 *
-	 * @param results the results
-	 * @throws SQLException the SQL exception
-	 */
-	public Output (ResultSet results) throws SQLException {
-		setHash(results.getString("transaction_hash"));
-		setVout(results.getInt("vout"));
-		setValue(results.getLong("value"));
-		setPrivateKey(results.getString("private_key"));
-		setLock(results.getInt("timestamp_locked"));
-		setTransactionOutput(new TransactionOutput(Constants.getNetwork(), null, Tools.stringToByte(results.getString("transaction_output")), 0));
-	}
+    /**
+     * Instantiates a new output.
+     *
+     * @param results the results
+     * @throws SQLException the SQL exception
+     */
+    public Output (ResultSet results) throws SQLException {
+        setHash(results.getString("transaction_hash"));
+        setVout(results.getInt("vout"));
+        setValue(results.getLong("value"));
+        setPrivateKey(results.getString("private_key"));
+        setLock(results.getInt("timestamp_locked"));
+        setTransactionOutput(new TransactionOutput(Constants.getNetwork(), null, Tools.stringToByte(results.getString("transaction_output")), 0));
+    }
 
-	/**
-	 * Instantiates a new output.
-	 *
-	 * @param o      the o
-	 * @param wallet the wallet
-	 */
-	public Output (TransactionOutput o, Wallet wallet) {
-		setVout(o.getIndex());
-		setHash(o.getParentTransaction().getHash().toString());
-		setValue(o.getValue().value);
-		setPrivateKey(new String(Base64.encode(wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160()).getPrivKeyBytes()
-		)));
-		setTransactionOutput(o);
-	}
+    /**
+     * Instantiates a new output.
+     *
+     * @param o      the o
+     * @param wallet the wallet
+     */
+    public Output (TransactionOutput o, Wallet wallet) {
+        setVout(o.getIndex());
+        setHash(o.getParentTransaction().getHash().toString());
+        setValue(o.getValue().value);
+        setPrivateKey(new String(Base64.encode(wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160()).getPrivKeyBytes())));
+        setTransactionOutput(o);
+    }
 
-	/**
-	 * Gets the channel id.
-	 *
-	 * @return the channel id
-	 */
-	public int getChannelId () {
-		return channelId;
-	}
+    /**
+     * Gets the channel id.
+     *
+     * @return the channel id
+     */
+    public int getChannelId () {
+        return channelId;
+    }
 
-	/**
-	 * Sets the channel id.
-	 *
-	 * @param channelId the new channel id
-	 */
-	public void setChannelId (int channelId) {
-		this.channelId = channelId;
-	}
+    /**
+     * Sets the channel id.
+     *
+     * @param channelId the new channel id
+     */
+    public void setChannelId (int channelId) {
+        this.channelId = channelId;
+    }
 
-	/**
-	 * Gets the channel pub key.
-	 *
-	 * @return the channel pub key
-	 */
-	public int getChannelPubKey () {
-		return channelId;
-	}
+    /**
+     * Gets the channel pub key.
+     *
+     * @return the channel pub key
+     */
+    public int getChannelPubKey () {
+        return channelId;
+    }
 
-	/**
-	 * Sets the channel pub key.
-	 *
-	 * @param channelId the new channel pub key
-	 */
-	public void setChannelPubKey (int channelId) {
-		this.channelId = channelId;
-	}
+    /**
+     * Sets the channel pub key.
+     *
+     * @param channelId the new channel pub key
+     */
+    public void setChannelPubKey (int channelId) {
+        this.channelId = channelId;
+    }
 
-	/**
-	 * Gets the EC key.
-	 *
-	 * @return the EC key
-	 */
-	public ECKey getECKey () {
-		if (key == null) {
-			key = ECKey.fromPrivate(Base64.decode(privateKey));
-		}
-		return key;
-	}
+    /**
+     * Gets the EC key.
+     *
+     * @return the EC key
+     */
+    public ECKey getECKey () {
+        if (key == null) {
+            key = ECKey.fromPrivate(Base64.decode(privateKey));
+        }
+        return key;
+    }
 
-	/**
-	 * Gets the hash.
-	 *
-	 * @return the hash
-	 */
-	public String getHash () {
-		return hash;
-	}
+    /**
+     * Gets the hash.
+     *
+     * @return the hash
+     */
+    public String getHash () {
+        return hash;
+    }
 
-	/**
-	 * Sets the hash.
-	 *
-	 * @param hash the new hash
-	 */
-	public void setHash (String hash) {
-		this.hash = hash;
-	}
+    /**
+     * Sets the hash.
+     *
+     * @param hash the new hash
+     */
+    public void setHash (String hash) {
+        this.hash = hash;
+    }
 
-	/**
-	 * Gets the lock.
-	 *
-	 * @return the lock
-	 */
-	public int getLock () {
-		return lock;
-	}
+    /**
+     * Gets the lock.
+     *
+     * @return the lock
+     */
+    public int getLock () {
+        return lock;
+    }
 
-	/**
-	 * Sets the lock.
-	 *
-	 * @param lock the new lock
-	 */
-	public void setLock (int lock) {
-		this.lock = lock;
-	}
+    /**
+     * Sets the lock.
+     *
+     * @param lock the new lock
+     */
+    public void setLock (int lock) {
+        this.lock = lock;
+    }
 
-	/**
-	 * Gets the private key.
-	 *
-	 * @return the private key
-	 */
-	public String getPrivateKey () {
-		return privateKey;
-	}
+    /**
+     * Gets the private key.
+     *
+     * @return the private key
+     */
+    public String getPrivateKey () {
+        return privateKey;
+    }
 
-	/**
-	 * Sets the private key.
-	 *
-	 * @param privateKey the new private key
-	 */
-	public void setPrivateKey (String privateKey) {
-		this.privateKey = privateKey;
-	}
+    /**
+     * Sets the private key.
+     *
+     * @param privateKey the new private key
+     */
+    public void setPrivateKey (String privateKey) {
+        this.privateKey = privateKey;
+    }
 
-	/**
-	 * Gets the transaction output.
-	 *
-	 * @return the transaction output
-	 */
-	public TransactionOutput getTransactionOutput () {
-		return transactionOutput;
-	}
+    /**
+     * Gets the transaction output.
+     *
+     * @return the transaction output
+     */
+    public TransactionOutput getTransactionOutput () {
+        return transactionOutput;
+    }
 
-	/**
-	 * Sets the transaction output.
-	 *
-	 * @param transactionOutput the new transaction output
-	 */
-	public void setTransactionOutput (TransactionOutput transactionOutput) {
-		this.transactionOutput = transactionOutput;
-	}
+    /**
+     * Sets the transaction output.
+     *
+     * @param transactionOutput the new transaction output
+     */
+    public void setTransactionOutput (TransactionOutput transactionOutput) {
+        this.transactionOutput = transactionOutput;
+    }
 
-	/**
-	 * Gets the value.
-	 *
-	 * @return the value
-	 */
-	public long getValue () {
-		return value;
-	}
+    /**
+     * Gets the value.
+     *
+     * @return the value
+     */
+    public long getValue () {
+        return value;
+    }
 
-	/**
-	 * Sets the value.
-	 *
-	 * @param value the new value
-	 */
-	public void setValue (long value) {
-		this.value = value;
-	}
+    /**
+     * Sets the value.
+     *
+     * @param value the new value
+     */
+    public void setValue (long value) {
+        this.value = value;
+    }
 
-	/**
-	 * Gets the vout.
-	 *
-	 * @return the vout
-	 */
-	public int getVout () {
-		return vout;
-	}
+    /**
+     * Gets the vout.
+     *
+     * @return the vout
+     */
+    public int getVout () {
+        return vout;
+    }
 
-	/**
-	 * Sets the vout.
-	 *
-	 * @param vout the new vout
-	 */
-	public void setVout (int vout) {
-		this.vout = vout;
-	}
+    /**
+     * Sets the vout.
+     *
+     * @param vout the new vout
+     */
+    public void setVout (int vout) {
+        this.vout = vout;
+    }
 
 }

@@ -28,14 +28,14 @@ import java.util.ArrayList;
  */
 public class SendPaymentResponseThree {
 
-	/**
-	 * The refund transaction signature.
-	 */
-	public String refundTransactionSignature;
+    /**
+     * The refund transaction signature.
+     */
+    public String refundTransactionSignature;
 
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
 }

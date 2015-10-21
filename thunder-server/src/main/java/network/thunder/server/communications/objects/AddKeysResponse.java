@@ -28,9 +28,9 @@ import java.util.ArrayList;
  */
 public class AddKeysResponse {
 
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
 }

@@ -35,33 +35,33 @@ import java.util.ArrayList;
  */
 public final class P2PServer {
 
-	private P2PContext context;
+    private P2PContext context;
 
-	public P2PServer (P2PContext context) {
-		this.context = context;
-	}
+    public P2PServer (P2PContext context) {
+        this.context = context;
+    }
 
-	//We will add a new handler for the different layers
-	//Furthermore, we will add a new handler for the different message types,
-	//as it will greatly improve readability and maintainability of the code.
+    //We will add a new handler for the different layers
+    //Furthermore, we will add a new handler for the different message types,
+    //as it will greatly improve readability and maintainability of the code.
 
-	public void startServer (int port, ArrayList<Node> connectedNodes) throws Exception {
-		SelfSignedCertificate ssc = new SelfSignedCertificate();
-		SslContext sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
+    public void startServer (int port, ArrayList<Node> connectedNodes) throws Exception {
+        SelfSignedCertificate ssc = new SelfSignedCertificate();
+        SslContext sslCtx = SslContextBuilder.forServer(ssc.certificate(), ssc.privateKey()).build();
 
-		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-		EventLoopGroup workerGroup = new NioEventLoopGroup();
+        EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+        EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-		ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(10000)));
+        ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(10000)));
 
-		try {
-			ServerBootstrap b = new ServerBootstrap();
-			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context, true, connectedNodes, key));
+        try {
+            ServerBootstrap b = new ServerBootstrap();
+            b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context, true, connectedNodes, key));
 
-			b.bind(port).sync().channel().closeFuture().sync();
-		} finally {
-			bossGroup.shutdownGracefully();
-			workerGroup.shutdownGracefully();
-		}
-	}
+            b.bind(port).sync().channel().closeFuture().sync();
+        } finally {
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+        }
+    }
 }

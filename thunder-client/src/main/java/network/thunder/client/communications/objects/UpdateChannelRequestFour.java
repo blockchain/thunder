@@ -20,9 +20,9 @@ package network.thunder.client.communications.objects;
 import java.util.ArrayList;
 
 public class UpdateChannelRequestFour {
-	public String revokeTransaction;
-	public ArrayList<String> paymentSettlements;
-	public ArrayList<String> paymentRefunds;
-	public String transactionHash;
+    public String revokeTransaction;
+    public ArrayList<String> paymentSettlements;
+    public ArrayList<String> paymentRefunds;
+    public String transactionHash;
 
 }

@@ -24,19 +24,19 @@ package network.thunder.server.communications.objects;
  */
 public class SendPaymentRequestOne {
 
-	/**
-	 * The channel transaction.
-	 */
-	public String channelTransaction;
+    /**
+     * The channel transaction.
+     */
+    public String channelTransaction;
 
-	/**
-	 * The receipient.
-	 */
-	public String receipient;
+    /**
+     * The receipient.
+     */
+    public String receipient;
 
-	/**
-	 * The amount.
-	 */
-	public long amount;
+    /**
+     * The amount.
+     */
+    public long amount;
 
 }

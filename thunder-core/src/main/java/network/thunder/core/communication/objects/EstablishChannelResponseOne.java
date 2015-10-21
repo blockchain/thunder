@@ -27,44 +27,43 @@ import network.thunder.core.communication.objects.subobjects.RevocationHash;
  */
 public class EstablishChannelResponseOne {
 
-	private String pubKey;
-	private String pubKeyFE;
-	private RevocationHash revocationHash;
-	private String secretHashFE;
-	private String changeAddress;
-	private String openingTxHash;
+    private String pubKey;
+    private String pubKeyFE;
+    private RevocationHash revocationHash;
+    private String secretHashFE;
+    private String changeAddress;
+    private String openingTxHash;
 
-	public EstablishChannelResponseOne (String pubKey, String pubKeyFE, RevocationHash revocationHash, String secretHashFE, String changeAddress, String
-			openingTxHash) {
-		this.pubKey = pubKey;
-		this.pubKeyFE = pubKeyFE;
-		this.revocationHash = revocationHash;
-		this.secretHashFE = secretHashFE;
-		this.changeAddress = changeAddress;
-		this.openingTxHash = openingTxHash;
-	}
+    public EstablishChannelResponseOne (String pubKey, String pubKeyFE, RevocationHash revocationHash, String secretHashFE, String changeAddress, String openingTxHash) {
+        this.pubKey = pubKey;
+        this.pubKeyFE = pubKeyFE;
+        this.revocationHash = revocationHash;
+        this.secretHashFE = secretHashFE;
+        this.changeAddress = changeAddress;
+        this.openingTxHash = openingTxHash;
+    }
 
-	public String getPubKey () {
-		return pubKey;
-	}
+    public String getPubKey () {
+        return pubKey;
+    }
 
-	public String getPubKeyFE () {
-		return pubKeyFE;
-	}
+    public String getPubKeyFE () {
+        return pubKeyFE;
+    }
 
-	public RevocationHash getRevocationHash () {
-		return revocationHash;
-	}
+    public RevocationHash getRevocationHash () {
+        return revocationHash;
+    }
 
-	public String getSecretHashFE () {
-		return secretHashFE;
-	}
+    public String getSecretHashFE () {
+        return secretHashFE;
+    }
 
-	public String getChangeAddress () {
-		return changeAddress;
-	}
+    public String getChangeAddress () {
+        return changeAddress;
+    }
 
-	public String getOpeningTxHash () {
-		return openingTxHash;
-	}
+    public String getOpeningTxHash () {
+        return openingTxHash;
+    }
 }

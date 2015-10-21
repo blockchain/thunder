@@ -29,81 +29,81 @@ import static wallettemplate.utils.GuiUtils.*;
  * progress meter as we scrypt the password.
  */
 public class WalletPasswordController {
-	public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
-	private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
-	public Main.OverlayUI overlayUI;
-	@FXML
-	HBox buttonsBox;
-	@FXML
-	PasswordField pass1;
-	@FXML
-	ImageView padlockImage;
-	@FXML
-	ProgressIndicator progressMeter;
-	@FXML
-	GridPane widgetGrid;
-	@FXML
-	Label explanationLabel;
-	private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
+    public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
+    private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
+    public Main.OverlayUI overlayUI;
+    @FXML
+    HBox buttonsBox;
+    @FXML
+    PasswordField pass1;
+    @FXML
+    ImageView padlockImage;
+    @FXML
+    ProgressIndicator progressMeter;
+    @FXML
+    GridPane widgetGrid;
+    @FXML
+    Label explanationLabel;
+    private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
-	// Reads target time or throws if not set yet (should never happen).
-	public static Duration getTargetTime () throws IllegalArgumentException {
-		return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
-	}
+    // Reads target time or throws if not set yet (should never happen).
+    public static Duration getTargetTime () throws IllegalArgumentException {
+        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+    }
 
-	// Writes the given time to the wallet as a tag so we can find it again in this class.
-	public static void setTargetTime (Duration targetTime) {
-		ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-		Main.bitcoin.wallet().setTag(TAG, bytes);
-	}
+    // Writes the given time to the wallet as a tag so we can find it again in this class.
+    public static void setTargetTime (Duration targetTime) {
+        ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
+        Main.bitcoin.wallet().setTag(TAG, bytes);
+    }
 
-	public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty () {
-		return aesKey;
-	}
+    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty () {
+        return aesKey;
+    }
 
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	public void cancelClicked (ActionEvent event) {
-		overlayUI.done();
-	}
+    public void cancelClicked (ActionEvent event) {
+        overlayUI.done();
+    }
 
-	@FXML
-	void confirmClicked (ActionEvent event) {
-		String password = pass1.getText();
-		if (password.isEmpty() || password.length() < 4) {
-			informationalAlert("Bad password", "The password you entered is empty or too short.");
-			return;
-		}
+    @FXML
+    void confirmClicked (ActionEvent event) {
+        String password = pass1.getText();
+        if (password.isEmpty() || password.length() < 4) {
+            informationalAlert("Bad password", "The password you entered is empty or too short.");
+            return;
+        }
 
-		final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
-		checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
-		KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
-			@Override
-			protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
-				checkGuiThread();
-				if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
-					WalletPasswordController.this.aesKey.set(aesKey);
-				} else {
-					log.warn("User entered incorrect password");
-					fadeOut(progressMeter);
-					fadeIn(widgetGrid);
-					fadeIn(explanationLabel);
-					fadeIn(buttonsBox);
-					informationalAlert("Wrong password", "Please try entering your password again, carefully checking for typos or spelling errors.");
-				}
-			}
-		};
-		progressMeter.progressProperty().bind(tasks.progress);
-		tasks.start();
+        final KeyCrypterScrypt keyCrypter = (KeyCrypterScrypt) Main.bitcoin.wallet().getKeyCrypter();
+        checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
+        KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
+            @Override
+            protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
+                checkGuiThread();
+                if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
+                    WalletPasswordController.this.aesKey.set(aesKey);
+                } else {
+                    log.warn("User entered incorrect password");
+                    fadeOut(progressMeter);
+                    fadeIn(widgetGrid);
+                    fadeIn(explanationLabel);
+                    fadeIn(buttonsBox);
+                    informationalAlert("Wrong password", "Please try entering your password again, carefully checking for typos or spelling errors.");
+                }
+            }
+        };
+        progressMeter.progressProperty().bind(tasks.progress);
+        tasks.start();
 
-		fadeIn(progressMeter);
-		fadeOut(widgetGrid);
-		fadeOut(explanationLabel);
-		fadeOut(buttonsBox);
-	}
+        fadeIn(progressMeter);
+        fadeOut(widgetGrid);
+        fadeOut(explanationLabel);
+        fadeOut(buttonsBox);
+    }
 
-	public void initialize () {
-		progressMeter.setOpacity(0);
-		Platform.runLater(pass1::requestFocus);
-	}
+    public void initialize () {
+        progressMeter.setOpacity(0);
+        Platform.runLater(pass1::requestFocus);
+    }
 }

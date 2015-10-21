@@ -7,15 +7,15 @@ import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
  */
 public class ServerMain {
 
-	public static void main(String[] args) throws Exception {
-		P2PContext context = new P2PContext(8992);
+    public static void main (String[] args) throws Exception {
+        P2PContext context = new P2PContext(8992);
 
-		PubkeyIPObject ip = new PubkeyIPObject();
-		ip.IP = "157.1.1.5";
-		ip.port = 8993;
+        PubkeyIPObject ip = new PubkeyIPObject();
+        ip.IP = "157.1.1.5";
+        ip.port = 8993;
 
-		context.IPList.add(ip);
+        context.IPList.add(ip);
 
-		context.startConnections();
-	}
+        context.startConnections();
+    }
 }

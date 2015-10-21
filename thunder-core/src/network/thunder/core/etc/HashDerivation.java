@@ -26,7 +26,6 @@ import org.bitcoinj.crypto.DeterministicKey;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /*
  * For deterministic derivation of revocation hashes, use the following scheme
  * Chose a master seed - for example the hash of private key.
@@ -39,123 +38,116 @@ import java.util.List;
  */
 public class HashDerivation {
 
-	/**
-	 * Calculate a revocation hash for a new channel state.
-	 *
-	 * @param seed A masterseed for this calculation
-	 * @param depth The depth of the new RevocationHash
-	 * @param childNumber The n. sibling at the specified depth
-	 * @return
-	 */
-	public static RevocationHash calculateRevocationHash(byte[] seed, int depth, int childNumber) {
+    /**
+     * Calculate a revocation hash for a new channel state.
+     *
+     * @param seed        A masterseed for this calculation
+     * @param depth       The depth of the new RevocationHash
+     * @param childNumber The n. sibling at the specified depth
+     */
+    public static RevocationHash calculateRevocationHash (byte[] seed, int depth, int childNumber) {
 
-		byte[] childseed = seed;
-		for(int i=0; i<depth; i++) {
-			childSeed = Tools.hashSecret(childSeed);
-		}
+        byte[] childseed = seed;
+        for (int i = 0; i < depth; i++) {
+            childSeed = Tools.hashSecret(childSeed);
+        }
 
-		byte[] childseedWithNumber = new byte[24];
-		System.arraycopy(childseed, 0, childseedWithNumber, 20);
+        byte[] childseedWithNumber = new byte[24];
+        System.arraycopy(childseed, 0, childseedWithNumber, 20);
 
-		//Copied over from http://stackoverflow.com/questions/2183240/java-integer-to-byte-array
-		//Workaround, as there is no native way to get integer to a byte array...
-		byte[] conv = new byte[4];
-		conv[3] = (byte) childNumber & 0xff;
-		input >>= 8;
-		conv[2] = (byte) childNumber & 0xff;
-		input >>= 8;
-		conv[1] = (byte) childNumber & 0xff;
-		input >>= 8;
-		conv[0] = (byte) childNumber;
+        //Copied over from http://stackoverflow.com/questions/2183240/java-integer-to-byte-array
+        //Workaround, as there is no native way to get integer to a byte array...
+        byte[] conv = new byte[4];
+        conv[3] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[2] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[1] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[0] = (byte) childNumber;
 
-		System.arraycopy(conv, 20, childseedWithNumber, 4);
+        System.arraycopy(conv, 20, childseedWithNumber, 4);
 
-		byte[] secret = Tools.hashSecret(childseedWithNumber);
-		byte[] secretHash = Tools.hashSecret(secret);
+        byte[] secret = Tools.hashSecret(childseedWithNumber);
+        byte[] secretHash = Tools.hashSecret(secret);
 
-		return new RevocationHash(depth, childNumber, secret, secretHash);
+        return new RevocationHash(depth, childNumber, secret, secretHash);
 
-	}
+    }
 
-	/**
-	 * The other party has breached the contract and submitted an old channel transaction.
-	 *
-	 * @param seed The latest masterseed we received from the other party
-	 * @param target The hash we are looking for
-	 * @param maxChildTries The maximum depth we will search to before giving up..
-	 * @param maxSiblingTries The amount of siblings calculating for each depth
-	 * @return The preimage hashing to the desired hash.
-	 */
-	public static byte[] bruteForceHash(byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
+    /**
+     * The other party has breached the contract and submitted an old channel transaction.
+     *
+     * @param seed            The latest masterseed we received from the other party
+     * @param target          The hash we are looking for
+     * @param maxChildTries   The maximum depth we will search to before giving up..
+     * @param maxSiblingTries The amount of siblings calculating for each depth
+     * @return The preimage hashing to the desired hash.
+     */
+    public static byte[] bruteForceHash (byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
 
+        for (int i = 0; i < maxChildTries; i++) {
 
-		for(int i=0; i<maxChildTries; i++) {
+            for (int j = 0; j < maxSiblingTries; j++) {
 
+            }
 
-			for(int j=0; j<maxSiblingTries; j++) {
+            seed = Tools.hashSecret(seed);
 
+        }
+    }
 
+    /**
+     * Brute force key.
+     *
+     * @param masterKey the master key
+     * @param pubkey    the pubkey
+     * @return the EC key
+     */
+    public static ECKey bruteForceKey (String masterKey, String pubkey) {
+        DeterministicKey hd = DeterministicKey.deserializeB58(masterKey, Constants.getNetwork());
 
-			}
+        DeterministicHierarchy hi = new DeterministicHierarchy(hd);
 
-			seed = Tools.hashSecret(seed);
+        for (int j = 0; j < 1000; ++j) {
+            List<ChildNumber> childList = getChildList(j);
 
-		}
-	}
+            for (int i = 0; i < 1000; ++i) {
 
+                ChildNumber childNumber = new ChildNumber(i, true);
+                childList.set(j, childNumber);
 
-	/**
-	 * Brute force key.
-	 *
-	 * @param masterKey the master key
-	 * @param pubkey    the pubkey
-	 * @return the EC key
-	 */
-	public static ECKey bruteForceKey (String masterKey, String pubkey) {
-		DeterministicKey hd = DeterministicKey.deserializeB58(masterKey, Constants.getNetwork());
+                DeterministicKey key = hi.get(childList, true, true);
+                String pubTemp = Tools.byteToString(key.getPubKey());
+                if (pubTemp.equals(pubkey)) {
+                    return key;
+                }
+            }
+        }
 
-		DeterministicHierarchy hi = new DeterministicHierarchy(hd);
+        return null;
+    }
 
-		for (int j = 0; j < 1000; ++j) {
-			List<ChildNumber> childList = getChildList(j);
+    /**
+     * Call to get the MasterKey for a new Channel.
+     *
+     * @param number Query the Database to get the latest unused number
+     * @return DeterministicKey for the new Channel
+     */
+    public static DeterministicKey getMasterKey (int number) {
 
-			for (int i = 0; i < 1000; ++i) {
+        DeterministicKey hd = DeterministicKey.deserializeB58(SideConstants.KEY_B58, Constants.getNetwork());
+        //		DeterministicKey hd =  DeterministicKey.deserializeB58(null,KEY_B58);
+        //        DeterministicKey hd = HDKeyDerivation.createMasterPrivateKey(KEY.getBytes());
+        DeterministicHierarchy hi = new DeterministicHierarchy(hd);
 
-				ChildNumber childNumber = new ChildNumber(i, true);
-				childList.set(j, childNumber);
+        List<ChildNumber> childList = new ArrayList<ChildNumber>();
+        ChildNumber childNumber = new ChildNumber(number, true);
+        childList.add(childNumber);
 
-				DeterministicKey key = hi.get(childList, true, true);
-				String pubTemp = Tools.byteToString(key.getPubKey());
-				if (pubTemp.equals(pubkey)) {
-					return key;
-				}
-			}
-		}
+        DeterministicKey key = hi.get(childList, true, true);
+        return key;
 
-		return null;
-	}
-
-
-	/**
-	 * Call to get the MasterKey for a new Channel.
-	 *
-	 * @param number Query the Database to get the latest unused number
-	 * @return DeterministicKey for the new Channel
-	 */
-	public static DeterministicKey getMasterKey (int number) {
-
-		DeterministicKey hd = DeterministicKey.deserializeB58(SideConstants.KEY_B58, Constants.getNetwork());
-		//		DeterministicKey hd =  DeterministicKey.deserializeB58(null,KEY_B58);
-		//        DeterministicKey hd = HDKeyDerivation.createMasterPrivateKey(KEY.getBytes());
-		DeterministicHierarchy hi = new DeterministicHierarchy(hd);
-
-		List<ChildNumber> childList = new ArrayList<ChildNumber>();
-		ChildNumber childNumber = new ChildNumber(number, true);
-		childList.add(childNumber);
-
-		DeterministicKey key = hi.get(childList, true, true);
-		return key;
-
-	}
+    }
 
 }

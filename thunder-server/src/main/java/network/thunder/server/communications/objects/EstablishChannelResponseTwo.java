@@ -24,14 +24,14 @@ package network.thunder.server.communications.objects;
  */
 public class EstablishChannelResponseTwo {
 
-	/**
-	 * The refund server sig.
-	 */
-	public String refundServerSig;
+    /**
+     * The refund server sig.
+     */
+    public String refundServerSig;
 
-	/**
-	 * The refund transaction.
-	 */
-	public String refundTransaction;
+    /**
+     * The refund transaction.
+     */
+    public String refundTransaction;
 
 }

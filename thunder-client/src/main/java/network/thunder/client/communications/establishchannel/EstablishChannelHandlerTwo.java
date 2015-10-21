@@ -45,83 +45,81 @@ import java.util.ArrayList;
  */
 public class EstablishChannelHandlerTwo {
 
-	public Connection conn;
-	public Channel channel;
-	public ArrayList<Output> outputArrayListlist;
+    public Connection conn;
+    public Channel channel;
+    public ArrayList<Output> outputArrayListlist;
 
-	public void evaluateResponse (EstablishChannelResponseTwo m) throws Exception {
-		/**
-		 * Check that the refund transaction is correct..
-		 *
-		 * Check all basic properties first
-		 *
-		 * Calculate and add our signature then, so we can check if the refund transaction
-		 * 	actually spends the channel output..
-		 *
-		 */
-		Transaction openingTransaction = channel.getOpeningTx();
-		Transaction refundTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.refundTransaction));
+    public void evaluateResponse (EstablishChannelResponseTwo m) throws Exception {
+        /**
+         * Check that the refund transaction is correct..
+         *
+         * Check all basic properties first
+         *
+         * Calculate and add our signature then, so we can check if the refund transaction
+         * 	actually spends the channel output..
+         *
+         */
+        Transaction openingTransaction = channel.getOpeningTx();
+        Transaction refundTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.refundTransaction));
 
-		TransactionOutput refundOutputClient = refundTransaction.getOutput(0);
+        TransactionOutput refundOutputClient = refundTransaction.getOutput(0);
 
-		if (refundOutputClient.getValue().value != (channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2))) {
-			throw new Exception("Refund value is not correct.. Should be: " + (channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2)) + " Is: " +
-					refundOutputClient.getValue().value);
-		}
+        if (refundOutputClient.getValue().value != (channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2))) {
+            throw new Exception("Refund value is not correct.. Should be: " + (channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2)) + " Is: " +
+                                    refundOutputClient.getValue().value);
+        }
 
-		if (!refundOutputClient.getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
-			throw new Exception("Refund does not pay to correct address.. Should be: " + channel.getChangeAddressClient() + " Is: " + refundOutputClient
-					.getAddressFromP2PKHScript(Constants.getNetwork()).toString());
-		}
+        if (!refundOutputClient.getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
+            throw new Exception("Refund does not pay to correct address.. Should be: " + channel.getChangeAddressClient() + " Is: " + refundOutputClient.getAddressFromP2PKHScript(Constants.getNetwork()).toString());
+        }
 
-		if (Math.abs(refundTransaction.getLockTime() - channel.getTimestampClose()) > Constants.MAX_CHANNEL_CREATION_TIME) {
-			throw new Exception("Refund LockTime does not match.. Should be: " + channel.getTimestampClose() + " Is: " + refundTransaction.getLockTime());
-		}
+        if (Math.abs(refundTransaction.getLockTime() - channel.getTimestampClose()) > Constants.MAX_CHANNEL_CREATION_TIME) {
+            throw new Exception("Refund LockTime does not match.. Should be: " + channel.getTimestampClose() + " Is: " + refundTransaction.getLockTime());
+        }
 
-		if (refundTransaction.getInput(0).getSequenceNumber() != 0) {
-			throw new Exception("Refund SequenceNumber is not 0..");
-		}
+        if (refundTransaction.getInput(0).getSequenceNumber() != 0) {
+            throw new Exception("Refund SequenceNumber is not 0..");
+        }
 
-		/**
-		 * Sign the transaction ourselves, such that it can be spent..
-		 */
-		ECDSASignature clientSignature = Tools.getSignature(refundTransaction, 0, openingTransaction.getOutput(0), channel.getClientKeyOnClient());
-		ECDSASignature serverSignature = ECDSASignature.decodeFromDER(Tools.stringToByte(m.refundServerSig));
+        /**
+         * Sign the transaction ourselves, such that it can be spent..
+         */
+        ECDSASignature clientSignature = Tools.getSignature(refundTransaction, 0, openingTransaction.getOutput(0), channel.getClientKeyOnClient());
+        ECDSASignature serverSignature = ECDSASignature.decodeFromDER(Tools.stringToByte(m.refundServerSig));
 
-		Script inputScript = Tools.getMultisigInputScript(clientSignature, serverSignature);
+        Script inputScript = Tools.getMultisigInputScript(clientSignature, serverSignature);
 
-		/**
-		 * Check if the refund TX actually spends the transaction
-		 */
-		TransactionInput input = refundTransaction.getInput(0);
-		input.setScriptSig(inputScript);
+        /**
+         * Check if the refund TX actually spends the transaction
+         */
+        TransactionInput input = refundTransaction.getInput(0);
+        input.setScriptSig(inputScript);
 
-		Script outputScript = openingTransaction.getOutput(0).getScriptPubKey();
-		inputScript.correctlySpends(refundTransaction, 0, outputScript);
+        Script outputScript = openingTransaction.getOutput(0).getScriptPubKey();
+        inputScript.correctlySpends(refundTransaction, 0, outputScript);
 
-		channel.setOpeningTxHash(refundTransaction.getInput(0).getOutpoint().getHash().toString());
-		channel.setRefundTxServer(refundTransaction);
-		channel.setRefundTxClient(refundTransaction);
+        channel.setOpeningTxHash(refundTransaction.getInput(0).getOutpoint().getHash().toString());
+        channel.setRefundTxServer(refundTransaction);
+        channel.setRefundTxClient(refundTransaction);
 
-	}
+    }
 
-	public EstablishChannelRequestTwo request () throws Exception {
+    public EstablishChannelRequestTwo request () throws Exception {
 
-		/**
-		 * We have to add inputs to fulfill our part of the channel
-		 */
-		Transaction transactionFromServer = channel.getOpeningTx();
+        /**
+         * We have to add inputs to fulfill our part of the channel
+         */
+        Transaction transactionFromServer = channel.getOpeningTx();
 
-		Transaction signedTransaction = MySQLConnection.getOutAndInputsForChannel(conn, outputArrayListlist, channel.getId(), channel.getInitialAmountClient()
-				, transactionFromServer, channel.getChangeAddressClientAsAddress(), true, true);
+        Transaction signedTransaction = MySQLConnection.getOutAndInputsForChannel(conn, outputArrayListlist, channel.getId(), channel.getInitialAmountClient(), transactionFromServer, channel.getChangeAddressClientAsAddress(), true, true);
 
-		//		System.out.println(signedTransaction.toString());
+        //		System.out.println(signedTransaction.toString());
 
-		EstablishChannelRequestTwo m = new EstablishChannelRequestTwo();
+        EstablishChannelRequestTwo m = new EstablishChannelRequestTwo();
 
-		m.transaction = Tools.byteToString(signedTransaction.bitcoinSerialize());
+        m.transaction = Tools.byteToString(signedTransaction.bitcoinSerialize());
 
-		return m;
-	}
+        return m;
+    }
 
 }

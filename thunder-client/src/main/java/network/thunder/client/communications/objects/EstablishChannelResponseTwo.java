@@ -19,7 +19,7 @@ package network.thunder.client.communications.objects;
 
 public class EstablishChannelResponseTwo {
 
-	public String refundServerSig;
-	public String refundTransaction;
+    public String refundServerSig;
+    public String refundTransaction;
 
 }

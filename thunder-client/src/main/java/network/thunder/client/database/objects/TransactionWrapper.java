@@ -22,58 +22,58 @@ import org.bitcoinj.core.Transaction;
 
 public class TransactionWrapper {
 
-	int id;
-	String hash;
-	int channelId;
-	int paymentId;
-	byte[] data;
+    int id;
+    String hash;
+    int channelId;
+    int paymentId;
+    byte[] data;
 
-	Transaction transaction;
-	ECDSASignature signature;
+    Transaction transaction;
+    ECDSASignature signature;
 
-	public TransactionWrapper (Transaction transaction, ECDSASignature signature) {
-		this.transaction = transaction;
-		this.signature = signature;
-	}
+    public TransactionWrapper (Transaction transaction, ECDSASignature signature) {
+        this.transaction = transaction;
+        this.signature = signature;
+    }
 
-	public TransactionWrapper (Transaction t, int channelId) {
-		this.hash = t.getHashAsString();
-		this.channelId = channelId;
-		this.data = t.bitcoinSerialize();
-	}
+    public TransactionWrapper (Transaction t, int channelId) {
+        this.hash = t.getHashAsString();
+        this.channelId = channelId;
+        this.data = t.bitcoinSerialize();
+    }
 
-	public TransactionWrapper (Transaction t, int channelId, int id) {
-		this.hash = t.getHashAsString();
-		this.channelId = channelId;
-		this.data = t.bitcoinSerialize();
-		this.id = id;
-	}
+    public TransactionWrapper (Transaction t, int channelId, int id) {
+        this.hash = t.getHashAsString();
+        this.channelId = channelId;
+        this.data = t.bitcoinSerialize();
+        this.id = id;
+    }
 
-	public int getChannelId () {
-		return channelId;
-	}
+    public int getChannelId () {
+        return channelId;
+    }
 
-	public byte[] getData () {
-		return data;
-	}
+    public byte[] getData () {
+        return data;
+    }
 
-	public String getHash () {
-		return hash;
-	}
+    public String getHash () {
+        return hash;
+    }
 
-	public int getId () {
-		return id;
-	}
+    public int getId () {
+        return id;
+    }
 
-	public int getPaymentId () {
-		return paymentId;
-	}
+    public int getPaymentId () {
+        return paymentId;
+    }
 
-	public ECDSASignature getSignature () {
-		return signature;
-	}
+    public ECDSASignature getSignature () {
+        return signature;
+    }
 
-	public Transaction getTransaction () {
-		return transaction;
-	}
+    public Transaction getTransaction () {
+        return transaction;
+    }
 }

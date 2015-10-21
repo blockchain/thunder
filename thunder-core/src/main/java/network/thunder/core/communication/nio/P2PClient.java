@@ -30,56 +30,56 @@ import java.math.BigInteger;
  */
 public final class P2PClient {
 
-	private P2PContext context;
+    private P2PContext context;
 
-	public P2PClient (P2PContext context) {
-		this.context = context;
-	}
+    public P2PClient (P2PContext context) {
+        this.context = context;
+    }
 
-	static final int PORT = Integer.parseInt(System.getProperty("port", "8992"));
+    static final int PORT = Integer.parseInt(System.getProperty("port", "8992"));
 
-	//We will add a new handler for the different layers
-	//Furthermore, we will add a new handler for the different message types,
-	//as it will greatly improve readability and maintainability of the code.
+    //We will add a new handler for the different layers
+    //Furthermore, we will add a new handler for the different message types,
+    //as it will greatly improve readability and maintainability of the code.
 
-	public void connectTo (Node node) throws Exception {
-		System.out.println("Connect to "+node.getHost());
-		new Thread(new Runnable() {
-			@Override
-			public void run () {
+    public void connectTo (Node node) throws Exception {
+        System.out.println("Connect to " + node.getHost());
+        new Thread(new Runnable() {
+            @Override
+            public void run () {
 
-				while (!node.isConnected()) {
+                while (!node.isConnected()) {
 
-					ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(100000)));
+                    ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(100000)));
 
-					EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-					EventLoopGroup workerGroup = new NioEventLoopGroup();
+                    EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+                    EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-					EventLoopGroup group = new NioEventLoopGroup();
-					try {
-						Bootstrap b = new Bootstrap();
-						b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, false, node, key));
+                    EventLoopGroup group = new NioEventLoopGroup();
+                    try {
+                        Bootstrap b = new Bootstrap();
+                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, false, node, key));
 
-						// Start the connection attempt.
-						Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
-						node.setConnected(ch.isOpen());
+                        // Start the connection attempt.
+                        Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
+                        node.setConnected(ch.isOpen());
 
-					} catch (Exception e) {
-						//Not able to connect?
-						try {
-							Thread.sleep(60 * 1000);
-						} catch (InterruptedException e1) {
-							e1.printStackTrace();
-						}
-						e.printStackTrace();
-					} finally {
-						bossGroup.shutdownGracefully();
-						workerGroup.shutdownGracefully();
-					}
-				}
+                    } catch (Exception e) {
+                        //Not able to connect?
+                        try {
+                            Thread.sleep(60 * 1000);
+                        } catch (InterruptedException e1) {
+                            e1.printStackTrace();
+                        }
+                        e.printStackTrace();
+                    } finally {
+                        bossGroup.shutdownGracefully();
+                        workerGroup.shutdownGracefully();
+                    }
+                }
 
-			}
-		}).start();
+            }
+        }).start();
 
-	}
+    }
 }

@@ -28,13 +28,13 @@ import java.util.ArrayList;
  */
 public class AddKeysRequest {
 
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
-	/**
-	 * The amount.
-	 */
-	public int amount;
+    /**
+     * The amount.
+     */
+    public int amount;
 }

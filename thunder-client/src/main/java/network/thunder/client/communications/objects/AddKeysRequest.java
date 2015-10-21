@@ -23,7 +23,7 @@ import java.util.ArrayList;
 
 public class AddKeysRequest {
 
-	public ArrayList<Key> keyList;
-	public int amount;
+    public ArrayList<Key> keyList;
+    public int amount;
 
 }

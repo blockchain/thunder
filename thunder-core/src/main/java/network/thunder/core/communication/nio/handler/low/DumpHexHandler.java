@@ -25,27 +25,24 @@ import io.netty.channel.ChannelPromise;
  */
 public class DumpHexHandler extends ChannelDuplexHandler {
 
+    @Override
+    public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
+        System.out.println("Incoming: " + msg);
+        ctx.fireChannelRead(msg);
 
+    }
 
-
-	@Override
-	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-		System.out.println("Incoming: "+msg);
-		ctx.fireChannelRead(msg);
-
-	}
-
-	@Override
-	public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+    @Override
+    public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
 //		System.out.println("test");
-		System.out.println("Outgoing: "+msg);
+        System.out.println("Outgoing: " + msg);
 
-		ctx.writeAndFlush(msg, promise);
-	}
+        ctx.writeAndFlush(msg, promise);
+    }
 
-	@Override
-	public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
-		ctx.close();
-	}
+    @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
 }

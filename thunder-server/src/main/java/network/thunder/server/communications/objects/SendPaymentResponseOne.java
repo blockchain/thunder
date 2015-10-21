@@ -24,14 +24,14 @@ package network.thunder.server.communications.objects;
  */
 public class SendPaymentResponseOne {
 
-	/**
-	 * The channel transaction.
-	 */
-	public String channelTransaction;
+    /**
+     * The channel transaction.
+     */
+    public String channelTransaction;
 
-	/**
-	 * The channel hash.
-	 */
-	public String channelHash;
+    /**
+     * The channel hash.
+     */
+    public String channelHash;
 
 }

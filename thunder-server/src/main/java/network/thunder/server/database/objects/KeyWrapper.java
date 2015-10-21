@@ -29,105 +29,105 @@ import java.util.ArrayList;
  */
 public class KeyWrapper {
 
-	/**
-	 * The key list.
-	 */
-	ArrayList<IKey> keyList = new ArrayList<IKey>();
+    /**
+     * The key list.
+     */
+    ArrayList<IKey> keyList = new ArrayList<IKey>();
 
-	/**
-	 * Adds the key.
-	 *
-	 * @param id     the id
-	 * @param pubKey the pub key
-	 */
-	public void addKey (int id, String pubKey) {
-		IKey k = new IKey();
-		k.id = id;
-		k.pubKey = pubKey;
-		keyList.add(k);
-	}
+    /**
+     * Adds the key.
+     *
+     * @param id     the id
+     * @param pubKey the pub key
+     */
+    public void addKey (int id, String pubKey) {
+        IKey k = new IKey();
+        k.id = id;
+        k.pubKey = pubKey;
+        keyList.add(k);
+    }
 
-	/**
-	 * Check key.
-	 *
-	 * @param pubKey the pub key
-	 * @return true, if successful
-	 */
-	public boolean checkKey (String pubKey) {
-		for (IKey k : keyList) {
-			//			if(!k.used) {
-			if (k.pubKey.equals(pubKey)) {
-				k.used = true;
-				return true;
-			}
-			//			}
+    /**
+     * Check key.
+     *
+     * @param pubKey the pub key
+     * @return true, if successful
+     */
+    public boolean checkKey (String pubKey) {
+        for (IKey k : keyList) {
+            //			if(!k.used) {
+            if (k.pubKey.equals(pubKey)) {
+                k.used = true;
+                return true;
+            }
+            //			}
 
-		}
-		return false;
-	}
+        }
+        return false;
+    }
 
-	/**
-	 * Gets the key.
-	 *
-	 * @return the key
-	 */
-	public String getKey () {
-		for (IKey k : keyList) {
-			//			if(!k.used) {
-			k.used = true;
-			return k.pubKey;
-			//			}
-		}
-		return null;
-	}
+    /**
+     * Gets the key.
+     *
+     * @return the key
+     */
+    public String getKey () {
+        for (IKey k : keyList) {
+            //			if(!k.used) {
+            k.used = true;
+            return k.pubKey;
+            //			}
+        }
+        return null;
+    }
 
-	/**
-	 * Gets the key list.
-	 *
-	 * @return the key list
-	 */
-	public ArrayList<IKey> getKeyList () {
-		return keyList;
-	}
+    /**
+     * Gets the key list.
+     *
+     * @return the key list
+     */
+    public ArrayList<IKey> getKeyList () {
+        return keyList;
+    }
 
-	/**
-	 * Gets the used ec key.
-	 *
-	 * @param pubKey the pub key
-	 * @return the used ec key
-	 */
-	public ECKey getUsedECKey (String pubKey) {
-		for (IKey k : keyList) {
-			if (k.used) {
-				if (k.pubKey.equals(pubKey)) {
-					ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
-					return key;
-				}
-			}
+    /**
+     * Gets the used ec key.
+     *
+     * @param pubKey the pub key
+     * @return the used ec key
+     */
+    public ECKey getUsedECKey (String pubKey) {
+        for (IKey k : keyList) {
+            if (k.used) {
+                if (k.pubKey.equals(pubKey)) {
+                    ECKey key = ECKey.fromPrivate(Tools.stringToByte(pubKey));
+                    return key;
+                }
+            }
 
-		}
-		return null;
-	}
+        }
+        return null;
+    }
 
-	/**
-	 * The Class IKey.
-	 */
-	public class IKey {
+    /**
+     * The Class IKey.
+     */
+    public class IKey {
 
-		/**
-		 * The pub key.
-		 */
-		public String pubKey;
+        /**
+         * The pub key.
+         */
+        public String pubKey;
 
-		/**
-		 * The id.
-		 */
-		public int id;
+        /**
+         * The id.
+         */
+        public int id;
 
-		/**
-		 * The used.
-		 */
-		public boolean used;
-	}
+        /**
+         * The used.
+         */
+        public boolean used;
+    }
 
 }

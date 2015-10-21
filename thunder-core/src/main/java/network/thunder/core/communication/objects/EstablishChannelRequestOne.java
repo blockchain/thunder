@@ -25,50 +25,49 @@ import network.thunder.core.communication.objects.subobjects.RevocationHash;
  */
 public class EstablishChannelRequestOne {
 
-	private String pubKey;
-	private String pubKeyFE;
-	private RevocationHash revocationHash;
-	private String secretHashFE;
-	private long totalAmount;
-	private long clientAmount;
-	private String changeAddress;
+    private String pubKey;
+    private String pubKeyFE;
+    private RevocationHash revocationHash;
+    private String secretHashFE;
+    private long totalAmount;
+    private long clientAmount;
+    private String changeAddress;
 
-	public EstablishChannelRequestOne (String pubKey, String pubKeyFE, RevocationHash revocationHash, String secretHashFE, long totalAmount, long
-			clientAmount, String changeAddress) {
-		this.pubKey = pubKey;
-		this.pubKeyFE = pubKeyFE;
-		this.revocationHash = revocationHash;
-		this.secretHashFE = secretHashFE;
-		this.totalAmount = totalAmount;
-		this.clientAmount = clientAmount;
-		this.changeAddress = changeAddress;
-	}
+    public EstablishChannelRequestOne (String pubKey, String pubKeyFE, RevocationHash revocationHash, String secretHashFE, long totalAmount, long clientAmount, String changeAddress) {
+        this.pubKey = pubKey;
+        this.pubKeyFE = pubKeyFE;
+        this.revocationHash = revocationHash;
+        this.secretHashFE = secretHashFE;
+        this.totalAmount = totalAmount;
+        this.clientAmount = clientAmount;
+        this.changeAddress = changeAddress;
+    }
 
-	public String getPubKey () {
-		return pubKey;
-	}
+    public String getPubKey () {
+        return pubKey;
+    }
 
-	public String getPubKeyFE () {
-		return pubKeyFE;
-	}
+    public String getPubKeyFE () {
+        return pubKeyFE;
+    }
 
-	public RevocationHash getRevocationHash () {
-		return revocationHash;
-	}
+    public RevocationHash getRevocationHash () {
+        return revocationHash;
+    }
 
-	public String getSecretHashFE () {
-		return secretHashFE;
-	}
+    public String getSecretHashFE () {
+        return secretHashFE;
+    }
 
-	public long getTotalAmount () {
-		return totalAmount;
-	}
+    public long getTotalAmount () {
+        return totalAmount;
+    }
 
-	public long getClientAmount () {
-		return clientAmount;
-	}
+    public long getClientAmount () {
+        return clientAmount;
+    }
 
-	public String getChangeAddress () {
-		return changeAddress;
-	}
+    public String getChangeAddress () {
+        return changeAddress;
+    }
 }

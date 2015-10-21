@@ -7,28 +7,26 @@ import network.thunder.core.communication.objects.OnionObject;
  */
 public class OnionWrapper {
 
-	private OnionObject onionObject;
+    private OnionObject onionObject;
 
-	private boolean isEncrypted = true;
-	private boolean isPrepared = false;
-	private boolean isHandled = false;
+    private boolean isEncrypted = true;
+    private boolean isPrepared = false;
+    private boolean isHandled = false;
 
-	private byte[] publicKey;
-	private byte[] privateKey;
+    private byte[] publicKey;
+    private byte[] privateKey;
 
-	public OnionWrapper (OnionObject onionObject) {
-		this.onionObject = onionObject;
-	}
+    public OnionWrapper (OnionObject onionObject) {
+        this.onionObject = onionObject;
+    }
 
-	public boolean decrypt () {
+    public boolean decrypt () {
 
-		if (!isEncrypted) {
-			return false;
-		}
+        if (!isEncrypted) {
+            return false;
+        }
 
-
-
-		return true;
-	}
+        return true;
+    }
 
 }

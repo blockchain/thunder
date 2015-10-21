@@ -35,68 +35,68 @@ import java.util.Arrays;
  */
 public class HashDerivation {
 
-	/**
-	 * Calculate a revocation hash for a new channel state.
-	 *
-	 * @param seed        A masterseed for this calculation
-	 * @param depth       The depth of the new RevocationHash
-	 * @param childNumber The n. sibling at the specified depth
-	 */
-	public static RevocationHash calculateRevocationHash (byte[] seed, int depth, int childNumber) {
+    /**
+     * Calculate a revocation hash for a new channel state.
+     *
+     * @param seed        A masterseed for this calculation
+     * @param depth       The depth of the new RevocationHash
+     * @param childNumber The n. sibling at the specified depth
+     */
+    public static RevocationHash calculateRevocationHash (byte[] seed, int depth, int childNumber) {
 
-		byte[] childseed = seed;
-		for (int i = 0; i < depth; i++) {
-			childseed = Tools.hashSecret(childseed);
-		}
+        byte[] childseed = seed;
+        for (int i = 0; i < depth; i++) {
+            childseed = Tools.hashSecret(childseed);
+        }
 
-		byte[] childseedWithNumber = new byte[24];
-		System.arraycopy(childseed, 0, childseedWithNumber, 0, 20);
+        byte[] childseedWithNumber = new byte[24];
+        System.arraycopy(childseed, 0, childseedWithNumber, 0, 20);
 
-		byte[] conv = ByteBuffer.allocate(4).putInt(childNumber).array();
+        byte[] conv = ByteBuffer.allocate(4).putInt(childNumber).array();
 
-		System.arraycopy(conv, 0, childseedWithNumber, 20, 4);
+        System.arraycopy(conv, 0, childseedWithNumber, 20, 4);
 
-		byte[] secret = Tools.hashSecret(childseedWithNumber);
-		byte[] secretHash = Tools.hashSecret(secret);
+        byte[] secret = Tools.hashSecret(childseedWithNumber);
+        byte[] secretHash = Tools.hashSecret(secret);
 
-		return new RevocationHash(depth, childNumber, secret, secretHash);
+        return new RevocationHash(depth, childNumber, secret, secretHash);
 
-	}
+    }
 
-	/**
-	 * The other party has breached the contract and submitted an old channel transaction.
-	 *
-	 * @param seed            The latest masterseed we received from the other party
-	 * @param target          The hash we are looking for
-	 * @param maxChildTries   The maximum depth we will search to before giving up..
-	 * @param maxSiblingTries The amount of siblings calculating for each depth
-	 * @return The preimage hashing to the desired hash.
-	 */
-	public static byte[] bruteForceHash (byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
+    /**
+     * The other party has breached the contract and submitted an old channel transaction.
+     *
+     * @param seed            The latest masterseed we received from the other party
+     * @param target          The hash we are looking for
+     * @param maxChildTries   The maximum depth we will search to before giving up..
+     * @param maxSiblingTries The amount of siblings calculating for each depth
+     * @return The preimage hashing to the desired hash.
+     */
+    public static byte[] bruteForceHash (byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
 
-		for (int i = 0; i < maxChildTries; i++) {
+        for (int i = 0; i < maxChildTries; i++) {
 
-			for (int j = 0; j < maxSiblingTries; j++) {
+            for (int j = 0; j < maxSiblingTries; j++) {
 
-				byte[] childseedWithNumber = new byte[24];
-				System.arraycopy(seed, 0, childseedWithNumber, 0, 20);
+                byte[] childseedWithNumber = new byte[24];
+                System.arraycopy(seed, 0, childseedWithNumber, 0, 20);
 
-				byte[] conv = ByteBuffer.allocate(4).putInt(j).array();
-				System.arraycopy(conv, 0, childseedWithNumber, 20, 4);
+                byte[] conv = ByteBuffer.allocate(4).putInt(j).array();
+                System.arraycopy(conv, 0, childseedWithNumber, 20, 4);
 
-				byte[] secret = Tools.hashSecret(childseedWithNumber);
-				byte[] secretHash = Tools.hashSecret(secret);
+                byte[] secret = Tools.hashSecret(childseedWithNumber);
+                byte[] secretHash = Tools.hashSecret(secret);
 
-				if (Arrays.equals(secretHash, target)) {
-					return secret;
-				}
-			}
+                if (Arrays.equals(secretHash, target)) {
+                    return secret;
+                }
+            }
 
-			seed = Tools.hashSecret(seed);
+            seed = Tools.hashSecret(seed);
 
-		}
-		return null;
-		//Todo: Throw a exception here maybe..
-	}
+        }
+        return null;
+        //Todo: Throw a exception here maybe..
+    }
 
 }

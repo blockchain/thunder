@@ -26,25 +26,25 @@ import org.bitcoinj.core.ECKey;
  */
 public class EstablishChannelRequestTwo {
 
-	private String openingTxHash;
-	private String escapeTxSig;
-	private String escapeFastTxSig;
+    private String openingTxHash;
+    private String escapeTxSig;
+    private String escapeFastTxSig;
 
-	public EstablishChannelRequestTwo (String openingTxHash, ECKey.ECDSASignature escapeTxSig, ECKey.ECDSASignature escapeFastTxSig) {
-		this.openingTxHash = openingTxHash;
-		this.escapeTxSig = Tools.byteToString(escapeTxSig.encodeToDER());
-		this.escapeFastTxSig = Tools.byteToString(escapeFastTxSig.encodeToDER());
-	}
+    public EstablishChannelRequestTwo (String openingTxHash, ECKey.ECDSASignature escapeTxSig, ECKey.ECDSASignature escapeFastTxSig) {
+        this.openingTxHash = openingTxHash;
+        this.escapeTxSig = Tools.byteToString(escapeTxSig.encodeToDER());
+        this.escapeFastTxSig = Tools.byteToString(escapeFastTxSig.encodeToDER());
+    }
 
-	public String getOpeningTxHash () {
-		return openingTxHash;
-	}
+    public String getOpeningTxHash () {
+        return openingTxHash;
+    }
 
-	public ECKey.ECDSASignature getEscapeTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeTxSig));
-	}
+    public ECKey.ECDSASignature getEscapeTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeTxSig));
+    }
 
-	public ECKey.ECDSASignature getEscapeFastTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeFastTxSig));
-	}
+    public ECKey.ECDSASignature getEscapeFastTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeFastTxSig));
+    }
 }

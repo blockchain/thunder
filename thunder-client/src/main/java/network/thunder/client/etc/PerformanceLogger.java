@@ -20,26 +20,26 @@ package network.thunder.client.etc;
 import org.spongycastle.util.Arrays;
 
 public class PerformanceLogger {
-	long time1;
-	long time2;
+    long time1;
+    long time2;
 
-	int level;
+    int level;
 
-	public PerformanceLogger () {
-		time1 = System.currentTimeMillis();
-		this.level = 1;
-	}
+    public PerformanceLogger () {
+        time1 = System.currentTimeMillis();
+        this.level = 1;
+    }
 
-	public PerformanceLogger (int level) {
-		time1 = System.currentTimeMillis();
-		this.level = level;
-	}
+    public PerformanceLogger (int level) {
+        time1 = System.currentTimeMillis();
+        this.level = level;
+    }
 
-	public void measure (String event) {
-		time2 = System.currentTimeMillis();
-		if (Arrays.contains(Constants.LOG_LEVELS, level)) {
-			System.out.println((time2 - time1) + "		" + event);
-		}
-		time1 = System.currentTimeMillis();
-	}
+    public void measure (String event) {
+        time2 = System.currentTimeMillis();
+        if (Arrays.contains(Constants.LOG_LEVELS, level)) {
+            System.out.println((time2 - time1) + "		" + event);
+        }
+        time1 = System.currentTimeMillis();
+    }
 }

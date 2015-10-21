@@ -24,19 +24,19 @@ package network.thunder.server.communications.objects;
  */
 public class EstablishChannelResponseOne {
 
-	/**
-	 * The pub key.
-	 */
-	public String pubKey;
+    /**
+     * The pub key.
+     */
+    public String pubKey;
 
-	/**
-	 * The change address.
-	 */
-	public String changeAddress;
+    /**
+     * The change address.
+     */
+    public String changeAddress;
 
-	/**
-	 * The tx unsigned.
-	 */
-	public String txUnsigned;
+    /**
+     * The tx unsigned.
+     */
+    public String txUnsigned;
 
 }

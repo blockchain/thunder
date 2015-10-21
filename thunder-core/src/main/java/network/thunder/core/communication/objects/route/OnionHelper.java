@@ -7,9 +7,8 @@ import network.thunder.core.communication.objects.RouteObject;
  */
 public class OnionHelper {
 
-	public RouteObject extractObject() {
-		return null;
-	}
-
+    public RouteObject extractObject () {
+        return null;
+    }
 
 }

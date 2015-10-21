@@ -35,48 +35,47 @@ import java.sql.Connection;
 import java.util.ArrayList;
 
 public class CloseChannelHandler {
-	public Connection conn;
-	public Channel channel;
+    public Connection conn;
+    public Channel channel;
 
-	public Transaction receivedTransaction;
+    public Transaction receivedTransaction;
 
-	public void evaluateResponse (CloseChannelResponse m) throws Exception {
-		receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
+    public void evaluateResponse (CloseChannelResponse m) throws Exception {
+        receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
 
-	}
+    }
 
-	public CloseChannelRequest request () throws Exception {
+    public CloseChannelRequest request () throws Exception {
 
-		CloseChannelRequest request = new CloseChannelRequest();
+        CloseChannelRequest request = new CloseChannelRequest();
 
-		Transaction channelTransaction = new Transaction(Constants.getNetwork());
+        Transaction channelTransaction = new Transaction(Constants.getNetwork());
 
-		ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
+        ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
 
-		long serverAmount = channel.getAmountServer();
+        long serverAmount = channel.getAmountServer();
 
-		for (Payment p : paymentList) {
-			if (p.paymentToServer) {
-				serverAmount += p.getAmount();
-			}
-		}
+        for (Payment p : paymentList) {
+            if (p.paymentToServer) {
+                serverAmount += p.getAmount();
+            }
+        }
 
-		channelTransaction.addOutput(Coin.valueOf(0), channel.getChangeAddressClientAsAddress());
-		channelTransaction.addOutput(Coin.valueOf(serverAmount), channel.getChangeAddressServerAsAddress());
+        channelTransaction.addOutput(Coin.valueOf(0), channel.getChangeAddressClientAsAddress());
+        channelTransaction.addOutput(Coin.valueOf(serverAmount), channel.getChangeAddressServerAsAddress());
 
-		channelTransaction.addInput(new Sha256Hash(channel.getOpeningTxHash()), 0, Tools.getDummyScript());
+        channelTransaction.addInput(new Sha256Hash(channel.getOpeningTxHash()), 0, Tools.getDummyScript());
 
-		long clientAmount = channel.getOpeningTx().getOutput(0).getValue().value - serverAmount - Tools.getTransactionFees(channelTransaction.getMessageSize()
-				+ 2 * 72);
+        long clientAmount = channel.getOpeningTx().getOutput(0).getValue().value - serverAmount - Tools.getTransactionFees(channelTransaction.getMessageSize() + 2 * 72);
 
-		channelTransaction.getOutput(0).setValue(Coin.valueOf(clientAmount));
+        channelTransaction.getOutput(0).setValue(Coin.valueOf(clientAmount));
 
-		ECDSASignature clientSig = Tools.getSignature(channelTransaction, 0, channel.getOpeningTx().getOutput(0), channel.getClientKeyOnClient());
-		Script inputScript = ScriptTools.getMultisigInputScript(clientSig);
-		channelTransaction.getInput(0).setScriptSig(inputScript);
+        ECDSASignature clientSig = Tools.getSignature(channelTransaction, 0, channel.getOpeningTx().getOutput(0), channel.getClientKeyOnClient());
+        Script inputScript = ScriptTools.getMultisigInputScript(clientSig);
+        channelTransaction.getInput(0).setScriptSig(inputScript);
 
-		request.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
-		return request;
+        request.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
+        return request;
 
-	}
+    }
 }

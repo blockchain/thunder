@@ -19,10 +19,10 @@ package network.thunder.client.communications.objects;
 
 public class EstablishChannelRequestOne {
 
-	public String pubKey;
-	public int timeInDays;
-	public long totalAmount;
-	public long clientAmount;
-	public String changeAddress;
+    public String pubKey;
+    public int timeInDays;
+    public long totalAmount;
+    public long clientAmount;
+    public String changeAddress;
 
 }

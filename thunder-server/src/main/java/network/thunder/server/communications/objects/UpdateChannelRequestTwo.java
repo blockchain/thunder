@@ -29,18 +29,18 @@ import java.util.ArrayList;
  */
 public class UpdateChannelRequestTwo {
 
-	/**
-	 * The secret list.
-	 */
-	public ArrayList<Secret> secretList;
+    /**
+     * The secret list.
+     */
+    public ArrayList<Secret> secretList;
 
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
-	/**
-	 * The removed payments.
-	 */
-	public ArrayList<String> removedPayments;
+    /**
+     * The removed payments.
+     */
+    public ArrayList<String> removedPayments;
 }

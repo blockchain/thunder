@@ -35,29 +35,29 @@ import java.sql.Connection;
  */
 public class SendPaymentHandlerThree {
 
-	public Connection conn;
-	public Channel channel;
+    public Connection conn;
+    public Channel channel;
 
-	public void evaluateResponse (SendPaymentResponseThree m) throws Exception {
+    public void evaluateResponse (SendPaymentResponseThree m) throws Exception {
 
-		//		if(m.keyList == null)
-		//			throw new Exception("keyList is null");
-		//		if(m.keyList.size() == 0)
-		//			throw new Exception("keyList is empty");
+        //		if(m.keyList == null)
+        //			throw new Exception("keyList is null");
+        //		if(m.keyList.size() == 0)
+        //			throw new Exception("keyList is empty");
 
-		MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
+        MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
 
-		MySQLConnection.updateChannel(conn, channel);
+        MySQLConnection.updateChannel(conn, channel);
 
-	}
+    }
 
-	public SendPaymentRequestThree request () throws Exception {
+    public SendPaymentRequestThree request () throws Exception {
 
-		SendPaymentRequestThree m = new SendPaymentRequestThree();
+        SendPaymentRequestThree m = new SendPaymentRequestThree();
 
-		m.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
+        m.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
 
-		return m;
-	}
+        return m;
+    }
 
 }

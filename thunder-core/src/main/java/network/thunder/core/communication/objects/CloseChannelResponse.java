@@ -26,14 +26,14 @@ import org.bitcoinj.core.ECKey;
  */
 public class CloseChannelResponse {
 
-	private String channelTxSig;
+    private String channelTxSig;
 
-	public CloseChannelResponse (ECKey.ECDSASignature channelTxSig) {
-		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
-	}
+    public CloseChannelResponse (ECKey.ECDSASignature channelTxSig) {
+        this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
+    }
 
-	public ECKey.ECDSASignature getChannelTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
-	}
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
+    }
 
 }

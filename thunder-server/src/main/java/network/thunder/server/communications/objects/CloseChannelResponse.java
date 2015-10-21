@@ -24,8 +24,8 @@ package network.thunder.server.communications.objects;
  */
 public class CloseChannelResponse {
 
-	/**
-	 * The channel transaction.
-	 */
-	public String channelTransaction;
+    /**
+     * The channel transaction.
+     */
+    public String channelTransaction;
 }

@@ -29,14 +29,14 @@ import network.thunder.client.communications.objects.SendPaymentResponseFour;
  */
 public class SendPaymentHandlerFour {
 
-	public void evaluateResponse (SendPaymentResponseFour m) throws Exception {
+    public void evaluateResponse (SendPaymentResponseFour m) throws Exception {
 
-	}
+    }
 
-	public SendPaymentRequestFour request () throws Exception {
+    public SendPaymentRequestFour request () throws Exception {
 
-		SendPaymentRequestFour m = new SendPaymentRequestFour();
-		return m;
-	}
+        SendPaymentRequestFour m = new SendPaymentRequestFour();
+        return m;
+    }
 
 }

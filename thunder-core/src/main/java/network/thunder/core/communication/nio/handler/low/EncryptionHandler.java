@@ -30,145 +30,145 @@ import java.security.SecureRandom;
 //TODO: Add a nonce to prevent replay attacks
 public class EncryptionHandler extends ChannelDuplexHandler {
 
-	private ECKey keyServer;
-	private ECKey keyClient;
+    private ECKey keyServer;
+    private ECKey keyClient;
 
-	private boolean sentOurKey = false;
-	private boolean keyReceived = false;
+    private boolean sentOurKey = false;
+    private boolean keyReceived = false;
 
-	private ECDHKeySet ecdhKeySet;
-	private boolean isServer;
+    private ECDHKeySet ecdhKeySet;
+    private boolean isServer;
 
-	long counterIn;
-	long counterOut;
+    long counterIn;
+    long counterOut;
 
-	Node node;
+    Node node;
 
-	public EncryptionHandler (boolean isServer, Node node) {
-		//TODO: Probably not save yet...
-		keyServer = new ECKey(new SecureRandom());
-		this.isServer = isServer;
-		this.node = node;
-		node.setPubKeyTempServer(keyServer);
-	}
+    public EncryptionHandler (boolean isServer, Node node) {
+        //TODO: Probably not save yet...
+        keyServer = new ECKey(new SecureRandom());
+        this.isServer = isServer;
+        this.node = node;
+        node.setPubKeyTempServer(keyServer);
+    }
 
-	public void sendOurKey (ChannelHandlerContext ctx) {
-		System.out.println("EncryptionHandler sendOurKey");
-		sentOurKey = true;
+    public void sendOurKey (ChannelHandlerContext ctx) {
+        System.out.println("EncryptionHandler sendOurKey");
+        sentOurKey = true;
 
-		Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
-		ByteBuf buf = ctx.alloc().buffer();
-		buf.writeBytes(keyServer.getPubKey());
+        Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
+        ByteBuf buf = ctx.alloc().buffer();
+        buf.writeBytes(keyServer.getPubKey());
 
-		try {
-			ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
-				@Override
-				public void operationComplete (ChannelFuture future) throws Exception {
-					System.out.println(future);
-				}
-			});
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
+        try {
+            ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete (ChannelFuture future) throws Exception {
+                    System.out.println(future);
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	public void channelActive (final ChannelHandlerContext ctx) {
-		System.out.println("CHANNEL ACTIVE ENCRYPTION");
-		//The node doing the incoming connection sends out his key first
-		if (!isServer) {
-			sendOurKey(ctx);
-		}
+    @Override
+    public void channelActive (final ChannelHandlerContext ctx) {
+        System.out.println("CHANNEL ACTIVE ENCRYPTION");
+        //The node doing the incoming connection sends out his key first
+        if (!isServer) {
+            sendOurKey(ctx);
+        }
 
-	}
+    }
 
-	@Override
-	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-		try {
-			if (keyReceived) {
-				System.out.println(msg);
+    @Override
+    public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
+        try {
+            if (keyReceived) {
+                System.out.println(msg);
 
-				ByteBuf buf = (ByteBuf) msg;
+                ByteBuf buf = (ByteBuf) msg;
 
-				ByteBuf out = ctx.alloc().buffer();
+                ByteBuf out = ctx.alloc().buffer();
 
-				byte[] data = new byte[buf.readableBytes()];
-				buf.readBytes(data);
-				buf.release();
+                byte[] data = new byte[buf.readableBytes()];
+                buf.readBytes(data);
+                buf.release();
 
-				data = CryptoTools.checkAndRemoveHMAC(data, ecdhKeySet.getHmacKey());
+                data = CryptoTools.checkAndRemoveHMAC(data, ecdhKeySet.getHmacKey());
 
-				byte[] enc = CryptoTools.decryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvClient(), counterIn);
+                byte[] enc = CryptoTools.decryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvClient(), counterIn);
 
-				out.writeBytes(enc);
+                out.writeBytes(enc);
 
-				counterIn++;
+                counterIn++;
 
-				//TODO: Add Decryption
-				ctx.fireChannelRead(out);
-			} else {
-				keyReceived = true;
-				byte[] pubkey = new byte[33];
+                //TODO: Add Decryption
+                ctx.fireChannelRead(out);
+            } else {
+                keyReceived = true;
+                byte[] pubkey = new byte[33];
 
-				ByteBuf buffer = (ByteBuf) msg;
-				buffer.readBytes(pubkey);
-				keyClient = ECKey.fromPublicOnly(pubkey);
-				node.setPubKeyTempClient(keyClient);
+                ByteBuf buffer = (ByteBuf) msg;
+                buffer.readBytes(pubkey);
+                keyClient = ECKey.fromPublicOnly(pubkey);
+                node.setPubKeyTempClient(keyClient);
 
-				if (!sentOurKey) {
-					sendOurKey(ctx);
-				}
+                if (!sentOurKey) {
+                    sendOurKey(ctx);
+                }
 
-				try {
-					this.ecdhKeySet = ECDH.getSharedSecret(keyServer, keyClient);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-				ctx.fireChannelActive();
+                try {
+                    this.ecdhKeySet = ECDH.getSharedSecret(keyServer, keyClient);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                ctx.fireChannelActive();
 
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-	}
+    }
 
-	@Override
-	public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-		try {
-			ByteBuf buf = (ByteBuf) msg;
+    @Override
+    public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+        try {
+            ByteBuf buf = (ByteBuf) msg;
 
-			ByteBuf out = ctx.alloc().buffer();
+            ByteBuf out = ctx.alloc().buffer();
 
-			byte[] data = new byte[buf.readableBytes()];
-			buf.readBytes(data);
-			buf.release();
+            byte[] data = new byte[buf.readableBytes()];
+            buf.readBytes(data);
+            buf.release();
 
-			byte[] enc = CryptoTools.encryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvServer(), counterOut);
+            byte[] enc = CryptoTools.encryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvServer(), counterOut);
 
-			enc = CryptoTools.addHMAC(enc, ecdhKeySet.getHmacKey());
+            enc = CryptoTools.addHMAC(enc, ecdhKeySet.getHmacKey());
 
-			out.writeBytes(enc);
+            out.writeBytes(enc);
 
-			counterOut++;
+            counterOut++;
 
-			System.out.println(msg);
-			//TODO: Add Encryption
+            System.out.println(msg);
+            //TODO: Add Encryption
 //		System.out.println("test");
-			ctx.writeAndFlush(out, promise);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+            ctx.writeAndFlush(out, promise);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
-	@Override
-	public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
-		ctx.close();
-	}
+    @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
 
 	/* I don't like this design, as it wires the EncryptionHandler and the AuthenticationHandler together for eternity, but I guess that is per
-	 * product design....
+     * product design....
 	 *
 	 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
 	 */

@@ -21,35 +21,35 @@ package network.thunder.core.communication.objects.subobjects;
 
 public class PaymentData {
 
-	private String receiver;
-	private long amount;
-	private long fee;
-	private PaymentSecret secret;
+    private String receiver;
+    private long amount;
+    private long fee;
+    private PaymentSecret secret;
 
-	/**
-	 * TODO: We probably need further fields here, can't think of any now..
-	 */
+    /**
+     * TODO: We probably need further fields here, can't think of any now..
+     */
 
-	public PaymentData (String receiver, long amount, long fee, PaymentSecret secret) {
-		this.receiver = receiver;
-		this.amount = amount;
-		this.fee = fee;
-		this.secret = secret;
-	}
+    public PaymentData (String receiver, long amount, long fee, PaymentSecret secret) {
+        this.receiver = receiver;
+        this.amount = amount;
+        this.fee = fee;
+        this.secret = secret;
+    }
 
-	public String getReceiver () {
-		return receiver;
-	}
+    public String getReceiver () {
+        return receiver;
+    }
 
-	public long getAmount () {
-		return amount;
-	}
+    public long getAmount () {
+        return amount;
+    }
 
-	public long getFee () {
-		return fee;
-	}
+    public long getFee () {
+        return fee;
+    }
 
-	public PaymentSecret getSecret () {
-		return secret;
-	}
+    public PaymentSecret getSecret () {
+        return secret;
+    }
 }

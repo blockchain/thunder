@@ -24,18 +24,18 @@ package network.thunder.server.communications.objects;
  */
 public class UpdateChannelResponseOne {
 
-	/**
-	 * The amount current payments.
-	 */
-	public int amountCurrentPayments;
+    /**
+     * The amount current payments.
+     */
+    public int amountCurrentPayments;
 
-	/**
-	 * The amount new payments.
-	 */
-	public int amountNewPayments;
+    /**
+     * The amount new payments.
+     */
+    public int amountNewPayments;
 
-	/**
-	 * The amount removed payments.
-	 */
-	public int amountRemovedPayments;
+    /**
+     * The amount removed payments.
+     */
+    public int amountRemovedPayments;
 }

@@ -23,18 +23,18 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 
 public class Secret {
-	public String secret;
-	public String secretHash;
+    public String secret;
+    public String secretHash;
 
-	public Secret () {
-	}
+    public Secret () {
+    }
 
-	public Secret (String secretHash, String secret) {
-		this.secret = secret;
-		this.secretHash = secretHash;
-	}
+    public Secret (String secretHash, String secret) {
+        this.secret = secret;
+        this.secretHash = secretHash;
+    }
 
-	public boolean verify () throws UnsupportedEncodingException, NoSuchAlgorithmException {
-		return secretHash.equals(Tools.hashSecret(Tools.stringToByte(secret)));
-	}
+    public boolean verify () throws UnsupportedEncodingException, NoSuchAlgorithmException {
+        return secretHash.equals(Tools.hashSecret(Tools.stringToByte(secret)));
+    }
 }

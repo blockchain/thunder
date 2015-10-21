@@ -26,19 +26,19 @@ import org.bitcoinj.core.ECKey;
  */
 public class EstablishChannelResponseTwo {
 
-	private String escapeTxSig;
-	private String escapeFastTxSig;
+    private String escapeTxSig;
+    private String escapeFastTxSig;
 
-	public EstablishChannelResponseTwo (ECKey.ECDSASignature escapeTxSig, ECKey.ECDSASignature escapeFastTxSig) {
-		this.escapeTxSig = Tools.byteToString(escapeTxSig.encodeToDER());
-		this.escapeFastTxSig = Tools.byteToString(escapeFastTxSig.encodeToDER());
-	}
+    public EstablishChannelResponseTwo (ECKey.ECDSASignature escapeTxSig, ECKey.ECDSASignature escapeFastTxSig) {
+        this.escapeTxSig = Tools.byteToString(escapeTxSig.encodeToDER());
+        this.escapeFastTxSig = Tools.byteToString(escapeFastTxSig.encodeToDER());
+    }
 
-	public ECKey.ECDSASignature getEscapeTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeTxSig));
-	}
+    public ECKey.ECDSASignature getEscapeTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeTxSig));
+    }
 
-	public ECKey.ECDSASignature getEscapeFastTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeFastTxSig));
-	}
+    public ECKey.ECDSASignature getEscapeFastTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(escapeFastTxSig));
+    }
 }

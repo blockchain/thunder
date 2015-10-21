@@ -23,8 +23,8 @@ import java.util.ArrayList;
 
 public class EstablishChannelResponseThree {
 
-	public String refundTransactionSignature;
+    public String refundTransactionSignature;
 
-	public ArrayList<Key> keyList;
+    public ArrayList<Key> keyList;
 
 }

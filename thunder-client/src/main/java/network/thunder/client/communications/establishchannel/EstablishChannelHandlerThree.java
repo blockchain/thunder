@@ -38,35 +38,35 @@ import java.sql.Connection;
  */
 public class EstablishChannelHandlerThree {
 
-	public Connection conn;
-	public Channel channel;
-	public TransactionStorage transactionStorage;
+    public Connection conn;
+    public Channel channel;
+    public TransactionStorage transactionStorage;
 
-	public void evaluateResponse (EstablishChannelRequestThree m) throws Exception {
+    public void evaluateResponse (EstablishChannelRequestThree m) throws Exception {
 
-		channel.setEstablishPhase(4);
-		transactionStorage.addOpenedChannel(channel);
-		MySQLConnection.updateChannel(conn, channel);
+        channel.setEstablishPhase(4);
+        transactionStorage.addOpenedChannel(channel);
+        MySQLConnection.updateChannel(conn, channel);
 
-		/**
-		 * No response from the server..
-		 *
-		 */
+        /**
+         * No response from the server..
+         *
+         */
 
-	}
+    }
 
-	public EstablishChannelResponseThree request () throws Exception {
+    public EstablishChannelResponseThree request () throws Exception {
 
-		/**
-		 * We have the signed refund transaction already in our channel
-		 */
-		Transaction refundTransaction = channel.getRefundTxClient();
-		//		System.out.println(refundTransaction.toString());
+        /**
+         * We have the signed refund transaction already in our channel
+         */
+        Transaction refundTransaction = channel.getRefundTxClient();
+        //		System.out.println(refundTransaction.toString());
 
-		EstablishChannelResponseThree m = new EstablishChannelResponseThree();
-		m.refundTransactionSignature = Tools.byteToString(refundTransaction.getInput(0).getScriptSig().getChunks().get(1).data);
+        EstablishChannelResponseThree m = new EstablishChannelResponseThree();
+        m.refundTransactionSignature = Tools.byteToString(refundTransaction.getInput(0).getScriptSig().getChunks().get(1).data);
 
-		return m;
-	}
+        return m;
+    }
 
 }

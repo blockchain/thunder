@@ -9,37 +9,37 @@ package network.thunder.core.communication.objects.subobjects;
  */
 public class ConnectedPeer {
 
-	private byte[] pubkey;
-	private float fee;
-	private float amout;
-	private short reputation;
-	private byte[] signature;
+    private byte[] pubkey;
+    private float fee;
+    private float amout;
+    private short reputation;
+    private byte[] signature;
 
-	public ConnectedPeer (byte[] pubkey, float fee, float amout, short reputation, byte[] signature) {
-		this.pubkey = pubkey;
-		this.fee = fee;
-		this.amout = amout;
-		this.reputation = reputation;
-		this.signature = signature;
-	}
+    public ConnectedPeer (byte[] pubkey, float fee, float amout, short reputation, byte[] signature) {
+        this.pubkey = pubkey;
+        this.fee = fee;
+        this.amout = amout;
+        this.reputation = reputation;
+        this.signature = signature;
+    }
 
-	public byte[] getPubkey () {
-		return pubkey;
-	}
+    public byte[] getPubkey () {
+        return pubkey;
+    }
 
-	public float getFee () {
-		return fee;
-	}
+    public float getFee () {
+        return fee;
+    }
 
-	public float getAmout () {
-		return amout;
-	}
+    public float getAmout () {
+        return amout;
+    }
 
-	public short getReputation () {
-		return reputation;
-	}
+    public short getReputation () {
+        return reputation;
+    }
 
-	public byte[] getSignature () {
-		return signature;
-	}
+    public byte[] getSignature () {
+        return signature;
+    }
 }

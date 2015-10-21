@@ -27,19 +27,19 @@ import network.thunder.core.communication.objects.subobjects.RevocationHash;
  */
 public class SendPaymentRequestOne {
 
-	private RevocationHash newHash;
-	private PaymentData paymentData;
+    private RevocationHash newHash;
+    private PaymentData paymentData;
 
-	public SendPaymentRequestOne (RevocationHash newHash, PaymentData paymentData) {
-		this.newHash = newHash;
-		this.paymentData = paymentData;
-	}
+    public SendPaymentRequestOne (RevocationHash newHash, PaymentData paymentData) {
+        this.newHash = newHash;
+        this.paymentData = paymentData;
+    }
 
-	public RevocationHash getNewHash () {
-		return newHash;
-	}
+    public RevocationHash getNewHash () {
+        return newHash;
+    }
 
-	public PaymentData getPaymentData () {
-		return paymentData;
-	}
+    public PaymentData getPaymentData () {
+        return paymentData;
+    }
 }

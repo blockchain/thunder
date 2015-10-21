@@ -30,38 +30,37 @@ import java.util.ArrayList;
  */
 public class UpdateChannelResponseOne {
 
-	private RevocationHash newHash;
-	private ArrayList<String> revealedSecrets;
-	private ArrayList<String> removedPayments;
-	private ArrayList<PaymentData> newPayments;
-	private String channelTxSig;
+    private RevocationHash newHash;
+    private ArrayList<String> revealedSecrets;
+    private ArrayList<String> removedPayments;
+    private ArrayList<PaymentData> newPayments;
+    private String channelTxSig;
 
-	public UpdateChannelResponseOne (RevocationHash newHash, ArrayList<String> revealedSecrets, ArrayList<String> removedPayments, ArrayList<PaymentData>
-			newPayments, ECKey.ECDSASignature channelTxSig) {
-		this.newHash = newHash;
-		this.revealedSecrets = revealedSecrets;
-		this.removedPayments = removedPayments;
-		this.newPayments = newPayments;
-		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
-	}
+    public UpdateChannelResponseOne (RevocationHash newHash, ArrayList<String> revealedSecrets, ArrayList<String> removedPayments, ArrayList<PaymentData> newPayments, ECKey.ECDSASignature channelTxSig) {
+        this.newHash = newHash;
+        this.revealedSecrets = revealedSecrets;
+        this.removedPayments = removedPayments;
+        this.newPayments = newPayments;
+        this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
+    }
 
-	public RevocationHash getNewHash () {
-		return newHash;
-	}
+    public RevocationHash getNewHash () {
+        return newHash;
+    }
 
-	public ArrayList<String> getRevealedSecrets () {
-		return revealedSecrets;
-	}
+    public ArrayList<String> getRevealedSecrets () {
+        return revealedSecrets;
+    }
 
-	public ArrayList<String> getRemovedPayments () {
-		return removedPayments;
-	}
+    public ArrayList<String> getRemovedPayments () {
+        return removedPayments;
+    }
 
-	public ArrayList<PaymentData> getNewPayments () {
-		return newPayments;
-	}
+    public ArrayList<PaymentData> getNewPayments () {
+        return newPayments;
+    }
 
-	public ECKey.ECDSASignature getChannelTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
-	}
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
+    }
 }

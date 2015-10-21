@@ -19,8 +19,8 @@ package network.thunder.client.communications.objects;
 
 public class SendPaymentRequestOne {
 
-	public String channelTransaction;
-	public String receipient;
-	public long amount;
+    public String channelTransaction;
+    public String receipient;
+    public long amount;
 
 }

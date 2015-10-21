@@ -5,15 +5,15 @@ package network.thunder.core.communication.objects;
  */
 public class OnionObject {
 
-	public byte[] pubkeyOnion;
+    public byte[] pubkeyOnion;
 
-	public byte[] hmac;
+    public byte[] hmac;
 
-	public byte[] message;
+    public byte[] message;
 
-	public byte[] iv;
-	public byte[] payload;
+    public byte[] iv;
+    public byte[] payload;
 
-	public byte[] padding;
+    public byte[] padding;
 
 }

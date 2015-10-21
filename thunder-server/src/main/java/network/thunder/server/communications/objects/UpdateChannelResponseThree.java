@@ -24,9 +24,9 @@ package network.thunder.server.communications.objects;
  */
 public class UpdateChannelResponseThree {
 
-	/**
-	 * The transaction hash.
-	 */
-	public String transactionHash;
+    /**
+     * The transaction hash.
+     */
+    public String transactionHash;
 
 }

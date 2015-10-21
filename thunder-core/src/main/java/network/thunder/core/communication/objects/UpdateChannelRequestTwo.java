@@ -29,20 +29,20 @@ import java.util.ArrayList;
  */
 public class UpdateChannelRequestTwo {
 
-	private ArrayList<RevocationHash> oldSecrets;
-	private String channelTxSig;
+    private ArrayList<RevocationHash> oldSecrets;
+    private String channelTxSig;
 
-	public UpdateChannelRequestTwo (ArrayList<RevocationHash> oldSecrets, ECKey.ECDSASignature channelTxSig) {
-		this.oldSecrets = oldSecrets;
-		this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
+    public UpdateChannelRequestTwo (ArrayList<RevocationHash> oldSecrets, ECKey.ECDSASignature channelTxSig) {
+        this.oldSecrets = oldSecrets;
+        this.channelTxSig = Tools.byteToString(channelTxSig.encodeToDER());
 
-	}
+    }
 
-	public ArrayList<RevocationHash> getOldSecrets () {
-		return oldSecrets;
-	}
+    public ArrayList<RevocationHash> getOldSecrets () {
+        return oldSecrets;
+    }
 
-	public ECKey.ECDSASignature getChannelTxSig () {
-		return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
-	}
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return ECKey.ECDSASignature.decodeFromDER(Tools.stringToByte(channelTxSig));
+    }
 }
