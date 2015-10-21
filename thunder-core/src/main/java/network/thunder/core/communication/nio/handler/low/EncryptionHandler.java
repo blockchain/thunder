@@ -18,8 +18,8 @@ package network.thunder.core.communication.nio.handler.low;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import network.thunder.core.communication.Message;
+import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
-import network.thunder.core.etc.Tools;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.etc.crypto.ECDHKeySet;
@@ -42,10 +42,14 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 	long counterIn;
 	long counterOut;
 
-	public EncryptionHandler (boolean isServer) {
+	Node node;
+
+	public EncryptionHandler (boolean isServer, Node node) {
 		//TODO: Probably not save yet...
 		keyServer = new ECKey(new SecureRandom());
 		this.isServer = isServer;
+		this.node = node;
+		node.setPubKeyTempServer(keyServer);
 	}
 
 	public void sendOurKey (ChannelHandlerContext ctx) {
@@ -75,6 +79,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 		if (!isServer) {
 			sendOurKey(ctx);
 		}
+
 	}
 
 	@Override
@@ -108,6 +113,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 				ByteBuf buffer = (ByteBuf) msg;
 				buffer.readBytes(pubkey);
 				keyClient = ECKey.fromPublicOnly(pubkey);
+				node.setPubKeyTempClient(keyClient);
 
 				if (!sentOurKey) {
 					sendOurKey(ctx);
@@ -115,11 +121,9 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 
 				try {
 					this.ecdhKeySet = ECDH.getSharedSecret(keyServer, keyClient);
-				} catch (Exception e) { e.printStackTrace(); }
-				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getEncryptionKey()));
-				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getHmacKey()));
-				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getIvClient()));
-				System.out.println(Tools.bytesToHex(this.ecdhKeySet.getIvServer()));
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				ctx.fireChannelActive();
 
 			}
@@ -168,11 +172,4 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 	 *
 	 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
 	 */
-	public ECKey getKeyServer () {
-		return keyServer;
-	}
-
-	public ECKey getKeyClient () {
-		return keyClient;
-	}
 }

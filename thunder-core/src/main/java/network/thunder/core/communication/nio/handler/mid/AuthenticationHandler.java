@@ -20,7 +20,6 @@ import io.netty.channel.*;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
-import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
 import org.bitcoinj.core.ECKey;
 
@@ -60,15 +59,15 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 		 *
 		 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
 		 */
-		this.keyTempClient = ((EncryptionHandler) ctx.pipeline().get("EncryptionHandler")).getKeyClient();
-		this.keyTempServer = ((EncryptionHandler) ctx.pipeline().get("EncryptionHandler")).getKeyServer();
+		this.keyTempClient = node.getPubKeyTempClient();
+		this.keyTempServer = node.getPubKeyTempServer();
 
-		System.out.println("CHANNEL ACTIVE");
+		System.out.println("CHANNEL ACTIVE AUTHENTICATION");
 		//The node receiving the incoming connection sends out his auth first
 		if (!isServer) {
 			sendAuthentication(ctx);
 		}
-		ctx.fireChannelActive();
+//		ctx.fireChannelActive();
 
 	}
 
@@ -80,6 +79,9 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 					System.out.println(future);
 				}
 			});
+			if (node.isAuthFinished()) {
+				ctx.fireChannelActive();
+			}
 		} catch (InterruptedException | NoSuchAlgorithmException | NoSuchProviderException e) {
 			e.printStackTrace();
 		}
@@ -90,12 +92,11 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 	}
 
 	public void authenticationFinished (ChannelHandlerContext ctx) {
+		System.out.println("Authentication Finished!");
 		node.setNettyContext(ctx);
 
-		ctx.fireChannelRead("1");
+		ctx.fireChannelActive();
 	}
-
-
 
 	@Override
 	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
@@ -114,7 +115,7 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 					AuthenticationObject authObject = new Gson().fromJson(message.data, AuthenticationObject.class);
 					if (node.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), keyTempServer)) {
 
-						if(!node.hasSentAuth()) {
+						if (!node.hasSentAuth()) {
 							sendAuthentication(ctx);
 						} else {
 							authenticationFinished(ctx);
@@ -137,6 +138,7 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 				System.out.println(message);
 			} else {
 				//Not authenticated. Will not look at messages with wrong types.
+				System.out.println("Not authenticated!");
 				sendFailure(ctx);
 			}
 
