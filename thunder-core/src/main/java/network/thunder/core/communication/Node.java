@@ -19,6 +19,10 @@ public class Node {
 	private ChannelHandlerContext nettyContext;
 
 	private byte[] pubkey;
+
+	private ECKey pubKeyTempClient;
+	private ECKey pubKeyTempServer;
+
 	private boolean isAuth;
 	private boolean sentAuth;
 	private boolean authFinished;
@@ -66,6 +70,9 @@ public class Node {
 		obj.signature = CryptoTools.createSignature(keyServer, data);
 
 		sentAuth = true;
+		if(this.isAuth) {
+			this.authFinished = true;
+		}
 		return obj;
 	}
 
@@ -121,5 +128,19 @@ public class Node {
 		return authFinished;
 	}
 
+	public ECKey getPubKeyTempClient () {
+		return pubKeyTempClient;
+	}
 
+	public void setPubKeyTempClient (ECKey pubKeyTempClient) {
+		this.pubKeyTempClient = pubKeyTempClient;
+	}
+
+	public ECKey getPubKeyTempServer () {
+		return pubKeyTempServer;
+	}
+
+	public void setPubKeyTempServer (ECKey pubKeyTempServer) {
+		this.pubKeyTempServer = pubKeyTempServer;
+	}
 }
