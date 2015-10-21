@@ -16,23 +16,16 @@
 package network.thunder.core.communication.nio;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.ChannelInitializer;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
-import io.netty.handler.codec.LengthFieldPrepender;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import network.thunder.core.communication.Node;
-import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
-import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
-import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
-import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
+import network.thunder.core.communication.nio.handler.ChannelInit;
 import org.bitcoinj.core.ECKey;
 
 import java.math.BigInteger;
@@ -41,6 +34,12 @@ import java.util.ArrayList;
 /**
  */
 public final class P2PServer {
+
+	private P2PContext context;
+
+	public P2PServer (P2PContext context) {
+		this.context = context;
+	}
 
 	//We will add a new handler for the different layers
 	//Furthermore, we will add a new handler for the different message types,
@@ -57,29 +56,7 @@ public final class P2PServer {
 
 		try {
 			ServerBootstrap b = new ServerBootstrap();
-			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInitializer<SocketChannel>() {
-				@Override
-				public void initChannel (SocketChannel ch) throws Exception {
-					Node node = new Node();
-					connectedNodes.add(node);
-
-//					ch.pipeline().addLast(new DumpHexHandler());
-
-//					ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
-					ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
-					ch.pipeline().addLast(new LengthFieldPrepender(4));
-
-					ch.pipeline().addLast(new EncryptionHandler(true));
-
-
-					ch.pipeline().addLast(new ByteToMessageObjectHandler());
-					ch.pipeline().addLast(new MessageObjectToByteHandler());
-
-
-					ch.pipeline().addLast(new AuthenticationHandler(key, true, node));
-
-				}
-			});
+			b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context, true, connectedNodes, key));
 
 			b.bind(port).sync().channel().closeFuture().sync();
 		} finally {
@@ -87,9 +64,4 @@ public final class P2PServer {
 			workerGroup.shutdownGracefully();
 		}
 	}
-
-	public static void main (String[] args) throws Exception {
-		new P2PServer().startServer(8992, new ArrayList<>());
-	}
-
 }
