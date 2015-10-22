@@ -1,10 +1,13 @@
 package network.thunder.core.database;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import network.thunder.core.communication.Node;
+import network.thunder.core.communication.objects.p2p.ChannelStatusObject;
+import network.thunder.core.communication.objects.p2p.DataObject;
 import network.thunder.core.communication.objects.p2p.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
 import network.thunder.core.database.objects.Channel;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.Node;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -20,8 +23,11 @@ import java.util.Random;
  */
 public class DatabaseHandler {
 
-    public static void main(String[] args) throws Exception {
-        fillPubkeyChannelTableWithRandomData(getDataSource().getConnection(), 110000);
+    public static void main (String[] args) throws Exception {
+//        fillNodeTableWithRandomData(getDataSource().getConnection(), 200000);
+//        fillChannelTableWithRandomData(getDataSource().getConnection(), 500000);
+//        fillChannelStatusTableWithRandomData(getDataSource().getConnection(), 500000);
+        fillPubkeyIPTableWithRandomData(getDataSource().getConnection(), 200000);
     }
 
     public static DataSource getDataSource () throws PropertyVetoException {
@@ -63,6 +69,121 @@ public class DatabaseHandler {
             }
             result.close();
             return channelList;
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static void fillNodeTableWithRandomData (Connection conn, int entries) throws SQLException {
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("INSERT INTO nodes VALUES(?,?)");
+
+            Random random = new Random();
+            for (int i = 0; i < entries; i++) {
+                byte[] b = new byte[33];
+                random.nextBytes(b);
+                stmt.setString(1, null);
+                stmt.setBytes(2, b);
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static void fillChannelStatusTableWithRandomData (Connection conn, int entries) throws SQLException {
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?)");
+
+            Random random = new Random();
+            for (int i = 0; i < entries; i++) {
+                byte[] b = new byte[33];
+                random.nextBytes(b);
+                stmt.setString(1, null);
+                stmt.setInt(2, random.nextInt(1000) + 1);
+                stmt.setInt(3, i + 1);
+                stmt.setInt(4, random.nextInt(200000) + 1);
+                stmt.setInt(5, random.nextInt(200000) + 1);
+                stmt.setBytes(6, b);
+                stmt.setBytes(7, b);
+                stmt.addBatch();
+
+            }
+            stmt.executeBatch();
+
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static void fillPubkeyIPTableWithRandomData (Connection conn, int entries) throws SQLException {
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("INSERT INTO pubkey_ips VALUES(?,?,?,?,?,?,?)");
+
+            Random random = new Random();
+            for (int i = 0; i < entries; i++) {
+                byte[] b = new byte[33];
+                random.nextBytes(b);
+                stmt.setString(1, null);
+                stmt.setInt(2, random.nextInt(1000) + 1);
+                stmt.setInt(3, i + 1);
+                stmt.setString(4, random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255));
+                stmt.setInt(5, 8992);
+                stmt.setInt(6, Tools.currentTime());
+                stmt.setBytes(7, b);
+                stmt.addBatch();
+
+            }
+            stmt.executeBatch();
+
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static void fillChannelTableWithRandomData (Connection conn, int entries) throws SQLException {
+
+        PreparedStatement stmt = null;
+        try {
+            stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,? )");
+
+            Random random = new Random();
+            for (int i = 0; i < entries; i++) {
+                byte[] b = new byte[33];
+                random.nextBytes(b);
+                stmt.setString(1, null);
+                stmt.setInt(2, random.nextInt(1000) + 1);
+                stmt.setInt(3, random.nextInt(200000) + 1);
+                stmt.setInt(4, random.nextInt(200000) + 1);
+                stmt.setBytes(5, b);
+                stmt.setBytes(6, b);
+                stmt.setBytes(7, b);
+                stmt.setBytes(8, b);
+                stmt.setBytes(9, b);
+                stmt.setBytes(10, b);
+                stmt.setBytes(11, b);
+                stmt.setBytes(12, b);
+                stmt.setBytes(13, b);
+                stmt.addBatch();
+            }
+            stmt.executeBatch();
+
         } finally {
             if (stmt != null) {
                 stmt.close();
@@ -124,6 +245,67 @@ public class DatabaseHandler {
         }
     }
 
+    public static ArrayList<DataObject> getSyncDataByFragmentIndex (Connection conn, int index) throws SQLException {
+        PreparedStatement stmt = null;
+        ArrayList<DataObject> dataObjectList = new ArrayList<>();
+        try {
+            stmt = conn.prepareStatement("SELECT * FROM channels " +
+                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                                             "WHERE channels.fragment_index=?");
+
+            stmt.setInt(1, index);
+            ResultSet result = stmt.executeQuery();
+
+            if (result.first()) {
+                while (!result.isAfterLast()) {
+                    dataObjectList.add(new DataObject(new PubkeyChannelObject(result)));
+                    result.next();
+                }
+            }
+            result.close();
+            stmt.close();
+
+            stmt = conn.prepareStatement("SELECT * FROM channel_status " +
+                                             "INNER JOIN channels ON channel_status.channel_id=channels.id " +
+                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                                             "WHERE channel_status.fragment_index=?");
+
+            stmt.setInt(1, index);
+            result = stmt.executeQuery();
+
+            if (result.first()) {
+                while (!result.isAfterLast()) {
+                    dataObjectList.add(new DataObject(new ChannelStatusObject(result)));
+                    result.next();
+                }
+            }
+            result.close();
+            stmt.close();
+
+            stmt = conn.prepareStatement("SELECT * FROM pubkey_ips " +
+                                             "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
+                                             "WHERE channel_status.fragment_index=?");
+
+            stmt.setInt(1, index);
+            result = stmt.executeQuery();
+
+            if (result.first()) {
+                while (!result.isAfterLast()) {
+                    dataObjectList.add(new DataObject(new PubkeyIPObject(result)));
+                    result.next();
+                }
+            }
+
+            result.close();
+            return dataObjectList;
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
 
     /**
      * Gets the active channels.
