@@ -1,5 +1,7 @@
 package network.thunder.core.communication.objects.p2p;
 
+import network.thunder.core.etc.Tools;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -15,14 +17,17 @@ public class TreeMapDatastructure {
     private final static long FRAGMENT_SIZE = Long.MAX_VALUE / NUMBER_OF_FRAGMENTS;
 
     public HashMap<Integer, ArrayList<P2PDataObject>> list = new HashMap<>();
+    public ArrayList<P2PDataObject> fullDataList = new ArrayList<>();
 
     public HashMap<Integer, Boolean> fragmentIsSyncedList = new HashMap<>();
+    public HashMap<Integer, Integer> fragmentJobList = new HashMap<>();
 
     public TreeMapDatastructure () {
         for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
             ArrayList<P2PDataObject> objList = new ArrayList<>();
             list.put(i, objList);
             fragmentIsSyncedList.put(i, false);
+            fragmentJobList.put(i, 0);
         }
     }
 
@@ -56,17 +61,32 @@ public class TreeMapDatastructure {
             if (!objectArrayList.contains(object)) {
                 objectArrayList.add(object);
             }
+            if (!fullDataList.contains(object)) {
+                fullDataList.add(object);
+            }
         }
+        fragmentIsSyncedList.put(index, true);
     }
 
     public synchronized int getNextFragmentIndexToSynchronize () {
         for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
-            if (fragmentIsSyncedList.get(i)) {
-                fragmentIsSyncedList.put(i, true);
-                return i;
+            if (!fragmentIsSyncedList.get(i)) {
+                if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
+                    fragmentJobList.put(i, Tools.currentTime());
+                    return i;
+                }
             }
         }
         return 0;
+    }
+
+    public boolean fullySynchronized () {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+            if (!fragmentIsSyncedList.get(i)) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }
