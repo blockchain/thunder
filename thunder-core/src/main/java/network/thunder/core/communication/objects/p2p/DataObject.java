@@ -32,12 +32,19 @@ public class DataObject {
     public DataObject (Object object) {
         if (object instanceof PubkeyIPObject) {
             type = TYPE_IP_PUBKEY;
+            PubkeyIPObject p = (PubkeyIPObject) object;
+            data = new Gson().toJson(p);
         } else if (object instanceof PubkeyChannelObject) {
             type = TYPE_CHANNEL_PUBKEY;
-        } else {
+            PubkeyChannelObject p = (PubkeyChannelObject) object;
+            data = new Gson().toJson(p);
+        } else if (object instanceof ChannelStatusObject) {
+            type = TYPE_CHANNEL_STATUS;
+            ChannelStatusObject p = (ChannelStatusObject) object;
+            data = new Gson().toJson(p);
+        } else  {
             throw new RuntimeException("Object not supported currently");
         }
-        data = new Gson().toJson(object);
 
     }
 
