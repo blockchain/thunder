@@ -20,7 +20,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import network.thunder.core.communication.Node;
+import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.nio.handler.ChannelInit;
 import org.bitcoinj.core.ECKey;
 
@@ -43,7 +43,7 @@ public final class P2PClient {
     //as it will greatly improve readability and maintainability of the code.
 
     public void connectTo (Node node) throws Exception {
-        System.out.println("Connect to " + node.getHost());
+        System.out.println("Connect to " + node.getHost()+":"+node.getPort());
         new Thread(new Runnable() {
             @Override
             public void run () {

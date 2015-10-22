@@ -19,7 +19,7 @@ import com.google.gson.Gson;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Node;
+import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;

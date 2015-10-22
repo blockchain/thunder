@@ -8,14 +8,19 @@ import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
 public class ServerMain {
 
     public static void main (String[] args) throws Exception {
-        P2PContext context = new P2PContext(8992);
+
+        P2PContext context = new P2PContext(8993);
 
         PubkeyIPObject ip = new PubkeyIPObject();
-        ip.IP = "157.1.1.5";
-        ip.port = 8993;
-
+        ip.IP = "127.0.0.1";
+        ip.port = 8992;
         context.IPList.add(ip);
 
+        PubkeyIPObject ip2 = new PubkeyIPObject();
+        ip2.IP = "127.0.0.1";
+        ip2.port = 8993;
+        context.IPList.add(ip2);
         context.startConnections();
+
     }
 }
