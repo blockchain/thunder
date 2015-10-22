@@ -23,14 +23,21 @@ import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
+import network.thunder.core.communication.objects.p2p.GetDataObject;
+import network.thunder.core.communication.objects.p2p.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
+import network.thunder.core.database.DatabaseHandler;
 
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
 /*
- * FLOW:
- * client send auth
- * server send auth
+ * Handling the data transfer to new nodes.
+ *
+ * New nodes will first connect to a random node and just ask for more IP addresses.
+ * As soon as they got new IP addresses, they will close the first connection and connect to
+ * some of the new ones to ask them for fragments of the PubkeyChannelMap.
  */
 public class SyncHandler extends ChannelInboundHandlerAdapter {
 
@@ -38,26 +45,29 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     private boolean isServer = false;
 
     private P2PContext context;
-    boolean justGetIpObjects;
 
-//	private Connection conn;
+	private Connection conn;
 
-    public SyncHandler (boolean isServer, Node node, P2PContext context, boolean justGetIpObjects) {
+    public SyncHandler (boolean isServer, Node node, P2PContext context) {
         this.isServer = isServer;
         this.node = node;
         this.context = context;
-        this.justGetIpObjects = justGetIpObjects;
+        try {
+            this.conn = context.dataSource.getConnection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
-        System.out.println("CHANNEL ACTIVE GOSSIP");
+        System.out.println("CHANNEL ACTIVE SYNC");
 
         if (!isServer) {
-            if (justGetIpObjects)
-            //TODO: Probably should ask for IPs and stuff here..
-            {
-                sendGetAddr(ctx);
+            if (node.justFetchNewIpAddresses) {
+                sendGetIPs(ctx);
+            } else if (node.justDownloadSyncData) {
+                sendGetSyncData(ctx, context.syncDatastructure.getNextFragmentIndexToSynchronize());
             }
         }
 
@@ -69,11 +79,19 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
         for (PubkeyIPObject o : context.getIPList()) {
             dataList.add(new DataObject(o));
         }
-        sendData(ctx, dataList);
+        ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_IPS));
     }
 
-    public void sendGetAddr (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.GOSSIP_GET_ADDR));
+    public void sendGetIPs (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.SYNC_GET_IPS));
+    }
+
+    public void sendGetSyncData (ChannelHandlerContext ctx, int index) {
+        ctx.writeAndFlush(new Message(new GetDataObject(index), Type.SYNC_GET_FRAGMENT));
+    }
+
+    public void sendSyncData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
+        ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_FRAGMENT));
     }
 
     public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
@@ -97,21 +115,48 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
 
 //			System.out.println(message.type);
 
-            if (message.type >= 1200 && message.type <= 1299) {
+            if (message.type >= 1300 && message.type <= 1399) {
 
-                if (message.type == Type.GOSSIP_GET_ADDR) {
+                if (message.type == Type.SYNC_GET_IPS) {
                     sendIPaddresses(ctx);
                 }
 
-                if (message.type == Type.GOSSIP_SEND) {
-                    //We get lots of different data here..
+                if (message.type == Type.SYNC_SEND_IPS) {
+                    //DataObject can hold lots of data. We only want to have IPs here
                     DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
                     for (DataObject o : dataList) {
                         if (o.type == DataObject.TYPE_IP_PUBKEY) {
                             PubkeyIPObject ipObject = o.getPubkeyIPObject();
                             ipObject.verify();
                             context.newIPList(ipObject);
+                        } else {
+                            throw new RuntimeException("Wrong Datatype when expecting IPs");
                         }
+                    }
+                    if (node.justFetchNewIpAddresses) {
+                        ctx.close();
+                    }
+                }
+
+                if (message.type == Type.SYNC_GET_FRAGMENT) {
+                    GetDataObject object = new Gson().fromJson(message.data, GetDataObject.class);
+                    ArrayList<PubkeyChannelObject> tempList = DatabaseHandler.getPubkeyChannelObjectsByFragmentIndex(conn, object.index);
+                    ArrayList<DataObject> dataList = new ArrayList<>();
+                    for (PubkeyChannelObject o : tempList) {
+                        dataList.add(new DataObject(o));
+                    }
+                    sendSyncData(ctx, dataList);
+                }
+
+                if (message.type == Type.SYNC_SEND_FRAGMENT) {
+                    DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
+                    System.out.println(dataList.length);
+
+                    int nextIndex = context.syncDatastructure.getNextFragmentIndexToSynchronize();
+                    if (nextIndex > 0) {
+                        sendGetSyncData(ctx, nextIndex);
+                    } else {
+                        ctx.close();
                     }
                 }
 
