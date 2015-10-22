@@ -1,4 +1,4 @@
-package network.thunder.core.communication;
+package network.thunder.core.mesh;
 
 import io.netty.channel.ChannelHandlerContext;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 
 public class Node {
     private String host;
@@ -29,6 +30,9 @@ public class Node {
     private boolean isReady;
     private boolean hasOpenChannel;
 
+    public boolean justFetchNewIpAddresses = false;
+    public boolean justDownloadSyncData = false;
+
     public Node (String host, int port) {
         this.host = host;
         this.port = port;
@@ -39,8 +43,11 @@ public class Node {
         this.port = set.getInt("port");
     }
 
-    public Node () {
+    public Node (byte[] pubkey) {
+        this.pubkey = pubkey;
+    }
 
+    public Node () {
     }
 
     public boolean processAuthentication (AuthenticationObject authentication, ECKey pubkeyClient, ECKey pubkeyServerTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
@@ -141,5 +148,44 @@ public class Node {
 
     public void setPubKeyTempServer (ECKey pubKeyTempServer) {
         this.pubKeyTempServer = pubKeyTempServer;
+    }
+
+    private OnConnectionCloseListener onConnectionCloseListener;
+
+    public void setOnConnectionCloseListener (OnConnectionCloseListener onConnectionCloseListener) {
+        this.onConnectionCloseListener = onConnectionCloseListener;
+    }
+
+    public void closeConnection () {
+        if (onConnectionCloseListener != null) {
+            onConnectionCloseListener.onClose();
+        }
+        try {
+            this.nettyContext.close();
+        } catch(Exception e){}
+    }
+
+    public interface OnConnectionCloseListener {
+        public void onClose ();
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Node node = (Node) o;
+
+        return Arrays.equals(pubkey, node.pubkey);
+
+    }
+
+    @Override
+    public int hashCode () {
+        return pubkey != null ? Arrays.hashCode(pubkey) : 0;
     }
 }
