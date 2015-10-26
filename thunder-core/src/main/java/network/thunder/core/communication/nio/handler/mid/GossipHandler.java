@@ -19,19 +19,22 @@ import com.google.gson.Gson;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
-import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
-import org.bitcoinj.core.ECKey;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.database.DatabaseHandler;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.Node;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 
-/*
- * FLOW:
- * client send auth
- * server send auth
+/* This layer is for coordinating gossip messages we received.
+ * Messages are sent using the Node.class.
  */
 public class GossipHandler extends ChannelInboundHandlerAdapter {
 
@@ -40,9 +43,6 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
 
     private P2PContext context;
 
-    private ECKey keyServer;
-//	private Connection conn;
-
     public GossipHandler (boolean isServer, Node node, P2PContext context) {
         this.isServer = isServer;
         this.node = node;
@@ -50,23 +50,36 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive (final ChannelHandlerContext ctx) {
+    public void channelActive (final ChannelHandlerContext ctx) throws SQLException {
         System.out.println("CHANNEL ACTIVE GOSSIP");
 
-        if (!isServer) {
-            //TODO: Probably should ask for IPs and stuff here..
-            sendGetAddr(ctx);
+        node.conn = context.dataSource.getConnection();
+
+        try {
+            if (!isServer) {
+                //The newly connected node will broadcast it's existence to all other nodes once the connection has been established.
+                sendOwnIPAddress(ctx);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
     }
 
-    public void sendIPaddresses (ChannelHandlerContext ctx) {
-        System.out.println("IPs");
-        ArrayList<DataObject> dataList = new ArrayList<>();
-        for (PubkeyIPObject o : context.getIPList()) {
-            dataList.add(new DataObject(o));
-        }
-        sendData(ctx, dataList);
+    public void sendOwnIPAddress (ChannelHandlerContext ctx) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+        PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
+        pubkeyIPObject.pubkey = this.context.nodeKey.getPubKey();
+        pubkeyIPObject.port = this.context.port;
+        pubkeyIPObject.IP = "127.0.0.1";
+        pubkeyIPObject.timestamp = Tools.currentTime();
+        pubkeyIPObject.sign(context.nodeKey);
+
+        sendIPAddress(ctx, pubkeyIPObject);
+    }
+
+    public void sendIPAddress (ChannelHandlerContext ctx, PubkeyIPObject pubkeyIPObject) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+        ctx.writeAndFlush(new Message(pubkeyIPObject, Type.GOSSIP_SEND_IP_OBJECT));
     }
 
     public void sendGetAddr (ChannelHandlerContext ctx) {
@@ -96,8 +109,22 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
 
             if (message.type >= 1200 && message.type <= 1299) {
 
-                if (message.type == Type.GOSSIP_GET_ADDR) {
-                    sendIPaddresses(ctx);
+                if (message.type == Type.GOSSIP_SEND_IP_OBJECT) {
+                    //Other node sent us a new IP object. We check whether we know it already and if we don't, we send it to all other nodes...
+                    PubkeyIPObject pubkeyIPObject = new Gson().fromJson(message.data, PubkeyIPObject.class);
+                    pubkeyIPObject.verifySignature();
+
+                    //Check if it is new to us
+                    if (DatabaseHandler.newIPObject(node.conn, pubkeyIPObject)) {
+                        //Object is new to us, broadcast to all other connected peers..
+                        for (Node n : context.connectedNodes) {
+                            sendIPAddress(n.getNettyContext(), pubkeyIPObject);
+                        }
+                    }
+                }
+
+                if(message.type == Type.GOSSIP_INV) {
+
                 }
 
                 if (message.type == Type.GOSSIP_SEND) {
@@ -107,7 +134,7 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
                         if (o.type == DataObject.TYPE_IP_PUBKEY) {
                             PubkeyIPObject ipObject = o.getPubkeyIPObject();
                             ipObject.verify();
-                            context.newIPList(ipObject);
+                            context.newIP(ipObject);
                         }
                     }
                 }
