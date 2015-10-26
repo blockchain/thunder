@@ -24,11 +24,9 @@ import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
-import network.thunder.core.communication.Node;
 import network.thunder.core.communication.nio.handler.ChannelInit;
-import org.bitcoinj.core.ECKey;
+import network.thunder.core.mesh.Node;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 
 /**
@@ -52,11 +50,9 @@ public final class P2PServer {
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(10000)));
-
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context, true, connectedNodes, key));
+            b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context, true));
 
             b.bind(port).sync().channel().closeFuture().sync();
         } finally {

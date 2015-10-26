@@ -1,13 +1,15 @@
 package network.thunder.core.communication.nio;
 
-import network.thunder.core.mesh.Node;
-import network.thunder.core.communication.objects.p2p.PubkeyChannelObject;
-import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
 import network.thunder.core.communication.objects.p2p.TreeMapDatastructure;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
+import network.thunder.core.mesh.Node;
+import org.bitcoinj.core.ECKey;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,12 +30,15 @@ public class P2PContext {
     public HashMap<String, PubkeyChannelObject> pubkeyChannelObjectHashMap = new HashMap<>();
 
     P2PServer server;
+    public ECKey nodeKey;
 
     boolean keepReconnectingToNewNodes = false;
 
     public boolean fetchFreshIPs = true;
 
     public TreeMapDatastructure syncDatastructure = new TreeMapDatastructure();
+
+    public boolean needsInitialSyncing = false;
 
     P2PContext context;
 
@@ -99,10 +104,9 @@ public class P2PContext {
 
                     try {
                         if (connectedNodes.size() < 10) {
-                            if(IPList.size() > 0) {
+                            if (IPList.size() > 0) {
                                 PubkeyIPObject ipObject = IPList.get(new Random().nextInt(IPList.size()));
                                 Node node = new Node(ipObject.IP, ipObject.port);
-                                node.justDownloadSyncData = true;
 
                                 new P2PClient(context).connectTo(node);
                                 IPList.remove(ipObject); //TODO: Maybe not the best to just delete it here?
@@ -132,6 +136,16 @@ public class P2PContext {
 
         //TODO: Validate all anchors we received. We need some kind of full blockchain to do that..
 
+        //Save all data into our database
+//        for(P2PDataObject obj : this.syncDatastructure.fullDataList) {
+        try {
+            DatabaseHandler.syncDatalist(dataSource.getConnection(), this.syncDatastructure.fullDataList);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+//            System.out.println(obj);
+//        }
+
         //Now figure out to which nodes we want to build lightning channels..
     }
 
@@ -139,7 +153,7 @@ public class P2PContext {
         boolean newPubKey = true;
         for (PubkeyIPObject newIP : newList) {
             for (PubkeyIPObject oldIP : IPList) {
-                if (Arrays.equals(newIP.pubKey, oldIP.pubKey)) {
+                if (Arrays.equals(newIP.pubkey, oldIP.pubkey)) {
                     newPubKey = false;
                     if (newIP.timestamp > oldIP.timestamp) {
                         //Got a new IP address for an existing pubkey
@@ -156,10 +170,10 @@ public class P2PContext {
         }
     }
 
-    public void newIPList (PubkeyIPObject newIP) {
+    public void newIP (PubkeyIPObject newIP) {
         boolean newPubKey = true;
         for (PubkeyIPObject oldIP : IPList) {
-            if (Arrays.equals(newIP.pubKey, oldIP.pubKey)) {
+            if (Arrays.equals(newIP.pubkey, oldIP.pubkey)) {
                 newPubKey = false;
                 if (newIP.timestamp > oldIP.timestamp) {
                     //Got a new IP address for an existing pubkey
@@ -170,8 +184,8 @@ public class P2PContext {
             }
         }
 //        if (newPubKey) {
-            //TODO: Got a pubkey we don't know about yet. Should probably do some checking here
-            IPList.add(newIP);
+        //TODO: Got a pubkey we don't know about yet. Should probably do some checking here
+        IPList.add(newIP);
 //        }
 
     }

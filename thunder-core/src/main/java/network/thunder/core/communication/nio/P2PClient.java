@@ -20,11 +20,8 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.nio.handler.ChannelInit;
-import org.bitcoinj.core.ECKey;
-
-import java.math.BigInteger;
+import network.thunder.core.mesh.Node;
 
 /**
  */
@@ -43,14 +40,12 @@ public final class P2PClient {
     //as it will greatly improve readability and maintainability of the code.
 
     public void connectTo (Node node) throws Exception {
-        System.out.println("Connect to " + node.getHost()+":"+node.getPort());
+        System.out.println("Connect to " + node.getHost() + ":" + node.getPort());
         new Thread(new Runnable() {
             @Override
             public void run () {
 
                 while (!node.isConnected()) {
-
-                    ECKey key = ECKey.fromPrivate(BigInteger.ONE.multiply(BigInteger.valueOf(100000)));
 
                     EventLoopGroup bossGroup = new NioEventLoopGroup(1);
                     EventLoopGroup workerGroup = new NioEventLoopGroup();
@@ -58,7 +53,7 @@ public final class P2PClient {
                     EventLoopGroup group = new NioEventLoopGroup();
                     try {
                         Bootstrap b = new Bootstrap();
-                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, false, node, key));
+                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, false, node));
 
                         // Start the connection attempt.
                         Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
