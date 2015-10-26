@@ -22,6 +22,8 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
+import network.thunder.core.communication.objects.p2p.gossip.GetGossipDataObject;
+import network.thunder.core.communication.objects.p2p.gossip.InvObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.etc.Tools;
@@ -82,6 +84,12 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(new Message(pubkeyIPObject, Type.GOSSIP_SEND_IP_OBJECT));
     }
 
+    public void sendGetData (ChannelHandlerContext ctx, ArrayList<byte[]> inventory) {
+        GetGossipDataObject object = new GetGossipDataObject();
+        object.inventoryList = inventory;
+        ctx.writeAndFlush(new Message(object, Type.GOSSIP_GET));
+    }
+
     public void sendGetAddr (ChannelHandlerContext ctx) {
         ctx.writeAndFlush(new Message(null, Type.GOSSIP_GET_ADDR));
     }
@@ -123,8 +131,12 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
 
-                if(message.type == Type.GOSSIP_INV) {
-
+                if (message.type == Type.GOSSIP_INV) {
+                    InvObject inventory = new Gson().fromJson(message.data, InvObject.class);
+                    ArrayList<byte[]> checkedInventory = DatabaseHandler.checkInv(node.conn, inventory.inventoryList);
+                    if (checkedInventory.size() > 0) {
+                        sendGetData(ctx, checkedInventory);
+                    }
                 }
 
                 if (message.type == Type.GOSSIP_SEND) {

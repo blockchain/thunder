@@ -55,6 +55,13 @@ public class PubkeyChannelObject implements P2PDataObject {
         return Math.abs(byteBuffer.getLong());
     }
 
+    public byte[] getHash () {
+        byte[] hash = new byte[20];
+        byte[] t = Tools.hashSecret(this.getData());
+        System.arraycopy(t, 0, hash, 0, 20);
+        return hash;
+    }
+
     private byte[] getData () {
         //TODO: Have some proper summary here..
         ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA.length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);

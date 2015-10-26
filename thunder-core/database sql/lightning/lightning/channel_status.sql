@@ -14,6 +14,7 @@
 CREATE TABLE IF NOT EXISTS `channel_status` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `fragment_index` smallint(6) DEFAULT NULL,
+  `hash` binary(20) DEFAULT NULL,
   `channel_id` int(11) DEFAULT NULL,
   `info_a` tinyblob,
   `info_b` tinyblob,

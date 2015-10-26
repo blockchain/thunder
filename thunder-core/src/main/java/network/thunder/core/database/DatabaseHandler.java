@@ -216,7 +216,7 @@ public class DatabaseHandler {
                 //TODO: We already have this channel in our database. Maybe change the object? These should be fairly static though..
                 stmt = conn.prepareStatement("UPDATE channels SET fragment_index=?, secret_a_hash=?, secret_b_hash=?, pubkey_a1=?, pubkey_a2=?, pubkey_b1=?, " +
                                                  "pubkey_b2=?, " +
-                                                 "txid_anchor=?, signature_a=?, signature_b=? WHERE id=?");
+                                                 "txid_anchor=?, signature_a=?, signature_b=?, hash=? WHERE id=?");
 
                 stmt.setInt(1, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
                 stmt.setBytes(2, pubkeyChannelObject.secretAHash);
@@ -228,7 +228,8 @@ public class DatabaseHandler {
                 stmt.setBytes(8, pubkeyChannelObject.txidAnchor);
                 stmt.setBytes(9, pubkeyChannelObject.signatureA);
                 stmt.setBytes(10, pubkeyChannelObject.signatureB);
-                stmt.setInt(11, id);
+                stmt.setBytes(11, pubkeyChannelObject.getHash());
+                stmt.setInt(12, id);
 
                 printInnerStatement((C3P0ProxyStatement) stmt);
                 stmt.execute();
@@ -241,23 +242,24 @@ public class DatabaseHandler {
             int nodeIdA = DatabaseHandler.getNodeId(conn, pubkeyChannelObject.pubkeyA);
             int nodeIdB = DatabaseHandler.getNodeId(conn, pubkeyChannelObject.pubkeyB);
 
-            stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
-
-            stmt.setInt(1, id);
-            stmt.setInt(2, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
-            stmt.setInt(3, nodeIdA);
-            stmt.setInt(4, nodeIdB);
-            stmt.setBytes(5, pubkeyChannelObject.secretAHash);
-            stmt.setBytes(6, pubkeyChannelObject.secretBHash);
-            stmt.setBytes(7, pubkeyChannelObject.pubkeyA1);
-            stmt.setBytes(8, pubkeyChannelObject.pubkeyA2);
-            stmt.setBytes(9, pubkeyChannelObject.pubkeyB1);
-            stmt.setBytes(10, pubkeyChannelObject.pubkeyB2);
-            stmt.setBytes(11, pubkeyChannelObject.txidAnchor);
-            stmt.setBytes(12, pubkeyChannelObject.signatureA);
-            stmt.setBytes(13, pubkeyChannelObject.signatureB);
-            stmt.setBytes(14, pubkeyChannelObject.pubkeyB2);
-            stmt.setBytes(15, pubkeyChannelObject.pubkeyB2);
+            stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            int i = 1;
+            stmt.setInt(i++, id);
+            stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
+            stmt.setBytes(i++, pubkeyChannelObject.getHash());
+            stmt.setInt(i++, nodeIdA);
+            stmt.setInt(i++, nodeIdB);
+            stmt.setBytes(i++, pubkeyChannelObject.secretAHash);
+            stmt.setBytes(i++, pubkeyChannelObject.secretBHash);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyA1);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyA2);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB1);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB2);
+            stmt.setBytes(i++, pubkeyChannelObject.txidAnchor);
+            stmt.setBytes(i++, pubkeyChannelObject.signatureA);
+            stmt.setBytes(i++, pubkeyChannelObject.signatureB);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB2);
+            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB2);
 
             printInnerStatement((C3P0ProxyStatement) stmt);
 
@@ -283,14 +285,16 @@ public class DatabaseHandler {
 
             if (id != 0) {
 
-                stmt = conn.prepareStatement("UPDATE pubkey_ips SET fragment_index=?, host=?, port=?, timestamp=?, signature=? WHERE id=? AND timestamp<?");
-                stmt.setInt(1, TreeMapDatastructure.objectToFragmentIndex(IPObject));
-                stmt.setString(2, IPObject.IP);
-                stmt.setInt(3, IPObject.port);
-                stmt.setInt(4, IPObject.timestamp);
-                stmt.setBytes(5, IPObject.signature);
-                stmt.setInt(6, id);
-                stmt.setInt(7, IPObject.timestamp);
+                stmt = conn.prepareStatement("UPDATE pubkey_ips SET fragment_index=?, hash=?, host=?, port=?, timestamp=?, signature=? WHERE id=? AND " + "timestamp<?");
+                int i = 1;
+                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(IPObject));
+                stmt.setBytes(i++, IPObject.getHash());
+                stmt.setString(i++, IPObject.IP);
+                stmt.setInt(i++, IPObject.port);
+                stmt.setInt(i++, IPObject.timestamp);
+                stmt.setBytes(i++, IPObject.signature);
+                stmt.setInt(i++, id);
+                stmt.setInt(i++, IPObject.timestamp);
 
                 int count = stmt.executeUpdate();
 
@@ -301,15 +305,17 @@ public class DatabaseHandler {
 
             //We don't have the IP currently..
 
-            stmt = conn.prepareStatement("INSERT INTO pubkey_ips VALUES(?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            stmt = conn.prepareStatement("INSERT INTO pubkey_ips VALUES(?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 
-            stmt.setInt(1, id);
-            stmt.setInt(2, TreeMapDatastructure.objectToFragmentIndex(IPObject));
-            stmt.setInt(3, DatabaseHandler.getNodeId(conn, IPObject.pubkey));
-            stmt.setString(4, IPObject.IP);
-            stmt.setInt(5, IPObject.port);
-            stmt.setInt(6, IPObject.timestamp);
-            stmt.setBytes(7, IPObject.signature);
+            int i = 1;
+            stmt.setInt(i++, id);
+            stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(IPObject));
+            stmt.setBytes(i++, IPObject.getHash());
+            stmt.setInt(i++, DatabaseHandler.getNodeId(conn, IPObject.pubkey));
+            stmt.setString(i++, IPObject.IP);
+            stmt.setInt(i++, IPObject.port);
+            stmt.setInt(i++, IPObject.timestamp);
+            stmt.setBytes(i++, IPObject.signature);
 
             printInnerStatement((C3P0ProxyStatement) stmt);
 
@@ -356,16 +362,17 @@ public class DatabaseHandler {
                 set.close();
                 stmt.close();
 
-                stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
-
-                stmt.setInt(1, id);
-                stmt.setInt(2, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
-                stmt.setInt(3, channelId);
-                stmt.setBytes(4, channelStatusObject.infoA);
-                stmt.setBytes(5, channelStatusObject.infoB);
-                stmt.setInt(6, channelStatusObject.timestamp);
-                stmt.setBytes(7, channelStatusObject.signatureA);
-                stmt.setBytes(8, channelStatusObject.signatureB);
+                stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
+                int i = 1;
+                stmt.setInt(i++, id);
+                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
+                stmt.setBytes(i++, channelStatusObject.getHash());
+                stmt.setInt(i++, channelId);
+                stmt.setBytes(i++, channelStatusObject.infoA);
+                stmt.setBytes(i++, channelStatusObject.infoB);
+                stmt.setInt(i++, channelStatusObject.timestamp);
+                stmt.setBytes(i++, channelStatusObject.signatureA);
+                stmt.setBytes(i++, channelStatusObject.signatureB);
 
                 printInnerStatement((C3P0ProxyStatement) stmt);
 
@@ -384,16 +391,18 @@ public class DatabaseHandler {
                 set.close();
                 stmt.close();
 
-                stmt = conn.prepareStatement("UPDATE channel_status SET fragment_index=?, info_a=?, info_b=?, timestamp=?, signature_a=?, signature_b=? " +
+                stmt = conn.prepareStatement("UPDATE channel_status SET fragment_index=?, hash=?, info_a=?, info_b=?, timestamp=?, signature_a=?, " +
+                                                 "signature_b=? " +
                                                  "WHERE" + " id=?");
-
-                stmt.setInt(1, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
-                stmt.setBytes(2, channelStatusObject.infoA);
-                stmt.setBytes(3, channelStatusObject.infoB);
-                stmt.setInt(4, channelStatusObject.timestamp);
-                stmt.setBytes(5, channelStatusObject.signatureA);
-                stmt.setBytes(6, channelStatusObject.signatureB);
-                stmt.setInt(7, id);
+                int i = 1;
+                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
+                stmt.setBytes(i++, channelStatusObject.getHash());
+                stmt.setBytes(i++, channelStatusObject.infoA);
+                stmt.setBytes(i++, channelStatusObject.infoB);
+                stmt.setInt(i++, channelStatusObject.timestamp);
+                stmt.setBytes(i++, channelStatusObject.signatureA);
+                stmt.setBytes(i++, channelStatusObject.signatureB);
+                stmt.setInt(i++, id);
 
                 stmt.execute();
 
@@ -402,6 +411,58 @@ public class DatabaseHandler {
                 return id;
 
             }
+
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static ArrayList<byte[]> checkInv (Connection conn, ArrayList<byte[]> inv) throws SQLException {
+        ArrayList<byte[]> arrayList = new ArrayList<>();
+
+        PreparedStatement stmt = null;
+        try {
+            for (byte[] hash : inv) {
+
+                //Lets see if we have the object in the db already
+                stmt = conn.prepareStatement("SELECT hash FROM channels WHERE hash=?");
+                stmt.setBytes(1, hash);
+                ResultSet set = stmt.executeQuery();
+                boolean found = set.first();
+                stmt.close();
+                set.close();
+                if (found) {
+                    arrayList.add(hash);
+                    continue;
+                }
+
+                stmt = conn.prepareStatement("SELECT hash FROM channel_status WHERE hash=?");
+                stmt.setBytes(1, hash);
+                set = stmt.executeQuery();
+                found = set.first();
+                stmt.close();
+                set.close();
+                if (found) {
+                    arrayList.add(hash);
+                    continue;
+                }
+
+                stmt = conn.prepareStatement("SELECT hash FROM pubkey_ips WHERE hash=?");
+                stmt.setBytes(1, hash);
+                set = stmt.executeQuery();
+                found = set.first();
+                stmt.close();
+                set.close();
+                if (found) {
+                    arrayList.add(hash);
+                    continue;
+                }
+
+            }
+
+            return arrayList;
 
         } finally {
             if (stmt != null) {

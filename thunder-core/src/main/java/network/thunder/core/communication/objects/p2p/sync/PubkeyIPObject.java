@@ -46,8 +46,8 @@ public class PubkeyIPObject implements P2PDataObject {
         return Math.abs(byteBuffer.getLong());
     }
 
-    public byte[] getDataWithoutSignature() throws UnsupportedEncodingException {
-        ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length+2+pubkey.length+4);
+    public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
+        ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length + 2 + pubkey.length + 4);
         buffer.put(IP.getBytes("UTF-8"));
         buffer.putShort((short) port);
         buffer.put(pubkey);
@@ -55,11 +55,11 @@ public class PubkeyIPObject implements P2PDataObject {
         return buffer.array();
     }
 
-    public void sign(ECKey key) throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
+    public void sign (ECKey key) throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
         this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
     }
 
-    public void verifySignature() throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
+    public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
         CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
     }
 
@@ -76,6 +76,13 @@ public class PubkeyIPObject implements P2PDataObject {
         byteBuffer.put(signature);
         byteBuffer.putInt(timestamp);
         return byteBuffer.array();
+    }
+
+    public byte[] getHash () {
+        byte[] hash = new byte[20];
+        byte[] t = Tools.hashSecret(this.getData());
+        System.arraycopy(t, 0, hash, 0, 20);
+        return hash;
     }
 
     @Override

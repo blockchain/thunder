@@ -46,6 +46,13 @@ public class ChannelStatusObject implements P2PDataObject {
         return Math.abs(byteBuffer.getLong());
     }
 
+    public byte[] getHash() {
+        byte[] hash = new byte[20];
+        byte[] t = Tools.hashSecret(this.getData());
+        System.arraycopy(t, 0, hash, 0, 20);
+        return hash;
+    }
+
     private byte[] getData () {
         //TODO: Have some proper summary here..
         ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + infoA.length + infoB.length + signatureA.length + signatureB.length + 4);

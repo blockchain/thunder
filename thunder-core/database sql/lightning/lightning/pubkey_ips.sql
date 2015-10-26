@@ -14,6 +14,7 @@
 CREATE TABLE IF NOT EXISTS `pubkey_ips` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `fragment_index` smallint(6) NOT NULL DEFAULT '0',
+  `hash` binary(20) NOT NULL DEFAULT '0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0',
   `node_id` int(11) DEFAULT NULL,
   `host` tinytext,
   `port` smallint(6) DEFAULT NULL,
