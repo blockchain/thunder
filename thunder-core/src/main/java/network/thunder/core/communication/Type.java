@@ -60,6 +60,7 @@ public class Type {
     public static int GOSSIP_SEND = 1204;
     public static int GOSSIP_GET_ADDR = 1211;
     public static int GOSSIP_GET_DATA_HEADER = 1212;
+    public static int GOSSIP_SEND_IP_OBJECT = 1213; //IP objects are currently sent without an inv first..
 
     public static int SYNC_GET_IPS = 1301;
     public static int SYNC_SEND_IPS = 1302;
