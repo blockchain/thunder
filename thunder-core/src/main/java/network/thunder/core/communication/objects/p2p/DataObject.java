@@ -1,9 +1,13 @@
 package network.thunder.core.communication.objects.p2p;
 
 import com.google.gson.Gson;
+import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 
 /**
- * Created by matsjerratsch on 19/10/2015.
+ * Object for sending across the different sync objects.
+ * This is only used to span they way to the other node, where the node will unbox the object again.
  */
 public class DataObject {
 
@@ -42,10 +46,22 @@ public class DataObject {
             type = TYPE_CHANNEL_STATUS;
             ChannelStatusObject p = (ChannelStatusObject) object;
             data = new Gson().toJson(p);
-        } else  {
+        } else {
             throw new RuntimeException("Object not supported currently");
         }
+    }
 
+    public P2PDataObject getObject () {
+        if (type == TYPE_IP_PUBKEY) {
+            return new Gson().fromJson(data, PubkeyIPObject.class);
+        }
+        if (type == TYPE_CHANNEL_PUBKEY) {
+            return new Gson().fromJson(data, PubkeyChannelObject.class);
+        }
+        if (type == TYPE_CHANNEL_STATUS) {
+            return new Gson().fromJson(data, ChannelStatusObject.class);
+        }
+        throw new RuntimeException("Object not supported currently");
     }
 
 }
