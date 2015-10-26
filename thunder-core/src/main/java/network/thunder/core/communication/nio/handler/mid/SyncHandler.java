@@ -19,14 +19,13 @@ import com.google.gson.Gson;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import network.thunder.core.communication.Message;
-import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
-import network.thunder.core.communication.objects.p2p.GetDataObject;
-import network.thunder.core.communication.objects.p2p.PubkeyChannelObject;
-import network.thunder.core.communication.objects.p2p.PubkeyIPObject;
+import network.thunder.core.communication.objects.p2p.GetP2PDataObject;
+import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
+import network.thunder.core.mesh.Node;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,7 +45,9 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
 
     private P2PContext context;
 
-	private Connection conn;
+    private Connection conn;
+
+    private int lastIndex = 0;
 
     public SyncHandler (boolean isServer, Node node, P2PContext context) {
         this.isServer = isServer;
@@ -66,15 +67,25 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
         if (!isServer) {
             if (node.justFetchNewIpAddresses) {
                 sendGetIPs(ctx);
-            } else if (node.justDownloadSyncData) {
+            } else if (context.needsInitialSyncing) {
                 sendGetSyncData(ctx, context.syncDatastructure.getNextFragmentIndexToSynchronize());
+
             }
         }
 
     }
 
-    public void sendIPaddresses (ChannelHandlerContext ctx) {
-        System.out.println("IPs");
+    @Override
+    public void channelUnregistered (ChannelHandlerContext ctx) {
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        ctx.fireChannelUnregistered();
+    }
+
+    public void sendIP (ChannelHandlerContext ctx) {
         ArrayList<DataObject> dataList = new ArrayList<>();
         for (PubkeyIPObject o : context.getIPList()) {
             dataList.add(new DataObject(o));
@@ -87,19 +98,12 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void sendGetSyncData (ChannelHandlerContext ctx, int index) {
-        ctx.writeAndFlush(new Message(new GetDataObject(index), Type.SYNC_GET_FRAGMENT));
+        lastIndex = index;
+        ctx.writeAndFlush(new Message(new GetP2PDataObject(index), Type.SYNC_GET_FRAGMENT));
     }
 
     public void sendSyncData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
         ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_FRAGMENT));
-    }
-
-    public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        try {
-            ctx.writeAndFlush(new Message(dataList, Type.GOSSIP_SEND)).sync();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     public void sendFailure (ChannelHandlerContext ctx) {
@@ -110,25 +114,20 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
 
-            //Check authentication first before doing anything else with the messages.
             Message message = (Message) msg;
-
-//			System.out.println(message.type);
 
             if (message.type >= 1300 && message.type <= 1399) {
 
                 if (message.type == Type.SYNC_GET_IPS) {
-                    sendIPaddresses(ctx);
+                    sendIP(ctx);
                 }
 
                 if (message.type == Type.SYNC_SEND_IPS) {
-                    //DataObject can hold lots of data. We only want to have IPs here
                     DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
                     for (DataObject o : dataList) {
                         if (o.type == DataObject.TYPE_IP_PUBKEY) {
-                            PubkeyIPObject ipObject = o.getPubkeyIPObject();
-                            ipObject.verify();
-                            context.newIPList(ipObject);
+                            PubkeyIPObject p2PDataObject = o.getPubkeyIPObject();
+                            context.newIP(p2PDataObject);
                         } else {
                             throw new RuntimeException("Wrong Datatype when expecting IPs");
                         }
@@ -139,18 +138,18 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 if (message.type == Type.SYNC_GET_FRAGMENT) {
-                    GetDataObject object = new Gson().fromJson(message.data, GetDataObject.class);
-                    ArrayList<PubkeyChannelObject> tempList = DatabaseHandler.getPubkeyChannelObjectsByFragmentIndex(conn, object.index);
-                    ArrayList<DataObject> dataList = new ArrayList<>();
-                    for (PubkeyChannelObject o : tempList) {
-                        dataList.add(new DataObject(o));
-                    }
+                    //We got a GET request for a specific fragment.
+                    GetP2PDataObject object = new Gson().fromJson(message.data, GetP2PDataObject.class);
+                    ArrayList<DataObject> dataList = DatabaseHandler.getSyncDataByFragmentIndex(conn, object.index);
                     sendSyncData(ctx, dataList);
                 }
 
                 if (message.type == Type.SYNC_SEND_FRAGMENT) {
+                    //Other node sent us all data with a specific fragment index.
                     DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
-                    System.out.println(dataList.length);
+                    System.out.println(lastIndex + " " + dataList.length);
+
+                    context.syncDatastructure.newFragment(lastIndex, dataList);
 
                     int nextIndex = context.syncDatastructure.getNextFragmentIndexToSynchronize();
                     if (nextIndex > 0) {
@@ -160,9 +159,6 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
 
-            } else if (message.type == 0) {
-                System.out.println("Got Failure:");
-                System.out.println(message);
             } else {
                 //Pass it further to the next handler
                 ctx.fireChannelRead(msg);

@@ -3,6 +3,7 @@ package network.thunder.core.communication.objects.p2p;
 import network.thunder.core.etc.Tools;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -35,9 +36,9 @@ public class TreeMapDatastructure {
         return list.get(index);
     }
 
-    public int objectToFragmentIndex (P2PDataObject object) {
+    public static int objectToFragmentIndex (P2PDataObject object) {
 
-        return (int) (object.getHash() / FRAGMENT_SIZE + 1);
+        return (int) (object.getHashAsLong() / FRAGMENT_SIZE + 1);
     }
 
     public void insertObject (P2PDataObject obj) {
@@ -48,28 +49,46 @@ public class TreeMapDatastructure {
         return list.get(objectToFragmentIndex(obj)).contains(obj);
     }
 
-    public void newFragment (int index, ArrayList<P2PDataObject> newFragment) {
+    public void newFragment (int index, DataObject[] newFragment) {
+        newFragment(index, new ArrayList<>(Arrays.asList(newFragment)));
+    }
+
+    public void newFragment (int index, ArrayList<DataObject> newFragment) {
 
         ArrayList<P2PDataObject> objectArrayList = list.get(index);
 
-        for (P2PDataObject object : newFragment) {
+        for (DataObject o : newFragment) {
+            P2PDataObject object = o.getObject();
             //TODO: Probably a bottleneck here, maybe we can trust the data?
             if (index != objectToFragmentIndex(object)) {
-                throw new RuntimeException("Object should not be in that index..");
+//                throw new RuntimeException("Object should not be in that index..");
+                System.out.println("Object should not be in that index.. Is in: "+index+" Should be: "+objectToFragmentIndex(object));
             }
+
+            //Check the signature on all objects we get before processing..
+            object.verify();
 
             if (!objectArrayList.contains(object)) {
                 objectArrayList.add(object);
             }
-            if (!fullDataList.contains(object)) {
+//            if (!fullDataList.contains(object)) {
                 fullDataList.add(object);
-            }
+//            }
+
+            //Save all data into our database
+//            System.out.println(object);
+//            ChannelStatusObject status = (ChannelStatusObject) object;
+
+
         }
+
+
         fragmentIsSyncedList.put(index, true);
     }
 
     public synchronized int getNextFragmentIndexToSynchronize () {
         for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+//            if(i>100) return 0;
             if (!fragmentIsSyncedList.get(i)) {
                 if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
                     fragmentJobList.put(i, Tools.currentTime());
@@ -82,6 +101,7 @@ public class TreeMapDatastructure {
 
     public boolean fullySynchronized () {
         for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+//            if(i>100) return true;
             if (!fragmentIsSyncedList.get(i)) {
                 return false;
             }
