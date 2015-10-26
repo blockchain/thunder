@@ -1,12 +1,14 @@
 package network.thunder.core.mesh;
 
 import io.netty.channel.ChannelHandlerContext;
+import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
 import network.thunder.core.etc.crypto.CryptoTools;
 import org.bitcoinj.core.ECKey;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
@@ -30,8 +32,12 @@ public class Node {
     private boolean isReady;
     private boolean hasOpenChannel;
 
+    //From the gossip handler upwards nodes have their own connection object
+    public Connection conn;
+
     public boolean justFetchNewIpAddresses = false;
-    public boolean justDownloadSyncData = false;
+
+    public P2PContext context;
 
     public Node (String host, int port) {
         this.host = host;
@@ -162,7 +168,8 @@ public class Node {
         }
         try {
             this.nettyContext.close();
-        } catch(Exception e){}
+        } catch (Exception e) {
+        }
     }
 
     public interface OnConnectionCloseListener {
