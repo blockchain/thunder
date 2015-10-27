@@ -1,8 +1,13 @@
 package network.thunder.core.mesh;
 
 import io.netty.channel.ChannelHandlerContext;
+import network.thunder.core.communication.Message;
+import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
+import network.thunder.core.communication.objects.p2p.DataObject;
+import network.thunder.core.communication.objects.p2p.gossip.InvObject;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.etc.crypto.CryptoTools;
 import org.bitcoinj.core.ECKey;
 
@@ -11,9 +16,13 @@ import java.security.NoSuchProviderException;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Node {
+
+    public static final int THRESHHOLD_INVENTORY_AMOUNT_TO_SEND = 32;
+
     private String host;
     private int port;
 
@@ -38,6 +47,8 @@ public class Node {
     public boolean justFetchNewIpAddresses = false;
 
     public P2PContext context;
+
+    private ArrayList<byte[]> inventoryList = new ArrayList<>();
 
     public Node (String host, int port) {
         this.host = host;
@@ -86,6 +97,26 @@ public class Node {
             this.authFinished = true;
         }
         return obj;
+    }
+
+    public void newInventoryList (ArrayList<DataObject> objectList) {
+        for (DataObject object : objectList) {
+            byte[] hash = object.getObject().getHash();
+            if (!Tools.arrayListContainsByteArray(this.inventoryList, hash)) {
+                this.inventoryList.add(hash);
+            }
+        }
+
+        if (this.inventoryList.size() > THRESHHOLD_INVENTORY_AMOUNT_TO_SEND) {
+            InvObject invObject = new InvObject();
+            invObject.inventoryList = this.inventoryList;
+            this.nettyContext.writeAndFlush(new Message(invObject, Type.GOSSIP_INV));
+            this.inventoryList.clear();
+        }
+    }
+
+    public void sendFailure (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.FAILURE));
     }
 
     public ChannelHandlerContext getNettyContext () {
