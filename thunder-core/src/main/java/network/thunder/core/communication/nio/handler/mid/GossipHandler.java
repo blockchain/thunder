@@ -24,6 +24,7 @@ import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
 import network.thunder.core.communication.objects.p2p.gossip.GetGossipDataObject;
 import network.thunder.core.communication.objects.p2p.gossip.InvObject;
+import network.thunder.core.communication.objects.p2p.gossip.SendGossipDataObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.etc.Tools;
@@ -54,6 +55,9 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive (final ChannelHandlerContext ctx) throws SQLException {
         System.out.println("CHANNEL ACTIVE GOSSIP");
+        if (node.getNettyContext() == null) {
+            node.setNettyContext(ctx);
+        }
 
         node.conn = context.dataSource.getConnection();
 
@@ -73,7 +77,7 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
         PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
         pubkeyIPObject.pubkey = this.context.nodeKey.getPubKey();
         pubkeyIPObject.port = this.context.port;
-        pubkeyIPObject.IP = "127.0.0.1";
+        pubkeyIPObject.IP = "127.0.0.1"; //TODO...
         pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(context.nodeKey);
 
@@ -90,20 +94,10 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(new Message(object, Type.GOSSIP_GET));
     }
 
-    public void sendGetAddr (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.GOSSIP_GET_ADDR));
-    }
-
     public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        try {
-            ctx.writeAndFlush(new Message(dataList, Type.GOSSIP_SEND)).sync();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void sendFailure (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.FAILURE));
+        SendGossipDataObject object = new SendGossipDataObject();
+        object.dataObjects = dataList;
+        ctx.writeAndFlush(new Message(object, Type.GOSSIP_SEND));
     }
 
     @Override
@@ -132,6 +126,7 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
                 }
 
                 if (message.type == Type.GOSSIP_INV) {
+                    //The other node is sending us his inventory of new data
                     InvObject inventory = new Gson().fromJson(message.data, InvObject.class);
                     ArrayList<byte[]> checkedInventory = DatabaseHandler.checkInv(node.conn, inventory.inventoryList);
                     if (checkedInventory.size() > 0) {
@@ -139,15 +134,23 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
                     }
                 }
 
+                if (message.type == Type.GOSSIP_GET) {
+                    //The other node asks for specific data
+                    GetGossipDataObject getGossipDataObject = new Gson().fromJson(message.data, GetGossipDataObject.class);
+                    ArrayList<DataObject> dataList = DatabaseHandler.getDataObjectByHash(node.conn, getGossipDataObject.inventoryList);
+                    if (dataList.size() > 0) {
+                        sendData(ctx, dataList);
+                    }
+                }
+
                 if (message.type == Type.GOSSIP_SEND) {
-                    //We get lots of different data here..
-                    DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
-                    for (DataObject o : dataList) {
-                        if (o.type == DataObject.TYPE_IP_PUBKEY) {
-                            PubkeyIPObject ipObject = o.getPubkeyIPObject();
-                            ipObject.verify();
-                            context.newIP(ipObject);
-                        }
+                    //The other node sent us a list of new data
+                    SendGossipDataObject sendGossipDataObject = new Gson().fromJson(message.data, SendGossipDataObject.class);
+                    for (DataObject o : sendGossipDataObject.dataObjects) {
+                        DatabaseHandler.newGossipData(node.conn, o);
+                    }
+                    for(Node n : context.connectedNodes) {
+                        n.newInventoryList(sendGossipDataObject.dataObjects);
                     }
                 }
 
