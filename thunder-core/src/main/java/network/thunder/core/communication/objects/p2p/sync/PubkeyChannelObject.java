@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  * Created by matsjerratsch on 19/10/2015.
  */
-public class PubkeyChannelObject implements P2PDataObject {
+public class PubkeyChannelObject extends P2PDataObject {
 
     public byte[] secretAHash;
     public byte[] secretBHash;
@@ -55,14 +55,8 @@ public class PubkeyChannelObject implements P2PDataObject {
         return Math.abs(byteBuffer.getLong());
     }
 
-    public byte[] getHash () {
-        byte[] hash = new byte[20];
-        byte[] t = Tools.hashSecret(this.getData());
-        System.arraycopy(t, 0, hash, 0, 20);
-        return hash;
-    }
-
-    private byte[] getData () {
+    @Override
+    public byte[] getData () {
         //TODO: Have some proper summary here..
         ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA.length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
 
@@ -146,7 +140,7 @@ public class PubkeyChannelObject implements P2PDataObject {
         PubkeyChannelObject obj = new PubkeyChannelObject();
 
         obj.secretAHash = Tools.getRandomByte(20);
-        obj.secretAHash = Tools.getRandomByte(20);
+        obj.secretBHash = Tools.getRandomByte(20);
 
         obj.pubkeyB = Tools.getRandomByte(33);
         obj.pubkeyB1 = Tools.getRandomByte(33);
@@ -162,5 +156,22 @@ public class PubkeyChannelObject implements P2PDataObject {
         obj.signatureB = Tools.getRandomByte(65);
 
         return obj;
+    }
+
+    @Override
+    public String toString () {
+        return "PubkeyChannelObject{" +
+            "secretAHash=" + Arrays.toString(secretAHash) +
+            ", secretBHash=" + Arrays.toString(secretBHash) +
+            ", pubkeyB=" + Arrays.toString(pubkeyB) +
+            ", pubkeyB1=" + Arrays.toString(pubkeyB1) +
+            ", pubkeyB2=" + Arrays.toString(pubkeyB2) +
+            ", pubkeyA=" + Arrays.toString(pubkeyA) +
+            ", pubkeyA1=" + Arrays.toString(pubkeyA1) +
+            ", pubkeyA2=" + Arrays.toString(pubkeyA2) +
+            ", txidAnchor=" + Arrays.toString(txidAnchor) +
+            ", signatureA=" + Arrays.toString(signatureA) +
+            ", signatureB=" + Arrays.toString(signatureB) +
+            '}';
     }
 }

@@ -17,7 +17,7 @@ import java.util.Random;
 /**
  * Created by matsjerratsch on 19/10/2015.
  */
-public class PubkeyIPObject implements P2PDataObject {
+public class PubkeyIPObject extends P2PDataObject {
     public String IP;
     public int port;
     public byte[] pubkey;
@@ -63,7 +63,8 @@ public class PubkeyIPObject implements P2PDataObject {
         CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
     }
 
-    private byte[] getData () {
+    @Override
+    public byte[] getData () {
         //TODO: Have some proper summary here..
         ByteBuffer byteBuffer = ByteBuffer.allocate(IP.length() + 4 + 4 + pubkey.length + signature.length);
         try {
@@ -78,12 +79,6 @@ public class PubkeyIPObject implements P2PDataObject {
         return byteBuffer.array();
     }
 
-    public byte[] getHash () {
-        byte[] hash = new byte[20];
-        byte[] t = Tools.hashSecret(this.getData());
-        System.arraycopy(t, 0, hash, 0, 20);
-        return hash;
-    }
 
     @Override
     public boolean equals (Object o) {
