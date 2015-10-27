@@ -18,7 +18,7 @@ package network.thunder.core.communication.nio.handler.mid;
 import com.google.gson.Gson;
 import io.netty.channel.*;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Node;
+import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
 import org.bitcoinj.core.ECKey;
@@ -148,7 +148,6 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 
     @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-        System.out.println("test");
         //Make sure to not send messages accidentally when auth is not finished yet.
 //		Message message = (Message) msg;
 //		if (!node.isAuthFinished() && (message.type < 1010 || message.type > 1099)) {

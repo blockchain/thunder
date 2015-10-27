@@ -22,9 +22,9 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
-import network.thunder.core.communication.objects.p2p.gossip.GetGossipDataObject;
+import network.thunder.core.communication.objects.p2p.gossip.GetDataObject;
 import network.thunder.core.communication.objects.p2p.gossip.InvObject;
-import network.thunder.core.communication.objects.p2p.gossip.SendGossipDataObject;
+import network.thunder.core.communication.objects.p2p.gossip.SendDataObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.etc.Tools;
@@ -89,13 +89,13 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void sendGetData (ChannelHandlerContext ctx, ArrayList<byte[]> inventory) {
-        GetGossipDataObject object = new GetGossipDataObject();
+        GetDataObject object = new GetDataObject();
         object.inventoryList = inventory;
         ctx.writeAndFlush(new Message(object, Type.GOSSIP_GET));
     }
 
     public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        SendGossipDataObject object = new SendGossipDataObject();
+        SendDataObject object = new SendDataObject();
         object.dataObjects = dataList;
         ctx.writeAndFlush(new Message(object, Type.GOSSIP_SEND));
     }
@@ -136,8 +136,8 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
 
                 if (message.type == Type.GOSSIP_GET) {
                     //The other node asks for specific data
-                    GetGossipDataObject getGossipDataObject = new Gson().fromJson(message.data, GetGossipDataObject.class);
-                    ArrayList<DataObject> dataList = DatabaseHandler.getDataObjectByHash(node.conn, getGossipDataObject.inventoryList);
+                    GetDataObject getDataObject = new Gson().fromJson(message.data, GetDataObject.class);
+                    ArrayList<DataObject> dataList = DatabaseHandler.getDataObjectByHash(node.conn, getDataObject.inventoryList);
                     if (dataList.size() > 0) {
                         sendData(ctx, dataList);
                     }
@@ -145,12 +145,12 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
 
                 if (message.type == Type.GOSSIP_SEND) {
                     //The other node sent us a list of new data
-                    SendGossipDataObject sendGossipDataObject = new Gson().fromJson(message.data, SendGossipDataObject.class);
-                    for (DataObject o : sendGossipDataObject.dataObjects) {
+                    SendDataObject sendDataObject = new Gson().fromJson(message.data, SendDataObject.class);
+                    for (DataObject o : sendDataObject.dataObjects) {
                         DatabaseHandler.newGossipData(node.conn, o);
                     }
                     for(Node n : context.connectedNodes) {
-                        n.newInventoryList(sendGossipDataObject.dataObjects);
+                        n.newInventoryList(sendDataObject.dataObjects);
                     }
                 }
 

@@ -23,6 +23,8 @@ import network.thunder.core.communication.Type;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.p2p.DataObject;
 import network.thunder.core.communication.objects.p2p.GetP2PDataObject;
+import network.thunder.core.communication.objects.p2p.P2PDataObject;
+import network.thunder.core.communication.objects.p2p.gossip.SendDataObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.mesh.Node;
@@ -63,6 +65,9 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
         System.out.println("CHANNEL ACTIVE SYNC");
+        if (node.getNettyContext() == null) {
+            node.setNettyContext(ctx);
+        }
 
         if (!isServer) {
             if (node.justFetchNewIpAddresses) {
@@ -106,10 +111,6 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
         ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_FRAGMENT));
     }
 
-    public void sendFailure (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.FAILURE));
-    }
-
     @Override
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
@@ -146,17 +147,24 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
 
                 if (message.type == Type.SYNC_SEND_FRAGMENT) {
                     //Other node sent us all data with a specific fragment index.
-                    DataObject[] dataList = new Gson().fromJson(message.data, DataObject[].class);
-                    System.out.println(lastIndex + " " + dataList.length);
+                    SendDataObject dataList = new Gson().fromJson(message.data, SendDataObject.class);
+                    System.out.println(lastIndex + " " + dataList.dataObjects.size());
 
-                    context.syncDatastructure.newFragment(lastIndex, dataList);
-
-                    int nextIndex = context.syncDatastructure.getNextFragmentIndexToSynchronize();
-                    if (nextIndex > 0) {
-                        sendGetSyncData(ctx, nextIndex);
-                    } else {
-                        ctx.close();
+                    ArrayList<P2PDataObject> list = new ArrayList<>();
+                    for (DataObject obj : dataList.dataObjects) {
+                        list.add(obj.getObject());
                     }
+
+                    DatabaseHandler.syncDatalist(node.conn, list);
+                    context.syncDatastructure.newFragment(lastIndex, dataList.dataObjects);
+
+                    //Add the inventory to all other nodes
+                    for (Node node : context.connectedNodes) {
+                        if (!node.equals(this.node)) {
+                            node.newInventoryList(dataList.dataObjects);
+                        }
+                    }
+                    //TODO: A bit messy with DataObject and P2PDataObject here..
                 }
 
             } else {

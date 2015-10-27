@@ -143,7 +143,6 @@ public class DatabaseHandler {
 
             //Lets see if we have the object in the db already
             stmt = conn.prepareStatement("SELECT nodes.id FROM nodes WHERE nodes.pubkey=?");
-            System.out.println(stmt);
 
             stmt.setBytes(1, pubkey);
 
@@ -159,8 +158,11 @@ public class DatabaseHandler {
                 stmt.setInt(1, 0);
                 stmt.setBytes(2, pubkey);
 
+                stmt.execute();
+
                 set = stmt.getGeneratedKeys();
-                int id = set.getInt(0);
+                set.first();
+                int id = set.getInt(1);
 
                 set.close();
                 return id;
@@ -242,7 +244,7 @@ public class DatabaseHandler {
             int nodeIdA = DatabaseHandler.getNodeId(conn, pubkeyChannelObject.pubkeyA);
             int nodeIdB = DatabaseHandler.getNodeId(conn, pubkeyChannelObject.pubkeyB);
 
-            stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
+            stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             int i = 1;
             stmt.setInt(i++, id);
             stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
@@ -258,8 +260,6 @@ public class DatabaseHandler {
             stmt.setBytes(i++, pubkeyChannelObject.txidAnchor);
             stmt.setBytes(i++, pubkeyChannelObject.signatureA);
             stmt.setBytes(i++, pubkeyChannelObject.signatureB);
-            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB2);
-            stmt.setBytes(i++, pubkeyChannelObject.pubkeyB2);
 
             printInnerStatement((C3P0ProxyStatement) stmt);
 
@@ -434,7 +434,6 @@ public class DatabaseHandler {
                 stmt.close();
                 set.close();
                 if (found) {
-                    arrayList.add(hash);
                     continue;
                 }
 
@@ -445,7 +444,6 @@ public class DatabaseHandler {
                 stmt.close();
                 set.close();
                 if (found) {
-                    arrayList.add(hash);
                     continue;
                 }
 
@@ -456,13 +454,75 @@ public class DatabaseHandler {
                 stmt.close();
                 set.close();
                 if (found) {
-                    arrayList.add(hash);
                     continue;
                 }
+
+                arrayList.add(hash);
 
             }
 
             return arrayList;
+
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static ArrayList<DataObject> getDataObjectByHash (Connection conn, ArrayList<byte[]> inv) throws SQLException {
+        ArrayList<DataObject> dataList = new ArrayList<>();
+
+        PreparedStatement stmt = null;
+        try {
+            for (byte[] hash : inv) {
+
+                //Lets see if we have the object in the db already
+                stmt = conn.prepareStatement("SELECT * FROM channels " +
+                                                 "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                                                 "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                                                 "WHERE channels.hash=?");
+
+                stmt.setBytes(1, hash);
+                ResultSet set = stmt.executeQuery();
+                if (set.first()) {
+                    PubkeyChannelObject pubkeyChannelObject = new PubkeyChannelObject(set);
+                    dataList.add(new DataObject(pubkeyChannelObject));
+                    set.close();
+                    stmt.close();
+                    continue;
+                }
+
+                stmt = conn.prepareStatement("SELECT * FROM channel_status " +
+                                                 "INNER JOIN channels ON channel_status.channel_id=channels.id " +
+                                                 "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                                                 "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                                                 "WHERE channel_status.hash=?");
+                stmt.setBytes(1, hash);
+                set = stmt.executeQuery();
+                if (set.first()) {
+                    ChannelStatusObject pubkeyChannelObject = new ChannelStatusObject(set);
+                    dataList.add(new DataObject(pubkeyChannelObject));
+                    set.close();
+                    stmt.close();
+                    continue;
+                }
+
+                stmt = conn.prepareStatement("SELECT * FROM pubkey_ips " +
+                                                 "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
+                                                 "WHERE pubkey_ips.hash=?");
+                stmt.setBytes(1, hash);
+                set = stmt.executeQuery();
+                if (set.first()) {
+                    PubkeyIPObject pubkeyChannelObject = new PubkeyIPObject(set);
+                    dataList.add(new DataObject(pubkeyChannelObject));
+                    set.close();
+                    stmt.close();
+                }
+
+            }
+
+            return dataList;
 
         } finally {
             if (stmt != null) {
@@ -718,6 +778,20 @@ public class DatabaseHandler {
                 DatabaseHandler.newIPObject(conn, (PubkeyIPObject) object);
             }
         }
+    }
+
+    public static void newGossipData (Connection conn, DataObject dataObject) throws SQLException {
+        P2PDataObject object = dataObject.getObject();
+        if (object instanceof PubkeyChannelObject) {
+            DatabaseHandler.newChannel(conn, (PubkeyChannelObject) object);
+        }
+        if (object instanceof ChannelStatusObject) {
+            DatabaseHandler.newChannelStatus(conn, (ChannelStatusObject) object);
+        }
+        if (object instanceof PubkeyIPObject) {
+            DatabaseHandler.newIPObject(conn, (PubkeyIPObject) object);
+        }
+
     }
 
     /**
