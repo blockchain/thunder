@@ -9,6 +9,8 @@ import org.bitcoinj.core.ECKey;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +51,12 @@ public class P2PContext {
         activeNodes = new ArrayList<>();
         this.port = port;
         context = this;
+
+        try {
+            nodeKey = new ECKey(SecureRandom.getInstanceStrong());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
 
         try {
             dataSource = DatabaseHandler.getDataSource();
