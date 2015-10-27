@@ -18,11 +18,11 @@ package network.thunder.core.communication.nio.handler.low;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.etc.crypto.ECDHKeySet;
+import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
 
 import java.security.SecureRandom;
@@ -86,12 +86,9 @@ public class EncryptionHandler extends ChannelDuplexHandler {
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
             if (keyReceived) {
-                System.out.println(msg);
 
                 ByteBuf buf = (ByteBuf) msg;
-
                 ByteBuf out = ctx.alloc().buffer();
-
                 byte[] data = new byte[buf.readableBytes()];
                 buf.readBytes(data);
                 buf.release();
@@ -104,7 +101,6 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 
                 counterIn++;
 
-                //TODO: Add Decryption
                 ctx.fireChannelRead(out);
             } else {
                 keyReceived = true;
@@ -152,7 +148,6 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 
             counterOut++;
 
-            System.out.println(msg);
             //TODO: Add Encryption
 //		System.out.println("test");
             ctx.writeAndFlush(out, promise);
@@ -167,9 +162,4 @@ public class EncryptionHandler extends ChannelDuplexHandler {
         ctx.close();
     }
 
-	/* I don't like this design, as it wires the EncryptionHandler and the AuthenticationHandler together for eternity, but I guess that is per
-     * product design....
-	 *
-	 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
-	 */
 }
