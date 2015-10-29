@@ -2,14 +2,11 @@ package wallettemplate;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import org.bitcoinj.core.Coin;
 import wallettemplate.utils.GuiUtils;
 
@@ -29,11 +26,11 @@ public class ReceiveMoneyController {
 
     public Main.OverlayUI overlayUI;
 
-    public void cancel(ActionEvent event) {
+    public void cancel (ActionEvent event) {
         overlayUI.done();
     }
 
-    public void send(ActionEvent actionEvent) {
+    public void send (ActionEvent actionEvent) {
 
         try {
             URL location = GuiUtils.getResource("receive_money_request.fxml");
@@ -42,8 +39,6 @@ public class ReceiveMoneyController {
 
             ReceiveMoneyRequestController controller = loader.getController();
 
-
-
             try {
                 controller.initData(Coin.parseCoin(amountEdit.getText()));
             } catch (NumberFormatException e) {
@@ -51,7 +46,6 @@ public class ReceiveMoneyController {
             }
 
             Main.instance.overlayUI(ui, controller);
-
 
         } catch (IOException e) {
             e.printStackTrace();

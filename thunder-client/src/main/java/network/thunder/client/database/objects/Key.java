@@ -18,33 +18,34 @@
 package network.thunder.client.database.objects;
 
 import network.thunder.client.etc.Tools;
-
 import org.bitcoinj.core.ECKey;
 
 public class Key {
-	
-	public String publicKey;
-	public String privateKey;
-	public int depth;
-	public int child;
-	
-	public Key() {}
-	
-	public boolean check() {
-		if(child==0)
-			return true;
-		
-		if(privateKey == null) 
-			return false;
-		
-		ECKey key = ECKey.fromPrivate(Tools.stringToByte(privateKey));
-		if(publicKey.equals(Tools.byteToString(key.getPubKey()))) 
-			return true;
-		
-		return false;
-		
-		
-		
-	}
+
+    public String publicKey;
+    public String privateKey;
+    public int depth;
+    public int child;
+
+    public Key () {
+    }
+
+    public boolean check () {
+        if (child == 0) {
+            return true;
+        }
+
+        if (privateKey == null) {
+            return false;
+        }
+
+        ECKey key = ECKey.fromPrivate(Tools.stringToByte(privateKey));
+        if (publicKey.equals(Tools.byteToString(key.getPubKey()))) {
+            return true;
+        }
+
+        return false;
+
+    }
 
 }

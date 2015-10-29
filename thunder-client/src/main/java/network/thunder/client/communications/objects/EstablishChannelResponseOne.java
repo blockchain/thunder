@@ -18,9 +18,9 @@
 package network.thunder.client.communications.objects;
 
 public class EstablishChannelResponseOne {
-	
-	public String pubKey;
-	public String changeAddress;
-	public String txUnsigned;
+
+    public String pubKey;
+    public String changeAddress;
+    public String txUnsigned;
 
 }

@@ -1,6 +1,5 @@
 package wallettemplate.controls;
 
-
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -32,30 +31,14 @@ import javax.annotation.Nullable;
 public class NotificationBarPane extends BorderPane {
     public static final Duration ANIM_IN_DURATION = GuiUtils.UI_ANIMATION_TIME.multiply(2);
     public static final Duration ANIM_OUT_DURATION = GuiUtils.UI_ANIMATION_TIME;
-
+    public final ObservableList<Item> items;
     private HBox bar;
     private Label label;
     private double barHeight;
     private ProgressBar progressBar;
+    private Timeline timeline;
 
-    public class Item {
-        public final SimpleStringProperty label;
-        @Nullable public final ObservableDoubleValue progress;
-
-        public Item(String label, @Nullable ObservableDoubleValue progress) {
-            this.label = new SimpleStringProperty(label);
-            this.progress = progress;
-        }
-
-        public void cancel() {
-//            items.remove(this);
-            items.clear();
-        }
-    }
-
-    public final ObservableList<Item> items;
-
-    public NotificationBarPane(Node content) {
+    public NotificationBarPane (Node content) {
         super(content);
         progressBar = new ProgressBar();
         label = new Label("infobar!");
@@ -66,7 +49,9 @@ public class NotificationBarPane extends BorderPane {
         setBottom(bar);
         // Figure out the height of the bar based on the CSS. Must wait until after we've been added to the parent node.
         sceneProperty().addListener(o -> {
-            if (getParent() == null) return;
+            if (getParent() == null) {
+                return;
+            }
             getParent().applyCss();
             getParent().layout();
             barHeight = bar.getHeight();
@@ -79,43 +64,7 @@ public class NotificationBarPane extends BorderPane {
         });
     }
 
-    private void config() {
-        if (items.isEmpty()) return;
-        Item item = items.get(0);
-
-        bar.getChildren().clear();
-        label.textProperty().bind(item.label);
-        label.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(label, Priority.ALWAYS);
-        bar.getChildren().add(label);
-        if (item.progress != null) {
-            progressBar.setMinWidth(200);
-            progressBar.progressProperty().bind(item.progress);
-            bar.getChildren().add(progressBar);
-        }
-    }
-
-    public void showOrHide() {
-        if (items.isEmpty())
-            animateOut();
-        else
-            animateIn();
-    }
-
-    public boolean isShowing() {
-        return bar.getPrefHeight() > 0;
-    }
-
-    private void animateIn() {
-        animate(barHeight);
-    }
-
-    private void animateOut() {
-        animate(0.0);
-    }
-
-    private Timeline timeline;
-    protected void animate(Number target) {
+    protected void animate (Number target) {
         if (timeline != null) {
             timeline.stop();
             timeline = null;
@@ -135,14 +84,70 @@ public class NotificationBarPane extends BorderPane {
         timeline.play();
     }
 
-    public Item pushItem(String string, @Nullable ObservableDoubleValue progress) {
+    private void animateIn () {
+        animate(barHeight);
+    }
+
+    private void animateOut () {
+        animate(0.0);
+    }
+
+    private void config () {
+        if (items.isEmpty()) {
+            return;
+        }
+        Item item = items.get(0);
+
+        bar.getChildren().clear();
+        label.textProperty().bind(item.label);
+        label.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(label, Priority.ALWAYS);
+        bar.getChildren().add(label);
+        if (item.progress != null) {
+            progressBar.setMinWidth(200);
+            progressBar.progressProperty().bind(item.progress);
+            bar.getChildren().add(progressBar);
+        }
+    }
+
+    public Item getItem () {
+        if (items.size() == 0) {
+            return null;
+        }
+        return items.get(items.size() - 1);
+    }
+
+    public boolean isShowing () {
+        return bar.getPrefHeight() > 0;
+    }
+
+    public Item pushItem (String string, @Nullable ObservableDoubleValue progress) {
         Item i = new Item(string, progress);
         items.add(i);
         return i;
     }
 
-    public Item getItem() {
-        if(items.size() == 0) return null;
-        return items.get(items.size()-1);
+    public void showOrHide () {
+        if (items.isEmpty()) {
+            animateOut();
+        } else {
+            animateIn();
+        }
+    }
+
+    public class Item {
+        public final SimpleStringProperty label;
+        @Nullable
+        public final ObservableDoubleValue progress;
+
+        public Item (String label, @Nullable ObservableDoubleValue progress) {
+            this.label = new SimpleStringProperty(label);
+            this.progress = progress;
+        }
+
+        public void cancel () {
+            //            items.remove(this);
+            items.clear();
+        }
     }
 }

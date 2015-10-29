@@ -2,9 +2,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -29,30 +29,34 @@ public class ThrottledRunLater implements Runnable {
     private final Runnable runnable;
     private final AtomicBoolean pending = new AtomicBoolean();
 
-    /** Created this way, the no-args runLater will execute this classes run method. */
-    public ThrottledRunLater() {
+    /**
+     * Created this way, the no-args runLater will execute this classes run method.
+     */
+    public ThrottledRunLater () {
         this.runnable = null;
     }
 
-    /** Created this way, the no-args runLater will execute the given runnable. */
-    public ThrottledRunLater(Runnable runnable) {
+    /**
+     * Created this way, the no-args runLater will execute the given runnable.
+     */
+    public ThrottledRunLater (Runnable runnable) {
         this.runnable = runnable;
     }
 
-    public void runLater(Runnable runnable) {
+    @Override
+    public void run () {
+    }
+
+    public void runLater () {
+        runLater(runnable != null ? runnable : this);
+    }
+
+    public void runLater (Runnable runnable) {
         if (!pending.getAndSet(true)) {
             Platform.runLater(() -> {
                 pending.set(false);
                 runnable.run();
             });
         }
-    }
-
-    public void runLater() {
-        runLater(runnable != null ? runnable : this);
-    }
-
-    @Override
-    public void run() {
     }
 }

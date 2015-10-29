@@ -1,20 +1,18 @@
 package wallettemplate.utils;
 
-import network.thunder.client.api.*;
-
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-import network.thunder.client.database.objects.Payment;
-import org.bitcoinj.core.*;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import network.thunder.client.api.ThunderContext;
+import network.thunder.client.database.objects.Payment;
+import org.bitcoinj.core.*;
 import wallettemplate.Main;
-import wallettemplate.MainController;
 import wallettemplate.controls.NotificationBarPane;
 
 import java.io.IOException;
@@ -27,31 +25,61 @@ import static wallettemplate.Main.bitcoin;
  * A class that exposes relevant bitcoin stuff as JavaFX bindable properties.
  */
 public class BitcoinUIModel {
+    public static SimpleDoubleProperty syncProgress = new SimpleDoubleProperty(-1);
     private SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private SimpleObjectProperty<Coin> balance = new SimpleObjectProperty<>(Coin.ZERO);
-    public static SimpleDoubleProperty syncProgress = new SimpleDoubleProperty(-1);
     private ProgressBarUpdater syncProgressUpdater = new ProgressBarUpdater();
 
     private ObservableList<Transaction> transactions = FXCollections.observableArrayList();
-
-
 
     private ObservableList<Node> transactionsThunderIncluded = FXCollections.observableArrayList();
     private ObservableList<Node> transactionsThunderSettled = FXCollections.observableArrayList();
     private ObservableList<Node> transactionsThunderRefunded = FXCollections.observableArrayList();
     private ObservableList<Node> transactionsThunderOpen = FXCollections.observableArrayList();
 
-    public BitcoinUIModel() {
+    public BitcoinUIModel () {
     }
 
-    public BitcoinUIModel(Wallet wallet) {
+    public BitcoinUIModel (Wallet wallet) {
         setWallet(wallet);
     }
 
-    public void setWallet(Wallet wallet) {
+    public ReadOnlyObjectProperty<Address> addressProperty () {
+        return address;
+    }
+
+    public ReadOnlyObjectProperty<Coin> balanceProperty () {
+        return balance;
+    }
+
+    public DownloadProgressTracker getDownloadProgressTracker () {
+        return syncProgressUpdater;
+    }
+
+    public ObservableList<Transaction> getTransactions () {
+        return transactions;
+    }
+
+    public ObservableList<Node> getTransactionsThunderIncluded () {
+        return transactionsThunderIncluded;
+    }
+
+    public ObservableList<Node> getTransactionsThunderOpen () {
+        return transactionsThunderOpen;
+    }
+
+    public ObservableList<Node> getTransactionsThunderRefunded () {
+        return transactionsThunderRefunded;
+    }
+
+    public ObservableList<Node> getTransactionsThunderSettled () {
+        return transactionsThunderSettled;
+    }
+
+    public void setWallet (Wallet wallet) {
         wallet.addEventListener(new AbstractWalletEventListener() {
             @Override
-            public void onWalletChanged(Wallet wallet) {
+            public void onWalletChanged (Wallet wallet) {
                 super.onWalletChanged(wallet);
                 update(wallet);
             }
@@ -59,14 +87,14 @@ public class BitcoinUIModel {
 
         ThunderContext.instance.addListener(new ThunderContext.ChangeListener() {
             @Override
-            public void channelListChanged() {
+            public void channelListChanged () {
                 update(wallet);
             }
         });
 
         ThunderContext.instance.setProgressUpdateListener(new ThunderContext.ProgressUpdateListener() {
             @Override
-            public void progressUpdated(int count, int max) {
+            public void progressUpdated (int count, int max) {
 
                 if (max == count) {
                     Platform.runLater(() -> {
@@ -89,11 +117,14 @@ public class BitcoinUIModel {
             }
         });
 
-
         update(wallet);
     }
 
-    private void update(Wallet wallet) {
+    public ReadOnlyDoubleProperty syncProgressProperty () {
+        return syncProgress;
+    }
+
+    private void update (Wallet wallet) {
         Platform.runLater(() -> {
             balance.set(wallet.getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE));
             address.set(wallet.currentReceiveAddress());
@@ -131,64 +162,32 @@ public class BitcoinUIModel {
 
     private class ProgressBarUpdater extends DownloadProgressTracker {
         @Override
-        protected void progress(double pct, int blocksLeft, Date date) {
+        protected void progress (double pct, int blocksLeft, Date date) {
             super.progress(pct, blocksLeft, date);
             Platform.runLater(() -> syncProgress.set(pct / 100.0));
         }
 
         @Override
-        protected void doneDownload() {
+        protected void doneDownload () {
             super.doneDownload();
 
-                Platform.runLater(() -> {
-                    try {
-                        syncProgress.set(1.0);
-                        ThunderContext.init(bitcoin.wallet(), bitcoin.peerGroup(), Main.CLIENTID, false);
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    } catch (InstantiationException e) {
-                        e.printStackTrace();
-                    } catch (IllegalAccessException e) {
-                        e.printStackTrace();
-                    }
-                });
+            Platform.runLater(() -> {
+                try {
+                    syncProgress.set(1.0);
+                    ThunderContext.init(bitcoin.wallet(), bitcoin.peerGroup(), Main.CLIENTID, false);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (InstantiationException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            });
 
         }
-    }
-
-    public DownloadProgressTracker getDownloadProgressTracker() { return syncProgressUpdater; }
-
-    public ReadOnlyDoubleProperty syncProgressProperty() { return syncProgress; }
-
-    public ReadOnlyObjectProperty<Address> addressProperty() {
-        return address;
-    }
-
-    public ReadOnlyObjectProperty<Coin> balanceProperty() {
-        return balance;
-    }
-
-    public ObservableList<Transaction> getTransactions() {
-        return transactions;
-    }
-
-    public ObservableList<Node> getTransactionsThunderIncluded() {
-        return transactionsThunderIncluded;
-    }
-
-    public ObservableList<Node> getTransactionsThunderSettled() {
-        return transactionsThunderSettled;
-    }
-
-    public ObservableList<Node> getTransactionsThunderRefunded() {
-        return transactionsThunderRefunded;
-    }
-
-    public ObservableList<Node> getTransactionsThunderOpen() {
-        return transactionsThunderOpen;
     }
 }

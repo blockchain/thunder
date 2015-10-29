@@ -19,34 +19,24 @@ package network.thunder.client.communications.sendpayment;
 
 import network.thunder.client.communications.objects.SendPaymentRequestFour;
 import network.thunder.client.communications.objects.SendPaymentResponseFour;
-/**			
+
+/**
  * Fourth Request for making a payment.
  * This just means that we are okay with the data we got sent.
  * Making this request marks the payment as final on both sides.
- * 
- * 							 
- * @author PC
  *
+ * @author PC
  */
 public class SendPaymentHandlerFour {
 
-	
-	public SendPaymentRequestFour request() throws Exception {
+    public void evaluateResponse (SendPaymentResponseFour m) throws Exception {
 
-		SendPaymentRequestFour m = new SendPaymentRequestFour();
-		return m;
-	}
-	
-	public void evaluateResponse(SendPaymentResponseFour m) throws Exception {
-		
+    }
 
-		
-		
-		
-		
+    public SendPaymentRequestFour request () throws Exception {
 
-	}
-	
-	
+        SendPaymentRequestFour m = new SendPaymentRequestFour();
+        return m;
+    }
 
 }

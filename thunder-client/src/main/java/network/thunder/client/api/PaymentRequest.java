@@ -17,44 +17,37 @@
  */
 package network.thunder.client.api;
 
-import java.security.NoSuchAlgorithmException;
-
 import network.thunder.client.database.objects.Channel;
 import network.thunder.client.database.objects.Payment;
 import network.thunder.client.etc.Tools;
 
+import java.security.NoSuchAlgorithmException;
+
 public class PaymentRequest {
-	private static final String PREFIX = "4";
-	private static final String DELIMITER = "-";
-	
-	
-	byte[] id = new byte[8];
+    private static final String PREFIX = "4";
+    private static final String DELIMITER = "-";
+
+    byte[] id = new byte[8];
     byte[] secretHash = new byte[20];
     byte[] hash = new byte[4];
-	byte typeOfId = 0x00;
-	
-	String domain = "@thunder.network";
-	
-	Payment payment;
-	
+    byte typeOfId = 0x00;
 
+    String domain = "@thunder.network";
 
+    Payment payment;
 
-
-	public PaymentRequest(Channel channel, Payment p) {
-		payment = p;
+    public PaymentRequest (Channel channel, Payment p) {
+        payment = p;
 
         id = Tools.stringToByte(p.getReceiver());
         secretHash = Tools.stringToByte(p.getSecretHash());
 
+        //		secretHash58 = Tools.byteToString58(Tools.stringToByte(payment.getSecretHash()));
+        //		secretHash58 = payment.getSecretHash();
 
+    }
 
-//		secretHash58 = Tools.byteToString58(Tools.stringToByte(payment.getSecretHash()));
-//		secretHash58 = payment.getSecretHash();
-
-	}
-	
-	public PaymentRequest(Channel channel, long amount, String request) {
+    public PaymentRequest (Channel channel, long amount, String request) {
 
         byte[] totalWithHash = Tools.stringToByte58(request.split("@")[0]);
 
@@ -64,29 +57,32 @@ public class PaymentRequest {
         String secretHashB64 = Tools.byteToString(secretHash);
         String idB64 = Tools.byteToString(id);
 
-//		System.out.println("SecretHash: "+secretHashB64);
+        //		System.out.println("SecretHash: "+secretHashB64);
 
-		payment = new Payment(channel.getId(), idB64, amount, secretHashB64);
-		
-		
-	}
+        payment = new Payment(channel.getId(), idB64, amount, secretHashB64);
+
+    }
+
+    public static boolean checkAddress (String address) {
+
+        return true;
+
+    }
 
     /**
      * Returns the address for this payment request.
-     *
+     * <p>
      * Current Format of the address:
-     *
+     * <p>
      * 1 byte to declare which kind of identifier we use (see (1) above)
      * 8 byte to clearly specify a receiver
      * 20 byte, the hashed preimage needed for the payment
      * 4 byte to serve as a checksum against typing errors
-     *
+     * <p>
      * Base58 encoded for practical reasons.
      * Domain of the PaymentHub of the receiver at the end.
-     * @return
-     * @throws NoSuchAlgorithmException
      */
-	public String getAddress() throws NoSuchAlgorithmException {
+    public String getAddress () throws NoSuchAlgorithmException {
 
         byte[] totalWithoutHash = new byte[29];
         totalWithoutHash[0] = typeOfId;
@@ -95,7 +91,7 @@ public class PaymentRequest {
 
         String secretHashB64 = Tools.byteToString(secretHash);
 
-//        System.out.println("SecretHash: " + secretHashB64);
+        //        System.out.println("SecretHash: " + secretHashB64);
 
         byte[] totalWithHash = new byte[33];
 
@@ -105,43 +101,32 @@ public class PaymentRequest {
 
         String address = Tools.byteToString58(totalWithHash);
 
+        //		String a = PREFIX+typeOfId+id+secretHash58+domain;
+        //
+        //		String b = PREFIX+DELIMITER+typeOfId+DELIMITER+id+DELIMITER+secretHash58+DELIMITER+domain;
+        //
+        //		String hash = Tools.getFourCharacterHash(b);
+        //		System.out.println(a);
+        //		System.out.println(b);
+        //		System.out.println(hash);
 
-//		String a = PREFIX+typeOfId+id+secretHash58+domain;
-//
-//		String b = PREFIX+DELIMITER+typeOfId+DELIMITER+id+DELIMITER+secretHash58+DELIMITER+domain;
-//
-//		String hash = Tools.getFourCharacterHash(b);
-//		System.out.println(a);
-//		System.out.println(b);
-//		System.out.println(hash);
-		
-		return address+domain;
-	}
-
-    public String getPaymentURI() throws NoSuchAlgorithmException {
-        return "thunder:address="+getAddress()+"&amount="+payment.getAmount();
+        return address + domain;
     }
 
-
-    public byte[] getId() {
+    public byte[] getId () {
         return id;
     }
 
-    public byte[] getSecretHash() {
+    public Payment getPayment () {
+        return payment;
+    }
+
+    public String getPaymentURI () throws NoSuchAlgorithmException {
+        return "thunder:address=" + getAddress() + "&amount=" + payment.getAmount();
+    }
+
+    public byte[] getSecretHash () {
         return secretHash;
     }
 
-    public Payment getPayment() {
-		return payment;
-	}
-	
-	
-
-	public static boolean checkAddress(String address) {
-		
-		return true;
-		
-	}
-	
-	
 }

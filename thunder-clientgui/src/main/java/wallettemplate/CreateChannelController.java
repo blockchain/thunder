@@ -1,12 +1,12 @@
 package wallettemplate;
 
-import network.thunder.*;
-import network.thunder.client.api.ThunderContext;import javafx.event.ActionEvent;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import network.thunder.client.api.ThunderContext;
 import org.bitcoinj.core.Coin;
 import wallettemplate.utils.BitcoinUIModel;
 
@@ -57,12 +57,12 @@ public class CreateChannelController {
     private Button sendBtn;
 
     @FXML
-    void cancel(ActionEvent event) {
+    void cancel (ActionEvent event) {
         overlayUI.done();
     }
 
     @FXML
-    void send(ActionEvent event) {
+    void send (ActionEvent event) {
         Main.instance.notificationBar.pushItem("Open Channel..", BitcoinUIModel.syncProgress);
 
         overlayUI.done();
@@ -72,13 +72,12 @@ public class CreateChannelController {
                 Coin c2 = Coin.parseCoin(amountEdit1.getText());
                 int days = Integer.parseInt(amountEdit2.getText());
                 ThunderContext.instance.openChannel(c1.getValue(), c2.getValue(), days);
-            } catch(NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 ThunderContext.instance.openChannel(10000, 10000, 100);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
 
     }
 

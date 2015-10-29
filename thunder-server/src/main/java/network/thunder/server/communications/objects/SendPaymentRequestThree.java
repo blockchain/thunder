@@ -17,19 +17,20 @@
  */
 package network.thunder.server.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.server.database.objects.Key;
 
+import java.util.ArrayList;
+
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class SendPaymentRequestThree.
  */
 public class SendPaymentRequestThree {
-	
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
 }

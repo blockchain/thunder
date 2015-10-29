@@ -1,7 +1,5 @@
 package wallettemplate.controls;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.uri.BitcoinURI;
 import de.jensd.fx.fontawesome.AwesomeDude;
 import de.jensd.fx.fontawesome.AwesomeIcon;
 import javafx.beans.binding.StringExpression;
@@ -24,6 +22,8 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.uri.BitcoinURI;
 import wallettemplate.Main;
 import wallettemplate.utils.GuiUtils;
 
@@ -40,15 +40,18 @@ import static javafx.beans.binding.Bindings.convert;
  * that shows a QRcode.
  */
 public class ClickableBitcoinAddress extends AnchorPane {
-    @FXML protected Label addressLabel;
-    @FXML protected ContextMenu addressMenu;
-    @FXML protected Label copyWidget;
-    @FXML protected Label qrCode;
-
-    protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     private final StringExpression addressStr;
+    @FXML
+    protected Label addressLabel;
+    @FXML
+    protected ContextMenu addressMenu;
+    @FXML
+    protected Label copyWidget;
+    @FXML
+    protected Label qrCode;
+    protected SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
 
-    public ClickableBitcoinAddress() {
+    public ClickableBitcoinAddress () {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("bitcoin_address.fxml"));
             loader.setRoot(this);
@@ -70,24 +73,12 @@ public class ClickableBitcoinAddress extends AnchorPane {
         }
     }
 
-    public String uri() {
-        return BitcoinURI.convertToBitcoinURI(address.get(), null, Main.APP_NAME, null);
-    }
-
-    public Address getAddress() {
-        return address.get();
-    }
-
-    public void setAddress(Address address) {
-        this.address.set(address);
-    }
-
-    public ObjectProperty<Address> addressProperty() {
+    public ObjectProperty<Address> addressProperty () {
         return address;
     }
 
     @FXML
-    protected void copyAddress(ActionEvent event) {
+    protected void copyAddress (ActionEvent event) {
         // User clicked icon or menu item.
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
@@ -97,7 +88,20 @@ public class ClickableBitcoinAddress extends AnchorPane {
     }
 
     @FXML
-    protected void requestMoney(MouseEvent event) {
+    protected void copyWidgetClicked (MouseEvent event) {
+        copyAddress(null);
+    }
+
+    public Address getAddress () {
+        return address.get();
+    }
+
+    public void setAddress (Address address) {
+        this.address.set(address);
+    }
+
+    @FXML
+    protected void requestMoney (MouseEvent event) {
         if (event.getButton() == MouseButton.SECONDARY || (event.getButton() == MouseButton.PRIMARY && event.isMetaDown())) {
             // User right clicked or the Mac equivalent. Show the context menu.
             addressMenu.show(addressLabel, event.getScreenX(), event.getScreenY());
@@ -112,20 +116,10 @@ public class ClickableBitcoinAddress extends AnchorPane {
     }
 
     @FXML
-    protected void copyWidgetClicked(MouseEvent event) {
-        copyAddress(null);
-    }
-
-    @FXML
-    protected void showQRCode(MouseEvent event) {
+    protected void showQRCode (MouseEvent event) {
         // Serialize to PNG and back into an image. Pretty lame but it's the shortest code to write and I'm feeling
         // lazy tonight.
-        final byte[] imageBytes = QRCode
-                .from(uri())
-                .withSize(320, 240)
-                .to(ImageType.PNG)
-                .stream()
-                .toByteArray();
+        final byte[] imageBytes = QRCode.from(uri()).withSize(320, 240).to(ImageType.PNG).stream().toByteArray();
         Image qrImage = new Image(new ByteArrayInputStream(imageBytes));
         ImageView view = new ImageView(qrImage);
         view.setEffect(new DropShadow());
@@ -136,5 +130,9 @@ public class ClickableBitcoinAddress extends AnchorPane {
         pane.setMaxSize(qrImage.getWidth(), qrImage.getHeight());
         final Main.OverlayUI<ClickableBitcoinAddress> overlay = Main.instance.overlayUI(pane, this);
         view.setOnMouseClicked(event1 -> overlay.done());
+    }
+
+    public String uri () {
+        return BitcoinURI.convertToBitcoinURI(address.get(), null, Main.APP_NAME, null);
     }
 }

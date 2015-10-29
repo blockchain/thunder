@@ -18,61 +18,63 @@
 package network.thunder.server.database.objects;
 
 import network.thunder.server.etc.Tools;
-
 import org.bitcoinj.core.ECKey;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class Key.
  */
 public class Key {
-	
-	/**
-	 * The public key.
-	 */
-	public String publicKey;
-	
-	/**
-	 * The private key.
-	 */
-	public String privateKey;
-	
-	/**
-	 * The depth.
-	 */
-	public int depth;
-	
-	/**
-	 * The child.
-	 */
-	public int child;
-	
-	/**
-	 * Instantiates a new key.
-	 */
-	public Key() {}
-	
-	/**
-	 * Check.
-	 *
-	 * @return true, if successful
-	 */
-	public boolean check() {
-		if(child==0)
-			return true;
-		
-		if(privateKey == null) 
-			return false;
-			
-		ECKey key = ECKey.fromPrivate(Tools.stringToByte(privateKey));
 
-		if(publicKey.equals(Tools.byteToString(key.getPubKey()))) 
-			return true;
-		
-		return false;
-		
-		
-		
-	}
+    /**
+     * The public key.
+     */
+    public String publicKey;
+
+    /**
+     * The private key.
+     */
+    public String privateKey;
+
+    /**
+     * The depth.
+     */
+    public int depth;
+
+    /**
+     * The child.
+     */
+    public int child;
+
+    /**
+     * Instantiates a new key.
+     */
+    public Key () {
+    }
+
+    /**
+     * Check.
+     *
+     * @return true, if successful
+     */
+    public boolean check () {
+        if (child == 0) {
+            return true;
+        }
+
+        if (privateKey == null) {
+            return false;
+        }
+
+        ECKey key = ECKey.fromPrivate(Tools.stringToByte(privateKey));
+
+        if (publicKey.equals(Tools.byteToString(key.getPubKey()))) {
+            return true;
+        }
+
+        return false;
+
+    }
 
 }

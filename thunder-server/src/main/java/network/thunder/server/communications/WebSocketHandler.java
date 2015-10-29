@@ -2,16 +2,9 @@ package network.thunder.server.communications;
 
 import network.thunder.server.communications.objects.WebSocketNewSecret;
 import network.thunder.server.communications.objects.WebSocketUpdatePayment;
-import network.thunder.server.database.MySQLConnection;
-import network.thunder.server.database.objects.Channel;
 import network.thunder.server.database.objects.Payment;
-import network.thunder.server.etc.Tools;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.util.HashMap;
@@ -23,28 +16,26 @@ public class WebSocketHandler {
     public static HashMap<Integer, Session> websocketList = new HashMap<>();
     public static DataSource dataSource;
 
-
-    public static void init(DataSource ds) {
-        dataSource = ds;
-    }
-
-    public static Class<?> getEventSocket() {
+    public static Class<?> getEventSocket () {
         return EventSocket.class;
     }
 
-    public static void sendPayment(int channelIdReceiver, Payment payment) {
-        WebSocketUpdatePayment request = new WebSocketUpdatePayment();
-        request.amount = payment.getAmount();
-        request.hash = payment.getSecretHash();
+    public static void init (DataSource ds) {
+        dataSource = ds;
+    }
+
+    public static void newSecret (int channelIdReceiver) {
+        WebSocketNewSecret request = new WebSocketNewSecret();
 
         Session session = websocketList.get(channelIdReceiver);
         /**
          * Check if there is a client listening for updates on this channel..
          */
-        if(session == null)
+        if (session == null) {
             return;
+        }
         Message message = new Message();
-        message.type = Type.WEBSOCKET_NEW_PAYMENT;
+        message.type = Type.WEBSOCKET_NEW_SECRET;
         message.success = true;
 
         try {
@@ -55,18 +46,20 @@ public class WebSocketHandler {
 
     }
 
-    public static void newSecret(int channelIdReceiver) {
-        WebSocketNewSecret request = new WebSocketNewSecret();
-
+    public static void sendPayment (int channelIdReceiver, Payment payment) {
+        WebSocketUpdatePayment request = new WebSocketUpdatePayment();
+        request.amount = payment.getAmount();
+        request.hash = payment.getSecretHash();
 
         Session session = websocketList.get(channelIdReceiver);
         /**
          * Check if there is a client listening for updates on this channel..
          */
-        if(session == null)
+        if (session == null) {
             return;
+        }
         Message message = new Message();
-        message.type = Type.WEBSOCKET_NEW_SECRET;
+        message.type = Type.WEBSOCKET_NEW_PAYMENT;
         message.success = true;
 
         try {

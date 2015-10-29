@@ -18,14 +18,15 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class EstablishChannelRequestTwo.
  */
 public class EstablishChannelRequestTwo {
-	
-	/**
-	 * The transaction.
-	 */
-	public String transaction;
+
+    /**
+     * The transaction.
+     */
+    public String transaction;
 
 }

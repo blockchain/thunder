@@ -18,7 +18,7 @@
 package network.thunder.client.communications.objects;
 
 public class UpdateChannelResponseOne {
-	public int amountCurrentPayments;
-	public int amountNewPayments;
-	public int amountRemovedPayments;
+    public int amountCurrentPayments;
+    public int amountNewPayments;
+    public int amountRemovedPayments;
 }

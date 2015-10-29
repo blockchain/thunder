@@ -18,23 +18,24 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class UpdateChannelResponseOne.
  */
 public class UpdateChannelResponseOne {
-	
-	/**
-	 * The amount current payments.
-	 */
-	public int amountCurrentPayments;
-	
-	/**
-	 * The amount new payments.
-	 */
-	public int amountNewPayments;
-	
-	/**
-	 * The amount removed payments.
-	 */
-	public int amountRemovedPayments;
+
+    /**
+     * The amount current payments.
+     */
+    public int amountCurrentPayments;
+
+    /**
+     * The amount new payments.
+     */
+    public int amountNewPayments;
+
+    /**
+     * The amount removed payments.
+     */
+    public int amountRemovedPayments;
 }

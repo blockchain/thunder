@@ -18,13 +18,14 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class UpdateChannelRequestThree.
  */
 public class UpdateChannelRequestThree {
-	
-	/**
-	 * The channel transaction.
-	 */
-	public String channelTransaction;
+
+    /**
+     * The channel transaction.
+     */
+    public String channelTransaction;
 }

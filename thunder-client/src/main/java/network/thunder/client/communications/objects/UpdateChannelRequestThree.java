@@ -18,5 +18,5 @@
 package network.thunder.client.communications.objects;
 
 public class UpdateChannelRequestThree {
-	public String channelTransaction;
+    public String channelTransaction;
 }

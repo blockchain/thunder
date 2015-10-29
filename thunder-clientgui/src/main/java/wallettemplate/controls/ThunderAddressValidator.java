@@ -1,8 +1,8 @@
 package wallettemplate.controls;
 
-import network.thunder.client.api.*;
 import javafx.scene.Node;
 import javafx.scene.control.TextField;
+import network.thunder.client.api.PaymentRequest;
 import org.bitcoinj.core.NetworkParameters;
 import wallettemplate.utils.TextFieldValidator;
 
@@ -14,7 +14,7 @@ public class ThunderAddressValidator {
     private NetworkParameters params;
     private Node[] nodes;
 
-    public ThunderAddressValidator(NetworkParameters params, TextField field, Node... nodes) {
+    public ThunderAddressValidator (NetworkParameters params, TextField field, Node... nodes) {
         this.params = params;
         this.nodes = nodes;
 
@@ -28,18 +28,20 @@ public class ThunderAddressValidator {
         toggleButtons(field.getText());
     }
 
-    private void toggleButtons(String current) {
-        boolean valid = testAddr(current);
-        for (Node n : nodes) n.setDisable(!valid);
+    private boolean testAddr (String text) {
+        //        try {
+        //TODO: write a test-method to check the address of a syntax, probably some lengthy regex..
+        PaymentRequest.checkAddress(text);
+        return true;
+        //        } catch (AddressFormatException e) {
+        //            return false;
+        //        }
     }
 
-    private boolean testAddr(String text) {
-//        try {
-        //TODO: write a test-method to check the address of a syntax, probably some lengthy regex..
-            PaymentRequest.checkAddress(text);
-            return true;
-//        } catch (AddressFormatException e) {
-//            return false;
-//        }
+    private void toggleButtons (String current) {
+        boolean valid = testAddr(current);
+        for (Node n : nodes) {
+            n.setDisable(!valid);
+        }
     }
 }

@@ -18,42 +18,41 @@
 package network.thunder.server.etc;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class SideConstants.
  */
 public class SideConstants {
-	
-	/**
-	 * The Constant DATABASE_CONNECTION2.
-	 */
-	public static final String DATABASE_CONNECTION2 = null;
-	
-	/**
-	 * The Constant DATABASE_CONNECTION_WITHOUT_DB.
-	 */
-	public static final String DATABASE_CONNECTION_WITHOUT_DB = null;
-	
-	/**
-	 * The database connection.
-	 */
-	public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true&autoReconnect=true&allowMultiQueries=true";
-	
-	
-	/**
-	 * The runs on server.
-	 */
-	public static boolean RUNS_ON_SERVER = true;
-	
-	/**
-	 * The wallet file.
-	 */
-	public static String WALLET_FILE = "wallet";
-	
-	/**
-	 * The KE y_ b58.
-	 */
-	public static String KEY_B58 = "tprv8dBsuaYzXZKmPEHjg5xvbD81ghiKMjZqF3UGANYXGofwhD4B375XGiEN8Bqhfv6WADnYKje3GwciwbcZ1GYLHrcDRLmtPTXNNMZnqcZFGqF";
-	
-	
-	
+
+    /**
+     * The Constant DATABASE_CONNECTION2.
+     */
+    public static final String DATABASE_CONNECTION2 = null;
+
+    /**
+     * The Constant DATABASE_CONNECTION_WITHOUT_DB.
+     */
+    public static final String DATABASE_CONNECTION_WITHOUT_DB = null;
+
+    /**
+     * The database connection.
+     */
+    public static String DATABASE_CONNECTION = "jdbc:mysql://localhost/bitnet?user=root&password=0000&rewriteBatchedStatements=true&autoReconnect=true" + "&allowMultiQueries=true";
+
+    /**
+     * The runs on server.
+     */
+    public static boolean RUNS_ON_SERVER = true;
+
+    /**
+     * The wallet file.
+     */
+    public static String WALLET_FILE = "wallet";
+
+    /**
+     * The KE y_ b58.
+     */
+    public static String KEY_B58 = "tprv8dBsuaYzXZKmPEHjg5xvbD81ghiKMjZqF3UGANYXGofwhD4B375XGiEN8Bqhfv6WADnYKje3GwciwbcZ1GYLHrcDRLmtPTXNNMZnqcZFGqF";
+
+    public static boolean DEBUG = false;
 }

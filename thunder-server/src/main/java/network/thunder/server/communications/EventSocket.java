@@ -2,29 +2,37 @@ package network.thunder.server.communications;
 
 import com.google.gson.Gson;
 import network.thunder.server.database.MySQLConnection;
-import network.thunder.server.etc.Tools;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
 import java.sql.Connection;
 
-
-public class EventSocket extends WebSocketAdapter
-{
+public class EventSocket extends WebSocketAdapter {
     private Session session;
     private int channelId;
 
     @Override
-    public void onWebSocketConnect(Session sess)
-    {
+    public void onWebSocketClose (int statusCode, String reason) {
+        super.onWebSocketClose(statusCode, reason);
+        WebSocketHandler.websocketList.remove(channelId);
+        System.out.println("Socket Closed: [" + statusCode + "] " + reason);
+    }
+
+    @Override
+    public void onWebSocketConnect (Session sess) {
         super.onWebSocketConnect(sess);
         session = sess;
         System.out.println("Socket Connected: " + sess);
     }
 
     @Override
-    public void onWebSocketText(String data)
-    {
+    public void onWebSocketError (Throwable cause) {
+        super.onWebSocketError(cause);
+        cause.printStackTrace(System.err);
+    }
+
+    @Override
+    public void onWebSocketText (String data) {
         /**
          * TODO: Do some more checking on the messag we actually received.
          */
@@ -43,20 +51,5 @@ public class EventSocket extends WebSocketAdapter
         }
 
         System.out.println("Received TEXT message: " + data);
-    }
-
-    @Override
-    public void onWebSocketClose(int statusCode, String reason)
-    {
-        super.onWebSocketClose(statusCode,reason);
-        WebSocketHandler.websocketList.remove(channelId);
-        System.out.println("Socket Closed: [" + statusCode + "] " + reason);
-    }
-
-    @Override
-    public void onWebSocketError(Throwable cause)
-    {
-        super.onWebSocketError(cause);
-        cause.printStackTrace(System.err);
     }
 }

@@ -17,15 +17,14 @@
  */
 package network.thunder.client.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.client.database.objects.Key;
 
-public class EstablishChannelResponseThree {
-	
-	public String refundTransactionSignature;
-	
-	public ArrayList<Key> keyList;
+import java.util.ArrayList;
 
+public class EstablishChannelResponseThree {
+
+    public String refundTransactionSignature;
+
+    public ArrayList<Key> keyList;
 
 }

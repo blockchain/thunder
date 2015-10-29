@@ -1,10 +1,10 @@
 package wallettemplate.controls;
 
+import javafx.scene.Node;
+import javafx.scene.control.TextField;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.AddressFormatException;
 import org.bitcoinj.core.NetworkParameters;
-import javafx.scene.Node;
-import javafx.scene.control.TextField;
 import wallettemplate.utils.TextFieldValidator;
 
 /**
@@ -15,7 +15,7 @@ public class BitcoinAddressValidator {
     private NetworkParameters params;
     private Node[] nodes;
 
-    public BitcoinAddressValidator(NetworkParameters params, TextField field, Node... nodes) {
+    public BitcoinAddressValidator (NetworkParameters params, TextField field, Node... nodes) {
         this.params = params;
         this.nodes = nodes;
 
@@ -29,17 +29,19 @@ public class BitcoinAddressValidator {
         toggleButtons(field.getText());
     }
 
-    private void toggleButtons(String current) {
-        boolean valid = testAddr(current);
-        for (Node n : nodes) n.setDisable(!valid);
-    }
-
-    private boolean testAddr(String text) {
+    private boolean testAddr (String text) {
         try {
             new Address(params, text);
             return true;
         } catch (AddressFormatException e) {
             return false;
+        }
+    }
+
+    private void toggleButtons (String current) {
+        boolean valid = testAddr(current);
+        for (Node n : nodes) {
+            n.setDisable(!valid);
         }
     }
 }

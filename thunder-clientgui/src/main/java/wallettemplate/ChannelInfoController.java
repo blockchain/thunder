@@ -1,12 +1,12 @@
 package wallettemplate;
 
-import network.thunder.client.api.ThunderContext;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
+import network.thunder.client.api.ThunderContext;
 import network.thunder.client.database.objects.Channel;
 import network.thunder.client.etc.Tools;
 import org.bitcoinj.core.Coin;
@@ -16,49 +16,48 @@ import java.util.Date;
 
 public class ChannelInfoController {
 
+    public Main.OverlayUI overlayUI;
     @FXML
     private HBox topHBox;
-
     @FXML
     private Label titleLabel;
-
     @FXML
     private Label labelOpen;
-
     @FXML
     private Label labelClose;
-
     @FXML
     private Label balanceClient;
-
     @FXML
     private Label balanceClientAcc;
-
     @FXML
     private Label balanceServer;
-
     @FXML
     private TextField txOpen;
-
     @FXML
     private TextField txRefund;
-
     @FXML
     private TextField txChannel;
-
     @FXML
     private TextField txRevoke;
-
     @FXML
     private Button cancelBtn;
-
     @FXML
     private Button cancelBtn1;
 
-    public Main.OverlayUI overlayUI;
+    @FXML
+    void cancel (ActionEvent event) {
+        overlayUI.done();
+    }
 
-    @FXML // This method is called by the FXMLLoader when initialization is complete
-    void initialize() throws SQLException {
+    @FXML
+    void closeChannel (ActionEvent event) throws Exception {
+        overlayUI.done();
+        ThunderContext.instance.closeChannel();
+    }
+
+    @FXML
+        // This method is called by the FXMLLoader when initialization is complete
+    void initialize () throws SQLException {
         assert topHBox != null : "fx:id=\"topHBox\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert titleLabel != null : "fx:id=\"titleLabel\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert labelOpen != null : "fx:id=\"labelOpen\" was not injected: check your FXML file 'channel_info.fxml'.";
@@ -79,28 +78,17 @@ public class ChannelInfoController {
         balanceServer.setText(Coin.valueOf(channel.getAmountServer()).toFriendlyString());
         balanceClientAcc.setText(ThunderContext.instance.getAmountClientAccessible().toFriendlyString());
 
-        labelClose.setText(new Date(((long)channel.getTimestampClose())*1000).toString());
-        labelOpen.setText(new Date(((long)channel.getTimestampOpen())*1000).toString());
+        labelClose.setText(new Date(((long) channel.getTimestampClose()) * 1000).toString());
+        labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
 
         txOpen.setText(Tools.bytesToHex(channel.getOpeningTx().bitcoinSerialize()));
         txRefund.setText(Tools.bytesToHex(channel.getRefundTxClient().bitcoinSerialize()));
 
-        if(channel.getChannelTxClientID() != 0) {
+        if (channel.getChannelTxClientID() != 0) {
             txChannel.setText(Tools.bytesToHex(channel.getChannelTxClient().bitcoinSerialize()));
             txRevoke.setText(Tools.bytesToHex(channel.getChannelTxRevokeClient().bitcoinSerialize()));
         }
 
-    }
-
-    @FXML
-    void cancel(ActionEvent event) {
-        overlayUI.done();
-    }
-
-    @FXML
-    void closeChannel(ActionEvent event) throws Exception {
-        overlayUI.done();
-        ThunderContext.instance.closeChannel();
     }
 
 }

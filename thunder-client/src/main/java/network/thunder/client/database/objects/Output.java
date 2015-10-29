@@ -17,115 +17,115 @@
  */
 package network.thunder.client.database.objects;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import network.thunder.client.etc.Constants;
 import network.thunder.client.etc.Tools;
-
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.TransactionOutput;
 import org.bitcoinj.core.Wallet;
 import org.spongycastle.util.encoders.Base64;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class Output {
-	String hash;
-	int vout;
-	long value;
-	String privateKey;
-	int lock;
-	int channelId;
-	TransactionOutput transactionOutput;
-	
-	public Output() {}
-	public Output(ResultSet results) throws SQLException {
-		setHash(results.getString("transaction_hash"));
-		setVout(results.getInt("vout"));
-		setValue(results.getLong("value"));
-		setPrivateKey(results.getString("private_key"));
-		setLock(results.getInt("timestamp_locked"));
-		setTransactionOutput(new TransactionOutput(Constants.getNetwork(), null, Tools.stringToByte(results.getString("transaction_output")), 0));
-	}
-	
-	public Output(TransactionOutput o, Wallet wallet) {
-    	setVout(o.getIndex());
-    	setHash(o.getParentTransaction().getHash().toString());
-    	setValue(o.getValue().value);
-    	setPrivateKey(new String(Base64.encode(wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160()).getPrivKeyBytes())));
-    	setTransactionOutput(o);
-	}
-	
-	public TransactionOutput getTransactionOutput() {
-		return transactionOutput;
-	}
+    String hash;
+    int vout;
+    long value;
+    String privateKey;
+    int lock;
+    int channelId;
+    TransactionOutput transactionOutput;
+    ECKey key;
 
-	public void setTransactionOutput(TransactionOutput transactionOutput) {
-		this.transactionOutput = transactionOutput;
-	}
+    public Output () {
+    }
 
-	public int getChannelPubKey() {
-		return channelId;
-	}
+    public Output (ResultSet results) throws SQLException {
+        setHash(results.getString("transaction_hash"));
+        setVout(results.getInt("vout"));
+        setValue(results.getLong("value"));
+        setPrivateKey(results.getString("private_key"));
+        setLock(results.getInt("timestamp_locked"));
+        setTransactionOutput(new TransactionOutput(Constants.getNetwork(), null, Tools.stringToByte(results.getString("transaction_output")), 0));
+    }
 
-	public void setChannelPubKey(int channelId) {
-		this.channelId = channelId;
-	}
+    public Output (TransactionOutput o, Wallet wallet) {
+        setVout(o.getIndex());
+        setHash(o.getParentTransaction().getHash().toString());
+        setValue(o.getValue().value);
+        setPrivateKey(new String(Base64.encode(wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160()).getPrivKeyBytes())));
+        setTransactionOutput(o);
+    }
 
-	ECKey key;
-	
-	public ECKey getECKey() {
-		if(key == null) {
-			key = ECKey.fromPrivate(Base64.decode(privateKey));
-		}
-		return key;
-	}
+    public int getChannelId () {
+        return channelId;
+    }
 
-	public String getHash() {
-		return hash;
-	}
+    public void setChannelId (int channelId) {
+        this.channelId = channelId;
+    }
 
-	public void setHash(String hash) {
-		this.hash = hash;
-	}
+    public int getChannelPubKey () {
+        return channelId;
+    }
 
-	public int getVout() {
-		return vout;
-	}
+    public void setChannelPubKey (int channelId) {
+        this.channelId = channelId;
+    }
 
-	public void setVout(int vout) {
-		this.vout = vout;
-	}
+    public ECKey getECKey () {
+        if (key == null) {
+            key = ECKey.fromPrivate(Base64.decode(privateKey));
+        }
+        return key;
+    }
 
-	public long getValue() {
-		return value;
-	}
+    public String getHash () {
+        return hash;
+    }
 
-	public void setValue(long value) {
-		this.value = value;
-	}
+    public void setHash (String hash) {
+        this.hash = hash;
+    }
 
-	public String getPrivateKey() {
-		return privateKey;
-	}
+    public int getLock () {
+        return lock;
+    }
 
-	public void setPrivateKey(String privateKey) {
-		this.privateKey = privateKey;
-	}
+    public void setLock (int lock) {
+        this.lock = lock;
+    }
 
-	public int getLock() {
-		return lock;
-	}
+    public String getPrivateKey () {
+        return privateKey;
+    }
 
-	public void setLock(int lock) {
-		this.lock = lock;
-	}
-	public int getChannelId() {
-		return channelId;
-	}
-	public void setChannelId(int channelId) {
-		this.channelId = channelId;
-	}
-	
+    public void setPrivateKey (String privateKey) {
+        this.privateKey = privateKey;
+    }
+
+    public TransactionOutput getTransactionOutput () {
+        return transactionOutput;
+    }
+
+    public void setTransactionOutput (TransactionOutput transactionOutput) {
+        this.transactionOutput = transactionOutput;
+    }
+
+    public long getValue () {
+        return value;
+    }
+
+    public void setValue (long value) {
+        this.value = value;
+    }
+
+    public int getVout () {
+        return vout;
+    }
+
+    public void setVout (int vout) {
+        this.vout = vout;
+    }
 
 }

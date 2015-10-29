@@ -17,24 +17,25 @@
  */
 package network.thunder.server.communications.objects;
 
-import java.util.ArrayList;
-
 import network.thunder.server.database.objects.Key;
 
+import java.util.ArrayList;
+
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class EstablishChannelRequestThree.
  */
 public class EstablishChannelRequestThree {
-	
-	/**
-	 * The refund transaction signature.
-	 */
-	public String refundTransactionSignature;
-	
-	/**
-	 * The key list.
-	 */
-	public ArrayList<Key> keyList;
+
+    /**
+     * The refund transaction signature.
+     */
+    public String refundTransactionSignature;
+
+    /**
+     * The key list.
+     */
+    public ArrayList<Key> keyList;
 
 }

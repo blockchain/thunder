@@ -17,55 +17,47 @@
  */
 package network.thunder.client.communications.sendpayment;
 
-import java.sql.Connection;
-
 import network.thunder.client.communications.objects.SendPaymentRequestThree;
 import network.thunder.client.communications.objects.SendPaymentResponseThree;
 import network.thunder.client.database.MySQLConnection;
 import network.thunder.client.database.objects.Channel;
-/**			
+
+import java.sql.Connection;
+
+/**
  * Third Request for making a payment.
- * 
+ * <p>
  * Request: 	Keys of old channels, that need to be sent in order to revoke these channels
- * 
+ * <p>
  * Response: 	Keys of old channels, that need to be sent in order to revoke these channels
- * 							 
- * @author PC
  *
+ * @author PC
  */
 public class SendPaymentHandlerThree {
-	
-	public Connection conn;
-	public Channel channel;
-	
-	public SendPaymentRequestThree request() throws Exception {
 
-		SendPaymentRequestThree m = new SendPaymentRequestThree();
-		
-		
-		m.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
+    public Connection conn;
+    public Channel channel;
 
-		return m;
-	}
-	
-	public void evaluateResponse(SendPaymentResponseThree m) throws Exception {
-		
-//		if(m.keyList == null)
-//			throw new Exception("keyList is null");
-//		if(m.keyList.size() == 0)
-//			throw new Exception("keyList is empty");
+    public void evaluateResponse (SendPaymentResponseThree m) throws Exception {
 
-		
-		MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
+        //		if(m.keyList == null)
+        //			throw new Exception("keyList is null");
+        //		if(m.keyList.size() == 0)
+        //			throw new Exception("keyList is empty");
 
-		
-		MySQLConnection.updateChannel(conn, channel);
+        MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
 
-		
-		
+        MySQLConnection.updateChannel(conn, channel);
 
-	}
-	
-	
+    }
+
+    public SendPaymentRequestThree request () throws Exception {
+
+        SendPaymentRequestThree m = new SendPaymentRequestThree();
+
+        m.keyList = MySQLConnection.getKeysOfUsToBeExposed(conn, channel, false);
+
+        return m;
+    }
 
 }

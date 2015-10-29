@@ -17,62 +17,56 @@
  */
 package network.thunder.client.communications.establishchannel;
 
-import java.sql.Connection;
-
 import network.thunder.client.communications.objects.EstablishChannelRequestThree;
 import network.thunder.client.communications.objects.EstablishChannelResponseThree;
 import network.thunder.client.database.MySQLConnection;
 import network.thunder.client.database.objects.Channel;
 import network.thunder.client.etc.Tools;
 import network.thunder.client.wallet.TransactionStorage;
-
 import org.bitcoinj.core.Transaction;
-/**			
+
+import java.sql.Connection;
+
+/**
  * Second Request for establishing the channel.
- * 
+ * <p>
  * Request: 	Refund of the opening transaction
- * 
- * Response: 	
- * 							 
- * @author PC
+ * <p>
+ * Response:
  *
+ * @author PC
  */
 public class EstablishChannelHandlerThree {
-	
-	public Connection conn;
-	public Channel channel;
-	public TransactionStorage transactionStorage;
-	
-	public EstablishChannelResponseThree request() throws Exception {
-		
-		/**
-		 * We have the signed refund transaction already in our channel
-		 */
-		Transaction refundTransaction = channel.getRefundTxClient();
-//		System.out.println(refundTransaction.toString());
-		
-		EstablishChannelResponseThree m = new EstablishChannelResponseThree();
-		m.refundTransactionSignature = Tools.byteToString(refundTransaction.getInput(0).getScriptSig().getChunks().get(1).data);
 
-		return m;
-	}
-	
-	public void evaluateResponse(EstablishChannelRequestThree m) throws Exception {
-		
+    public Connection conn;
+    public Channel channel;
+    public TransactionStorage transactionStorage;
 
-		
-		channel.setEstablishPhase(4);
-		transactionStorage.addOpenedChannel(channel);
-		MySQLConnection.updateChannel(conn, channel);
-		
-		
-		/**
-		 * No response from the server..
-		 *	
-		 */
+    public void evaluateResponse (EstablishChannelRequestThree m) throws Exception {
 
-	}
-	
-	
+        channel.setEstablishPhase(4);
+        transactionStorage.addOpenedChannel(channel);
+        MySQLConnection.updateChannel(conn, channel);
+
+        /**
+         * No response from the server..
+         *
+         */
+
+    }
+
+    public EstablishChannelResponseThree request () throws Exception {
+
+        /**
+         * We have the signed refund transaction already in our channel
+         */
+        Transaction refundTransaction = channel.getRefundTxClient();
+        //		System.out.println(refundTransaction.toString());
+
+        EstablishChannelResponseThree m = new EstablishChannelResponseThree();
+        m.refundTransactionSignature = Tools.byteToString(refundTransaction.getInput(0).getScriptSig().getChunks().get(1).data);
+
+        return m;
+    }
 
 }

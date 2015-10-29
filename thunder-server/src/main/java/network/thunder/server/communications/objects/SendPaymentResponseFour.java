@@ -21,6 +21,5 @@ package network.thunder.server.communications.objects;
  * The Class SendPaymentResponseFour.
  */
 public class SendPaymentResponseFour {
-	
 
 }

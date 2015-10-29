@@ -5,7 +5,6 @@ import network.thunder.client.api.ThunderContext;
 import network.thunder.client.communications.objects.WebSocketAddListener;
 import network.thunder.client.database.objects.Channel;
 import network.thunder.client.etc.Constants;
-import network.thunder.client.etc.Tools;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -24,10 +23,21 @@ public class WebSocketHandler {
 
     HashMap<Integer, EventSocket> sessionHashMap = new HashMap<>();
 
+    public void closeConnection (int channelId) {
+        EventSocket socket = sessionHashMap.get(channelId);
+        if (socket != null) {
+            socket.canceled = true;
+            try {
+                socket.session.disconnect();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
-    public void connectToServer(Channel channel, ThunderContext context) {
+    public void connectToServer (Channel channel, ThunderContext context) {
         boolean connected = false;
-        while(!connected) {
+        while (!connected) {
             WebSocketClient client = new WebSocketClient();
             URI uri = URI.create("ws://" + Constants.SERVER_URL + "/websocket");
             System.out.println(uri);
@@ -44,15 +54,15 @@ public class WebSocketHandler {
                 session.getRemote().sendString(new Gson().toJson(message));
                 new Timer().scheduleAtFixedRate(new TimerTask() {
                     @Override
-                    public void run() {
+                    public void run () {
                         try {
-//                        System.out.println("Ping");
+                            //                        System.out.println("Ping");
                             session.getRemote().sendPing(null);
                         } catch (Exception e) {
                             e.printStackTrace();
                             cancel();
 
-//                        e.printStackTrace();
+                            //                        e.printStackTrace();
                         }
                     }
                 }, 0, 5000);
@@ -66,25 +76,13 @@ public class WebSocketHandler {
                 }
 
             } catch (IOException e) {
-//                e.printStackTrace();
+                //                e.printStackTrace();
             } catch (Exception e) {
-//                e.printStackTrace();
+                //                e.printStackTrace();
             }
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
-            }
-        }
-    }
-
-    public void closeConnection(int channelId) {
-        EventSocket socket = sessionHashMap.get(channelId);
-        if(socket != null) {
-            socket.canceled = true;
-            try {
-                socket.session.disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
@@ -97,40 +95,42 @@ public class WebSocketHandler {
         public Session session;
 
         @Override
-        public void onWebSocketConnect(Session sess) {
+        public void onWebSocketClose (int statusCode, String reason) {
+            super.onWebSocketClose(statusCode, reason);
+            System.out.println("Socket Closed: [" + statusCode + "] " + reason);
+            if (!canceled) {
+                connectToServer(channel, context);
+            }
+
+        }
+
+        @Override
+        public void onWebSocketConnect (Session sess) {
             super.onWebSocketConnect(sess);
             this.session = sess;
             System.out.println("Socket Connected: " + sess);
         }
 
         @Override
-        public void onWebSocketText(String message) {
+        public void onWebSocketError (Throwable cause) {
+            super.onWebSocketError(cause);
+            //            cause.printStackTrace(System.err);
+        }
+
+        @Override
+        public void onWebSocketText (String message) {
             /**
              * TODO: Do some more checking on the messag we actually received.
              */
             super.onWebSocketText(message);
-//            System.out.println("Received TEXT message: " + message);
+            //            System.out.println("Received TEXT message: " + message);
             try {
-                if(!canceled)
+                if (!canceled) {
                     context.updateChannel();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-
-        @Override
-        public void onWebSocketClose(int statusCode, String reason) {
-            super.onWebSocketClose(statusCode, reason);
-            System.out.println("Socket Closed: [" + statusCode + "] " + reason);
-            if(!canceled)
-                connectToServer(channel, context);
-
-        }
-
-        @Override
-        public void onWebSocketError(Throwable cause) {
-            super.onWebSocketError(cause);
-//            cause.printStackTrace(System.err);
         }
     }
 }

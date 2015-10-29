@@ -18,39 +18,40 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class EstablishChannelRequestOne.
  */
 public class EstablishChannelRequestOne {
-	
-	/**
-	 * The pub key.
-	 */
-	public String pubKey;
-	
-	/**
-	 * The time in days.
-	 */
-	public int timeInDays;
-	
-	/**
-	 * The total amount.
-	 */
-	public long totalAmount;
-	
-	/**
-	 * The client amount.
-	 */
-	public long clientAmount;
-	
-	/**
-	 * The transaction unsigned.
-	 */
-	public String transactionUnsigned;
-	
-	/**
-	 * The change address.
-	 */
-	public String changeAddress;
+
+    /**
+     * The pub key.
+     */
+    public String pubKey;
+
+    /**
+     * The time in days.
+     */
+    public int timeInDays;
+
+    /**
+     * The total amount.
+     */
+    public long totalAmount;
+
+    /**
+     * The client amount.
+     */
+    public long clientAmount;
+
+    /**
+     * The transaction unsigned.
+     */
+    public String transactionUnsigned;
+
+    /**
+     * The change address.
+     */
+    public String changeAddress;
 
 }

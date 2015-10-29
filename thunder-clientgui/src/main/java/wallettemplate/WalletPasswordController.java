@@ -1,9 +1,8 @@
 package wallettemplate;
 
-import javafx.application.Platform;
-import org.bitcoinj.crypto.KeyCrypterScrypt;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
+import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
@@ -14,6 +13,7 @@ import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import org.bitcoinj.crypto.KeyCrypterScrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -29,25 +29,46 @@ import static wallettemplate.utils.GuiUtils.*;
  * progress meter as we scrypt the password.
  */
 public class WalletPasswordController {
+    public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
     private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
-
-    @FXML HBox buttonsBox;
-    @FXML PasswordField pass1;
-    @FXML ImageView padlockImage;
-    @FXML ProgressIndicator progressMeter;
-    @FXML GridPane widgetGrid;
-    @FXML Label explanationLabel;
-
     public Main.OverlayUI overlayUI;
-
+    @FXML
+    HBox buttonsBox;
+    @FXML
+    PasswordField pass1;
+    @FXML
+    ImageView padlockImage;
+    @FXML
+    ProgressIndicator progressMeter;
+    @FXML
+    GridPane widgetGrid;
+    @FXML
+    Label explanationLabel;
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
-    public void initialize() {
-        progressMeter.setOpacity(0);
-        Platform.runLater(pass1::requestFocus);
+    // Reads target time or throws if not set yet (should never happen).
+    public static Duration getTargetTime () throws IllegalArgumentException {
+        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
     }
 
-    @FXML void confirmClicked(ActionEvent event) {
+    // Writes the given time to the wallet as a tag so we can find it again in this class.
+    public static void setTargetTime (Duration targetTime) {
+        ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
+        Main.bitcoin.wallet().setTag(TAG, bytes);
+    }
+
+    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty () {
+        return aesKey;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    public void cancelClicked (ActionEvent event) {
+        overlayUI.done();
+    }
+
+    @FXML
+    void confirmClicked (ActionEvent event) {
         String password = pass1.getText();
         if (password.isEmpty() || password.length() < 4) {
             informationalAlert("Bad password", "The password you entered is empty or too short.");
@@ -58,7 +79,7 @@ public class WalletPasswordController {
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
-            protected void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
                 if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
@@ -68,8 +89,7 @@ public class WalletPasswordController {
                     fadeIn(widgetGrid);
                     fadeIn(explanationLabel);
                     fadeIn(buttonsBox);
-                    informationalAlert("Wrong password",
-                            "Please try entering your password again, carefully checking for typos or spelling errors.");
+                    informationalAlert("Wrong password", "Please try entering your password again, carefully checking for typos or spelling errors.");
                 }
             }
         };
@@ -82,26 +102,8 @@ public class WalletPasswordController {
         fadeOut(buttonsBox);
     }
 
-    public void cancelClicked(ActionEvent event) {
-        overlayUI.done();
-    }
-
-    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty() {
-        return aesKey;
-    }
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
-
-    // Writes the given time to the wallet as a tag so we can find it again in this class.
-    public static void setTargetTime(Duration targetTime) {
-        ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
-        Main.bitcoin.wallet().setTag(TAG, bytes);
-    }
-
-    // Reads target time or throws if not set yet (should never happen).
-    public static Duration getTargetTime() throws IllegalArgumentException {
-        return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
+    public void initialize () {
+        progressMeter.setOpacity(0);
+        Platform.runLater(pass1::requestFocus);
     }
 }

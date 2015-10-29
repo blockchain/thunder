@@ -10,8 +10,6 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -21,12 +19,11 @@ import java.util.List;
  */
 public class PaymentProtocolServerSocket {
 
-    public static void init() {
+    public static void init () {
 
         new Thread(new Runnable() {
             @Override
-            public void run() {
-
+            public void run () {
 
                 int portNumber = 15462;
 
@@ -36,8 +33,7 @@ public class PaymentProtocolServerSocket {
 
                     serverSocket = new ServerSocket(portNumber);
 
-
-                    while(true) {
+                    while (true) {
                         try {
                             Socket clientSocket = serverSocket.accept();
                             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -59,8 +55,8 @@ public class PaymentProtocolServerSocket {
                                 ThunderContext.instance.makePayment(Long.valueOf(list.get("amount")), list.get("address"));
                             } catch (Exception e) {
                                 e.printStackTrace();
-                            };
-
+                            }
+                            ;
 
                             clientSocket.close();
                         } catch (IOException e) {

@@ -18,19 +18,20 @@
 package network.thunder.server.communications.objects;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class EstablishChannelResponseTwo.
  */
 public class EstablishChannelResponseTwo {
-	
-	/**
-	 * The refund server sig.
-	 */
-	public String refundServerSig;
-	
-	/**
-	 * The refund transaction.
-	 */
-	public String refundTransaction;
+
+    /**
+     * The refund server sig.
+     */
+    public String refundServerSig;
+
+    /**
+     * The refund transaction.
+     */
+    public String refundTransaction;
 
 }

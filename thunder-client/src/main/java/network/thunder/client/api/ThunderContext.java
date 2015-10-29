@@ -17,6 +17,18 @@
  */
 package network.thunder.client.api;
 
+import network.thunder.client.communications.ClientTools;
+import network.thunder.client.communications.WebSocketHandler;
+import network.thunder.client.database.MySQLConnection;
+import network.thunder.client.database.objects.Channel;
+import network.thunder.client.database.objects.Output;
+import network.thunder.client.database.objects.Payment;
+import network.thunder.client.etc.Tools;
+import network.thunder.client.wallet.TransactionStorage;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.PeerGroup;
+import org.bitcoinj.core.Wallet;
+
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,65 +39,38 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
-import network.thunder.client.communications.WebSocketHandler;
-import network.thunder.client.database.MySQLConnection;
-import network.thunder.client.database.objects.Channel;
-import network.thunder.client.database.objects.Output;
-import network.thunder.client.database.objects.Payment;
-import network.thunder.client.communications.ClientTools;
-import network.thunder.client.etc.Tools;
-import network.thunder.client.wallet.TransactionStorage;
-
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.Wallet;
-
-
 public class ThunderContext {
 
+    public static ThunderContext instance = new ThunderContext();
     public Connection conn;
-
+    public ArrayList<Output> outputList = new ArrayList<Output>();
+    public HashMap<Integer, Channel> channelList = new HashMap<>();
+    public Channel currentChannel;
+    public TransactionStorage transactionStorage;
+    public ThunderContext thisReference;
+    public ExecutorService executorService = Executors.newSingleThreadExecutor();
+    public WebSocketHandler webSocketHandler = new WebSocketHandler();
+    Future latestFuture;
     private ArrayList<Payment> paymentListIncluded = new ArrayList<Payment>();
     private ArrayList<Payment> paymentListSettled = new ArrayList<Payment>();
     private ArrayList<Payment> paymentListRefunded = new ArrayList<Payment>();
     private ArrayList<Payment> paymentListOpen = new ArrayList<Payment>();
-
-    public ArrayList<Output> outputList = new ArrayList<Output>();
-
-    public HashMap<Integer, Channel> channelList = new HashMap<>();
-
-    public Channel currentChannel;
-
     private Wallet wallet;
     private PeerGroup peerGroup;
-
-    public TransactionStorage transactionStorage;
-
     private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
     private InitFinishListener initListener;
     private ProgressUpdateListener updateListener;
     private UpdateStartListener updateStartListener;
     private ErrorListener errorListener;
-
     private boolean initFinished = false;
 
-
-    public static ThunderContext instance = new ThunderContext();
-
-    public ThunderContext thisReference;
-
-    public ExecutorService executorService = Executors.newSingleThreadExecutor();
-    public WebSocketHandler webSocketHandler = new WebSocketHandler();
-
-    Future latestFuture;
-
-
-    public static ThunderContext init(Wallet w, PeerGroup p, int clientId, boolean forceNew) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
-        if (!forceNew && instance.initFinished)
+    public static ThunderContext init (Wallet w, PeerGroup p, int clientId, boolean forceNew) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+        if (!forceNew && instance.initFinished) {
             return instance;
+        }
 
         ThunderContext context;
-        if(!instance.initFinished) {
+        if (!instance.initFinished) {
             context = instance;
         } else {
             context = new ThunderContext();
@@ -103,7 +88,6 @@ public class ThunderContext {
             MySQLConnection.buildDatabase(context.conn);
         }
 
-
         context.wallet = w;
         context.peerGroup = p;
 
@@ -118,8 +102,9 @@ public class ThunderContext {
         System.out.println("Finished init! Active channels: " + context.channelList.size());
 
         context.transactionStorage.updateOutputs(context.wallet, true);
-        if (context.initListener != null)
+        if (context.initListener != null) {
             context.initListener.initFinished();
+        }
 
         if (context.currentChannel != null) {
             context.webSocketHandler.connectToServer(context.currentChannel, context);
@@ -128,7 +113,7 @@ public class ThunderContext {
         instance = context;
 
         Runtime.getRuntime().addShutdownHook(new Thread() {
-            public void run() {
+            public void run () {
                 System.out.println("Closing down the wallet gracefully..");
                 instance.wallet.shutdownAutosaveAndWait();
                 System.out.println("Closing down the wallet gracefully successful..");
@@ -138,48 +123,54 @@ public class ThunderContext {
         return context;
     }
 
-    public static void init(Wallet w, PeerGroup p) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
+    public static void init (Wallet w, PeerGroup p) throws SQLException, IOException, InstantiationException, IllegalAccessException, ClassNotFoundException {
         init(w, p, 1, false);
     }
 
-    private void updatePaymentLists() throws SQLException {
-        paymentListIncluded = MySQLConnection.getPaymentsIncludedInChannel(conn, currentChannel.getId());
-        paymentListSettled = MySQLConnection.getPaymentsSettled(conn, currentChannel.getId());
-        paymentListRefunded = MySQLConnection.getPaymentsRefunded(conn, currentChannel.getId());
-        paymentListOpen = MySQLConnection.getPaymentsOpen(conn, currentChannel.getId());
+    public void addListener (ChangeListener toAdd) {
+        System.out.println("Listener added!");
+        changeListeners.add(toAdd);
     }
 
+    public void closeChannel () throws Exception {
 
-    public ArrayList<Payment> getPaymentListIncluded() {
-        return paymentListIncluded;
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+                try {
+
+                    ClientTools.closeChannel(conn, currentChannel, peerGroup);
+                    channelList.remove(currentChannel.getId());
+                    webSocketHandler.closeConnection(currentChannel.getId());
+
+                    if (channelList.size() > 0) {
+                        currentChannel = channelList.entrySet().iterator().next().getValue();
+                    }
+
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                } catch (Exception e) {
+                    throwError(Tools.stacktraceToString(e));
+                    e.printStackTrace();
+                }
+
+            }
+        });
     }
 
-    public ArrayList<Payment> getPaymentListSettled() {
-        return paymentListSettled;
-    }
-
-    public ArrayList<Payment> getPaymentListRefunded() {
-        return paymentListRefunded;
-    }
-
-    public ArrayList<Payment> getPaymentListOpen() {
-        return paymentListOpen;
-    }
-
-
-    public HashMap<Integer, Channel> getChannelList() {
-        return channelList;
-    }
-
-    public Coin getAmountClient() {
-        if (currentChannel == null)
+    public Coin getAmountClient () {
+        if (currentChannel == null) {
             return Coin.ZERO;
+        }
         return Coin.valueOf(currentChannel.getAmountClient());
     }
 
-    public Coin getAmountClientAccessible() throws SQLException {
-        if (currentChannel == null)
+    public Coin getAmountClientAccessible () throws SQLException {
+        if (currentChannel == null) {
             return Coin.ZERO;
+        }
         if (currentChannel.getChannelTxClientID() == 0) {
             return Coin.valueOf(currentChannel.getAmountClient());
         } else {
@@ -187,33 +178,31 @@ public class ThunderContext {
         }
     }
 
-    public boolean hasActiveChannel() {
-        System.out.println(channelList);
-        System.out.println(channelList.size());
-        return (channelList.size() != 0);
+    public HashMap<Integer, Channel> getChannelList () {
+        return channelList;
     }
 
-    public void addListener(ChangeListener toAdd) {
-        System.out.println("Listener added!");
-        changeListeners.add(toAdd);
+    public Channel getCurrentChannel () {
+        return currentChannel;
     }
 
-    public void setInitFinishedListener(InitFinishListener listener) {
-        initListener = listener;
+    public ArrayList<Payment> getPaymentListIncluded () {
+        return paymentListIncluded;
     }
 
-    public void setProgressUpdateListener(ProgressUpdateListener listener) {
-        updateListener = listener;
+    public ArrayList<Payment> getPaymentListOpen () {
+        return paymentListOpen;
     }
 
-    public void setErrorListener(ErrorListener listener) {
-        errorListener = listener;
-    }
-    public void setUpdateStartListener(UpdateStartListener listener) {
-        updateStartListener = listener;
+    public ArrayList<Payment> getPaymentListRefunded () {
+        return paymentListRefunded;
     }
 
-    public PaymentRequest getPaymentReceiveRequest(long amount) throws Exception {
+    public ArrayList<Payment> getPaymentListSettled () {
+        return paymentListSettled;
+    }
+
+    public PaymentRequest getPaymentReceiveRequest (long amount) throws Exception {
 
         Payment p = new Payment(0, currentChannel.getId(), amount);
         p.setReceiver(currentChannel.getPubKeyClient());
@@ -224,81 +213,34 @@ public class ThunderContext {
         PaymentRequest request = new PaymentRequest(currentChannel, p);
 
         updatePaymentLists();
-        for (ChangeListener listener : changeListeners)
+        for (ChangeListener listener : changeListeners) {
             listener.channelListChanged();
+        }
 
         return request;
 
     }
 
-    public void openChannel(final long clientAmount, final long serverAmount, final int timeInDays) throws Exception {
-        latestFuture = executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-
-                try {
-                    Channel channel = currentChannel;
-
-                    channel = ClientTools.createChannel(conn, wallet, peerGroup, outputList, clientAmount, serverAmount, timeInDays);
-
-                    channelList.put(channel.getId(), channel);
-                    currentChannel = channel;
-
-                    for (ChangeListener listener : changeListeners)
-                        listener.channelListChanged();
-
-                    webSocketHandler.connectToServer(currentChannel, thisReference);
-
-                } catch (Exception e) {
-                    throwError(Tools.stacktraceToString(e));
-                    e.printStackTrace();
-                }
-
-            }
-        });
-
+    public boolean hasActiveChannel () {
+        System.out.println(channelList);
+        System.out.println(channelList.size());
+        return (channelList.size() != 0);
     }
 
-    public void closeChannel() throws Exception {
-
-        latestFuture = executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-
-                    ClientTools.closeChannel(conn, currentChannel, peerGroup);
-                    channelList.remove(currentChannel.getId());
-                    webSocketHandler.closeConnection(currentChannel.getId());
-
-                    if (channelList.size() > 0)
-                        currentChannel = channelList.entrySet().iterator().next().getValue();
-
-                    for (ChangeListener listener : changeListeners)
-                        listener.channelListChanged();
-
-                } catch (Exception e) {
-                    throwError(Tools.stacktraceToString(e));
-                    e.printStackTrace();
-                }
-
-            }
-        });
-    }
-
-    public void makePayment(final long amount, final String address) throws Exception {
+    public void makePayment (final long amount, final String address) throws Exception {
 
         PaymentRequest request = new PaymentRequest(currentChannel, amount, address);
 
         latestFuture = executorService.submit(new Runnable() {
             @Override
-            public void run() {
+            public void run () {
                 try {
-
 
                     currentChannel = ClientTools.makePayment(conn, currentChannel, request.getPayment());
                     updatePaymentLists();
-                    for (ChangeListener listener : changeListeners)
+                    for (ChangeListener listener : changeListeners) {
                         listener.channelListChanged();
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -318,12 +260,74 @@ public class ThunderContext {
         });
     }
 
-    public void updateChannel() throws Exception {
-        if(updateStartListener != null)
-            updateStartListener.updateStart();
+    public void openChannel (final long clientAmount, final long serverAmount, final int timeInDays) throws Exception {
         latestFuture = executorService.submit(new Runnable() {
             @Override
-            public void run() {
+            public void run () {
+
+                try {
+                    Channel channel = currentChannel;
+
+                    channel = ClientTools.createChannel(conn, wallet, peerGroup, outputList, clientAmount, serverAmount, timeInDays);
+
+                    channelList.put(channel.getId(), channel);
+                    currentChannel = channel;
+
+                    for (ChangeListener listener : changeListeners) {
+                        listener.channelListChanged();
+                    }
+
+                    webSocketHandler.connectToServer(currentChannel, thisReference);
+
+                } catch (Exception e) {
+                    throwError(Tools.stacktraceToString(e));
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
+    }
+
+    public void progressUpdated (int progress, int max) {
+        if (updateListener != null) {
+            updateListener.progressUpdated(progress, max);
+        }
+    }
+
+    public void setChannel (Channel channel) {
+        currentChannel = channel;
+    }
+
+    public void setErrorListener (ErrorListener listener) {
+        errorListener = listener;
+    }
+
+    public void setInitFinishedListener (InitFinishListener listener) {
+        initListener = listener;
+    }
+
+    public void setProgressUpdateListener (ProgressUpdateListener listener) {
+        updateListener = listener;
+    }
+
+    public void setUpdateStartListener (UpdateStartListener listener) {
+        updateStartListener = listener;
+    }
+
+    public void throwError (String error) {
+        if (errorListener != null) {
+            errorListener.error(error);
+        }
+    }
+
+    public void updateChannel () throws Exception {
+        if (updateStartListener != null) {
+            updateStartListener.updateStart();
+        }
+        latestFuture = executorService.submit(new Runnable() {
+            @Override
+            public void run () {
                 try {
                     /**
                      * TODO: change protocol, such that server sends amount of new payments
@@ -336,15 +340,16 @@ public class ThunderContext {
                     currentChannel = ClientTools.updateChannel(conn, currentChannel, true);
 
                     updatePaymentLists();
-                    for (ChangeListener listener : changeListeners)
+                    for (ChangeListener listener : changeListeners) {
                         listener.channelListChanged();
-
+                    }
 
                     currentChannel = ClientTools.updateChannel(conn, currentChannel, false);
 
                     updatePaymentLists();
-                    for (ChangeListener listener : changeListeners)
+                    for (ChangeListener listener : changeListeners) {
                         listener.channelListChanged();
+                    }
 
                     ThunderContext.instance.progressUpdated(10, 10);
 
@@ -365,48 +370,35 @@ public class ThunderContext {
         });
     }
 
-    public void waitUntilReady() throws ExecutionException, InterruptedException {
+    private void updatePaymentLists () throws SQLException {
+        paymentListIncluded = MySQLConnection.getPaymentsIncludedInChannel(conn, currentChannel.getId());
+        paymentListSettled = MySQLConnection.getPaymentsSettled(conn, currentChannel.getId());
+        paymentListRefunded = MySQLConnection.getPaymentsRefunded(conn, currentChannel.getId());
+        paymentListOpen = MySQLConnection.getPaymentsOpen(conn, currentChannel.getId());
+    }
+
+    public void waitUntilReady () throws ExecutionException, InterruptedException {
         latestFuture.get();
     }
 
-    public void progressUpdated(int progress, int max) {
-        if (updateListener != null)
-            updateListener.progressUpdated(progress, max);
-    }
-
-    public void throwError(String error) {
-        if (errorListener != null)
-            errorListener.error(error);
-    }
-
-    public Channel getCurrentChannel() {
-        return currentChannel;
-    }
-
     public interface ChangeListener {
-        public void channelListChanged();
+        public void channelListChanged ();
     }
 
     public interface InitFinishListener {
-        public void initFinished();
+        public void initFinished ();
     }
 
     public interface ProgressUpdateListener {
-        public void progressUpdated(int progress, int max);
+        public void progressUpdated (int progress, int max);
     }
 
     public interface ErrorListener {
-        public void error(String error);
+        public void error (String error);
     }
 
     public interface UpdateStartListener {
-        public void updateStart();
+        public void updateStart ();
     }
-
-
-    public void setChannel(Channel channel) {
-        currentChannel = channel;
-    }
-
 
 }

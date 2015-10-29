@@ -18,7 +18,6 @@
 package network.thunder.client.communications.objects;
 
 public class UpdateChannelResponseThree {
-	public String transactionHash;
-	
+    public String transactionHash;
 
 }

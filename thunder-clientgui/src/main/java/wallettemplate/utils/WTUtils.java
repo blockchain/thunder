@@ -9,31 +9,25 @@ import org.slf4j.LoggerFactory;
 public class WTUtils {
     private static final Logger log = LoggerFactory.getLogger(WTUtils.class);
 
-    public interface UncheckedRun<T> {
-        public T run() throws Throwable;
-    }
-
-    public interface UncheckedRunnable {
-        public void run() throws Throwable;
-    }
-
-    public static <T> T unchecked(UncheckedRun<T> run) {
-        try {
-            return run.run();
-        } catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
-        }
-    }
-
-    public static void uncheck(UncheckedRunnable run) {
+    public static boolean didThrow (UncheckedRun run) {
         try {
             run.run();
+            return false;
         } catch (Throwable throwable) {
-            throw new RuntimeException(throwable);
+            return true;
         }
     }
 
-    public static void ignoreAndLog(UncheckedRunnable runnable) {
+    public static boolean didThrow (UncheckedRunnable run) {
+        try {
+            run.run();
+            return false;
+        } catch (Throwable throwable) {
+            return true;
+        }
+    }
+
+    public static void ignoreAndLog (UncheckedRunnable runnable) {
         try {
             runnable.run();
         } catch (Throwable t) {
@@ -41,7 +35,7 @@ public class WTUtils {
         }
     }
 
-    public static <T> T ignoredAndLogged(UncheckedRun<T> runnable) {
+    public static <T> T ignoredAndLogged (UncheckedRun<T> runnable) {
         try {
             return runnable.run();
         } catch (Throwable t) {
@@ -50,21 +44,27 @@ public class WTUtils {
         }
     }
 
-    public static boolean didThrow(UncheckedRun run) {
+    public static void uncheck (UncheckedRunnable run) {
         try {
             run.run();
-            return false;
         } catch (Throwable throwable) {
-            return true;
+            throw new RuntimeException(throwable);
         }
     }
 
-    public static boolean didThrow(UncheckedRunnable run) {
+    public static <T> T unchecked (UncheckedRun<T> run) {
         try {
-            run.run();
-            return false;
+            return run.run();
         } catch (Throwable throwable) {
-            return true;
+            throw new RuntimeException(throwable);
         }
+    }
+
+    public interface UncheckedRun <T> {
+        public T run () throws Throwable;
+    }
+
+    public interface UncheckedRunnable {
+        public void run () throws Throwable;
     }
 }

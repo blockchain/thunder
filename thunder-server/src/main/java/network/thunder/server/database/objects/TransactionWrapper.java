@@ -21,143 +21,144 @@ import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.Transaction;
 
 // TODO: Auto-generated Javadoc
+
 /**
  * The Class TransactionWrapper.
  */
 public class TransactionWrapper {
 
-	/**
-	 * The id.
-	 */
-	int id;
-	
-	/**
-	 * The hash.
-	 */
-	String hash;
-	
-	/**
-	 * The channel id.
-	 */
-	int channelId;
-	
-	/**
-	 * The payment id.
-	 */
-	int paymentId;
-	
-	/**
-	 * The data.
-	 */
-	byte[] data;
-	
-	/**
-	 * The transaction.
-	 */
-	Transaction transaction;
-	
-	/**
-	 * The signature.
-	 */
-	ECDSASignature signature;
-	
-	/**
-	 * Instantiates a new transaction wrapper.
-	 *
-	 * @param transaction the transaction
-	 * @param signature the signature
-	 */
-	public TransactionWrapper(Transaction transaction, ECDSASignature signature) {
-		this.transaction = transaction;
-		this.signature = signature;
-	}
-	
-	/**
-	 * Gets the transaction.
-	 *
-	 * @return the transaction
-	 */
-	public Transaction getTransaction() {
-		return transaction;
-	}
+    /**
+     * The id.
+     */
+    int id;
 
-	/**
-	 * Gets the signature.
-	 *
-	 * @return the signature
-	 */
-	public ECDSASignature getSignature() {
-		return signature;
-	}
+    /**
+     * The hash.
+     */
+    String hash;
 
-	/**
-	 * Instantiates a new transaction wrapper.
-	 *
-	 * @param t the t
-	 * @param channelId the channel id
-	 */
-	public TransactionWrapper(Transaction t, int channelId) {
-		this.hash = t.getHashAsString();
-		this.channelId = channelId;
-		this.data = t.bitcoinSerialize();
-	}
-	
-	/**
-	 * Instantiates a new transaction wrapper.
-	 *
-	 * @param t the t
-	 * @param channelId the channel id
-	 * @param id the id
-	 */
-	public TransactionWrapper(Transaction t, int channelId, int id) {
-		this.hash = t.getHashAsString();
-		this.channelId = channelId;
-		this.data = t.bitcoinSerialize();
-		this.id = id;
-	}
+    /**
+     * The channel id.
+     */
+    int channelId;
 
-	/**
-	 * Gets the id.
-	 *
-	 * @return the id
-	 */
-	public int getId() {
-		return id;
-	}
+    /**
+     * The payment id.
+     */
+    int paymentId;
 
-	/**
-	 * Gets the hash.
-	 *
-	 * @return the hash
-	 */
-	public String getHash() {
-		return hash;
-	}
+    /**
+     * The data.
+     */
+    byte[] data;
 
-	/**
-	 * Gets the channel id.
-	 *
-	 * @return the channel id
-	 */
-	public int getChannelId() {
-		return channelId;
-	}
+    /**
+     * The transaction.
+     */
+    Transaction transaction;
 
-	/**
-	 * Gets the payment id.
-	 *
-	 * @return the payment id
-	 */
-	public int getPaymentId() {
-		return paymentId;
-	}
+    /**
+     * The signature.
+     */
+    ECDSASignature signature;
 
-	/**
-	 * Gets the data.
-	 *
-	 * @return the data
-	 */
-	public byte[] getData() {
-		return data;
-	}
+    /**
+     * Instantiates a new transaction wrapper.
+     *
+     * @param transaction the transaction
+     * @param signature   the signature
+     */
+    public TransactionWrapper (Transaction transaction, ECDSASignature signature) {
+        this.transaction = transaction;
+        this.signature = signature;
+    }
+
+    /**
+     * Instantiates a new transaction wrapper.
+     *
+     * @param t         the t
+     * @param channelId the channel id
+     */
+    public TransactionWrapper (Transaction t, int channelId) {
+        this.hash = t.getHashAsString();
+        this.channelId = channelId;
+        this.data = t.bitcoinSerialize();
+    }
+
+    /**
+     * Instantiates a new transaction wrapper.
+     *
+     * @param t         the t
+     * @param channelId the channel id
+     * @param id        the id
+     */
+    public TransactionWrapper (Transaction t, int channelId, int id) {
+        this.hash = t.getHashAsString();
+        this.channelId = channelId;
+        this.data = t.bitcoinSerialize();
+        this.id = id;
+    }
+
+    /**
+     * Gets the channel id.
+     *
+     * @return the channel id
+     */
+    public int getChannelId () {
+        return channelId;
+    }
+
+    /**
+     * Gets the data.
+     *
+     * @return the data
+     */
+    public byte[] getData () {
+        return data;
+    }
+
+    /**
+     * Gets the hash.
+     *
+     * @return the hash
+     */
+    public String getHash () {
+        return hash;
+    }
+
+    /**
+     * Gets the id.
+     *
+     * @return the id
+     */
+    public int getId () {
+        return id;
+    }
+
+    /**
+     * Gets the payment id.
+     *
+     * @return the payment id
+     */
+    public int getPaymentId () {
+        return paymentId;
+    }
+
+    /**
+     * Gets the signature.
+     *
+     * @return the signature
+     */
+    public ECDSASignature getSignature () {
+        return signature;
+    }
+
+    /**
+     * Gets the transaction.
+     *
+     * @return the transaction
+     */
+    public Transaction getTransaction () {
+        return transaction;
+    }
 }

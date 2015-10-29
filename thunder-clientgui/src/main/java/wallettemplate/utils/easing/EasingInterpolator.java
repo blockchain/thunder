@@ -45,38 +45,7 @@ public abstract class EasingInterpolator extends Interpolator {
      *
      * @param easingMode The easing mode.
      */
-    public EasingInterpolator(EasingMode easingMode) {
-        this.easingMode.set(easingMode);
-    }
-
-    /**
-     * The easing mode property.
-     *
-     * @return The property.
-     * @see #getEasingMode()
-     * @see #setEasingMode(EasingMode)
-     */
-    public ObjectProperty<EasingMode> easingModeProperty() {
-        return easingMode;
-    }
-
-    /**
-     * Gets the easing mode.
-     *
-     * @return The easing mode.
-     * @see #easingModeProperty()
-     */
-    public EasingMode getEasingMode() {
-        return easingMode.get();
-    }
-
-    /**
-     * Sets the easing mode.
-     *
-     * @param easingMode The easing mode.
-     * @see #easingModeProperty()
-     */
-    public void setEasingMode(EasingMode easingMode) {
+    public EasingInterpolator (EasingMode easingMode) {
         this.easingMode.set(easingMode);
     }
 
@@ -88,7 +57,7 @@ public abstract class EasingInterpolator extends Interpolator {
      * @return The resulting value of the function, should return a value between 0 and 1.
      * @see Interpolator#curve(double)
      */
-    protected abstract double baseCurve(final double v);
+    protected abstract double baseCurve (final double v);
 
     /**
      * Curves the function depending on the easing mode.
@@ -97,7 +66,7 @@ public abstract class EasingInterpolator extends Interpolator {
      * @return The resulting value of the function.
      */
     @Override
-    protected final double curve(final double v) {
+    protected final double curve (final double v) {
         switch (easingMode.get()) {
             case EASE_IN:
                 return baseCurve(v);
@@ -112,5 +81,36 @@ public abstract class EasingInterpolator extends Interpolator {
 
         }
         return baseCurve(v);
+    }
+
+    /**
+     * The easing mode property.
+     *
+     * @return The property.
+     * @see #getEasingMode()
+     * @see #setEasingMode(EasingMode)
+     */
+    public ObjectProperty<EasingMode> easingModeProperty () {
+        return easingMode;
+    }
+
+    /**
+     * Gets the easing mode.
+     *
+     * @return The easing mode.
+     * @see #easingModeProperty()
+     */
+    public EasingMode getEasingMode () {
+        return easingMode.get();
+    }
+
+    /**
+     * Sets the easing mode.
+     *
+     * @param easingMode The easing mode.
+     * @see #easingModeProperty()
+     */
+    public void setEasingMode (EasingMode easingMode) {
+        this.easingMode.set(easingMode);
     }
 }

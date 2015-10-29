@@ -17,65 +17,18 @@
  */
 package network.thunder.server.communications;
 
-import java.io.IOException;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.util.*;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
-
-import network.thunder.server.communications.objects.AddKeysRequest;
-import network.thunder.server.communications.objects.CloseChannelRequest;
-import network.thunder.server.communications.objects.CloseChannelResponse;
-import network.thunder.server.communications.objects.EstablishChannelRequestOne;
-import network.thunder.server.communications.objects.EstablishChannelRequestThree;
-import network.thunder.server.communications.objects.EstablishChannelRequestTwo;
-import network.thunder.server.communications.objects.EstablishChannelResponseOne;
-import network.thunder.server.communications.objects.EstablishChannelResponseThree;
-import network.thunder.server.communications.objects.EstablishChannelResponseTwo;
-import network.thunder.server.communications.objects.SendPaymentRequestFour;
-import network.thunder.server.communications.objects.SendPaymentRequestOne;
-import network.thunder.server.communications.objects.SendPaymentRequestThree;
-import network.thunder.server.communications.objects.SendPaymentRequestTwo;
-import network.thunder.server.communications.objects.SendPaymentResponseOne;
-import network.thunder.server.communications.objects.SendPaymentResponseThree;
-import network.thunder.server.communications.objects.SendPaymentResponseTwo;
-import network.thunder.server.communications.objects.UpdateChannelRequestFive;
-import network.thunder.server.communications.objects.UpdateChannelRequestFour;
-import network.thunder.server.communications.objects.UpdateChannelRequestThree;
-import network.thunder.server.communications.objects.UpdateChannelRequestTwo;
-import network.thunder.server.communications.objects.UpdateChannelResponseFive;
-import network.thunder.server.communications.objects.UpdateChannelResponseFour;
-import network.thunder.server.communications.objects.UpdateChannelResponseOne;
-import network.thunder.server.communications.objects.UpdateChannelResponseThree;
-import network.thunder.server.communications.objects.UpdateChannelResponseTwo;
+import com.google.gson.Gson;
+import network.thunder.server.communications.objects.*;
 import network.thunder.server.database.MySQLConnection;
-import network.thunder.server.database.objects.Channel;
-import network.thunder.server.database.objects.Key;
-import network.thunder.server.database.objects.KeyWrapper;
-import network.thunder.server.database.objects.Output;
-import network.thunder.server.database.objects.Payment;
-import network.thunder.server.database.objects.Secret;
-import network.thunder.server.database.objects.TransactionWrapper;
+import network.thunder.server.database.objects.*;
 import network.thunder.server.etc.Constants;
 import network.thunder.server.etc.PerformanceLogger;
 import network.thunder.server.etc.ScriptTools;
 import network.thunder.server.etc.Tools;
 import network.thunder.server.wallet.TransactionStorage;
-
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.*;
 import org.bitcoinj.core.ECKey.ECDSASignature;
-import org.bitcoinj.core.PeerGroup;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.Transaction.SigHash;
-import org.bitcoinj.core.TransactionInput;
-import org.bitcoinj.core.TransactionOutPoint;
-import org.bitcoinj.core.TransactionOutput;
-import org.bitcoinj.core.Wallet;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
@@ -83,7 +36,13 @@ import org.bitcoinj.wallet.DefaultRiskAnalysis;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-import com.google.gson.Gson;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.*;
 
 // TODO: Auto-generated Javadoc
 
@@ -113,18 +72,18 @@ public class RequestHandler extends AbstractHandler {
     public TransactionStorage transactionStorage;
 
     /* (non-Javadoc)
-     * @see org.eclipse.jetty.server.Handler#handle(java.lang.String, org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+     * @see org.eclipse.jetty.server.Handler#handle(java.lang.String, org.eclipse.jetty.server.Request, javax.servlet.http.HttpServletRequest, javax.servlet
+     * .http.HttpServletResponse)
      */
-    public void handle(String target, Request baseRequest, HttpServletRequest jettyRequest, HttpServletResponse jettyResponse) throws IOException {
+    public void handle (String target, Request baseRequest, HttpServletRequest jettyRequest, HttpServletResponse jettyResponse) throws IOException {
 
         if (baseRequest.getMethod() == "GET") {
-//			jettyResponse.setContentType("text/plain;charset=utf-8");
+            //			jettyResponse.setContentType("text/plain;charset=utf-8");
             jettyResponse.setStatus(HttpServletResponse.SC_OK);
             baseRequest.setHandled(true);
             jettyResponse.getWriter().println("Hello there");
             return;
         }
-
 
         Message responseContainer = new Message();
         Message message = null;
@@ -139,8 +98,7 @@ public class RequestHandler extends AbstractHandler {
             message = Tools.getMessage(jettyRequest);
             message.prepare(conn);
 
-            System.out.println("Request.. " + message.type + "  "+message.pubkey);
-
+            System.out.println("Request.. " + message.type + "  " + message.pubkey);
 
             if (message.type == Type.ESTABLISH_CHANNEL_ONE_REQUEST) {
                 /**
@@ -161,13 +119,16 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Test if there is already a channel open with this pubkey..
                  */
-                if (MySQLConnection.testIfChannelExists(conn, message.pubkey))
+                if (MySQLConnection.testIfChannelExists(conn, message.pubkey)) {
                     throw new Exception("Pubkey is already in use for a channel..");
+                }
 
-
-                if (!m.pubKey.equals(message.pubkey)) throw new Exception("Signature Key does not match Channel Key..");
-                if (m.timeInDays < Constants.MIN_CHANNEL_DURATION_IN_DAYS || m.timeInDays > Constants.MAX_CHANNEL_DURATION_IN_DAYS)
+                if (!m.pubKey.equals(message.pubkey)) {
+                    throw new Exception("Signature Key does not match Channel Key..");
+                }
+                if (m.timeInDays < Constants.MIN_CHANNEL_DURATION_IN_DAYS || m.timeInDays > Constants.MAX_CHANNEL_DURATION_IN_DAYS) {
                     throw new Exception("Channel duration exceeds limits..");
+                }
 
                 /**
                  * Rules for the channel:
@@ -176,18 +137,21 @@ public class RequestHandler extends AbstractHandler {
                  * 	(3) Total value > MIN_CHANNEL_VALUE
                  * 	(4) clientShare > serverShare
                  */
-                if (m.totalAmount > Constants.MAX_CHANNEL_VALUE)
+                if (m.totalAmount > Constants.MAX_CHANNEL_VALUE) {
                     throw new Exception("Channel value is too high. Currently the maximum is " + Constants.MAX_CHANNEL_VALUE + "satoshi.");
+                }
 
-                if (m.totalAmount - m.clientAmount > Constants.MAX_SERVER_SHARE)
+                if (m.totalAmount - m.clientAmount > Constants.MAX_SERVER_SHARE) {
                     throw new Exception("Server share too high. Currently the maximum is " + Constants.MAX_SERVER_SHARE + "satoshi.");
+                }
 
-                if (m.totalAmount - m.clientAmount > m.clientAmount)
+                if (m.totalAmount - m.clientAmount > m.clientAmount) {
                     throw new Exception("Server share higher than client share..");
+                }
 
-                if (m.totalAmount < Constants.MIN_CHANNEL_VALUE)
+                if (m.totalAmount < Constants.MIN_CHANNEL_VALUE) {
                     throw new Exception("Channel value is too low. Currently the minimum is " + Constants.MIN_CHANNEL_VALUE + "satoshi.");
-
+                }
 
                 /**
                  * Create the channel and set all the values accordingly..
@@ -203,7 +167,6 @@ public class RequestHandler extends AbstractHandler {
                 channel.setKeyChainChild(1);
                 channel.setPubKeyServer(Tools.byteToString(channel.getServerKeyOnServer().getPubKey()));
 
-
                 /**
                  * Create the unsigned transaction for the client
                  */
@@ -212,14 +175,12 @@ public class RequestHandler extends AbstractHandler {
                 channelTransaction.addOutput(Coin.valueOf(m.totalAmount), correctScript);
                 channelTransaction = MySQLConnection.getOutAndInputsForChannel(conn, channel.getId(), m.totalAmount - m.clientAmount, channelTransaction, wallet.getChangeAddress(), false, false);
 
-
                 /**
                  * Update our Database
                  */
                 channel.setOpeningTx(channelTransaction);
                 channel.setEstablishPhase(2);
                 MySQLConnection.updateChannel(conn, channel);
-
 
                 /**
                  * Fill the request object for the client.
@@ -231,7 +192,6 @@ public class RequestHandler extends AbstractHandler {
                 responseContainer.success = true;
                 responseContainer.type = Type.ESTABLISH_CHANNEL_ONE_RESPONSE;
                 responseContainer.fill(response);
-
 
             } else if (message.type == Type.ESTABLISH_CHANNEL_TWO_REQUEST) {
                 /**
@@ -254,11 +214,12 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Test if the channel is indeed not yet created..
                  */
-                if (channel.isReady())
+                if (channel.isReady()) {
                     throw new Exception("Channel is ready already");
-                if (channel.getEstablishPhase() != 2)
+                }
+                if (channel.getEstablishPhase() != 2) {
                     throw new Exception("Something went wrong somewhere, start again with a new pubkey..");
-
+                }
 
                 /**
                  * Compare the clientTransaction with the saved serverTransaction
@@ -283,11 +244,11 @@ public class RequestHandler extends AbstractHandler {
                         TransactionOutput client = clientOutputs.get(i);
                         TransactionOutput server = serverOutputs.get(i);
 
-                        if (!Arrays.equals(client.bitcoinSerialize(), server.bitcoinSerialize()))
+                        if (!Arrays.equals(client.bitcoinSerialize(), server.bitcoinSerialize())) {
                             throw new Exception("TransactionOutput has been changed..");
+                        }
                     }
                 }
-
 
                 for (int i = 0; i < clientInputs.size(); ++i) {
                     if (i > serverInputs.size() - 1) {
@@ -296,11 +257,11 @@ public class RequestHandler extends AbstractHandler {
                         TransactionInput client = clientInputs.get(i);
                         TransactionInput server = clientInputs.get(i);
 
-                        if (!client.equals(server))
+                        if (!client.equals(server)) {
                             throw new Exception("TransactionInput has been changed..");
+                        }
                     }
                 }
-
 
                 /**
                  * Add all our signatures to make the transaction valid
@@ -324,20 +285,20 @@ public class RequestHandler extends AbstractHandler {
                 long sumOutputs = 0;
                 long difference = 0;
 
-
-//				sumOutputs = Tools.getCoinValueFromOutput(transactionFromClient.getOutputs());
-//				sumInputs = Tools.getCoinValueFromInput(peerGroup.getConnectedPeers().get(0), transactionFromClient.getInputs());
-//
-//				difference = sumInputs - sumOutputs;
-//				
-//				long fees = Tools.getTransactionFees(transactionFromClient.getInputs().size(), transactionFromClient.getOutputs().size());
-//					
-//				/**
-//				 * TODO: This is currently pretty difficult.. 
-//				 * For debug purposes, I leave this commented now, but we should find a way, if the client send us proper inputs
-//				 */
-//				if(difference < fees)
-//					throw new Exception("Inputs not sufficient for the channel.. Should be: "+sumOutputs+" Is: "+sumInputs+" Difference: "+difference+" Fees: "+fees);
+                //				sumOutputs = Tools.getCoinValueFromOutput(transactionFromClient.getOutputs());
+                //				sumInputs = Tools.getCoinValueFromInput(peerGroup.getConnectedPeers().get(0), transactionFromClient.getInputs());
+                //
+                //				difference = sumInputs - sumOutputs;
+                //
+                //				long fees = Tools.getTransactionFees(transactionFromClient.getInputs().size(), transactionFromClient.getOutputs().size());
+                //
+                //				/**
+                //				 * TODO: This is currently pretty difficult..
+                //				 * For debug purposes, I leave this commented now, but we should find a way, if the client send us proper inputs
+                //				 */
+                //				if(difference < fees)
+                //					throw new Exception("Inputs not sufficient for the channel.. Should be: "+sumOutputs+" Is: "+sumInputs+" Difference:
+                // "+difference+" Fees: "+fees);
 
                 /**
                  * Make sure the transaction is actually spendable..
@@ -352,14 +313,12 @@ public class RequestHandler extends AbstractHandler {
                 channel.setOpeningTx(transactionFromClient);
                 channel.setOpeningTxHash(transactionFromClient.getHashAsString());
 
-
                 /**
                  * Build the refund transaction
                  */
                 TransactionWrapper transactionWrapper = Tools.getChannelRefundTransaction(channel);
                 Transaction refundTransaction = transactionWrapper.getTransaction();
                 ECDSASignature signature = transactionWrapper.getSignature();
-
 
                 /**
                  * Update our database with the channel
@@ -368,7 +327,6 @@ public class RequestHandler extends AbstractHandler {
                 channel.setRefundTxClient(refundTransaction);
                 channel.setRefundTxServer(refundTransaction);
                 MySQLConnection.updateChannel(conn, channel);
-
 
                 /**
                  * Fill the respone to the client
@@ -401,11 +359,12 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Test if the channel is indeed not yet created..
                  */
-                if (channel.isReady())
+                if (channel.isReady()) {
                     throw new Exception("Channel is ready already");
-                if (channel.getEstablishPhase() != 3)
+                }
+                if (channel.getEstablishPhase() != 3) {
                     throw new Exception("Something went wrong somewhere, start again with a new pubkey..");
-
+                }
 
                 Transaction openingTransaction = channel.getOpeningTx();
 
@@ -423,7 +382,6 @@ public class RequestHandler extends AbstractHandler {
                 refundTransaction.getInput(0).setScriptSig(inputScript);
                 inputScript.correctlySpends(refundTransaction, 0, openingTransaction.getOutput(0).getScriptPubKey());
 
-
                 DefaultRiskAnalysis.isStandard(openingTransaction);
                 DefaultRiskAnalysis.isStandard(refundTransaction);
 
@@ -436,7 +394,6 @@ public class RequestHandler extends AbstractHandler {
                 System.out.println(openingTransaction);
                 peerGroup.broadcastTransaction(openingTransaction);
                 MySQLConnection.deleteOutputByChannel(conn, channel);
-
 
                 /**
                  * Update our database with the channel
@@ -455,7 +412,6 @@ public class RequestHandler extends AbstractHandler {
                 channel.setReady(true);
 
                 MySQLConnection.updateChannel(conn, channel);
-
 
                 /**
                  * Fill the respone to the client
@@ -493,18 +449,23 @@ public class RequestHandler extends AbstractHandler {
                  * TODO: Check if there are enough funds left on the receiving channel
                  * 			to cover this payment..
                  */
-                if (!channel.isReady())
+                if (!channel.isReady()) {
                     throw new Exception("Channel is not ready for payments..");
+                }
 
-                if (m.amount < Constants.MIN_PAYMENT)
+                if (m.amount < Constants.MIN_PAYMENT) {
                     throw new Exception("Payment is below threshold");
+                }
 
-                if (m.amount > channel.getAmountClient())
+                if (m.amount > channel.getAmountClient()) {
                     throw new Exception("Payment is too high for the channel");
+                }
 
-                if (channel.getChannelTxClientID() != 0)
-                    if (m.amount + 2 * Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX) > channel.getChannelTxClient().getOutput(0).getValue().value)
+                if (channel.getChannelTxClientID() != 0) {
+                    if (m.amount + 2 * Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX) > channel.getChannelTxClient().getOutput(0).getValue().value) {
                         throw new Exception("Too many uncleared payments in the channel. Current Client change not sufficient.");
+                    }
+                }
 
                 /**
                  * TODO: We get the first 8 byte of the pubkey of the receiver, base64 encoded. As it is truncated and as we compare it to the
@@ -512,25 +473,28 @@ public class RequestHandler extends AbstractHandler {
                  */
                 String receiver = m.receipient.substring(0, 6);
                 int receiverChannelId = MySQLConnection.checkChannelForReceiving(conn, receiver);
-                if (receiverChannelId == 0)
+                if (receiverChannelId == 0) {
                     throw new Exception("Receiver does not exist or is not ready for receiving payments..");
+                }
 
-                if (receiverChannelId == channel.getId())
+                if (receiverChannelId == channel.getId()) {
                     throw new Exception("Receiving Channel cannot be the same as Sending Channel.");
+                }
 
                 /**
                  * Just allow one input for now, the one of the multisig
                  */
                 receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
 
-                if (receivedTransaction.getInputs().size() != 1)
+                if (receivedTransaction.getInputs().size() != 1) {
                     throw new Exception("Transaction input count is not 1");
+                }
 
                 TransactionInput input = receivedTransaction.getInput(0);
                 TransactionOutPoint outpoint = input.getOutpoint();
-                if (!outpoint.getHash().toString().equals(channel.getOpeningTx().getHash().toString()) || outpoint.getIndex() != 0)
+                if (!outpoint.getHash().toString().equals(channel.getOpeningTx().getHash().toString()) || outpoint.getIndex() != 0) {
                     throw new Exception("Transaction input does not point to the opening transaction");
-
+                }
 
                 /**
                  * Check the outputs of the transaction that was sent to us
@@ -551,12 +515,13 @@ public class RequestHandler extends AbstractHandler {
 
                 if (channel.getChannelTxServerID() != 0) {
                     Transaction channelTransaction = channel.getChannelTxServer();
-                    if (receivedTransaction.getOutputs().size() - channelTransaction.getOutputs().size() != 1)
-                        throw new Exception("Transaction Output count is not correct. Is: " + receivedTransaction.getOutputs().size() + " Should be: " + (channelTransaction.getOutputs().size() + 1));
+                    if (receivedTransaction.getOutputs().size() - channelTransaction.getOutputs().size() != 1) {
+                        throw new Exception("Transaction Output count is not correct. Is: " + receivedTransaction.getOutputs().size() + " Should be: " +
+                                                (channelTransaction.getOutputs().size() + 1));
+                    }
 
                     List<TransactionOutput> clientList = receivedTransaction.getOutputs();
                     List<TransactionOutput> serverList = channelTransaction.getOutputs();
-
 
                     for (int i = 0; i < paymentList.size(); i++) {
                         TransactionOutput client = clientList.get(i + 2);
@@ -569,8 +534,9 @@ public class RequestHandler extends AbstractHandler {
 
                         }
 
-                        if (!ScriptTools.checkPaymentScript(client, channel, keyWrapper, payment.getSecretHash(), Constants.SERVERSIDE, payment.paymentToServer))
+                        if (!ScriptTools.checkPaymentScript(client, channel, keyWrapper, payment.getSecretHash(), Constants.SERVERSIDE, payment.paymentToServer)) {
                             throw new Exception("Payment Script is not correct..");
+                        }
                     }
                 }
                 /**
@@ -578,21 +544,24 @@ public class RequestHandler extends AbstractHandler {
                  * 		1. output is the client change
                  * 		2. output is the server change
                  */
-                if (receivedTransaction.getOutput(0).getValue().value > (channel.getAmountClient() - m.amount))
+                if (receivedTransaction.getOutput(0).getValue().value > (channel.getAmountClient() - m.amount)) {
                     throw new Exception("Client change is too high");
-                if (receivedTransaction.getOutput(1).getValue().value < (channel.getAmountServer() + Tools.getTransactionFees(Constants.SIZE_REVOKE_TX)))
+                }
+                if (receivedTransaction.getOutput(1).getValue().value < (channel.getAmountServer() + Tools.getTransactionFees(Constants.SIZE_REVOKE_TX))) {
                     throw new Exception("Server change is not correct. Is: " + receivedTransaction.getOutput(1).getValue().value + " Should be: " + (channel.getAmountServer() + Tools.getTransactionFees(Constants.SIZE_REVOKE_TX)));
+                }
 
                 /**
                  * On Serverside, the change(revoke) is
                  * 		1. client goes directly to his change address
                  * 		2. server goes to another multisig, between clientPubKey and serverPubKeyTemp
                  */
-                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient()))
+                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
                     throw new Exception("Revoke Script to Client does not pay to correct address.. Is: " + receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString() + " Should Be: " + channel.getChangeAddressClient());
-                if (!ScriptTools.checkRevokeScript(receivedTransaction.getOutput(1), channel, keyWrapper, Constants.SERVERSIDE))
+                }
+                if (!ScriptTools.checkRevokeScript(receivedTransaction.getOutput(1), channel, keyWrapper, Constants.SERVERSIDE)) {
                     throw new Exception("Revoke Script to Server is not correct..");
-
+                }
 
                 /**
                  * Check the added payment..
@@ -620,21 +589,23 @@ public class RequestHandler extends AbstractHandler {
 
                 TransactionOutput paymentOutput = receivedTransaction.getOutputs().get(receivedTransaction.getOutputs().size() - 1);
                 String secretHash = ScriptTools.getRofPaymentScript(paymentOutput);
-                if (MySQLConnection.getPayment(conn, secretHash, channel.getId()) != null)
+                if (MySQLConnection.getPayment(conn, secretHash, channel.getId()) != null) {
                     throw new Exception("Secret Hash must be unique..");
+                }
 
                 long amountShouldBe = m.amount + Tools.getTransactionFees(Constants.SIZE_OF_SETTLEMENT_TX);
-                if (paymentOutput.getValue().value < amountShouldBe)
+                if (paymentOutput.getValue().value < amountShouldBe) {
                     throw new Exception("New payment output value is not sufficient");
+                }
 
-                if (!ScriptTools.checkPaymentScript(paymentOutput, channel, keyWrapper, null, Constants.SERVERSIDE, true))
+                if (!ScriptTools.checkPaymentScript(paymentOutput, channel, keyWrapper, null, Constants.SERVERSIDE, true)) {
                     throw new Exception("Script of the added payment is not correct..");
+                }
 
                 /**
                  * Set those keys from the list as used, that have been around in any of the Scripts.
                  */
                 MySQLConnection.setKeysUsed(conn, keyWrapper);
-
 
                 /**
                  * Sign it, such that we can give the hash to the client
@@ -652,8 +623,9 @@ public class RequestHandler extends AbstractHandler {
                  */
                 int size = receivedTransaction.getMessageSize() + 71;
 
-                if (!Tools.checkTransactionFees(size, receivedTransaction, channel.getOpeningTx().getOutput(0)))
+                if (!Tools.checkTransactionFees(size, receivedTransaction, channel.getOpeningTx().getOutput(0))) {
                     throw new Exception("Transaction fees for channel transaction is not correct");
+                }
 
                 /**
                  * Validation complete..
@@ -674,7 +646,6 @@ public class RequestHandler extends AbstractHandler {
                 channelTransaction.addOutput(Coin.valueOf(0), ScriptTools.getRevokeScript(keyWrapper, channel, Constants.CLIENTSIDE));
                 channelTransaction.addOutput(Coin.valueOf(channel.getAmountServer()), channel.getChangeAddressServerAsAddress());
 
-
                 for (Payment p : paymentList) {
                     Script outputScript = ScriptTools.getPaymentScript(channel, keyWrapper, p.getSecretHash(), Constants.CLIENTSIDE, p.paymentToServer);
                     long amount;
@@ -689,8 +660,9 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Set those payments included in the current temp tx accordingly..
                  */
-                for(Payment p : paymentList)
+                for (Payment p : paymentList) {
                     p.setIncludedInChannelTemp(true);
+                }
 
                 /**
                  * Set those keys from the list as used, that have been around in any of the Scripts.
@@ -712,7 +684,6 @@ public class RequestHandler extends AbstractHandler {
                  */
                 serverSig = Tools.getSignature(channelTransaction, 0, channel.getOpeningTx().getOutput(0), channel.getServerKeyOnServer());
                 channelTransaction.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
-
 
                 /**
                  * Update our database with the new data.
@@ -763,11 +734,12 @@ public class RequestHandler extends AbstractHandler {
                 SendPaymentRequestTwo m = new Gson().fromJson(message.data, SendPaymentRequestTwo.class);
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-
-                if (!channel.isReady())
+                if (!channel.isReady()) {
                     throw new Exception("Channel is not ready for payments..");
-                if (channel.getPaymentPhase() != 2)
+                }
+                if (channel.getPaymentPhase() != 2) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
+                }
 
                 /**
                  * We got a 2 lists back with refunds and settlements tx for each payment.
@@ -787,69 +759,80 @@ public class RequestHandler extends AbstractHandler {
                 receivedTransaction = channel.getChannelTxClientTemp();
                 Sha256Hash channelHash = channel.getChannelTxServerTemp().getHash();
 
-
                 /**
                  * Get all payments that are stored in the channel, with the most recent one aswell.
                  */
-//                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelWithMostRecent(conn, channel.getId());
+                //                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelWithMostRecent(conn, channel.getId());
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelTemp(conn, channel.getId());
-
 
                 for (int i = 0; i < paymentList.size(); ++i) {
                     payment = paymentList.get(i);
                     Transaction refund = refundList.get(i);
                     Transaction settlement = settlementList.get(i);
 
-                    if (refund.getInputs().size() != 1)
+                    if (refund.getInputs().size() != 1) {
                         throw new Exception("Refund Input Size is not 1");
-                    if (settlement.getInputs().size() != 1)
+                    }
+                    if (settlement.getInputs().size() != 1) {
                         throw new Exception("Settlement Input Size is not 1");
-
-
-                    if (refund.getOutputs().size() != 1)
-                        throw new Exception("Refund Output Size is not 1");
-                    if (settlement.getOutputs().size() != 1)
-                        throw new Exception("Settlement Output Size is not 1");
-
-
-                    if (!Tools.compareHash(refund.getInput(0).getOutpoint().getHash(), channelHash))
-                        throw new Exception("Refund Input Hash is not correct");
-                    if (!Tools.compareHash(settlement.getInput(0).getOutpoint().getHash(), channelHash))
-                        throw new Exception("Settlement Input Hash is not correct");
-
-
-                    if (refund.getInput(0).getOutpoint().getIndex() != (i + 2))
-                        throw new Exception("Refund Input Index is not correct");
-                    if (settlement.getInput(0).getOutpoint().getIndex() != (i + 2))
-                        throw new Exception("Settlement Input Index is not correct");
-
-
-                    if (refund.getOutput(0).getValue().value != payment.getAmount())
-                        throw new Exception("Refund Output value not correct");
-                    if (settlement.getOutput(0).getValue().value != payment.getAmount())
-                        throw new Exception("Settlement Output value not correct");
-
-
-                    if (payment.paymentToServer) {
-                        if (!refund.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient()))
-                            throw new Exception("Refund Output Address is not correct");
-                        if (!settlement.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer()))
-                            throw new Exception("Settlement Output Address is not correct");
-                        if (!Tools.checkTransactionLockTime(refund, channel.getTimestampRefunds()))
-                            throw new Exception("Refund LockTime is not correct.");
-                    } else {
-                        if (!refund.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer()))
-                            throw new Exception("Refund Output Address is not correct");
-                        if (!settlement.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient()))
-                            throw new Exception("Settlement Output Address is not correct");
-                        if (!Tools.checkTransactionLockTime(refund, payment.getTimestampCreated() + Constants.TIME_TO_REVEAL_SECRET))
-                            throw new Exception("Refund LockTime is not correct.");
                     }
 
-                    if (Tools.checkSignature(refund, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data))
+                    if (refund.getOutputs().size() != 1) {
+                        throw new Exception("Refund Output Size is not 1");
+                    }
+                    if (settlement.getOutputs().size() != 1) {
+                        throw new Exception("Settlement Output Size is not 1");
+                    }
+
+                    if (!Tools.compareHash(refund.getInput(0).getOutpoint().getHash(), channelHash)) {
+                        throw new Exception("Refund Input Hash is not correct");
+                    }
+                    if (!Tools.compareHash(settlement.getInput(0).getOutpoint().getHash(), channelHash)) {
+                        throw new Exception("Settlement Input Hash is not correct");
+                    }
+
+                    if (refund.getInput(0).getOutpoint().getIndex() != (i + 2)) {
+                        throw new Exception("Refund Input Index is not correct");
+                    }
+                    if (settlement.getInput(0).getOutpoint().getIndex() != (i + 2)) {
+                        throw new Exception("Settlement Input Index is not correct");
+                    }
+
+                    if (refund.getOutput(0).getValue().value != payment.getAmount()) {
+                        throw new Exception("Refund Output value not correct");
+                    }
+                    if (settlement.getOutput(0).getValue().value != payment.getAmount()) {
+                        throw new Exception("Settlement Output value not correct");
+                    }
+
+                    if (payment.paymentToServer) {
+                        if (!refund.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
+                            throw new Exception("Refund Output Address is not correct");
+                        }
+                        if (!settlement.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer())) {
+                            throw new Exception("Settlement Output Address is not correct");
+                        }
+                        if (!Tools.checkTransactionLockTime(refund, channel.getTimestampRefunds())) {
+                            throw new Exception("Refund LockTime is not correct.");
+                        }
+                    } else {
+                        if (!refund.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer())) {
+                            throw new Exception("Refund Output Address is not correct");
+                        }
+                        if (!settlement.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
+                            throw new Exception("Settlement Output Address is not correct");
+                        }
+                        if (!Tools.checkTransactionLockTime(refund, payment.getTimestampCreated() + Constants.TIME_TO_REVEAL_SECRET)) {
+                            throw new Exception("Refund LockTime is not correct.");
+                        }
+                    }
+
+                    if (Tools.checkSignature(refund, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data)) {
                         throw new Exception("Refund Client Signature is not correct");
-                    if (Tools.checkSignature(settlement, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data))
+                    }
+                    if (Tools.checkSignature(settlement, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data)) {
                         throw new Exception("Settlement Client Signature is not correct");
+                    }
 
                     if (payment.paymentToServer) {
                         payment.setSettlementTxSenderTemp(settlement);
@@ -858,7 +841,6 @@ public class RequestHandler extends AbstractHandler {
                         payment.setSettlementTxReceiverTemp(settlement);
                         payment.setRefundTxReceiverTemp(refund);
                     }
-
 
                 }
                 /**
@@ -869,22 +851,28 @@ public class RequestHandler extends AbstractHandler {
                  */
                 Transaction revoke = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.revokeTransaction));
 
-                if (revoke.getInputs().size() != 1)
+                if (revoke.getInputs().size() != 1) {
                     throw new Exception("Revoke Input Size is not 1");
-                if (revoke.getOutputs().size() != 1)
+                }
+                if (revoke.getOutputs().size() != 1) {
                     throw new Exception("Revoke Output Size is not 1");
-                if (!Tools.compareHash(revoke.getInput(0).getOutpoint().getHash(), channelHash))
+                }
+                if (!Tools.compareHash(revoke.getInput(0).getOutpoint().getHash(), channelHash)) {
                     throw new Exception("Revoke Input Hash is not correct");
-                if (revoke.getInput(0).getOutpoint().getIndex() != 1)
+                }
+                if (revoke.getInput(0).getOutpoint().getIndex() != 1) {
                     throw new Exception("Revoke Input Index is not correct");
-                if (revoke.getOutput(0).getValue().value != channel.getAmountServer())
+                }
+                if (revoke.getOutput(0).getValue().value != channel.getAmountServer()) {
                     throw new Exception("Revoke Output value not correct");
-                if (!Tools.checkTransactionLockTime(revoke, channel.getTimestampRefunds()))
+                }
+                if (!Tools.checkTransactionLockTime(revoke, channel.getTimestampRefunds())) {
                     throw new Exception("Revoke TimeLock is not correct.");
+                }
 
-//				if(Tools.checkSignature(revoke, 0, channelTransaction.getOutput(0), channel.getClientKeyOnServer(), revoke.getInput(0).getScriptSig().getChunks().get(1).data))
-//					throw new Exception("Revoke Client Signature is not correct");
-
+                //				if(Tools.checkSignature(revoke, 0, channelTransaction.getOutput(0), channel.getClientKeyOnServer(), revoke.getInput(0)
+                // .getScriptSig().getChunks().get(1).data))
+                //					throw new Exception("Revoke Client Signature is not correct");
 
                 /**
                  * Validation complete, all transactions we got from the client are correct..
@@ -905,7 +893,6 @@ public class RequestHandler extends AbstractHandler {
                 ECDSASignature serverSig = Tools.getSignature(revokeTransaction, 0, channel.getChannelTxServerTemp().getOutput(1), channel.getServerKeyOnServer());
                 revokeTransaction.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
 
-
                 /**
                  * Create the refunds and settlement transactions for each payment,
                  * 	based on the hash we got from the server
@@ -913,7 +900,6 @@ public class RequestHandler extends AbstractHandler {
                 ArrayList<String> refundListToClient = new ArrayList<String>();
                 ArrayList<String> settlementListToClient = new ArrayList<String>();
                 ArrayList<String> addListToClient = new ArrayList<String>();
-
 
                 for (int i = 0; i < paymentList.size(); ++i) {
 
@@ -931,7 +917,6 @@ public class RequestHandler extends AbstractHandler {
                         refund.addOutput(Coin.valueOf(payment.getAmount()), channel.getChangeAddressServerAsAddress());
                         refund.setLockTime(payment.getTimestampCreated() + Constants.TIME_TO_REVEAL_SECRET);
                     }
-
 
                     Transaction settlement = new Transaction(Constants.getNetwork());
                     settlement.addInput(hash, i + 2, Tools.getDummyScript());
@@ -961,21 +946,17 @@ public class RequestHandler extends AbstractHandler {
                     Script scriptSig = Tools.getMultisigInputScript(signatureClient, signature);
                     additional.getInput(0).setScriptSig(scriptSig);
 
-
                     serverSig = Tools.getSignature(refund, 0, output, channel.getServerKeyOnServer());
                     refund.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
 
                     serverSig = Tools.getSignature(settlement, 0, output, channel.getServerKeyOnServer());
                     settlement.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
 
-
                     refundListToClient.add(Tools.byteToString(refund.bitcoinSerialize()));
                     settlementListToClient.add(Tools.byteToString(settlement.bitcoinSerialize()));
                     addListToClient.add(Tools.byteToString(additional.bitcoinSerialize()));
 
-
                 }
-
 
                 /**
                  * Update our database with the channel.
@@ -984,13 +965,11 @@ public class RequestHandler extends AbstractHandler {
                 channel.setChannelTxClientTemp(receivedTransaction);
                 channel.setChannelTxRevokeClientTemp(revokeTransaction);
                 channel.setChannelTxRevokeServerTemp(revoke);
-//				conn.setAutoCommit(false);
+                //				conn.setAutoCommit(false);
                 MySQLConnection.updatePayment(conn, paymentList);
-
 
                 channel.setPaymentPhase(3);
                 MySQLConnection.updateChannel(conn, channel);
-
 
                 /**
                  * Fill response for the client.
@@ -1004,7 +983,6 @@ public class RequestHandler extends AbstractHandler {
 
                 responseContainer.success = true;
                 responseContainer.type = Type.SEND_PAYMENT_TWO_RESPONSE;
-
 
                 responseContainer.fill(response);
 
@@ -1027,26 +1005,27 @@ public class RequestHandler extends AbstractHandler {
 
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-
-                if (!channel.isReady())
+                if (!channel.isReady()) {
                     throw new Exception("Channel is not ready for payments..");
-                if (channel.getPaymentPhase() != 3)
+                }
+                if (channel.getPaymentPhase() != 3) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
-
+                }
 
                 /**
                  * Check if the keys are provided and save them..
                  */
-                if (m.keyList == null)
+                if (m.keyList == null) {
                     throw new Exception("keyList is null");
-                if (m.keyList.size() == 0)
+                }
+                if (m.keyList.size() == 0) {
                     throw new Exception("keyList is empty");
+                }
 
                 /**
                  * Helper Class to check all the different parameters from the new keys.
                  */
                 MySQLConnection.checkKeysFromOtherSide(conn, channel, m.keyList);
-
 
                 /**
                  * At this point, the payment is complete for us, wait for REQUEST_FOUR, such that the client is okay aswell.
@@ -1054,7 +1033,6 @@ public class RequestHandler extends AbstractHandler {
                 channel.setPaymentPhase(4);
                 MySQLConnection.updateChannel(conn, channel);
                 conn.commit();
-
 
                 /**
                  * Fill response for the client.
@@ -1065,7 +1043,6 @@ public class RequestHandler extends AbstractHandler {
                 responseContainer.success = true;
                 responseContainer.type = Type.SEND_PAYMENT_THREE_RESPONSE;
 
-
             } else if (message.type == Type.SEND_PAYMENT_FOUR_REQUEST) {
                 /**
                  * Fourth Request for establishing the channel.
@@ -1075,12 +1052,12 @@ public class RequestHandler extends AbstractHandler {
 
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-
-                if (!channel.isReady())
+                if (!channel.isReady()) {
                     throw new Exception("Channel is not ready for payments..");
-                if (channel.getPaymentPhase() != 4)
+                }
+                if (channel.getPaymentPhase() != 4) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
-
+                }
 
                 /**
                  * At this point, the payment is complete for us, so we should swap out the transactions
@@ -1088,8 +1065,8 @@ public class RequestHandler extends AbstractHandler {
                  */
                 MySQLConnection.getKeysOfUsToBeExposed(conn, channel, true);
 
-//				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
-//				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
+                //				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
+                //				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
 
                 channel.replaceCurrentTransactionsWithTemporary();
                 channel.setPaymentPhase(0);
@@ -1097,16 +1074,14 @@ public class RequestHandler extends AbstractHandler {
 
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelTemp(conn, channel.getId());
 
-
-
-//                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
-//                Payment newPayment = MySQLConnection.getPaymentMostRecentSent(conn, channel.getId());
+                //                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
+                //                Payment newPayment = MySQLConnection.getPaymentMostRecentSent(conn, channel.getId());
                 Payment newPayment = paymentList.get(paymentList.size() - 1);
                 newPayment.setPhase(1);
-//                newPayment.setIncludeInSenderChannel(true);
-//                newPayment.setPhase(1);
+                //                newPayment.setIncludeInSenderChannel(true);
+                //                newPayment.setPhase(1);
 
-//                paymentList.add(newPayment);
+                //                paymentList.add(newPayment);
 
                 for (Payment p : paymentList) {
                     p.setIncludedInChannel(true);
@@ -1118,14 +1093,15 @@ public class RequestHandler extends AbstractHandler {
                 int lowestTimestamp = channel.getTimestampRefunds();
                 for (Payment p : paymentList) {
                     if (!p.paymentToServer) {
-                        if (p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET < lowestTimestamp)
+                        if (p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET < lowestTimestamp) {
                             lowestTimestamp = p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET;
+                        }
                     }
                 }
                 channel.setTimestampForceClose(lowestTimestamp);
                 TransactionStorage.instance.onChannelChanged(channel);
 
-//				System.out.println("Payment "+newPayment.getSecretHash()+" is final!");
+                //				System.out.println("Payment "+newPayment.getSecretHash()+" is final!");
 
                 /**
                  * Fill the (empty) response to the client.
@@ -1155,20 +1131,20 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Check if the keys are provided and save them..
                  */
-                if (m.keyList == null)
+                if (m.keyList == null) {
                     throw new Exception("keyList is null");
-                if (m.keyList.size() == 0)
+                }
+                if (m.keyList.size() == 0) {
                     throw new Exception("keyList is empty");
+                }
 
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
-
 
                 /**
                  * Clean our keylist first, such that only these new keys are used now.
                  */
-//				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
-//				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
-
+                //				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
+                //				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
 
                 MySQLConnection.addKey(conn, m.keyList, channel.getId(), false);
 
@@ -1181,7 +1157,6 @@ public class RequestHandler extends AbstractHandler {
                 for (Key key : response.keyList) {
                     key.privateKey = null;
                 }
-
 
                 responseContainer.fill(response);
                 responseContainer.success = true;
@@ -1234,19 +1209,18 @@ public class RequestHandler extends AbstractHandler {
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
                 MySQLConnection.updatePaymentsResetTemp(conn, channel);
 
-//				if(channel.getPaymentPhase() != 12)
-//					throw new Exception("Something went wrong somewhere, start again at the beginning..");
+                //				if(channel.getPaymentPhase() != 12)
+                //					throw new Exception("Something went wrong somewhere, start again at the beginning..");
 
                 /**
                  * Clean our keylist first, such that only these new keys are used now.
                  */
-//				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
-//				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
+                //				MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
+                //				MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
 
                 MySQLConnection.addKey(conn, m.keyList, channel.getId(), false);
 
                 ArrayList<String> deletedPayments = new ArrayList<String>();
-
 
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
                 ArrayList<Secret> secretsForSentPayments = new ArrayList<Secret>();
@@ -1296,7 +1270,9 @@ public class RequestHandler extends AbstractHandler {
                                 break;
                             }
                         }
-                        if (brk) continue;
+                        if (brk) {
+                            continue;
+                        }
                         if (p.getPhase() == 5) {
                             p.setPhase(2);
                         }
@@ -1313,9 +1289,10 @@ public class RequestHandler extends AbstractHandler {
                  */
                 Set<Integer> receiverSet = new LinkedHashSet<>();
                 for (Secret secret : m.secretList) {
-//                    System.out.println(secret.secretHash);
-                    if (!secret.verify())
+                    //                    System.out.println(secret.secretHash);
+                    if (!secret.verify()) {
                         throw new Exception("Secret does not hash to correct value");
+                    }
 
                     for (Payment p : paymentList) {
                         if (!p.paymentToServer) {
@@ -1338,7 +1315,6 @@ public class RequestHandler extends AbstractHandler {
 
                 MySQLConnection.updatePayment(conn, paymentList);
 
-
                 /**
                  * Add all payments to the channel, that have no secret attached
                  */
@@ -1348,7 +1324,7 @@ public class RequestHandler extends AbstractHandler {
                     }
                 }
 
-                for(Payment p : paymentsForUpdatedChannel) {
+                for (Payment p : paymentsForUpdatedChannel) {
                     paymentList.remove(p);
                 }
 
@@ -1362,8 +1338,8 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Calculate amount of total payments we can include with the amount of keys we have
                  */
-//				int amountOfTotalPayments = (keyWrapper.getKeyList().size() - 1) / Constants.KEYS_PER_PAYMENT_CLIENTSIDE;
-//				int amountOfAdditionalPayments = amountOfTotalPayments - ( paymentsForUpdatedChannel.size() );
+                //				int amountOfTotalPayments = (keyWrapper.getKeyList().size() - 1) / Constants.KEYS_PER_PAYMENT_CLIENTSIDE;
+                //				int amountOfAdditionalPayments = amountOfTotalPayments - ( paymentsForUpdatedChannel.size() );
 
                 /**
                  * Grab additional payments out of the database, that aren't yet included
@@ -1375,13 +1351,11 @@ public class RequestHandler extends AbstractHandler {
                     paymentsForUpdatedChannel.add(p);
                 }
 
-
-
                 /**
                  * For later reference, order the payments in order of their id in our database.
                  */
                 paymentsForUpdatedChannel.sort(new Comparator<Payment>() {
-                    public int compare(Payment arg0, Payment arg1) {
+                    public int compare (Payment arg0, Payment arg1) {
                         return arg0.getId() - arg1.getId();
                     }
                 });
@@ -1424,8 +1398,9 @@ public class RequestHandler extends AbstractHandler {
                 /**
                  * Set all those payments as included in the temp-tx
                  */
-                for(Payment p : paymentsForUpdatedChannel)
+                for (Payment p : paymentsForUpdatedChannel) {
                     p.setIncludedInChannelTemp(true);
+                }
                 /**
                  * Set those keys from the list as used, that have been around in any of the Scripts.
                  */
@@ -1445,14 +1420,14 @@ public class RequestHandler extends AbstractHandler {
                 ECDSASignature serverSig = Tools.getSignature(channelTransaction, 0, channel.getOpeningTx().getOutput(0), channel.getServerKeyOnServer());
                 channelTransaction.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
 
-
                 /**
                  * Fill the response to the client
                  */
                 UpdateChannelResponseTwo response = new UpdateChannelResponseTwo();
                 response.channelTransaction = Tools.byteToString(channelTransaction.bitcoinSerialize());
                 response.secretList = secretsForSentPayments;
-//				response.keyList = MySQLConnection.createKeys(conn, channel, (paymentsForUpdatedChannel.size() * Constants.KEYS_PER_PAYMENT_SERVERSIDE) + 1);
+                //				response.keyList = MySQLConnection.createKeys(conn, channel, (paymentsForUpdatedChannel.size() * Constants
+                // .KEYS_PER_PAYMENT_SERVERSIDE) + 1);
                 response.keyList = MySQLConnection.createKeys(conn, channel, 1);
                 response.removedPayments = deletedPayments;
 
@@ -1466,8 +1441,9 @@ public class RequestHandler extends AbstractHandler {
                 MySQLConnection.updatePayment(conn, paymentsForUpdatedChannel);
                 MySQLConnection.updateChannel(conn, channel);
 
-                for (Integer sendingChannelId : receiverSet)
+                for (Integer sendingChannelId : receiverSet) {
                     WebSocketHandler.newSecret(sendingChannelId);
+                }
 
             } else if (message.type == Type.UPDATE_CHANNEL_THREE_REQUEST) {
                 /**
@@ -1480,8 +1456,9 @@ public class RequestHandler extends AbstractHandler {
                  */
                 UpdateChannelRequestThree m = new Gson().fromJson(message.data, UpdateChannelRequestThree.class);
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
-                if (channel.getPaymentPhase() != 13)
+                if (channel.getPaymentPhase() != 13) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
+                }
 
                 /**
                  * Just allow one input for now, the one of the multisig
@@ -1489,14 +1466,15 @@ public class RequestHandler extends AbstractHandler {
                 receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
                 Transaction channelTransaction = channel.getChannelTxClientTemp();
 
-                if (receivedTransaction.getInputs().size() != 1)
+                if (receivedTransaction.getInputs().size() != 1) {
                     throw new Exception("Transaction input count is not 1");
+                }
 
                 TransactionInput input = receivedTransaction.getInput(0);
                 TransactionOutPoint outpoint = input.getOutpoint();
-                if (!Tools.compareHash(outpoint.getHash(), channel.getOpeningTx().getHash()) || outpoint.getIndex() != 0)
+                if (!Tools.compareHash(outpoint.getHash(), channel.getOpeningTx().getHash()) || outpoint.getIndex() != 0) {
                     throw new Exception("Transaction input does not point to the opening transaction");
-
+                }
 
                 /**
                  * Check the outputs of the transaction that was sent to us
@@ -1515,15 +1493,15 @@ public class RequestHandler extends AbstractHandler {
                  */
                 KeyWrapper keyWrapper = MySQLConnection.getKeysPubOnly(conn, channel, true);
 
-                if (receivedTransaction.getOutputs().size() != channelTransaction.getOutputs().size())
+                if (receivedTransaction.getOutputs().size() != channelTransaction.getOutputs().size()) {
                     throw new Exception("Transaction Output count is not correct.");
+                }
 
                 if (channelTransaction.getOutputs().size() > 2) {
 
-//                    ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), channelTransaction.getOutputs().size() - 2);
+                    //                    ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(),
+                    // channelTransaction.getOutputs().size() - 2);
                     ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelTemp(conn, channel.getId());
-
-
 
                     List<TransactionOutput> clientList = receivedTransaction.getOutputs();
                     List<TransactionOutput> serverList = channelTransaction.getOutputs();
@@ -1534,12 +1512,13 @@ public class RequestHandler extends AbstractHandler {
                             TransactionOutput server = serverList.get(i);
                             payment = paymentList.get(i - 2);
 
-
-                            if (client.getValue().value != server.getValue().value)
+                            if (client.getValue().value != server.getValue().value) {
                                 throw new Exception("Value of an old payment does not match..");
+                            }
 
-                            if (!ScriptTools.checkPaymentScript(client, channel, keyWrapper, payment.getSecretHash(), Constants.SERVERSIDE, payment.paymentToServer))
+                            if (!ScriptTools.checkPaymentScript(client, channel, keyWrapper, payment.getSecretHash(), Constants.SERVERSIDE, payment.paymentToServer)) {
                                 throw new Exception("Payment Script is not correct..");
+                            }
                         }
                     }
                 }
@@ -1549,20 +1528,24 @@ public class RequestHandler extends AbstractHandler {
                  * 		1. output is the client change
                  * 		2. output is the server change
                  */
-                if (receivedTransaction.getOutput(0).getValue().value > channelTransaction.getOutput(0).getValue().value)
+                if (receivedTransaction.getOutput(0).getValue().value > channelTransaction.getOutput(0).getValue().value) {
                     throw new Exception("Client change is too high");
-                if (receivedTransaction.getOutput(1).getValue().value < (channelTransaction.getOutput(1).getValue().value + Tools.getTransactionFees(Constants.SIZE_REVOKE_TX)))
+                }
+                if (receivedTransaction.getOutput(1).getValue().value < (channelTransaction.getOutput(1).getValue().value + Tools.getTransactionFees(Constants.SIZE_REVOKE_TX))) {
                     throw new Exception("Server change is too low");
+                }
 
                 /**
                  * On Serverside, the change(revoke) is
                  * 		1. client goes directly to his change address
                  * 		2. server goes to another multisig, between clientPubKey and serverPubKeyTemp
                  */
-                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient()))
+                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
                     throw new Exception("Revoke Script to Client does not pay to correct address.. Is: " + receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString() + " Should Be: " + channel.getChangeAddressClient());
-                if (!ScriptTools.checkRevokeScript(receivedTransaction.getOutput(1), channel, keyWrapper, Constants.SERVERSIDE))
+                }
+                if (!ScriptTools.checkRevokeScript(receivedTransaction.getOutput(1), channel, keyWrapper, Constants.SERVERSIDE)) {
                     throw new Exception("Revoke Script to Server is not correct..");
+                }
 
                 /**
                  * Sign it, such that we can give the hash to the client
@@ -1574,7 +1557,6 @@ public class RequestHandler extends AbstractHandler {
                 receivedTransaction.getInput(0).setScriptSig(inputScript);
 
                 inputScript.correctlySpends(receivedTransaction, 0, channel.getOpeningTx().getOutput(0).getScriptPubKey());
-
 
                 /**
                  * Fill the response to the client
@@ -1612,9 +1594,9 @@ public class RequestHandler extends AbstractHandler {
                 UpdateChannelRequestFour m = new Gson().fromJson(message.data, UpdateChannelRequestFour.class);
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-                if (channel.getPaymentPhase() != 14)
+                if (channel.getPaymentPhase() != 14) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
-
+                }
 
                 /**
                  * We got a 2 lists back with refunds and settlements tx for each payment.
@@ -1634,13 +1616,12 @@ public class RequestHandler extends AbstractHandler {
                 receivedTransaction = channel.getChannelTxClientTemp();
                 Sha256Hash channelHash = channel.getChannelTxServerTemp().getHash();
 
-
                 /**
                  * Get all payments that should be in this channel.
                  */
-//                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), receivedTransaction.getOutputs().size() - 2);
+                //                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(),
+                // receivedTransaction.getOutputs().size() - 2);
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelTemp(conn, channel.getId());
-
 
                 for (int i = 0; i < paymentList.size(); ++i) {
                     payment = paymentList.get(i);
@@ -1653,16 +1634,20 @@ public class RequestHandler extends AbstractHandler {
 
                     } else {
                         int time = payment.getTimestampAddedToReceiver();
-                        if (time == 0) time = Tools.currentTime() + Constants.TIME_TO_REVEAL_SECRET;
+                        if (time == 0) {
+                            time = Tools.currentTime() + Constants.TIME_TO_REVEAL_SECRET;
+                        }
                         ScriptTools.checkTransaction(refund, (i + 2), channelHash, payment.getAmount(), channel.getChangeAddressServer(), time);
                         ScriptTools.checkTransaction(settlement, (i + 2), channelHash, payment.getAmount(), channel.getChangeAddressClient(), 0);
 
                     }
 
-                    if (Tools.checkSignature(refund, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data))
+                    if (Tools.checkSignature(refund, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data)) {
                         throw new Exception("Refund Client Signature is not correct");
-                    if (Tools.checkSignature(settlement, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data))
+                    }
+                    if (Tools.checkSignature(settlement, 0, receivedTransaction.getOutput(i + 2), channel.getClientKeyOnServer(), refund.getInput(0).getScriptSig().getChunks().get(1).data)) {
                         throw new Exception("Settlement Client Signature is not correct");
+                    }
 
                     if (payment.paymentToServer) {
                         payment.setSettlementTxSenderTemp(settlement);
@@ -1683,9 +1668,9 @@ public class RequestHandler extends AbstractHandler {
                 Transaction revoke = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.revokeTransaction));
                 ScriptTools.checkTransaction(revoke, 1, channelHash, channel.getChannelTxClientTemp().getOutput(1).getValue().value, channel.getChangeAddressServer(), channel.getTimestampRefunds());
 
-//				if(Tools.checkSignature(revoke, 0, channelTransaction.getOutput(0), channel.getClientKeyOnServer(), revoke.getInput(0).getScriptSig().getChunks().get(1).data))
-//					throw new Exception("Revoke Client Signature is not correct");
-
+                //				if(Tools.checkSignature(revoke, 0, channelTransaction.getOutput(0), channel.getClientKeyOnServer(), revoke.getInput(0)
+                // .getScriptSig().getChunks().get(1).data))
+                //					throw new Exception("Revoke Client Signature is not correct");
 
                 /**
                  * Verification complete, produce the arrays of settlements/refunds/additionals and the revoke tx
@@ -1697,7 +1682,6 @@ public class RequestHandler extends AbstractHandler {
                 ArrayList<String> refundListToClient = new ArrayList<String>();
                 ArrayList<String> settlementListToClient = new ArrayList<String>();
                 ArrayList<String> addListToClient = new ArrayList<String>();
-
 
                 ECDSASignature serverSig;
                 for (int i = 0; i < paymentList.size(); ++i) {
@@ -1711,7 +1695,6 @@ public class RequestHandler extends AbstractHandler {
                     Transaction refund = new Transaction(Constants.getNetwork());
                     refund.addInput(hash, i + 2, Tools.getDummyScript());
                     refund.getInput(0).setSequenceNumber(0);
-
 
                     Transaction additional;
                     ECKey key;
@@ -1758,7 +1741,6 @@ public class RequestHandler extends AbstractHandler {
                     settlementListToClient.add(Tools.byteToString(settlement.bitcoinSerialize()));
                     addListToClient.add(Tools.byteToString(additional.bitcoinSerialize()));
 
-
                 }
 
                 /**
@@ -1774,7 +1756,6 @@ public class RequestHandler extends AbstractHandler {
                  */
                 serverSig = Tools.getSignature(revokeTransaction, 0, channel.getChannelTxServerTemp().getOutput(1), channel.getServerKeyOnServer());
                 revokeTransaction.getInput(0).setScriptSig(ScriptTools.getMultisigInputScript(serverSig));
-
 
                 /**
                  * Fill the response to the client
@@ -1810,9 +1791,9 @@ public class RequestHandler extends AbstractHandler {
                 UpdateChannelRequestFive m = new Gson().fromJson(message.data, UpdateChannelRequestFive.class);
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-                if (channel.getPaymentPhase() != 15)
+                if (channel.getPaymentPhase() != 15) {
                     throw new Exception("Something went wrong somewhere, start again at the beginning..");
-
+                }
 
                 /**
                  * Helper Class to check the new keys.
@@ -1837,11 +1818,11 @@ public class RequestHandler extends AbstractHandler {
                  * 		- Swap the TXIDs of all payments and of the channel
                  * 		- Change phase=5 into phase=6
                  */
-//                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), channel.getChannelTxServerTemp().getOutputs().size() - 2);
+                //                ArrayList<Payment> paymentList = MySQLConnection.getPaymentsForUpdatingChannelOrdered(conn, channel.getId(), channel
+                // .getChannelTxServerTemp().getOutputs().size() - 2);
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannelTemp(conn, channel.getId());
                 ArrayList<Payment> oldPayments = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
                 ArrayList<Payment> oldPaymentsToUpdate = new ArrayList<Payment>();
-
 
                 long addAmountToServer = 0;
                 long addAmountToClient = 0;
@@ -1884,8 +1865,8 @@ public class RequestHandler extends AbstractHandler {
                     }
                 }
 
-//				System.out.println("Update complete! New channel transaction on server: ");
-//				System.out.println(channel.getChannelTxServerTemp().toString());
+                //				System.out.println("Update complete! New channel transaction on server: ");
+                //				System.out.println(channel.getChannelTxServerTemp().toString());
 
                 channel.setAmountClient(channel.getAmountClient() + addAmountToClient);
                 channel.setAmountServer(channel.getAmountServer() + addAmountToServer);
@@ -1894,7 +1875,9 @@ public class RequestHandler extends AbstractHandler {
                     if (p.paymentToServer) {
                         p.setIncludeInSenderChannel(true);
                     } else {
-                        if (p.getTimestampAddedToReceiver() == 0) p.setTimestampAddedToReceiver(Tools.currentTime());
+                        if (p.getTimestampAddedToReceiver() == 0) {
+                            p.setTimestampAddedToReceiver(Tools.currentTime());
+                        }
                         p.setPhase(2);
                         p.setIncludeInReceiverChannel(true);
                     }
@@ -1905,26 +1888,24 @@ public class RequestHandler extends AbstractHandler {
                 int lowestTimestamp = channel.getTimestampRefunds();
                 for (Payment p : paymentList) {
                     if (!p.paymentToServer) {
-                        if (p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET < lowestTimestamp)
+                        if (p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET < lowestTimestamp) {
                             lowestTimestamp = p.getTimestampAddedToReceiver() + Constants.TIME_TO_REVEAL_SECRET;
+                        }
                     }
                 }
                 channel.setTimestampForceClose(lowestTimestamp);
 
                 TransactionStorage.instance.onChannelChanged(channel);
 
-
                 MySQLConnection.updatePayment(conn, paymentList);
                 MySQLConnection.updatePayment(conn, oldPaymentsToUpdate);
                 MySQLConnection.updatePaymentRefunds(conn, channel);
-
 
                 channel.setPaymentPhase(0);
                 MySQLConnection.updateChannel(conn, channel);
 
                 MySQLConnection.deleteUnusedAndExposedKeysFromUs(conn, channel);
                 MySQLConnection.deleteUnusedKeyFromOtherSide(conn, channel);
-
 
             } else if (message.type == Type.CLOSE_CHANNEL_REQUEST) {
                 /**
@@ -1938,20 +1919,20 @@ public class RequestHandler extends AbstractHandler {
                 CloseChannelRequest m = new Gson().fromJson(message.data, CloseChannelRequest.class);
                 channel = MySQLConnection.getChannel(conn, message.pubkey);
 
-
                 /**
                  * Just allow one input for now, the one of the multisig
                  */
                 receivedTransaction = new Transaction(Constants.getNetwork(), Tools.stringToByte(m.channelTransaction));
 
-
-                if (receivedTransaction.getInputs().size() != 1)
+                if (receivedTransaction.getInputs().size() != 1) {
                     throw new Exception("Transaction input count is not 1");
+                }
 
                 TransactionInput input = receivedTransaction.getInput(0);
                 TransactionOutPoint outpoint = input.getOutpoint();
-                if (!Tools.compareHash(outpoint.getHash(), channel.getOpeningTx().getHash()) || outpoint.getIndex() != 0)
+                if (!Tools.compareHash(outpoint.getHash(), channel.getOpeningTx().getHash()) || outpoint.getIndex() != 0) {
                     throw new Exception("Transaction input does not point to the opening transaction");
+                }
 
                 ArrayList<Payment> paymentList = MySQLConnection.getPaymentsIncludedInChannel(conn, channel.getId());
 
@@ -1963,14 +1944,18 @@ public class RequestHandler extends AbstractHandler {
                     }
                 }
 
-                if (receivedTransaction.getOutput(1).getValue().value < serverAmount)
+                if (receivedTransaction.getOutput(1).getValue().value < serverAmount) {
                     throw new Exception("Server Change is not correct.");
-                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient()))
+                }
+                if (!receivedTransaction.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressClient())) {
                     throw new Exception("Client Change Address is not correct");
-                if (!receivedTransaction.getOutput(1).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer()))
+                }
+                if (!receivedTransaction.getOutput(1).getAddressFromP2PKHScript(Constants.getNetwork()).toString().equals(channel.getChangeAddressServer())) {
                     throw new Exception("Server Change Address is not correct");
-                if (!Tools.checkTransactionLockTime(receivedTransaction, 0))
+                }
+                if (!Tools.checkTransactionLockTime(receivedTransaction, 0)) {
                     throw new Exception("Lock Time is not correct");
+                }
 
                 /**
                  * Sign it, such that we can give the hash to the client
@@ -1983,9 +1968,9 @@ public class RequestHandler extends AbstractHandler {
 
                 inputScript.correctlySpends(receivedTransaction, 0, channel.getOpeningTx().getOutput(0).getScriptPubKey());
 
-                if (!Tools.checkTransactionFees(receivedTransaction.getMessageSize(), receivedTransaction, channel.getOpeningTx().getOutput(0)))
+                if (!Tools.checkTransactionFees(receivedTransaction.getMessageSize(), receivedTransaction, channel.getOpeningTx().getOutput(0))) {
                     throw new Exception("Transaction fees for channel transaction is not correct");
-
+                }
 
                 /**
                  * Okay, we got a correct transaction from the client to close this channel.
@@ -1993,7 +1978,6 @@ public class RequestHandler extends AbstractHandler {
                  */
 
                 peerGroup.broadcastTransaction(receivedTransaction);
-
 
                 /**
                  * Fill the response to the client
@@ -2021,15 +2005,15 @@ public class RequestHandler extends AbstractHandler {
                 throw new Exception("Type not supported..");
             }
         } catch (Exception e) {
-//			try {
-//				conn.setAutoCommit(true);
-//			} catch (SQLException e1) {
-//				e1.printStackTrace();
-//			}
+            //			try {
+            //				conn.setAutoCommit(true);
+            //			} catch (SQLException e1) {
+            //				e1.printStackTrace();
+            //			}
             responseContainer.success = false;
             responseContainer.type = Type.FAILURE;
             responseContainer.data = e.getMessage();
-//			responseContainer.data = Tools.stacktraceToString(e);
+            //			responseContainer.data = Tools.stacktraceToString(e);
             Tools.emailException(e, message, channel, payment, receivedTransaction, null);
             e.printStackTrace();
         } finally {
@@ -2052,7 +2036,6 @@ public class RequestHandler extends AbstractHandler {
         baseRequest.setHandled(true);
 
         responseContainer.sendMessage(jettyResponse);
-
 
     }
 
