@@ -22,7 +22,6 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
-import network.thunder.core.database.objects.Payment;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey.ECDSASignature;
@@ -445,22 +444,6 @@ public class Tools {
         Script workaround = new Script(inputScript.getProgram());
         return workaround;
 
-    }
-
-    /**
-     * Gets the payment out of list.
-     *
-     * @param paymentList the payment list
-     * @param secretHash  the secret hash
-     * @return the payment out of list
-     */
-    public static Payment getPaymentOutOfList (ArrayList<Payment> paymentList, String secretHash) {
-        for (Payment p : paymentList) {
-            if (p.getSecretHash().equals(secretHash)) {
-                return p;
-            }
-        }
-        return null;
     }
 
     /**
