@@ -21,7 +21,6 @@ Big nodes and a client-server alike structure can always evolve out of a P2P net
 
 For now I will stick with the basic server/client architecture, such that users can also choose to just be ‘most basic customers’, it’s like full node vs. SPV. The servers on their own will form a P2P mesh, where users can chose their nodes. Client and server mostly differ in their connectivity, as servers will have a very high uptime, where clients should not bother about that.
 
-
 ## Database Design
 
 As we don't depend on half-signed transactions from the other party anymore that we have to store, the database design simplifies. 
