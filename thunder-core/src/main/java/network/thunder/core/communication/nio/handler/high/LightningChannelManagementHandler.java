@@ -19,7 +19,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Node;
+import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;

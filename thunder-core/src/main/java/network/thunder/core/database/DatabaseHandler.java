@@ -8,7 +8,6 @@ import network.thunder.core.communication.objects.p2p.TreeMapDatastructure;
 import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
-import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
 
@@ -41,39 +40,6 @@ public class DatabaseHandler {
         cpds.setMaxPoolSize(8);
 
         return cpds;
-    }
-
-    /**
-     * Gets the active channels.
-     *
-     * @param conn the conn
-     * @return the active channels
-     * @throws SQLException the SQL exception
-     */
-    public static ArrayList<Channel> getActiveChannels (Connection conn) throws SQLException {
-        PreparedStatement stmt = null;
-        ArrayList<Channel> channelList = new ArrayList<>();
-        try {
-            stmt = conn.prepareStatement("SELECT * FROM channels WHERE is_ready=1");
-
-            ResultSet result = stmt.executeQuery();
-
-            if (!result.first()) {
-                return channelList;
-            }
-
-            while (!result.isAfterLast()) {
-                Channel c = new Channel(result);
-                channelList.add(c);
-                result.next();
-            }
-            result.close();
-            return channelList;
-        } finally {
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
     }
 
     public static int getChannelId (Connection conn, byte[] pubkeyA, byte[] pubkeyB) throws SQLException {
