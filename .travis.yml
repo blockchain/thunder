@@ -1,9 +1,12 @@
 language: java
 jdk:
-  - oraclejdk8
+- oraclejdk8
 before-install:
-  - echo before-install
+- echo before-install
 install: true
 script: 
   - mysql -u root < thunder-core/build_database.sql 
   - mvn clean install
+notifications:
+	slack:
+        secure: HWEF0BTIUGrDUDL2NhJl91RFwKyfdv7KXqd7LpED6J4fCyD1yy0W5XTDGyN1HaULxW0v5bCs8Krs8MRD3BDPJYP4902qvvZtchijwJWQp9NpPZ+nj7dBenUofg/qvg3kYL02GcbAlG2UQz+OTCIU7hA695q/gaI5nWeTDGI6OFuEDWeJeaWXFcbd8rquKYxUXDJQRNPtpv2EDTPNr5bglcJPEBQAd3iuOh0e/fp4wXsosNx13F8ddyUF8uSFAy3vTJeYnYFp+Q4uyWUSi2FMxDQsT4q4PVmSTtCZyFm3++a+9cKF0IVGVJwd/R3yIHhZ0cZJiq6bh3pkPXsW70wR5ZNeSFBKN/Q+FDz2VJmqCu4VWjF3y+CxQ2ZUIc+CRuEH87+qRt/9rbT44OkYPgpPpG6gaFp1Ojy8x431wRqyDoWiSbIO+1ZQmMNoT/TlSvtPXdNTN0kDoVnJp/HJkIEYXRrhbJHNFYn6BULtqHLdBqMA2FPA3/UxaNerv1jixHnPLyDbEmV3D2h+zDrnjmdzG7Dp4T13kiSMTA3bJ5xrLWxk8Ff2K9iky+bmPN6fmY5zm7xlUrP0NLuSSaGiuzT+7opOKjRGq1V9+Clm7LG7sGQljp3VzImepF4oksLNobgrDIOlKrcCe1jvCfvLBx3SuGRzUBQyKGImA9XL7Nuf8N8=
