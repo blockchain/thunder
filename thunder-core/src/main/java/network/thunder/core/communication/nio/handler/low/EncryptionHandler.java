@@ -36,7 +36,7 @@ public class EncryptionHandler extends ChannelDuplexHandler {
     private boolean sentOurKey = false;
     private boolean keyReceived = false;
 
-    private ECDHKeySet ecdhKeySet;
+    protected ECDHKeySet ecdhKeySet;
     private boolean isServer;
 
     long counterIn;
@@ -74,6 +74,9 @@ public class EncryptionHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
+        if (node.getNettyContext() == null) {
+            node.setNettyContext(ctx);
+        }
         System.out.println("CHANNEL ACTIVE ENCRYPTION");
         //The node doing the incoming connection sends out his key first
         if (!isServer) {
