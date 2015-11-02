@@ -28,7 +28,7 @@ public class ChannelStatusObject extends P2PDataObject {
         this.pubkeyA = set.getBytes("nodes_a_table.pubkey");
         this.pubkeyB = set.getBytes("nodes_b_table.pubkey");
         this.infoA = set.getBytes("info_a");
-        this.infoB = set.getBytes("info_a");
+        this.infoB = set.getBytes("info_b");
         this.signatureA = set.getBytes("signature_a");
         this.signatureB = set.getBytes("signature_b");
         this.timestamp = set.getInt("timestamp");

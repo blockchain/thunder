@@ -95,11 +95,11 @@ public class DatabaseHandler {
     }
 
     static void printInnerStatement (C3P0ProxyStatement stmt) {
-        try {
-            java.lang.reflect.Method m = java.io.PrintStream.class.getMethod("println", new Class[]{Object.class});
-            stmt.rawStatementOperation(m, System.out, new Object[]{C3P0ProxyStatement.RAW_STATEMENT});
-        } catch (Exception e) {
-        }
+//        try {
+//            java.lang.reflect.Method m = java.io.PrintStream.class.getMethod("println", new Class[]{Object.class});
+//            stmt.rawStatementOperation(m, System.out, new Object[]{C3P0ProxyStatement.RAW_STATEMENT});
+//        } catch (Exception e) {
+//        }
     }
 
     public static int getNodeId (Connection conn, byte[] pubkey) throws SQLException {
@@ -328,7 +328,7 @@ public class DatabaseHandler {
                 set.close();
                 stmt.close();
 
-                stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
+                stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
                 int i = 1;
                 stmt.setInt(i++, id);
                 stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
@@ -345,6 +345,7 @@ public class DatabaseHandler {
                 stmt.execute();
 
                 set = stmt.getGeneratedKeys();
+                set.first();
                 id = set.getInt(1);
                 set.close();
                 return id;
@@ -720,6 +721,15 @@ public class DatabaseHandler {
             }
 
             result.close();
+
+            for(DataObject o : dataObjectList) {
+                if(TreeMapDatastructure.objectToFragmentIndex(o.getObject()) != index) {
+                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: "+index+" Should be: "+TreeMapDatastructure.objectToFragmentIndex(o
+                                                                                                                                                           .getObject()));
+
+                }
+            }
+
             return dataObjectList;
         } finally {
             if (stmt != null) {

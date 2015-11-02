@@ -108,7 +108,9 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     }
 
     public void sendSyncData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_FRAGMENT));
+        SendDataObject sendDataObject = new SendDataObject();
+        sendDataObject.dataObjects = dataList;
+        ctx.writeAndFlush(new Message(sendDataObject, Type.SYNC_SEND_FRAGMENT));
     }
 
     @Override
@@ -148,7 +150,6 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
                 if (message.type == Type.SYNC_SEND_FRAGMENT) {
                     //Other node sent us all data with a specific fragment index.
                     SendDataObject dataList = new Gson().fromJson(message.data, SendDataObject.class);
-                    System.out.println(lastIndex + " " + dataList.dataObjects.size());
 
                     ArrayList<P2PDataObject> list = new ArrayList<>();
                     for (DataObject obj : dataList.dataObjects) {
@@ -163,6 +164,10 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
                         if (!node.equals(this.node)) {
                             node.newInventoryList(dataList.dataObjects);
                         }
+                    }
+                    int nextIndex = context.syncDatastructure.getNextFragmentIndexToSynchronize();
+                    if(nextIndex > 0) {
+                        this.sendGetSyncData(ctx, nextIndex);
                     }
                     //TODO: A bit messy with DataObject and P2PDataObject here..
                 }

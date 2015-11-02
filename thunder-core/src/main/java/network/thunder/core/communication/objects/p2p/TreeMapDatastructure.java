@@ -24,7 +24,7 @@ public class TreeMapDatastructure {
     public HashMap<Integer, Integer> fragmentJobList = new HashMap<>();
 
     public TreeMapDatastructure () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
             ArrayList<P2PDataObject> objList = new ArrayList<>();
             list.put(i, objList);
             fragmentIsSyncedList.put(i, false);
@@ -87,7 +87,7 @@ public class TreeMapDatastructure {
     }
 
     public synchronized int getNextFragmentIndexToSynchronize () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
 //            if(i>100) return 0;
             if (!fragmentIsSyncedList.get(i)) {
                 if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
@@ -100,7 +100,7 @@ public class TreeMapDatastructure {
     }
 
     public boolean fullySynchronized () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS; i++) {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
 //            if(i>100) return true;
             if (!fragmentIsSyncedList.get(i)) {
                 return false;
