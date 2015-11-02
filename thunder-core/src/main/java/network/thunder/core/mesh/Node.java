@@ -32,8 +32,8 @@ public class Node {
 
     private byte[] pubkey;
 
-    private ECKey pubKeyTempClient;
-    private ECKey pubKeyTempServer;
+    protected ECKey pubKeyTempClient;
+    protected ECKey pubKeyTempServer;
 
     private boolean isAuth;
     private boolean sentAuth;
@@ -68,6 +68,8 @@ public class Node {
     }
 
     public boolean processAuthentication (AuthenticationObject authentication, ECKey pubkeyClient, ECKey pubkeyServerTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
+
+        //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting
 
         byte[] data = new byte[pubkeyClient.getPubKey().length + pubkeyServerTemp.getPubKey().length];
         System.arraycopy(pubkeyClient.getPubKey(), 0, data, 0, pubkeyClient.getPubKey().length);

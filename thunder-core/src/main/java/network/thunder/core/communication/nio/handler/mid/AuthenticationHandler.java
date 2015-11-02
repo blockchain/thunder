@@ -16,11 +16,13 @@
 package network.thunder.core.communication.nio.handler.mid;
 
 import com.google.gson.Gson;
-import io.netty.channel.*;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import network.thunder.core.communication.Message;
-import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.Type;
 import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
+import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
 
 import java.security.NoSuchAlgorithmException;
@@ -52,49 +54,37 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void channelActive (final ChannelHandlerContext ctx) {
+    public void channelActive (final ChannelHandlerContext ctx) throws NoSuchProviderException, NoSuchAlgorithmException {
+        if (node.getNettyContext() == null) {
+            node.setNettyContext(ctx);
+        }
 
-		/* I don't like this design, as it wires the EncryptionHandler and the AuthenticationHandler together for eternity, but I guess that is per
-         * product design....
-		 *
-		 * TODO: Merge Encryption and Authentication handler, as authentication is no longer possible without encryption..
-		 */
         this.keyTempClient = node.getPubKeyTempClient();
         this.keyTempServer = node.getPubKeyTempServer();
 
         System.out.println("CHANNEL ACTIVE AUTHENTICATION");
-        //The node receiving the incoming connection sends out his auth first
+        //The node doing the initial connection sends out his auth first
         if (!isServer) {
             sendAuthentication(ctx);
         }
-//		ctx.fireChannelActive();
 
     }
 
-    public void sendAuthentication (ChannelHandlerContext ctx) {
-        try {
-            ctx.writeAndFlush(new Message(node.getAuthenticationObject(keyServer, keyTempClient), Type.AUTH_SEND)).sync().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete (ChannelFuture future) throws Exception {
-                    System.out.println(future);
-                }
-            });
-            if (node.isAuthFinished()) {
-                ctx.fireChannelActive();
-            }
-        } catch (InterruptedException | NoSuchAlgorithmException | NoSuchProviderException e) {
-            e.printStackTrace();
+    public void sendAuthentication (ChannelHandlerContext ctx) throws NoSuchProviderException, NoSuchAlgorithmException {
+        ctx.writeAndFlush(new Message(node.getAuthenticationObject(keyServer, keyTempClient), Type.AUTH_SEND));
+        if (node.isAuthFinished()) {
+            ctx.fireChannelActive();
         }
     }
 
     public void sendFailure (ChannelHandlerContext ctx) {
         ctx.writeAndFlush(new Message(null, Type.FAILURE));
     }
+    public void sendAuthFailed (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.AUTH_FAILED));
+    }
 
     public void authenticationFinished (ChannelHandlerContext ctx) {
-        System.out.println("Authentication Finished!");
-        node.setNettyContext(ctx);
-
         ctx.fireChannelActive();
     }
 
@@ -113,14 +103,25 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
 
                 if (message.type == Type.AUTH_SEND) {
                     AuthenticationObject authObject = new Gson().fromJson(message.data, AuthenticationObject.class);
-                    if (node.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), keyTempServer)) {
+                    boolean failed = false;
+                    try {
+                        if (node.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), keyTempServer)) {
 
-                        if (!node.hasSentAuth()) {
-                            sendAuthentication(ctx);
+                            if (!node.hasSentAuth()) {
+                                sendAuthentication(ctx);
+                            } else {
+                                authenticationFinished(ctx);
+                            }
+
                         } else {
-                            authenticationFinished(ctx);
+                            failed = true;
                         }
-
+                    } catch(Exception e) {
+                        failed = true;
+                        System.out.println("Authentication failed: "+e.getMessage());
+                    }
+                    if(failed) {
+                        sendAuthFailed(ctx);
                     }
                 } else if (message.type == Type.AUTH_FAILED) {
                     //For some reason authentication failed. We will retry it some times.
@@ -149,10 +150,10 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
     @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         //Make sure to not send messages accidentally when auth is not finished yet.
-//		Message message = (Message) msg;
-//		if (!node.isAuthFinished() && (message.type < 1010 || message.type > 1099)) {
-//			throw new RuntimeException("This should not happen. Don't send messages when auth is not finished yet");
-//		}
+        Message message = (Message) msg;
+        if (!node.isAuthFinished() && (message.type < 1010 || message.type > 1099)) {
+            throw new RuntimeException("This should not happen. Don't send messages when auth is not finished yet");
+        }
 
         ctx.writeAndFlush(msg, promise);
     }
