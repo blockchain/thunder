@@ -30,19 +30,15 @@ import java.security.SecureRandom;
 //TODO: Add a nonce to prevent replay attacks
 public class EncryptionHandler extends ChannelDuplexHandler {
 
-    private ECKey keyServer;
-    private ECKey keyClient;
-
-    private boolean sentOurKey = false;
-    private boolean keyReceived = false;
-
     protected ECDHKeySet ecdhKeySet;
-    private boolean isServer;
-
     long counterIn;
     long counterOut;
-
     Node node;
+    private ECKey keyServer;
+    private ECKey keyClient;
+    private boolean sentOurKey = false;
+    private boolean keyReceived = false;
+    private boolean isServer;
 
     public EncryptionHandler (boolean isServer, Node node) {
         //TODO: Probably not save yet...
@@ -50,26 +46,6 @@ public class EncryptionHandler extends ChannelDuplexHandler {
         this.isServer = isServer;
         this.node = node;
         node.setPubKeyTempServer(keyServer);
-    }
-
-    public void sendOurKey (ChannelHandlerContext ctx) {
-        System.out.println("EncryptionHandler sendOurKey");
-        sentOurKey = true;
-
-        Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
-        ByteBuf buf = ctx.alloc().buffer();
-        buf.writeBytes(keyServer.getPubKey());
-
-        try {
-            ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete (ChannelFuture future) throws Exception {
-                    System.out.println(future);
-                }
-            });
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
     }
 
     @Override
@@ -133,6 +109,32 @@ public class EncryptionHandler extends ChannelDuplexHandler {
     }
 
     @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
+
+    public void sendOurKey (ChannelHandlerContext ctx) {
+        System.out.println("EncryptionHandler sendOurKey");
+        sentOurKey = true;
+
+        Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
+        ByteBuf buf = ctx.alloc().buffer();
+        buf.writeBytes(keyServer.getPubKey());
+
+        try {
+            ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
+                @Override
+                public void operationComplete (ChannelFuture future) throws Exception {
+                    System.out.println(future);
+                }
+            });
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         try {
             ByteBuf buf = (ByteBuf) msg;
@@ -157,12 +159,6 @@ public class EncryptionHandler extends ChannelDuplexHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @Override
-    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
-        ctx.close();
     }
 
 }

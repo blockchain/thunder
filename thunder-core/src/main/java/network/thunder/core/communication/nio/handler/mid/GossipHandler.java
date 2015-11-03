@@ -73,33 +73,6 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
 
     }
 
-    public void sendOwnIPAddress (ChannelHandlerContext ctx) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
-        PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
-        pubkeyIPObject.pubkey = this.context.nodeKey.getPubKey();
-        pubkeyIPObject.port = this.context.port;
-        pubkeyIPObject.IP = "127.0.0.1"; //TODO...
-        pubkeyIPObject.timestamp = Tools.currentTime();
-        pubkeyIPObject.sign(context.nodeKey);
-
-        sendIPAddress(ctx, pubkeyIPObject);
-    }
-
-    public void sendIPAddress (ChannelHandlerContext ctx, PubkeyIPObject pubkeyIPObject) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
-        ctx.writeAndFlush(new Message(pubkeyIPObject, Type.GOSSIP_SEND_IP_OBJECT));
-    }
-
-    public void sendGetData (ChannelHandlerContext ctx, ArrayList<byte[]> inventory) {
-        GetDataObject object = new GetDataObject();
-        object.inventoryList = inventory;
-        ctx.writeAndFlush(new Message(object, Type.GOSSIP_GET));
-    }
-
-    public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        SendDataObject object = new SendDataObject();
-        object.dataObjects = dataList;
-        ctx.writeAndFlush(new Message(object, Type.GOSSIP_SEND));
-    }
-
     @Override
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
@@ -149,7 +122,7 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
                     for (DataObject o : sendDataObject.dataObjects) {
                         DatabaseHandler.newGossipData(node.conn, o);
                     }
-                    for(Node n : context.connectedNodes) {
+                    for (Node n : context.connectedNodes) {
                         n.newInventoryList(sendDataObject.dataObjects);
                     }
                 }
@@ -171,5 +144,32 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    public void sendData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
+        SendDataObject object = new SendDataObject();
+        object.dataObjects = dataList;
+        ctx.writeAndFlush(new Message(object, Type.GOSSIP_SEND));
+    }
+
+    public void sendGetData (ChannelHandlerContext ctx, ArrayList<byte[]> inventory) {
+        GetDataObject object = new GetDataObject();
+        object.inventoryList = inventory;
+        ctx.writeAndFlush(new Message(object, Type.GOSSIP_GET));
+    }
+
+    public void sendIPAddress (ChannelHandlerContext ctx, PubkeyIPObject pubkeyIPObject) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+        ctx.writeAndFlush(new Message(pubkeyIPObject, Type.GOSSIP_SEND_IP_OBJECT));
+    }
+
+    public void sendOwnIPAddress (ChannelHandlerContext ctx) throws UnsupportedEncodingException, NoSuchAlgorithmException, NoSuchProviderException {
+        PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
+        pubkeyIPObject.pubkey = this.context.nodeKey.getPubKey();
+        pubkeyIPObject.port = this.context.port;
+        pubkeyIPObject.IP = "127.0.0.1"; //TODO...
+        pubkeyIPObject.timestamp = Tools.currentTime();
+        pubkeyIPObject.sign(context.nodeKey);
+
+        sendIPAddress(ctx, pubkeyIPObject);
     }
 }

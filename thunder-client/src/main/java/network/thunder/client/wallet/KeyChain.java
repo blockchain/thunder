@@ -142,6 +142,11 @@ public class KeyChain {
         }
 
         @Override
+        public void onKeysAdded (List<ECKey> keys) {
+            System.out.println("new key added");
+        }
+
+        @Override
         public void onReorganize (Wallet wallet) {
         }
 
@@ -188,11 +193,6 @@ public class KeyChain {
                     }
                 }
             }
-        }
-
-        @Override
-        public void onKeysAdded (List<ECKey> keys) {
-            System.out.println("new key added");
         }
 
         @Override

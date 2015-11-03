@@ -12,20 +12,20 @@ import java.util.List;
  * Created by matsjerratsch on 13/10/2015.
  */
 public class ByteToMessageObjectHandler extends ByteToMessageDecoder {
-	@Override
-	protected void decode (ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
-		try {
-			if (in.readableBytes() > 0) {
-				byte[] data = new byte[in.readableBytes()];
-				in.readBytes(data);
-				Message message = new Gson().fromJson(new String(data), Message.class);
+    @Override
+    protected void decode (ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        try {
+            if (in.readableBytes() > 0) {
+                byte[] data = new byte[in.readableBytes()];
+                in.readBytes(data);
+                Message message = new Gson().fromJson(new String(data), Message.class);
 
-				out.add(message);
-				System.out.println("Incoming: " + message.type);
+                out.add(message);
+                System.out.println("Incoming: " + message.type);
 
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -34,32 +34,21 @@ public class ChannelStatusObject extends P2PDataObject {
         this.timestamp = set.getInt("timestamp");
     }
 
-    @Override
-    public void verify () {
-    }
+    public static ChannelStatusObject getRandomObject () {
+        ChannelStatusObject obj = new ChannelStatusObject();
 
-    @Override
-    public long getHashAsLong () {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
-        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
-        byteBuffer.flip();
-        return Math.abs(byteBuffer.getLong());
-    }
+        obj.pubkeyA = Tools.getRandomByte(33);
+        obj.pubkeyB = Tools.getRandomByte(33);
 
-    @Override
-    public byte[] getData () {
-        //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + infoA.length + infoB.length + signatureA.length + signatureB.length + 4);
+        obj.infoA = Tools.getRandomByte(60);
+        obj.infoB = Tools.getRandomByte(60);
 
-        byteBuffer.put(pubkeyA);
-        byteBuffer.put(pubkeyB);
-        byteBuffer.put(infoA);
-        byteBuffer.put(infoB);
-        byteBuffer.put(signatureA);
-        byteBuffer.put(signatureB);
-        byteBuffer.putInt(timestamp);
+        obj.timestamp = Tools.currentTime();
 
-        return byteBuffer.array();
+        obj.signatureA = Tools.getRandomByte(65);
+        obj.signatureB = Tools.getRandomByte(65);
+
+        return obj;
     }
 
     @Override
@@ -96,6 +85,30 @@ public class ChannelStatusObject extends P2PDataObject {
     }
 
     @Override
+    public byte[] getData () {
+        //TODO: Have some proper summary here..
+        ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + infoA.length + infoB.length + signatureA.length + signatureB.length + 4);
+
+        byteBuffer.put(pubkeyA);
+        byteBuffer.put(pubkeyB);
+        byteBuffer.put(infoA);
+        byteBuffer.put(infoB);
+        byteBuffer.put(signatureA);
+        byteBuffer.put(signatureB);
+        byteBuffer.putInt(timestamp);
+
+        return byteBuffer.array();
+    }
+
+    @Override
+    public long getHashAsLong () {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
+        byteBuffer.flip();
+        return Math.abs(byteBuffer.getLong());
+    }
+
+    @Override
     public int hashCode () {
         int result = pubkeyA != null ? Arrays.hashCode(pubkeyA) : 0;
         result = 31 * result + (pubkeyB != null ? Arrays.hashCode(pubkeyB) : 0);
@@ -107,20 +120,7 @@ public class ChannelStatusObject extends P2PDataObject {
         return result;
     }
 
-    public static ChannelStatusObject getRandomObject () {
-        ChannelStatusObject obj = new ChannelStatusObject();
-
-        obj.pubkeyA = Tools.getRandomByte(33);
-        obj.pubkeyB = Tools.getRandomByte(33);
-
-        obj.infoA = Tools.getRandomByte(60);
-        obj.infoB = Tools.getRandomByte(60);
-
-        obj.timestamp = Tools.currentTime();
-
-        obj.signatureA = Tools.getRandomByte(65);
-        obj.signatureB = Tools.getRandomByte(65);
-
-        return obj;
+    @Override
+    public void verify () {
     }
 }

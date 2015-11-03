@@ -81,39 +81,6 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelUnregistered (ChannelHandlerContext ctx) {
-        try {
-            conn.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        ctx.fireChannelUnregistered();
-    }
-
-    public void sendIP (ChannelHandlerContext ctx) {
-        ArrayList<DataObject> dataList = new ArrayList<>();
-        for (PubkeyIPObject o : context.getIPList()) {
-            dataList.add(new DataObject(o));
-        }
-        ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_IPS));
-    }
-
-    public void sendGetIPs (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.SYNC_GET_IPS));
-    }
-
-    public void sendGetSyncData (ChannelHandlerContext ctx, int index) {
-        lastIndex = index;
-        ctx.writeAndFlush(new Message(new GetP2PDataObject(index), Type.SYNC_GET_FRAGMENT));
-    }
-
-    public void sendSyncData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
-        SendDataObject sendDataObject = new SendDataObject();
-        sendDataObject.dataObjects = dataList;
-        ctx.writeAndFlush(new Message(sendDataObject, Type.SYNC_SEND_FRAGMENT));
-    }
-
-    @Override
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
 
@@ -166,7 +133,7 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
                         }
                     }
                     int nextIndex = context.syncDatastructure.getNextFragmentIndexToSynchronize();
-                    if(nextIndex > 0) {
+                    if (nextIndex > 0) {
                         this.sendGetSyncData(ctx, nextIndex);
                     }
                     //TODO: A bit messy with DataObject and P2PDataObject here..
@@ -183,8 +150,41 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
+    public void channelUnregistered (ChannelHandlerContext ctx) {
+        try {
+            conn.close();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        ctx.fireChannelUnregistered();
+    }
+
+    @Override
     public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    public void sendGetIPs (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.SYNC_GET_IPS));
+    }
+
+    public void sendGetSyncData (ChannelHandlerContext ctx, int index) {
+        lastIndex = index;
+        ctx.writeAndFlush(new Message(new GetP2PDataObject(index), Type.SYNC_GET_FRAGMENT));
+    }
+
+    public void sendIP (ChannelHandlerContext ctx) {
+        ArrayList<DataObject> dataList = new ArrayList<>();
+        for (PubkeyIPObject o : context.getIPList()) {
+            dataList.add(new DataObject(o));
+        }
+        ctx.writeAndFlush(new Message(dataList, Type.SYNC_SEND_IPS));
+    }
+
+    public void sendSyncData (ChannelHandlerContext ctx, ArrayList<DataObject> dataList) {
+        SendDataObject sendDataObject = new SendDataObject();
+        sendDataObject.dataObjects = dataList;
+        ctx.writeAndFlush(new Message(sendDataObject, Type.SYNC_SEND_FRAGMENT));
     }
 }

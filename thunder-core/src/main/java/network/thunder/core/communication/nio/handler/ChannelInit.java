@@ -55,6 +55,5 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
 
         ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 
-
     }
 }

@@ -19,8 +19,8 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.ChannelPromise;
-import network.thunder.core.mesh.Node;
 import network.thunder.core.communication.nio.P2PContext;
+import network.thunder.core.mesh.Node;
 
 /**
  * Creates a newly configured {@link ChannelPipeline} for a new channel.
@@ -30,25 +30,17 @@ public class NodeConnectionHandler extends ChannelDuplexHandler {
     private P2PContext context;
     private Node node;
 
-    public NodeConnectionHandler(P2PContext context, Node node) {
+    public NodeConnectionHandler (P2PContext context, Node node) {
         this.context = context;
         this.node = node;
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) {
+    public void channelActive (ChannelHandlerContext ctx) {
         System.out.println("CHANNEL ACTIVE NODE_CONNECTION_HANDLER");
         context.activeNodes.add(node);
         node.setNettyContext(ctx);
         ctx.fireChannelActive();
-    }
-
-    @Override
-    public void channelUnregistered(ChannelHandlerContext ctx) {
-        context.activeNodes.remove(node);
-        System.out.println("CHANNEL UNREGISTERED..");
-        node.closeConnection();
-        ctx.fireChannelUnregistered();
     }
 
     @Override
@@ -58,8 +50,11 @@ public class NodeConnectionHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
-        ctx.writeAndFlush(msg, promise);
+    public void channelUnregistered (ChannelHandlerContext ctx) {
+        context.activeNodes.remove(node);
+        System.out.println("CHANNEL UNREGISTERED..");
+        node.closeConnection();
+        ctx.fireChannelUnregistered();
     }
 
     @Override
@@ -67,5 +62,10 @@ public class NodeConnectionHandler extends ChannelDuplexHandler {
         cause.printStackTrace();
         context.activeNodes.remove(node);
         ctx.close();
+    }
+
+    @Override
+    public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+        ctx.writeAndFlush(msg, promise);
     }
 }

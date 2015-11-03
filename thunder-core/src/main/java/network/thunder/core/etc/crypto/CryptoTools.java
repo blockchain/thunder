@@ -19,6 +19,43 @@ import java.util.Arrays;
  */
 public class CryptoTools {
 
+    public static byte[] addHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
+        Mac mac = Mac.getInstance("HmacSHA1");
+        mac.init(keySpec);
+        byte[] result = mac.doFinal(data);
+
+        byte[] total = new byte[result.length + data.length];
+        System.arraycopy(result, 0, total, 0, result.length);
+        System.arraycopy(data, 0, total, result.length, data.length);
+
+        return total;
+    }
+
+    public static byte[] checkAndRemoveHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
+        byte[] hmac = new byte[20];
+        byte[] rest = new byte[data.length - hmac.length];
+        System.arraycopy(data, 0, hmac, 0, hmac.length);
+        System.arraycopy(data, hmac.length, rest, 0, data.length - hmac.length);
+
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
+        Mac mac = Mac.getInstance("HmacSHA1");
+        mac.init(keySpec);
+        byte[] result = mac.doFinal(rest);
+
+        if (Arrays.equals(result, hmac)) {
+            return rest;
+        }
+
+        throw new RuntimeException("HMAC does not match..");
+
+    }
+
+    public static byte[] createSignature (ECKey pubkey, byte[] data) throws NoSuchProviderException, NoSuchAlgorithmException {
+
+        return pubkey.sign(Sha256Hash.of(data)).encodeToDER();
+    }
+
     public static byte[] decryptAES_CTR (byte[] data, byte[] keyBytes, byte[] ivBytes, long counter) {
 
         try {
@@ -92,38 +129,6 @@ public class CryptoTools {
         }
     }
 
-    public static byte[] addHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
-        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
-        Mac mac = Mac.getInstance("HmacSHA1");
-        mac.init(keySpec);
-        byte[] result = mac.doFinal(data);
-
-        byte[] total = new byte[result.length + data.length];
-        System.arraycopy(result, 0, total, 0, result.length);
-        System.arraycopy(data, 0, total, result.length, data.length);
-
-        return total;
-    }
-
-    public static byte[] checkAndRemoveHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
-        byte[] hmac = new byte[20];
-        byte[] rest = new byte[data.length - hmac.length];
-        System.arraycopy(data, 0, hmac, 0, hmac.length);
-        System.arraycopy(data, hmac.length, rest, 0, data.length - hmac.length);
-
-        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
-        Mac mac = Mac.getInstance("HmacSHA1");
-        mac.init(keySpec);
-        byte[] result = mac.doFinal(rest);
-
-        if (Arrays.equals(result, hmac)) {
-            return rest;
-        }
-
-        throw new RuntimeException("HMAC does not match..");
-
-    }
-
     public static void verifySignature (ECKey pubkey, byte[] data, byte[] signature) throws NoSuchProviderException, NoSuchAlgorithmException {
         MessageDigest hashHandler = MessageDigest.getInstance("SHA256", "BC");
         hashHandler.update(data);
@@ -133,10 +138,5 @@ public class CryptoTools {
             System.out.println("Signature does not match..");
             throw new RuntimeException("Signature does not match..");
         }
-    }
-
-    public static byte[] createSignature (ECKey pubkey, byte[] data) throws NoSuchProviderException, NoSuchAlgorithmException {
-
-        return pubkey.sign(Sha256Hash.of(data)).encodeToDER();
     }
 }

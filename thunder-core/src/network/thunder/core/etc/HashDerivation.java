@@ -39,43 +39,6 @@ import java.util.List;
 public class HashDerivation {
 
     /**
-     * Calculate a revocation hash for a new channel state.
-     *
-     * @param seed        A masterseed for this calculation
-     * @param depth       The depth of the new RevocationHash
-     * @param childNumber The n. sibling at the specified depth
-     */
-    public static RevocationHash calculateRevocationHash (byte[] seed, int depth, int childNumber) {
-
-        byte[] childseed = seed;
-        for (int i = 0; i < depth; i++) {
-            childSeed = Tools.hashSecret(childSeed);
-        }
-
-        byte[] childseedWithNumber = new byte[24];
-        System.arraycopy(childseed, 0, childseedWithNumber, 20);
-
-        //Copied over from http://stackoverflow.com/questions/2183240/java-integer-to-byte-array
-        //Workaround, as there is no native way to get integer to a byte array...
-        byte[] conv = new byte[4];
-        conv[3] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[2] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[1] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[0] = (byte) childNumber;
-
-        System.arraycopy(conv, 20, childseedWithNumber, 4);
-
-        byte[] secret = Tools.hashSecret(childseedWithNumber);
-        byte[] secretHash = Tools.hashSecret(secret);
-
-        return new RevocationHash(depth, childNumber, secret, secretHash);
-
-    }
-
-    /**
      * The other party has breached the contract and submitted an old channel transaction.
      *
      * @param seed            The latest masterseed we received from the other party
@@ -126,6 +89,43 @@ public class HashDerivation {
         }
 
         return null;
+    }
+
+    /**
+     * Calculate a revocation hash for a new channel state.
+     *
+     * @param seed        A masterseed for this calculation
+     * @param depth       The depth of the new RevocationHash
+     * @param childNumber The n. sibling at the specified depth
+     */
+    public static RevocationHash calculateRevocationHash (byte[] seed, int depth, int childNumber) {
+
+        byte[] childseed = seed;
+        for (int i = 0; i < depth; i++) {
+            childSeed = Tools.hashSecret(childSeed);
+        }
+
+        byte[] childseedWithNumber = new byte[24];
+        System.arraycopy(childseed, 0, childseedWithNumber, 20);
+
+        //Copied over from http://stackoverflow.com/questions/2183240/java-integer-to-byte-array
+        //Workaround, as there is no native way to get integer to a byte array...
+        byte[] conv = new byte[4];
+        conv[3] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[2] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[1] = (byte) childNumber & 0xff;
+        input >>= 8;
+        conv[0] = (byte) childNumber;
+
+        System.arraycopy(conv, 20, childseedWithNumber, 4);
+
+        byte[] secret = Tools.hashSecret(childseedWithNumber);
+        byte[] secretHash = Tools.hashSecret(secret);
+
+        return new RevocationHash(depth, childNumber, secret, secretHash);
+
     }
 
     /**

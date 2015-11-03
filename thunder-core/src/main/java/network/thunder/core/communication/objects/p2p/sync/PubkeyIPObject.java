@@ -34,51 +34,21 @@ public class PubkeyIPObject extends P2PDataObject {
         this.pubkey = set.getBytes("pubkey");
     }
 
-    public void verify () {
-        //TODO: Implement signature verification..
-    }
+    public static PubkeyIPObject getRandomObject () {
+        PubkeyIPObject obj = new PubkeyIPObject();
 
-    @Override
-    public long getHashAsLong () {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
-        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
-        byteBuffer.flip();
-        return Math.abs(byteBuffer.getLong());
-    }
+        Random random = new Random();
 
-    public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
-        ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length + 2 + pubkey.length + 4);
-        buffer.put(IP.getBytes("UTF-8"));
-        buffer.putShort((short) port);
-        buffer.put(pubkey);
-        buffer.putInt(timestamp);
-        return buffer.array();
-    }
+        obj.IP = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
 
-    public void sign (ECKey key) throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
-        this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
-    }
+        obj.pubkey = Tools.getRandomByte(33);
+        obj.timestamp = Tools.currentTime();
+        obj.port = 8992;
 
-    public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
-        CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
-    }
+        obj.signature = Tools.getRandomByte(65);
 
-    @Override
-    public byte[] getData () {
-        //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(IP.length() + 4 + 4 + pubkey.length + signature.length);
-        try {
-            byteBuffer.put(IP.getBytes("UTF-8"));
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-        byteBuffer.putInt(port);
-        byteBuffer.put(pubkey);
-        byteBuffer.put(signature);
-        byteBuffer.putInt(timestamp);
-        return byteBuffer.array();
+        return obj;
     }
-
 
     @Override
     public boolean equals (Object o) {
@@ -108,6 +78,39 @@ public class PubkeyIPObject extends P2PDataObject {
     }
 
     @Override
+    public byte[] getData () {
+        //TODO: Have some proper summary here..
+        ByteBuffer byteBuffer = ByteBuffer.allocate(IP.length() + 4 + 4 + pubkey.length + signature.length);
+        try {
+            byteBuffer.put(IP.getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        byteBuffer.putInt(port);
+        byteBuffer.put(pubkey);
+        byteBuffer.put(signature);
+        byteBuffer.putInt(timestamp);
+        return byteBuffer.array();
+    }
+
+    public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
+        ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length + 2 + pubkey.length + 4);
+        buffer.put(IP.getBytes("UTF-8"));
+        buffer.putShort((short) port);
+        buffer.put(pubkey);
+        buffer.putInt(timestamp);
+        return buffer.array();
+    }
+
+    @Override
+    public long getHashAsLong () {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
+        byteBuffer.flip();
+        return Math.abs(byteBuffer.getLong());
+    }
+
+    @Override
     public int hashCode () {
         int result = IP != null ? IP.hashCode() : 0;
         result = 31 * result + port;
@@ -117,19 +120,15 @@ public class PubkeyIPObject extends P2PDataObject {
         return result;
     }
 
-    public static PubkeyIPObject getRandomObject () {
-        PubkeyIPObject obj = new PubkeyIPObject();
+    public void sign (ECKey key) throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
+        this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
+    }
 
-        Random random = new Random();
+    public void verify () {
+        //TODO: Implement signature verification..
+    }
 
-        obj.IP = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
-
-        obj.pubkey = Tools.getRandomByte(33);
-        obj.timestamp = Tools.currentTime();
-        obj.port = 8992;
-
-        obj.signature = Tools.getRandomByte(65);
-
-        return obj;
+    public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
+        CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
     }
 }

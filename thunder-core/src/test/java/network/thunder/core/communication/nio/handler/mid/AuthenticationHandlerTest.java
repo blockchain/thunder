@@ -40,6 +40,25 @@ public class AuthenticationHandlerTest {
 
 //    EncryptionHandler handler;
 
+    @Test
+    public void authenticationFail () throws NoSuchProviderException, NoSuchAlgorithmException {
+        m = (Message) channel1.readOutbound();
+        assertEquals(m.type, Type.AUTH_SEND);
+        AuthenticationObject authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
+        assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey2));
+
+        byte[] b = new byte[4];
+        Random r = new Random();
+        r.nextBytes(b);
+        System.arraycopy(b, 0, authObject.signature, 10, 4);
+
+        channel2.writeInbound(new Message(authObject, Type.AUTH_SEND));
+
+        m = (Message) channel2.readOutbound();
+        assertEquals(m.type, Type.AUTH_FAILED);
+
+    }
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -80,26 +99,6 @@ public class AuthenticationHandlerTest {
         assertEquals(m.type, Type.AUTH_SEND);
         authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
         assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey1));
-
-    }
-
-    @Test
-    public void authenticationFail() throws NoSuchProviderException, NoSuchAlgorithmException {
-        m = (Message) channel1.readOutbound();
-        assertEquals(m.type, Type.AUTH_SEND);
-        AuthenticationObject authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
-        assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey2));
-
-
-        byte[] b = new byte[4];
-        Random r = new Random();
-        r.nextBytes(b);
-        System.arraycopy(b, 0, authObject.signature, 10, 4);
-
-        channel2.writeInbound(new Message(authObject, Type.AUTH_SEND));
-
-        m = (Message) channel2.readOutbound();
-        assertEquals(m.type, Type.AUTH_FAILED);
 
     }
 

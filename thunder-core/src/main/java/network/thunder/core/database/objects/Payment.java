@@ -24,19 +24,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Payment {
-
     /**
      * Whether *in this context* this payment is towards us or towards the node.
      * Depends on the node we are currently talking with.
      */
     public boolean paymentToServer;
-
     int id;
     int channelIdSender;
     int channelIdReceiver;
-
     long amount;
-
+    int phaseReceiver;
 
     /*
      * Different phases of a payment:
@@ -55,28 +52,21 @@ public class Payment {
 	 * 5 - receiver/server requested refund
 	 * 6 - receiver refunded/timeouted
 	 * 12 - receiver and sender refunded (so it's settled aswell..)
-	 */
-
-    int phaseReceiver;
-    int phaseSender;
+	 */ int phaseSender;
     long fee;
-
     /*
      * Revocation hash and preimage for this payment.
      * If we know the preimage, it means the payment made it to the final receiver and we can pull the funds.
      */ byte[] secretHash;
     byte[] secret;
-
     int timestampAddedSender;
     int timestampAddedReceiver;
     int timestampSettledSender;
     int timestampSettledReceiver;
-
     boolean includeInSenderChannel;
     boolean includeInReceiverChannel;
     boolean includeInReceiverChannelTemp;
     boolean includeInSenderChannelTemp;
-
     /*
      * We use the version flags to allow for easier bruteforcing of the P2SH script.
      * If we don't know at all which payments might be used together with which revocation hashes,
@@ -233,6 +223,38 @@ public class Payment {
         this.phaseSender = phaseSender;
     }
 
+    public byte[] getSecret () {
+        return secret;
+    }
+
+    public void setSecret (byte[] secret) {
+        this.secret = secret;
+    }
+
+    public byte[] getSecretHash () {
+        return secretHash;
+    }
+
+    public void setSecretHash (byte[] secretHash) {
+        this.secretHash = secretHash;
+    }
+
+    public int getTimestampAddedReceiver () {
+        return timestampAddedReceiver;
+    }
+
+    public void setTimestampAddedReceiver (int timestampAddedReceiver) {
+        this.timestampAddedReceiver = timestampAddedReceiver;
+    }
+
+    public int getTimestampAddedSender () {
+        return timestampAddedSender;
+    }
+
+    public void setTimestampAddedSender (int timestampAddedSender) {
+        this.timestampAddedSender = timestampAddedSender;
+    }
+
     public int getTimestampSettledReceiver () {
         return timestampSettledReceiver;
     }
@@ -247,6 +269,38 @@ public class Payment {
 
     public void setTimestampSettledSender (int timestampSettledSender) {
         this.timestampSettledSender = timestampSettledSender;
+    }
+
+    public int getVersionAddedReceiver () {
+        return versionAddedReceiver;
+    }
+
+    public void setVersionAddedReceiver (int versionAddedReceiver) {
+        this.versionAddedReceiver = versionAddedReceiver;
+    }
+
+    public int getVersionAddedSender () {
+        return versionAddedSender;
+    }
+
+    public void setVersionAddedSender (int versionAddedSender) {
+        this.versionAddedSender = versionAddedSender;
+    }
+
+    public int getVersionSettledReceiver () {
+        return versionSettledReceiver;
+    }
+
+    public void setVersionSettledReceiver (int versionSettledReceiver) {
+        this.versionSettledReceiver = versionSettledReceiver;
+    }
+
+    public int getVersionSettledSender () {
+        return versionSettledSender;
+    }
+
+    public void setVersionSettledSender (int versionSettledSender) {
+        this.versionSettledSender = versionSettledSender;
     }
 
     /**
@@ -301,6 +355,14 @@ public class Payment {
         this.includeInSenderChannelTemp = includeInSenderChannelTemp;
     }
 
+    public boolean isPaymentToServer () {
+        return paymentToServer;
+    }
+
+    public void setPaymentToServer (boolean paymentToServer) {
+        this.paymentToServer = paymentToServer;
+    }
+
     public void setIncludedInChannel (boolean includedInChannelTemp) {
         if (paymentToServer) {
             setIncludeInSenderChannel(includedInChannelTemp);
@@ -315,77 +377,5 @@ public class Payment {
         } else {
             setIncludeInReceiverChannelTemp(includedInChannelTemp);
         }
-    }
-
-    public boolean isPaymentToServer () {
-        return paymentToServer;
-    }
-
-    public void setPaymentToServer (boolean paymentToServer) {
-        this.paymentToServer = paymentToServer;
-    }
-
-    public byte[] getSecretHash () {
-        return secretHash;
-    }
-
-    public void setSecretHash (byte[] secretHash) {
-        this.secretHash = secretHash;
-    }
-
-    public byte[] getSecret () {
-        return secret;
-    }
-
-    public void setSecret (byte[] secret) {
-        this.secret = secret;
-    }
-
-    public int getTimestampAddedSender () {
-        return timestampAddedSender;
-    }
-
-    public void setTimestampAddedSender (int timestampAddedSender) {
-        this.timestampAddedSender = timestampAddedSender;
-    }
-
-    public int getTimestampAddedReceiver () {
-        return timestampAddedReceiver;
-    }
-
-    public void setTimestampAddedReceiver (int timestampAddedReceiver) {
-        this.timestampAddedReceiver = timestampAddedReceiver;
-    }
-
-    public int getVersionAddedSender () {
-        return versionAddedSender;
-    }
-
-    public void setVersionAddedSender (int versionAddedSender) {
-        this.versionAddedSender = versionAddedSender;
-    }
-
-    public int getVersionAddedReceiver () {
-        return versionAddedReceiver;
-    }
-
-    public void setVersionAddedReceiver (int versionAddedReceiver) {
-        this.versionAddedReceiver = versionAddedReceiver;
-    }
-
-    public int getVersionSettledSender () {
-        return versionSettledSender;
-    }
-
-    public void setVersionSettledSender (int versionSettledSender) {
-        this.versionSettledSender = versionSettledSender;
-    }
-
-    public int getVersionSettledReceiver () {
-        return versionSettledReceiver;
-    }
-
-    public void setVersionSettledReceiver (int versionSettledReceiver) {
-        this.versionSettledReceiver = versionSettledReceiver;
     }
 }

@@ -35,7 +35,6 @@ public class Channel {
 
     private int id;
     private int nodeId;
-
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
@@ -44,13 +43,11 @@ public class Channel {
     private ECKey KeyServer;
     private ECKey KeyClientA;
     private ECKey KeyServerA;
-
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
     private byte[] masterPrivateKeyClient;
     private byte[] masterPrivateKeyServer;
-
     /*
      * Keeping track of the revocation hashes we gave out.
      * When we open the channel we set the depth to some high value and decrease it every X hours.
@@ -58,13 +55,11 @@ public class Channel {
      */
     private int serverChainDepth;
     private int serverChainChild;
-
     /*
      * We keep track of the key chain of the other party.
      * Doing so allows us to recreate and check old keys, as we know the depth of the current key we hold without poking around in the dark.
      */
     private int clientChainDepth;
-
     /*
      * Current and initial balances in microsatoshi ( = 1 / 1000 satoshi )
      * We update the current balances whenever a payment is settled or refunded.
@@ -74,7 +69,6 @@ public class Channel {
     private long initialAmountClient;
     private long amountServer;
     private long amountClient;
-
     /*
      * Timestamps for the channel management.
      * For now we keep the force close timestamp. It is updated when the channel changed.
@@ -82,7 +76,6 @@ public class Channel {
      */
     private int timestampOpen;
     private int timestampForceClose;
-
     /*
      * Signatures for broadcasting transactions.
      * Escape and FastEscape Transactions are for claiming our initial funds when something goes wrong before the first commitment or if the other party
@@ -92,60 +85,34 @@ public class Channel {
     private ECKey.ECDSASignature escapeFastTxSig;
     private ECKey.ECDSASignature channelTxSig;
     private ECKey.ECDSASignature channelTxTempSig;
-
     /*
      * Upcounting version number to keep track which revocation-hash is used with which payments.
      * We increase it, whenever we commited to a new channel.
      */
     private int channelTxVersion;
-
     /*
      * Hashes to build each channel transaction.
      */
     private Sha256Hash openingTxHashServer;
     private Sha256Hash openingTxHashClient;
-
     /*
      * The secrets for making the opening transactions.
      * We only use them once or in case the other party tries to cheat on us.
      */
     private byte[] openingSecretServer;
     private byte[] openingSecretClient;
-
     /**
      * Enum to mark the different phases.
      * <p>
      * These are necessary, as we save the state back to the database after each communication.
      */
     private Phase phase;
-
-    public enum Phase {
-        NEUTRAL("0"),
-        ESTABLISH_REQUESTED("11"),
-        ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION("12"),
-        PAYMENT_REQUESTED("21"),
-        UPDATE_REQUESTED("31"),
-        CLOSED("50");
-
-        private String value;
-
-        private Phase (String value) {
-            this.value = value;
-        }
-
-        public String getValue () {
-            return value;
-        }
-
-    }
-
     /*
      * Determines if the channel is ready to make/receive payments.
      * We set this to true once the opening txs have enough confirmations.
      * We set this to false if the channel is closed.
      */
     private boolean isReady;
-
     /*
      * Keys used for all channel transactions.
      * These are the keys used for the 2-of-2 multisig of the opening transactions.
@@ -204,154 +171,6 @@ public class Channel {
 
     }
 
-    public ECKey getKeyClient () {
-        return KeyClient;
-    }
-
-    public void setKeyClient (ECKey keyClient) {
-        KeyClient = keyClient;
-    }
-
-    public ECKey getKeyServer () {
-        return KeyServer;
-    }
-
-    public void setKeyServer (ECKey keyServer) {
-        KeyServer = keyServer;
-    }
-
-    public ECKey getKeyClientA () {
-        return KeyClientA;
-    }
-
-    public void setKeyClientA (ECKey keyClientA) {
-        KeyClientA = keyClientA;
-    }
-
-    public ECKey getKeyServerA () {
-        return KeyServerA;
-    }
-
-    public void setKeyServerA (ECKey keyServerA) {
-        KeyServerA = keyServerA;
-    }
-
-    public byte[] getMasterPrivateKeyClient () {
-        return masterPrivateKeyClient;
-    }
-
-    public void setMasterPrivateKeyClient (byte[] masterPrivateKeyClient) {
-        this.masterPrivateKeyClient = masterPrivateKeyClient;
-    }
-
-    public byte[] getMasterPrivateKeyServer () {
-        return masterPrivateKeyServer;
-    }
-
-    public void setMasterPrivateKeyServer (byte[] masterPrivateKeyServer) {
-        this.masterPrivateKeyServer = masterPrivateKeyServer;
-    }
-
-    public int getServerChainDepth () {
-        return serverChainDepth;
-    }
-
-    public void setServerChainDepth (int serverChainDepth) {
-        this.serverChainDepth = serverChainDepth;
-    }
-
-    public int getServerChainChild () {
-        return serverChainChild;
-    }
-
-    public void setServerChainChild (int serverChainChild) {
-        this.serverChainChild = serverChainChild;
-    }
-
-    public int getClientChainDepth () {
-        return clientChainDepth;
-    }
-
-    public void setClientChainDepth (int clientChainDepth) {
-        this.clientChainDepth = clientChainDepth;
-    }
-
-    public ECKey getClientKey () {
-        return clientKey;
-    }
-
-    public void setClientKey (ECKey clientKey) {
-        this.clientKey = clientKey;
-    }
-
-    public DeterministicKey getClientKeyDeterministic () {
-        return clientKeyDeterministic;
-    }
-
-    public void setClientKeyDeterministic (DeterministicKey clientKeyDeterministic) {
-        this.clientKeyDeterministic = clientKeyDeterministic;
-    }
-
-    public ECKey getServerKey () {
-        return serverKey;
-    }
-
-    public void setServerKey (ECKey serverKey) {
-        this.serverKey = serverKey;
-    }
-
-    public DeterministicKey getServerKeyDeterministic () {
-        return serverKeyDeterministic;
-    }
-
-    public void setServerKeyDeterministic (DeterministicKey serverKeyDeterministic) {
-        this.serverKeyDeterministic = serverKeyDeterministic;
-    }
-
-    public Sha256Hash getOpeningTxHashServer () {
-        return openingTxHashServer;
-    }
-
-    public void setOpeningTxHashServer (Sha256Hash openingTxHashServer) {
-        this.openingTxHashServer = openingTxHashServer;
-    }
-
-    public Sha256Hash getOpeningTxHashClient () {
-        return openingTxHashClient;
-    }
-
-    public void setOpeningTxHashClient (Sha256Hash openingTxHashClient) {
-        this.openingTxHashClient = openingTxHashClient;
-    }
-
-    public byte[] getOpeningSecretServer () {
-        return openingSecretServer;
-    }
-
-    public void setOpeningSecretServer (byte[] openingSecretServer) {
-        this.openingSecretServer = openingSecretServer;
-    }
-
-    public byte[] getOpeningSecretClient () {
-        return openingSecretClient;
-    }
-
-    public void setOpeningSecretClient (byte[] openingSecretClient) {
-        this.openingSecretClient = openingSecretClient;
-    }
-
-    public Phase getPhase () {
-        return phase;
-    }
-
-    public void setPhase (Phase phase) {
-        this.phase = phase;
-    }
-
-    public void setIsReady (boolean isReady) {
-        this.isReady = isReady;
-    }
-
     /**
      * Gets the amount client.
      *
@@ -386,6 +205,70 @@ public class Channel {
      */
     public void setAmountServer (long amountMe) {
         this.amountServer = amountMe;
+    }
+
+    public ECKey.ECDSASignature getChannelTxSig () {
+        return channelTxSig;
+    }
+
+    public void setChannelTxSig (ECKey.ECDSASignature channelTxSig) {
+        this.channelTxSig = channelTxSig;
+    }
+
+    public ECKey.ECDSASignature getChannelTxTempSig () {
+        return channelTxTempSig;
+    }
+
+    public void setChannelTxTempSig (ECKey.ECDSASignature channelTxTempSig) {
+        this.channelTxTempSig = channelTxTempSig;
+    }
+
+    public int getChannelTxVersion () {
+        return channelTxVersion;
+    }
+
+    public void setChannelTxVersion (int channelTxVersion) {
+        this.channelTxVersion = channelTxVersion;
+    }
+
+    public int getClientChainDepth () {
+        return clientChainDepth;
+    }
+
+    public void setClientChainDepth (int clientChainDepth) {
+        this.clientChainDepth = clientChainDepth;
+    }
+
+    public ECKey getClientKey () {
+        return clientKey;
+    }
+
+    public void setClientKey (ECKey clientKey) {
+        this.clientKey = clientKey;
+    }
+
+    public DeterministicKey getClientKeyDeterministic () {
+        return clientKeyDeterministic;
+    }
+
+    public void setClientKeyDeterministic (DeterministicKey clientKeyDeterministic) {
+        this.clientKeyDeterministic = clientKeyDeterministic;
+    }
+
+    public ECKey.ECDSASignature getEscapeFastTxSig () {
+        return escapeFastTxSig;
+    }
+
+    public void setEscapeFastTxSig (ECKey.ECDSASignature escapeFastTxSig) {
+        this.escapeFastTxSig = escapeFastTxSig;
+    }
+
+    public ECKey.ECDSASignature getEscapeTxSig () {
+        return escapeTxSig;
+    }
+
+    public void setEscapeTxSig (ECKey.ECDSASignature escapeTxSig) {
+        this.escapeTxSig = escapeTxSig;
     }
 
     /**
@@ -442,6 +325,154 @@ public class Channel {
         this.initialAmountServer = initialAmountMe;
     }
 
+    public ECKey getKeyClient () {
+        return KeyClient;
+    }
+
+    public void setKeyClient (ECKey keyClient) {
+        KeyClient = keyClient;
+    }
+
+    public ECKey getKeyClientA () {
+        return KeyClientA;
+    }
+
+    public void setKeyClientA (ECKey keyClientA) {
+        KeyClientA = keyClientA;
+    }
+
+    public ECKey getKeyServer () {
+        return KeyServer;
+    }
+
+    public void setKeyServer (ECKey keyServer) {
+        KeyServer = keyServer;
+    }
+
+    public ECKey getKeyServerA () {
+        return KeyServerA;
+    }
+
+    public void setKeyServerA (ECKey keyServerA) {
+        KeyServerA = keyServerA;
+    }
+
+    public byte[] getMasterPrivateKeyClient () {
+        return masterPrivateKeyClient;
+    }
+
+    public void setMasterPrivateKeyClient (byte[] masterPrivateKeyClient) {
+        this.masterPrivateKeyClient = masterPrivateKeyClient;
+    }
+
+    public byte[] getMasterPrivateKeyServer () {
+        return masterPrivateKeyServer;
+    }
+
+    public void setMasterPrivateKeyServer (byte[] masterPrivateKeyServer) {
+        this.masterPrivateKeyServer = masterPrivateKeyServer;
+    }
+
+    public int getNodeId () {
+        return nodeId;
+    }
+
+    public void setNodeId (int nodeId) {
+        this.nodeId = nodeId;
+    }
+
+    public byte[] getOpeningSecretClient () {
+        return openingSecretClient;
+    }
+
+    public void setOpeningSecretClient (byte[] openingSecretClient) {
+        this.openingSecretClient = openingSecretClient;
+    }
+
+    public byte[] getOpeningSecretServer () {
+        return openingSecretServer;
+    }
+
+    public void setOpeningSecretServer (byte[] openingSecretServer) {
+        this.openingSecretServer = openingSecretServer;
+    }
+
+    public Sha256Hash getOpeningTxHashClient () {
+        return openingTxHashClient;
+    }
+
+    public void setOpeningTxHashClient (Sha256Hash openingTxHashClient) {
+        this.openingTxHashClient = openingTxHashClient;
+    }
+
+    public Sha256Hash getOpeningTxHashServer () {
+        return openingTxHashServer;
+    }
+
+    public void setOpeningTxHashServer (Sha256Hash openingTxHashServer) {
+        this.openingTxHashServer = openingTxHashServer;
+    }
+
+    public Phase getPhase () {
+        return phase;
+    }
+
+    public void setPhase (Phase phase) {
+        this.phase = phase;
+    }
+
+    public int getServerChainChild () {
+        return serverChainChild;
+    }
+
+    public void setServerChainChild (int serverChainChild) {
+        this.serverChainChild = serverChainChild;
+    }
+
+    public int getServerChainDepth () {
+        return serverChainDepth;
+    }
+
+    public void setServerChainDepth (int serverChainDepth) {
+        this.serverChainDepth = serverChainDepth;
+    }
+
+    public ECKey getServerKey () {
+        return serverKey;
+    }
+
+//    /**
+//     * New master key.
+//     *
+//     * @param masterKey the master key
+//     * @throws Exception the exception
+//     */
+//    public void newMasterKey (RevocationHash masterKey) throws Exception {
+//        if (getMasterPrivateKeyClient() != null) {
+//            /*
+//             * Make sure the old masterPrivateKey is a child of this one..
+//			 */
+
+    public void setServerKey (ECKey serverKey) {
+        this.serverKey = serverKey;
+    }
+//            DeterministicKey key = DeterministicKey.deserializeB58(masterKey.privateKey, Constants.getNetwork());
+//            DeterministicHierarchy hierachy = new DeterministicHierarchy(key);
+
+    public DeterministicKey getServerKeyDeterministic () {
+        return serverKeyDeterministic;
+    }
+//            List<ChildNumber> childList = HashDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
+//            DeterministicKey keyDerived = hierachy.get(childList, true, true);
+
+    public void setServerKeyDeterministic (DeterministicKey serverKeyDeterministic) {
+        this.serverKeyDeterministic = serverKeyDeterministic;
+    }
+//            if (!HashDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
+//                throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
+//            }
+//        }
+
     /**
      * Gets the timestamp force close.
      *
@@ -450,6 +481,9 @@ public class Channel {
     public int getTimestampForceClose () {
         return timestampForceClose;
     }
+//        setMasterPrivateKeyClient(masterKey.getSecretAsString());
+//        setMasterChainDepth(masterKey.getDepth());
+//    }
 
     /**
      * Sets the timestamp force close.
@@ -496,78 +530,33 @@ public class Channel {
         this.isReady = isReady;
     }
 
-//    /**
-//     * New master key.
-//     *
-//     * @param masterKey the master key
-//     * @throws Exception the exception
-//     */
-//    public void newMasterKey (RevocationHash masterKey) throws Exception {
-//        if (getMasterPrivateKeyClient() != null) {
-//            /*
-//             * Make sure the old masterPrivateKey is a child of this one..
-//			 */
+    public void setIsReady (boolean isReady) {
+        this.isReady = isReady;
+    }
+
+    public enum Phase {
+        NEUTRAL("0"),
+        ESTABLISH_REQUESTED("11"),
+        ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION("12"),
+        PAYMENT_REQUESTED("21"),
+        UPDATE_REQUESTED("31"),
+        CLOSED("50");
+
+        private String value;
+
+        private Phase (String value) {
+            this.value = value;
+        }
+
+        public String getValue () {
+            return value;
+        }
+
+    }
+
 //
-//            DeterministicKey key = DeterministicKey.deserializeB58(masterKey.privateKey, Constants.getNetwork());
-//            DeterministicHierarchy hierachy = new DeterministicHierarchy(key);
 //
-//            List<ChildNumber> childList = HashDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
-//            DeterministicKey keyDerived = hierachy.get(childList, true, true);
+
 //
-//            if (!HashDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
-//                throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
-//            }
-//        }
 //
-//        setMasterPrivateKeyClient(masterKey.getSecretAsString());
-//        setMasterChainDepth(masterKey.getDepth());
-//    }
-
-    public ECKey.ECDSASignature getEscapeTxSig () {
-        return escapeTxSig;
-    }
-
-    public void setEscapeTxSig (ECKey.ECDSASignature escapeTxSig) {
-        this.escapeTxSig = escapeTxSig;
-    }
-
-    public ECKey.ECDSASignature getEscapeFastTxSig () {
-        return escapeFastTxSig;
-    }
-
-    public void setEscapeFastTxSig (ECKey.ECDSASignature escapeFastTxSig) {
-        this.escapeFastTxSig = escapeFastTxSig;
-    }
-
-    public ECKey.ECDSASignature getChannelTxSig () {
-        return channelTxSig;
-    }
-
-    public void setChannelTxSig (ECKey.ECDSASignature channelTxSig) {
-        this.channelTxSig = channelTxSig;
-    }
-
-    public ECKey.ECDSASignature getChannelTxTempSig () {
-        return channelTxTempSig;
-    }
-
-    public void setChannelTxTempSig (ECKey.ECDSASignature channelTxTempSig) {
-        this.channelTxTempSig = channelTxTempSig;
-    }
-
-    public int getChannelTxVersion () {
-        return channelTxVersion;
-    }
-
-    public void setChannelTxVersion (int channelTxVersion) {
-        this.channelTxVersion = channelTxVersion;
-    }
-
-    public int getNodeId () {
-        return nodeId;
-    }
-
-    public void setNodeId (int nodeId) {
-        this.nodeId = nodeId;
-    }
 }

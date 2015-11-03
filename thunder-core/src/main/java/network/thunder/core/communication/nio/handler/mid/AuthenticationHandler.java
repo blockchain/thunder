@@ -35,22 +35,23 @@ import java.security.NoSuchProviderException;
  */
 public class AuthenticationHandler extends ChannelDuplexHandler {
 
-    private Node node;
-    private boolean isServer = false;
-
-    private ECKey keyServer;
-
-    private int authFailCounter = 0;
     private static final int AUTH_FAIL_MAX_RETRIES = 3;
-
     public ECKey keyTempClient;
     public ECKey keyTempServer;
+    private Node node;
+    private boolean isServer = false;
+    private ECKey keyServer;
+    private int authFailCounter = 0;
 
     public AuthenticationHandler (ECKey key, boolean isServer, Node node) {
         this.keyServer = key;
         this.isServer = isServer;
         this.node = node;
 
+    }
+
+    public void authenticationFinished (ChannelHandlerContext ctx) {
+        ctx.fireChannelActive();
     }
 
     @Override
@@ -68,24 +69,6 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
             sendAuthentication(ctx);
         }
 
-    }
-
-    public void sendAuthentication (ChannelHandlerContext ctx) throws NoSuchProviderException, NoSuchAlgorithmException {
-        ctx.writeAndFlush(new Message(node.getAuthenticationObject(keyServer, keyTempClient), Type.AUTH_SEND));
-        if (node.isAuthFinished()) {
-            ctx.fireChannelActive();
-        }
-    }
-
-    public void sendFailure (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.FAILURE));
-    }
-    public void sendAuthFailed (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.AUTH_FAILED));
-    }
-
-    public void authenticationFinished (ChannelHandlerContext ctx) {
-        ctx.fireChannelActive();
     }
 
     @Override
@@ -116,11 +99,11 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
                         } else {
                             failed = true;
                         }
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         failed = true;
-                        System.out.println("Authentication failed: "+e.getMessage());
+                        System.out.println("Authentication failed: " + e.getMessage());
                     }
-                    if(failed) {
+                    if (failed) {
                         sendAuthFailed(ctx);
                     }
                 } else if (message.type == Type.AUTH_FAILED) {
@@ -148,6 +131,27 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
     }
 
     @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
+
+    public void sendAuthFailed (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.AUTH_FAILED));
+    }
+
+    public void sendAuthentication (ChannelHandlerContext ctx) throws NoSuchProviderException, NoSuchAlgorithmException {
+        ctx.writeAndFlush(new Message(node.getAuthenticationObject(keyServer, keyTempClient), Type.AUTH_SEND));
+        if (node.isAuthFinished()) {
+            ctx.fireChannelActive();
+        }
+    }
+
+    public void sendFailure (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.FAILURE));
+    }
+
+    @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         //Make sure to not send messages accidentally when auth is not finished yet.
         Message message = (Message) msg;
@@ -156,11 +160,5 @@ public class AuthenticationHandler extends ChannelDuplexHandler {
         }
 
         ctx.writeAndFlush(msg, promise);
-    }
-
-    @Override
-    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
-        ctx.close();
     }
 }

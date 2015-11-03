@@ -133,19 +133,19 @@ public class MainController {
             syncItem = Main.instance.notificationBar.pushItem(torMsg, torProgress);
             torClient.addInitializationListener(new TorInitializationListener() {
                 @Override
-                public void initializationProgress (String message, int percent) {
-                    Platform.runLater(() -> {
-                        syncItem.label.set(torMsg + ": " + message);
-                        torProgress.set(percent / 100.0);
-                    });
-                }
-
-                @Override
                 public void initializationCompleted () {
                     Platform.runLater(() -> {
                         syncItem.cancel();
                         showBitcoinSyncMessage();
 
+                    });
+                }
+
+                @Override
+                public void initializationProgress (String message, int percent) {
+                    Platform.runLater(() -> {
+                        syncItem.label.set(torMsg + ": " + message);
+                        torProgress.set(percent / 100.0);
                     });
                 }
             });
@@ -174,6 +174,11 @@ public class MainController {
 
         blockchainTxList.setCellFactory(param -> new TextFieldListCell<>(new StringConverter<Transaction>() {
             @Override
+            public Transaction fromString (String string) {
+                return null;
+            }
+
+            @Override
             public String toString (Transaction tx) {
                 Coin value = tx.getValue(Main.bitcoin.wallet());
                 if (value.isPositive()) {
@@ -186,11 +191,6 @@ public class MainController {
                     return tx.getConfidence().getDepthInBlocks() + " Outbound payment to " + address;
                 }
                 return "Payment with id " + tx.getHash();
-            }
-
-            @Override
-            public Transaction fromString (String string) {
-                return null;
             }
         }));
 

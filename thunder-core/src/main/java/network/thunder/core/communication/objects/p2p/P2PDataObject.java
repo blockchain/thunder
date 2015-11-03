@@ -8,14 +8,6 @@ import network.thunder.core.etc.Tools;
  * We use the getHashAsLong() to determine the fragment block this object should be sent with.
  */
 public class P2PDataObject {
-    public long getHashAsLong () {
-        return 0;
-    }
-
-    public void verify () {
-
-    }
-
     public byte[] getData () {return null;}
 
     public byte[] getHash () {
@@ -23,5 +15,13 @@ public class P2PDataObject {
         byte[] t = Tools.hashSecret(this.getData());
         System.arraycopy(t, 0, hash, 0, 20);
         return hash;
+    }
+
+    public long getHashAsLong () {
+        return 0;
+    }
+
+    public void verify () {
+
     }
 }

@@ -26,16 +26,15 @@ import static org.junit.Assert.*;
  */
 public class SyncHandlerTest {
 
+    static ArrayList<PubkeyChannelObject> pubkeyChannelObjectArrayList = new ArrayList<>();
+    static ArrayList<PubkeyIPObject> pubkeyIPObjectArrayList = new ArrayList<>();
+    static ArrayList<ChannelStatusObject> channelStatusObjectArrayList = new ArrayList<>();
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
     Message m;
     P2PContext context;
     Node node1;
     Node node2;
-
-    static ArrayList<PubkeyChannelObject> pubkeyChannelObjectArrayList = new ArrayList<>();
-    static ArrayList<PubkeyIPObject> pubkeyIPObjectArrayList = new ArrayList<>();
-    static ArrayList<ChannelStatusObject> channelStatusObjectArrayList = new ArrayList<>();
 
     @BeforeClass
     public static void buildDatabase () throws PropertyVetoException, SQLException {

@@ -11,32 +11,32 @@ import network.thunder.core.communication.Message;
  */
 public class MessageObjectToByteHandler extends MessageToByteEncoder {
 
-	@Override
-	protected void encode (ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
+    @Override
+    public boolean acceptOutboundMessage (Object msg) {
+        if (msg instanceof Message) {
+            return true;
+        }
 
-		try {
+        return false;
+//		return true;
+    }
 
-			Message message = (Message) msg;
-			System.out.println("Outgoing: " + message.type);
+    @Override
+    protected void encode (ChannelHandlerContext ctx, Object msg, ByteBuf out) throws Exception {
+
+        try {
+
+            Message message = (Message) msg;
+            System.out.println("Outgoing: " + message.type);
 
 //			System.out.println(new Gson().toJson(message));
 //			byte[] data = Tools.stringToByte(new Gson().toJson(message));
-			byte[] data = new Gson().toJson(message).getBytes("UTF-8");
-			out.writeBytes(data);
-			ctx.flush();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+            byte[] data = new Gson().toJson(message).getBytes("UTF-8");
+            out.writeBytes(data);
+            ctx.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-	}
-
-	@Override
-	public boolean acceptOutboundMessage (Object msg) {
-		if (msg instanceof Message) {
-			return true;
-		}
-
-		return false;
-//		return true;
-	}
+    }
 }

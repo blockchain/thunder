@@ -19,20 +19,6 @@ public class DataObject {
 
     public String data = "";
 
-    public PubkeyChannelObject getPubkeyChannelObject () {
-        if (type == TYPE_CHANNEL_PUBKEY) {
-            return new Gson().fromJson(data, PubkeyChannelObject.class);
-        }
-        throw new RuntimeException("Not correct object..");
-    }
-
-    public PubkeyIPObject getPubkeyIPObject () {
-        if (type == TYPE_IP_PUBKEY) {
-            return new Gson().fromJson(data, PubkeyIPObject.class);
-        }
-        throw new RuntimeException("Not correct object..");
-    }
-
     public DataObject (Object object) {
         if (object instanceof PubkeyIPObject) {
             type = TYPE_IP_PUBKEY;
@@ -62,6 +48,20 @@ public class DataObject {
             return new Gson().fromJson(data, ChannelStatusObject.class);
         }
         throw new RuntimeException("Object not supported currently");
+    }
+
+    public PubkeyChannelObject getPubkeyChannelObject () {
+        if (type == TYPE_CHANNEL_PUBKEY) {
+            return new Gson().fromJson(data, PubkeyChannelObject.class);
+        }
+        throw new RuntimeException("Not correct object..");
+    }
+
+    public PubkeyIPObject getPubkeyIPObject () {
+        if (type == TYPE_IP_PUBKEY) {
+            return new Gson().fromJson(data, PubkeyIPObject.class);
+        }
+        throw new RuntimeException("Not correct object..");
     }
 
 }

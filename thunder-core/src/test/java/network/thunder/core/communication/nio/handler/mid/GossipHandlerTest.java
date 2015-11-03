@@ -90,6 +90,23 @@ public class GossipHandlerTest {
     }
 
     @Test
+    public void shouldNotSendDataToNextPeer () throws Exception {
+        ArrayList<DataObject> dataList = new ArrayList<>();
+        for (int i = 0; i < Node.THRESHHOLD_INVENTORY_AMOUNT_TO_SEND - 1; i++) {
+            dataList.add(new DataObject(PubkeyChannelObject.getRandomObject()));
+        }
+        SendDataObject sendDataObject = new SendDataObject();
+        sendDataObject.dataObjects = dataList;
+
+        channel1.writeInbound(new Message(sendDataObject, Type.GOSSIP_SEND));
+        channel1.writeInbound(new Message(sendDataObject, Type.GOSSIP_SEND));
+
+        m = (Message) channel2.readOutbound();
+        assertNull(m);
+
+    }
+
+    @Test
     public void shouldSendDataToNextPeer () throws Exception {
         ArrayList<DataObject> dataList = new ArrayList<>();
         for (int i = 0; i < Node.THRESHHOLD_INVENTORY_AMOUNT_TO_SEND + 1; i++) {
@@ -118,23 +135,6 @@ public class GossipHandlerTest {
         for (int i = 0; i < Node.THRESHHOLD_INVENTORY_AMOUNT_TO_SEND + 1; i++) {
             assertEquals(sendDataObject1.dataObjects.get(i).getObject(), dataList.get(i).getObject());
         }
-
-    }
-
-    @Test
-    public void shouldNotSendDataToNextPeer () throws Exception {
-        ArrayList<DataObject> dataList = new ArrayList<>();
-        for (int i = 0; i < Node.THRESHHOLD_INVENTORY_AMOUNT_TO_SEND - 1; i++) {
-            dataList.add(new DataObject(PubkeyChannelObject.getRandomObject()));
-        }
-        SendDataObject sendDataObject = new SendDataObject();
-        sendDataObject.dataObjects = dataList;
-
-        channel1.writeInbound(new Message(sendDataObject, Type.GOSSIP_SEND));
-        channel1.writeInbound(new Message(sendDataObject, Type.GOSSIP_SEND));
-
-        m = (Message) channel2.readOutbound();
-        assertNull(m);
 
     }
 

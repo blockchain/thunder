@@ -73,15 +73,15 @@ public class SendMoneyBlockchainController {
             sendResult = Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
-                public void onSuccess (Transaction result) {
-                    checkGuiThread();
-                    overlayUI.done();
-                }
-
-                @Override
                 public void onFailure (Throwable t) {
                     // We died trying to empty the wallet.
                     crashAlert(t);
+                }
+
+                @Override
+                public void onSuccess (Transaction result) {
+                    checkGuiThread();
+                    overlayUI.done();
                 }
             });
             sendResult.tx.getConfidence().addEventListener((tx, reason) -> {

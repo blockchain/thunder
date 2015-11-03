@@ -22,33 +22,24 @@ import java.util.Arrays;
 public class Node {
 
     public static final int THRESHHOLD_INVENTORY_AMOUNT_TO_SEND = 32;
-
-    private String host;
-    private int port;
-
-    private boolean connected = false;
-
-    private ChannelHandlerContext nettyContext;
-
-    private byte[] pubkey;
-
+    //From the gossip handler upwards nodes have their own connection object
+    public Connection conn;
+    public boolean justFetchNewIpAddresses = false;
+    public P2PContext context;
     protected ECKey pubKeyTempClient;
     protected ECKey pubKeyTempServer;
-
+    private String host;
+    private int port;
+    private boolean connected = false;
+    private ChannelHandlerContext nettyContext;
+    private byte[] pubkey;
     private boolean isAuth;
     private boolean sentAuth;
     private boolean authFinished;
     private boolean isReady;
     private boolean hasOpenChannel;
-
-    //From the gossip handler upwards nodes have their own connection object
-    public Connection conn;
-
-    public boolean justFetchNewIpAddresses = false;
-
-    public P2PContext context;
-
     private ArrayList<byte[]> inventoryList = new ArrayList<>();
+    private OnConnectionCloseListener onConnectionCloseListener;
 
     public Node (String host, int port) {
         this.host = host;
@@ -67,21 +58,37 @@ public class Node {
     public Node () {
     }
 
-    public boolean processAuthentication (AuthenticationObject authentication, ECKey pubkeyClient, ECKey pubkeyServerTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
+    public boolean allowsAuth () {
+        return !isAuth;
+    }
 
-        //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting
-
-        byte[] data = new byte[pubkeyClient.getPubKey().length + pubkeyServerTemp.getPubKey().length];
-        System.arraycopy(pubkeyClient.getPubKey(), 0, data, 0, pubkeyClient.getPubKey().length);
-        System.arraycopy(pubkeyServerTemp.getPubKey(), 0, data, pubkeyClient.getPubKey().length, pubkeyServerTemp.getPubKey().length);
-
-        CryptoTools.verifySignature(pubkeyClient, data, authentication.signature);
-
-        isAuth = true;
-        if (sentAuth) {
-            authFinished = true;
+    public void closeConnection () {
+        if (onConnectionCloseListener != null) {
+            onConnectionCloseListener.onClose();
         }
-        return true;
+        try {
+            this.nettyContext.close();
+        } catch (Exception e) {
+        }
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Node node = (Node) o;
+
+        return Arrays.equals(pubkey, node.pubkey);
+
+    }
+
+    public void finishAuth () {
+        authFinished = true;
     }
 
     public AuthenticationObject getAuthenticationObject (ECKey keyServer, ECKey keyClientTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
@@ -101,24 +108,12 @@ public class Node {
         return obj;
     }
 
-    public void newInventoryList (ArrayList<DataObject> objectList) {
-        for (DataObject object : objectList) {
-            byte[] hash = object.getObject().getHash();
-            if (!Tools.arrayListContainsByteArray(this.inventoryList, hash)) {
-                this.inventoryList.add(hash);
-            }
-        }
-
-        if (this.inventoryList.size() > THRESHHOLD_INVENTORY_AMOUNT_TO_SEND) {
-            InvObject invObject = new InvObject();
-            invObject.inventoryList = this.inventoryList;
-            this.nettyContext.writeAndFlush(new Message(invObject, Type.GOSSIP_INV));
-            this.inventoryList.clear();
-        }
+    public String getHost () {
+        return host;
     }
 
-    public void sendFailure (ChannelHandlerContext ctx) {
-        ctx.writeAndFlush(new Message(null, Type.FAILURE));
+    public void setHost (String host) {
+        this.host = host;
     }
 
     public ChannelHandlerContext getNettyContext () {
@@ -137,42 +132,6 @@ public class Node {
         this.port = port;
     }
 
-    public String getHost () {
-        return host;
-    }
-
-    public void setHost (String host) {
-        this.host = host;
-    }
-
-    public boolean isConnected () {
-        return connected;
-    }
-
-    public void setConnected (boolean connected) {
-        this.connected = connected;
-    }
-
-    public boolean hasSentAuth () {
-        return sentAuth;
-    }
-
-    public boolean isAuth () {
-        return isAuth;
-    }
-
-    public boolean allowsAuth () {
-        return !isAuth;
-    }
-
-    public void finishAuth () {
-        authFinished = true;
-    }
-
-    public boolean isAuthFinished () {
-        return authFinished;
-    }
-
     public ECKey getPubKeyTempClient () {
         return pubKeyTempClient;
     }
@@ -189,43 +148,73 @@ public class Node {
         this.pubKeyTempServer = pubKeyTempServer;
     }
 
-    private OnConnectionCloseListener onConnectionCloseListener;
-
-    public void setOnConnectionCloseListener (OnConnectionCloseListener onConnectionCloseListener) {
-        this.onConnectionCloseListener = onConnectionCloseListener;
-    }
-
-    public void closeConnection () {
-        if (onConnectionCloseListener != null) {
-            onConnectionCloseListener.onClose();
-        }
-        try {
-            this.nettyContext.close();
-        } catch (Exception e) {
-        }
-    }
-
-    public interface OnConnectionCloseListener {
-        public void onClose ();
-    }
-
-    @Override
-    public boolean equals (Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        Node node = (Node) o;
-
-        return Arrays.equals(pubkey, node.pubkey);
-
+    public boolean hasSentAuth () {
+        return sentAuth;
     }
 
     @Override
     public int hashCode () {
         return pubkey != null ? Arrays.hashCode(pubkey) : 0;
+    }
+
+    public boolean isAuth () {
+        return isAuth;
+    }
+
+    public boolean isAuthFinished () {
+        return authFinished;
+    }
+
+    public boolean isConnected () {
+        return connected;
+    }
+
+    public void setConnected (boolean connected) {
+        this.connected = connected;
+    }
+
+    public void newInventoryList (ArrayList<DataObject> objectList) {
+        for (DataObject object : objectList) {
+            byte[] hash = object.getObject().getHash();
+            if (!Tools.arrayListContainsByteArray(this.inventoryList, hash)) {
+                this.inventoryList.add(hash);
+            }
+        }
+
+        if (this.inventoryList.size() > THRESHHOLD_INVENTORY_AMOUNT_TO_SEND) {
+            InvObject invObject = new InvObject();
+            invObject.inventoryList = this.inventoryList;
+            this.nettyContext.writeAndFlush(new Message(invObject, Type.GOSSIP_INV));
+            this.inventoryList.clear();
+        }
+    }
+
+    public boolean processAuthentication (AuthenticationObject authentication, ECKey pubkeyClient, ECKey pubkeyServerTemp) throws NoSuchProviderException, NoSuchAlgorithmException {
+
+        //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting
+
+        byte[] data = new byte[pubkeyClient.getPubKey().length + pubkeyServerTemp.getPubKey().length];
+        System.arraycopy(pubkeyClient.getPubKey(), 0, data, 0, pubkeyClient.getPubKey().length);
+        System.arraycopy(pubkeyServerTemp.getPubKey(), 0, data, pubkeyClient.getPubKey().length, pubkeyServerTemp.getPubKey().length);
+
+        CryptoTools.verifySignature(pubkeyClient, data, authentication.signature);
+
+        isAuth = true;
+        if (sentAuth) {
+            authFinished = true;
+        }
+        return true;
+    }
+
+    public void sendFailure (ChannelHandlerContext ctx) {
+        ctx.writeAndFlush(new Message(null, Type.FAILURE));
+    }
+
+    public void setOnConnectionCloseListener (OnConnectionCloseListener onConnectionCloseListener) {
+        this.onConnectionCloseListener = onConnectionCloseListener;
+    }
+
+    public interface OnConnectionCloseListener {
+        public void onClose ();
     }
 }

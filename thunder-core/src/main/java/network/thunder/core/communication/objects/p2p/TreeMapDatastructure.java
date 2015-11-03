@@ -24,7 +24,7 @@ public class TreeMapDatastructure {
     public HashMap<Integer, Integer> fragmentJobList = new HashMap<>();
 
     public TreeMapDatastructure () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS + 1; i++) {
             ArrayList<P2PDataObject> objList = new ArrayList<>();
             list.put(i, objList);
             fragmentIsSyncedList.put(i, false);
@@ -32,21 +32,44 @@ public class TreeMapDatastructure {
         }
     }
 
-    public ArrayList<P2PDataObject> getFragment (int index) {
-        return list.get(index);
-    }
-
     public static int objectToFragmentIndex (P2PDataObject object) {
 
         return (int) (object.getHashAsLong() / FRAGMENT_SIZE + 1);
     }
 
-    public void insertObject (P2PDataObject obj) {
-        list.get(objectToFragmentIndex(obj)).add(obj);
-    }
-
     public boolean contains (P2PDataObject obj) {
         return list.get(objectToFragmentIndex(obj)).contains(obj);
+    }
+
+    public boolean fullySynchronized () {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS + 1; i++) {
+//            if(i>100) return true;
+            if (!fragmentIsSyncedList.get(i)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public ArrayList<P2PDataObject> getFragment (int index) {
+        return list.get(index);
+    }
+
+    public synchronized int getNextFragmentIndexToSynchronize () {
+        for (int i = 1; i < NUMBER_OF_FRAGMENTS + 1; i++) {
+//            if(i>100) return 0;
+            if (!fragmentIsSyncedList.get(i)) {
+                if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
+                    fragmentJobList.put(i, Tools.currentTime());
+                    return i;
+                }
+            }
+        }
+        return 0;
+    }
+
+    public void insertObject (P2PDataObject obj) {
+        list.get(objectToFragmentIndex(obj)).add(obj);
     }
 
     public void newFragment (int index, DataObject[] newFragment) {
@@ -62,7 +85,7 @@ public class TreeMapDatastructure {
             //TODO: Probably a bottleneck here, maybe we can trust the data?
             if (index != objectToFragmentIndex(object)) {
 //                throw new RuntimeException("Object should not be in that index..");
-                System.out.println("Object should not be in that index.. Is in: "+index+" Should be: "+objectToFragmentIndex(object));
+                System.out.println("Object should not be in that index.. Is in: " + index + " Should be: " + objectToFragmentIndex(object));
             }
 
             //Check the signature on all objects we get before processing..
@@ -72,41 +95,16 @@ public class TreeMapDatastructure {
                 objectArrayList.add(object);
             }
 //            if (!fullDataList.contains(object)) {
-                fullDataList.add(object);
+            fullDataList.add(object);
 //            }
 
             //Save all data into our database
 //            System.out.println(object);
 //            ChannelStatusObject status = (ChannelStatusObject) object;
 
-
         }
-
 
         fragmentIsSyncedList.put(index, true);
-    }
-
-    public synchronized int getNextFragmentIndexToSynchronize () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
-//            if(i>100) return 0;
-            if (!fragmentIsSyncedList.get(i)) {
-                if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
-                    fragmentJobList.put(i, Tools.currentTime());
-                    return i;
-                }
-            }
-        }
-        return 0;
-    }
-
-    public boolean fullySynchronized () {
-        for (int i = 1; i < NUMBER_OF_FRAGMENTS+1; i++) {
-//            if(i>100) return true;
-            if (!fragmentIsSyncedList.get(i)) {
-                return false;
-            }
-        }
-        return true;
     }
 
 }

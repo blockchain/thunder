@@ -29,47 +29,44 @@ import java.util.ArrayList;
  */
 public class LightningChannelManagementHandler extends ChannelInboundHandlerAdapter {
 
-	private Node node;
-	private boolean isServer = false;
+    public boolean initialized = false;
+    ArrayList<Channel> channelList = new ArrayList<>();
+    private Node node;
+    private boolean isServer = false;
+    private ECKey key;
 
-	private ECKey key;
+    public LightningChannelManagementHandler (ECKey key, boolean isServer, Node node) {
+        this.key = key;
+        this.isServer = isServer;
+        this.node = node;
 
-	public boolean initialized = false;
+    }
 
-	ArrayList<Channel> channelList = new ArrayList<>();
+    @Override
+    public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
 
-	public LightningChannelManagementHandler (ECKey key, boolean isServer, Node node) {
-		this.key = key;
-		this.isServer = isServer;
-		this.node = node;
+        if (!initialized) {
+            initialize();
+            ctx.fireChannelRead("1");
+        } else {
+            Message message = (Message) msg;
+            if (message.type >= 110 && message.type < 199) {
+                //TODO: Do all the channel opening stuff here..
+            } else {
+                ctx.fireChannelRead(msg);
+            }
+        }
 
-	}
+    }
 
-	public void initialize () {
-		//TODO: Add all the database stuff here to get a complete list of all channels related with this node
-		//Also, this is the place to ask for a new channel in case we don't have one yet (or want another one..)
-	}
+    @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
 
-	@Override
-	public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
-
-		if (!initialized) {
-			initialize();
-			ctx.fireChannelRead("1");
-		} else {
-			Message message = (Message) msg;
-			if (message.type >= 110 && message.type < 199) {
-				//TODO: Do all the channel opening stuff here..
-			} else {
-				ctx.fireChannelRead(msg);
-			}
-		}
-
-	}
-
-	@Override
-	public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
-		ctx.close();
-	}
+    public void initialize () {
+        //TODO: Add all the database stuff here to get a complete list of all channels related with this node
+        //Also, this is the place to ask for a new channel in case we don't have one yet (or want another one..)
+    }
 }

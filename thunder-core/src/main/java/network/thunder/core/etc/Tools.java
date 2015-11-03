@@ -87,6 +87,20 @@ public class Tools {
         return qry;
     }
 
+    public static boolean arrayListContainsByteArray (ArrayList<byte[]> arrayList, byte[] bytes) {
+        //TODO: This is a probably slow hack, better way would be to use a helper class, as we can make use of hashCode then..
+        /* Example wrapper class to have more efficient contains(..)
+        public final class Bytes { private final int hashCode; private final byte[] data; public Bytes(byte[] in) { this.data = in; this.hashCode = Arrays.hashCode(in); } @Override public boolean equals(Object other) {if (other == null) return false; if (!(other instanceof Bytes)) return false; if (((Bytes) other).hashCode != hashCode) return false; return Arrays.equals(data, ((Bytes) other).data); } @Override public int hashCode()
+        {return hashCode;} @Override public String toString() { ... do something useful here ... }}
+         */
+        for (byte[] a : arrayList) {
+            if (Arrays.equals(a, bytes)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Bool to int.
      *
@@ -253,6 +267,14 @@ public class Tools {
         return hash1.toString().equals(hash2.toString());
     }
 
+//	public static void emailException (Exception e, Message m, Channel c, Payment p, Transaction channelTransaction, Transaction t) throws AddressException {
+//		String to = "matsjj@gmail.com";
+//		String from = "exception@thunder.network";
+//		String host = "localhost";
+//		Properties properties = System.getProperties();
+//		properties.setProperty("mail.smtp.host", host);
+//		Session session = Session.getDefaultInstance(properties);
+
     /**
      * Current time.
      *
@@ -261,82 +283,10 @@ public class Tools {
     public static int currentTime () {
         return ((int) (System.currentTimeMillis() / 1000));
     }
-
-//	public static void emailException (Exception e, Message m, Channel c, Payment p, Transaction channelTransaction, Transaction t) throws AddressException {
-//		String to = "matsjj@gmail.com";
-//		String from = "exception@thunder.network";
-//		String host = "localhost";
-//		Properties properties = System.getProperties();
-//		properties.setProperty("mail.smtp.host", host);
-//		Session session = Session.getDefaultInstance(properties);
-//
 //		try {
 //			MimeMessage message = new MimeMessage(session);
 //			message.setFrom(new InternetAddress(from));
 //			message.addRecipient(javax.mail.Message.RecipientType.TO, new InternetAddress(to));
-//
-//			message.setSubject("New Critical Exception thrown..");
-//
-//			String text = "";
-//
-//			text += Tools.stacktraceToString(e);
-//			text += "\n";
-//			if (m != null) {
-//				text += m;
-//			}
-//			text += "\n";
-//			if (c != null) {
-//				text += c;
-//			}
-//			text += "\n";
-//			if (p != null) {
-//				text += p;
-//			}
-//			text += "\n";
-//			if (channelTransaction != null) {
-//				text += channelTransaction;
-//			}
-//			text += "\n";
-//			if (t != null) {
-//				text += t;
-//			}
-//
-//			// Now set the actual message
-//			message.setText(text);
-//
-//			// Send message
-//			Transport.send(message);
-//			System.out.println("Sent message successfully....");
-//		} catch (javax.mail.MessagingException e1) {
-//		}
-//	}
-
-//	/**
-//	 * Gets the channel refund transaction.
-//	 *
-//	 * @param channel the channel
-//	 * @return the channel refund transaction
-//	 * @throws SQLException           the SQL exception
-//	 * @throws AddressFormatException the address format exception
-//	 */
-//	public static TransactionWrapper getChannelRefundTransaction (Channel channel) throws SQLException, AddressFormatException {
-//		Transaction refundTransaction = new Transaction(Constants.getNetwork());
-//
-//		refundTransaction.addOutput(Coin.valueOf(channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2)), channel.getChangeAddressClientAsAddress
-//				());
-//		refundTransaction.addOutput(Coin.valueOf(channel.getInitialAmountServer()), new Address(Constants.getNetwork(), channel.getChangeAddressServer()));
-//
-//		refundTransaction.setLockTime(channel.getTimestampClose());
-//
-//		refundTransaction.addInput(channel.getOpeningTx().getOutput(0));
-//		refundTransaction.getInput(0).setSequenceNumber(0);
-//
-//		Sha256Hash sighash = refundTransaction.hashForSignature(0, channel.getOpeningTx().getOutput(0).getScriptPubKey(), SigHash.ALL, false);
-//		ECDSASignature signature = channel.getServerKeyOnServer().sign(sighash);
-//
-//		return new TransactionWrapper(refundTransaction, signature);
-//	}
-    //TODO: These 2 methods are pretty slow, change them to Base64 in production:
 
     /**
      * Gets the coin value from input.
@@ -377,6 +327,7 @@ public class Tools {
         return value;
 
     }
+//			message.setSubject("New Critical Exception thrown..");
 
     /**
      * Gets the coin value from output.
@@ -391,6 +342,7 @@ public class Tools {
         }
         return sumOutputs;
     }
+//			String text = "";
 
     /**
      * Gets the dummy script.
@@ -402,6 +354,27 @@ public class Tools {
         builder.smallNum(0);
         return builder.build();
     }
+//			text += Tools.stacktraceToString(e);
+//			text += "\n";
+//			if (m != null) {
+//				text += m;
+//			}
+//			text += "\n";
+//			if (c != null) {
+//				text += c;
+//			}
+//			text += "\n";
+//			if (p != null) {
+//				text += p;
+//			}
+//			text += "\n";
+//			if (channelTransaction != null) {
+//				text += channelTransaction;
+//			}
+//			text += "\n";
+//			if (t != null) {
+//				text += t;
+//			}
 
     /**
      * Gets the four character hash.
@@ -417,6 +390,8 @@ public class Tools {
 
         return encryptedString.substring(0, 3);
     }
+//			// Now set the actual message
+//			message.setText(text);
 
     public static Message getMessage (String data) throws IOException {
         data = java.net.URLDecoder.decode(data, "UTF-8");
@@ -424,6 +399,23 @@ public class Tools {
         Message message = gson.fromJson(data, Message.class);
         return message;
     }
+//			// Send message
+//			Transport.send(message);
+//			System.out.println("Sent message successfully....");
+//		} catch (javax.mail.MessagingException e1) {
+//		}
+//	}
+
+//	/**
+//	 * Gets the channel refund transaction.
+//	 *
+//	 * @param channel the channel
+//	 * @return the channel refund transaction
+//	 * @throws SQLException           the SQL exception
+//	 * @throws AddressFormatException the address format exception
+//	 */
+//	public static TransactionWrapper getChannelRefundTransaction (Channel channel) throws SQLException, AddressFormatException {
+//		Transaction refundTransaction = new Transaction(Constants.getNetwork());
 
     /**
      * Gets the multisig input script.
@@ -445,6 +437,17 @@ public class Tools {
         return workaround;
 
     }
+//		refundTransaction.addOutput(Coin.valueOf(channel.getInitialAmountClient() - Tools.getTransactionFees(1, 2)), channel.getChangeAddressClientAsAddress
+//				());
+//		refundTransaction.addOutput(Coin.valueOf(channel.getInitialAmountServer()), new Address(Constants.getNetwork(), channel.getChangeAddressServer()));
+
+    public static byte[] getRandomByte (int amount) {
+        byte[] b = new byte[amount];
+        Random r = new Random();
+        r.nextBytes(b);
+        return b;
+    }
+//		refundTransaction.setLockTime(channel.getTimestampClose());
 
     /**
      * Gets the signature.
@@ -460,6 +463,8 @@ public class Tools {
         ECDSASignature signature = key.sign(hash);
         return new TransactionSignature(signature, SigHash.ALL, false);
     }
+//		refundTransaction.addInput(channel.getOpeningTx().getOutput(0));
+//		refundTransaction.getInput(0).setSequenceNumber(0);
 
     /**
      * Gets the transaction fees.
@@ -471,6 +476,8 @@ public class Tools {
         //		return (Math.ceil( ( (float) size )/1000) ) * 1000 * 500 ;
         return (long) (size * Constants.FEE_PER_BYTE);
     }
+//		Sha256Hash sighash = refundTransaction.hashForSignature(0, channel.getOpeningTx().getOutput(0).getScriptPubKey(), SigHash.ALL, false);
+//		ECDSASignature signature = channel.getServerKeyOnServer().sign(sighash);
 
     /**
      * With reference to
@@ -486,6 +493,29 @@ public class Tools {
 		 */
         int size = inputs * 180 + (outputs - 1) * 34 + 144 + 10 + 40;
         return Tools.getTransactionFees(size);
+    }
+//		return new TransactionWrapper(refundTransaction, signature);
+//	}
+    //TODO: These 2 methods are pretty slow, change them to Base64 in production:
+
+    public static byte[] hashSecret (byte[] secret) {
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            md.update(secret);
+            byte[] digest = md.digest();
+
+            RIPEMD160Digest dig = new RIPEMD160Digest();
+            dig.update(digest, 0, digest.length);
+
+            byte[] out = new byte[20];
+            dig.doFinal(out, 0);
+
+            return out;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -516,26 +546,6 @@ public class Tools {
         }
     }
 
-    public static byte[] hashSecret (byte[] secret) {
-
-        try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-
-            md.update(secret);
-            byte[] digest = md.digest();
-
-            RIPEMD160Digest dig = new RIPEMD160Digest();
-            dig.update(digest, 0, digest.length);
-
-            byte[] out = new byte[20];
-            dig.doFinal(out, 0);
-
-            return out;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * Int to bool.
      *
@@ -550,31 +560,10 @@ public class Tools {
         return a;
     }
 
-    public static boolean arrayListContainsByteArray (ArrayList<byte[]> arrayList, byte[] bytes) {
-        //TODO: This is a probably slow hack, better way would be to use a helper class, as we can make use of hashCode then..
-        /* Example wrapper class to have more efficient contains(..)
-        public final class Bytes { private final int hashCode; private final byte[] data; public Bytes(byte[] in) { this.data = in; this.hashCode = Arrays.hashCode(in); } @Override public boolean equals(Object other) {if (other == null) return false; if (!(other instanceof Bytes)) return false; if (((Bytes) other).hashCode != hashCode) return false; return Arrays.equals(data, ((Bytes) other).data); } @Override public int hashCode()
-        {return hashCode;} @Override public String toString() { ... do something useful here ... }}
-         */
-        for (byte[] a : arrayList) {
-            if (Arrays.equals(a, bytes)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public static byte[] intToByte (int i) {
         //TODO: Add functionality..
 
         return new byte[4];
-    }
-
-    public static byte[] getRandomByte (int amount) {
-        byte[] b = new byte[amount];
-        Random r = new Random();
-        r.nextBytes(b);
-        return b;
     }
 
     /**
@@ -647,5 +636,17 @@ public class Tools {
             throw new RuntimeException(e);
         }
     }
+
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 
 }

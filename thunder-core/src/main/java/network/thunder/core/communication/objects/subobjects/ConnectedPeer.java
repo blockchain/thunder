@@ -23,16 +23,16 @@ public class ConnectedPeer {
         this.signature = signature;
     }
 
-    public byte[] getPubkey () {
-        return pubkey;
+    public float getAmout () {
+        return amout;
     }
 
     public float getFee () {
         return fee;
     }
 
-    public float getAmout () {
-        return amout;
+    public byte[] getPubkey () {
+        return pubkey;
     }
 
     public short getReputation () {

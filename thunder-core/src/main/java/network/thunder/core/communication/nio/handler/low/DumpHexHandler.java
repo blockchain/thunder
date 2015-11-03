@@ -33,16 +33,16 @@ public class DumpHexHandler extends ChannelDuplexHandler {
     }
 
     @Override
+    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
+        cause.printStackTrace();
+        ctx.close();
+    }
+
+    @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
 //		System.out.println("test");
         System.out.println("Outgoing: " + msg);
 
         ctx.writeAndFlush(msg, promise);
-    }
-
-    @Override
-    public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
-        ctx.close();
     }
 }

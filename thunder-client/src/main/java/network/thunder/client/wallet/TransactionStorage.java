@@ -96,37 +96,19 @@ public class TransactionStorage implements WalletEventListener {
     }
 
     @Override
+    public void onKeysAdded (List<ECKey> arg0) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
     public void onReorganize (Wallet arg0) {
         // TODO Auto-generated method stub
 
     }
 
     @Override
-    public void onTransactionConfidenceChanged (Wallet arg0, Transaction arg1) {
-        try {
-            onTransaction(arg1);
-        } catch (SQLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
-    }
-
-    @Override
-    public void onWalletChanged (Wallet arg0) {
-        // TODO Auto-generated method stub
-        updateOutputs(arg0, false);
-
-    }
-
-    @Override
     public void onScriptsChanged (Wallet arg0, List<Script> arg1, boolean arg2) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void onKeysAdded (List<ECKey> arg0) {
         // TODO Auto-generated method stub
 
     }
@@ -162,6 +144,24 @@ public class TransactionStorage implements WalletEventListener {
                 }
             }
         }
+
+    }
+
+    @Override
+    public void onTransactionConfidenceChanged (Wallet arg0, Transaction arg1) {
+        try {
+            onTransaction(arg1);
+        } catch (SQLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    public void onWalletChanged (Wallet arg0) {
+        // TODO Auto-generated method stub
+        updateOutputs(arg0, false);
 
     }
 

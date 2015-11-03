@@ -173,6 +173,13 @@ public class KeyChain {
         }
 
         /* (non-Javadoc)
+         * @see org.bitcoinj.core.AbstractWalletEventListener#onKeysAdded(java.util.List)
+         */
+        @Override
+        public void onKeysAdded (List<ECKey> keys) {
+        }
+
+        /* (non-Javadoc)
          * @see org.bitcoinj.core.AbstractWalletEventListener#onReorganize(org.bitcoinj.core.Wallet)
          */
         @Override
@@ -221,13 +228,6 @@ public class KeyChain {
         }
 
         /* (non-Javadoc)
-         * @see org.bitcoinj.core.AbstractWalletEventListener#onKeysAdded(java.util.List)
-         */
-        @Override
-        public void onKeysAdded (List<ECKey> keys) {
-        }
-
-        /* (non-Javadoc)
          * @see org.bitcoinj.core.AbstractWalletEventListener#onWalletChanged(org.bitcoinj.core.Wallet)
          */
         @Override
@@ -248,9 +248,10 @@ public class KeyChain {
     class PeerListener implements PeerEventListener {
 
         /* (non-Javadoc)
-         * @see org.bitcoinj.core.PeerEventListener#onPeersDiscovered(java.util.Set)
+         * @see org.bitcoinj.core.PeerEventListener#getData(org.bitcoinj.core.Peer, org.bitcoinj.core.GetDataMessage)
          */
-        public void onPeersDiscovered (Set<PeerAddress> peerAddresses) {
+        public List<Message> getData (Peer peer, GetDataMessage m) {
+            return null;
         }
 
         /* (non-Javadoc)
@@ -279,6 +280,12 @@ public class KeyChain {
         }
 
         /* (non-Javadoc)
+         * @see org.bitcoinj.core.PeerEventListener#onPeersDiscovered(java.util.Set)
+         */
+        public void onPeersDiscovered (Set<PeerAddress> peerAddresses) {
+        }
+
+        /* (non-Javadoc)
          * @see org.bitcoinj.core.PeerEventListener#onPreMessageReceived(org.bitcoinj.core.Peer, org.bitcoinj.core.Message)
          */
         public Message onPreMessageReceived (Peer peer, Message m) {
@@ -299,13 +306,6 @@ public class KeyChain {
                 // TODO Auto-generated catch block
                 e.printStackTrace();
             }
-        }
-
-        /* (non-Javadoc)
-         * @see org.bitcoinj.core.PeerEventListener#getData(org.bitcoinj.core.Peer, org.bitcoinj.core.GetDataMessage)
-         */
-        public List<Message> getData (Peer peer, GetDataMessage m) {
-            return null;
         }
 
     }

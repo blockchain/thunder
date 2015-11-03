@@ -43,36 +43,26 @@ public class PubkeyChannelObject extends P2PDataObject {
         this.pubkeyB = set.getBytes("nodes_b_table.pubkey");
     }
 
-    @Override
-    public void verify () {
-    }
+    public static PubkeyChannelObject getRandomObject () {
+        PubkeyChannelObject obj = new PubkeyChannelObject();
 
-    @Override
-    public long getHashAsLong () {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
-        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
-        byteBuffer.flip();
-        return Math.abs(byteBuffer.getLong());
-    }
+        obj.secretAHash = Tools.getRandomByte(20);
+        obj.secretBHash = Tools.getRandomByte(20);
 
-    @Override
-    public byte[] getData () {
-        //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA.length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
+        obj.pubkeyB = Tools.getRandomByte(33);
+        obj.pubkeyB1 = Tools.getRandomByte(33);
+        obj.pubkeyB2 = Tools.getRandomByte(33);
 
-        byteBuffer.put(secretAHash);
-        byteBuffer.put(secretBHash);
-        byteBuffer.put(pubkeyB);
-        byteBuffer.put(pubkeyB1);
-        byteBuffer.put(pubkeyB2);
-        byteBuffer.put(pubkeyA);
-        byteBuffer.put(pubkeyA1);
-        byteBuffer.put(pubkeyA2);
-        byteBuffer.put(txidAnchor);
-        byteBuffer.put(signatureA);
-        byteBuffer.put(signatureB);
+        obj.pubkeyA = Tools.getRandomByte(33);
+        obj.pubkeyA1 = Tools.getRandomByte(33);
+        obj.pubkeyA2 = Tools.getRandomByte(33);
 
-        return byteBuffer.array();
+        obj.txidAnchor = Tools.getRandomByte(32);
+
+        obj.signatureA = Tools.getRandomByte(65);
+        obj.signatureB = Tools.getRandomByte(65);
+
+        return obj;
     }
 
     @Override
@@ -121,6 +111,34 @@ public class PubkeyChannelObject extends P2PDataObject {
     }
 
     @Override
+    public byte[] getData () {
+        //TODO: Have some proper summary here..
+        ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA.length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
+
+        byteBuffer.put(secretAHash);
+        byteBuffer.put(secretBHash);
+        byteBuffer.put(pubkeyB);
+        byteBuffer.put(pubkeyB1);
+        byteBuffer.put(pubkeyB2);
+        byteBuffer.put(pubkeyA);
+        byteBuffer.put(pubkeyA1);
+        byteBuffer.put(pubkeyA2);
+        byteBuffer.put(txidAnchor);
+        byteBuffer.put(signatureA);
+        byteBuffer.put(signatureB);
+
+        return byteBuffer.array();
+    }
+
+    @Override
+    public long getHashAsLong () {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(8);
+        byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
+        byteBuffer.flip();
+        return Math.abs(byteBuffer.getLong());
+    }
+
+    @Override
     public int hashCode () {
         int result = secretAHash != null ? Arrays.hashCode(secretAHash) : 0;
         result = 31 * result + (secretBHash != null ? Arrays.hashCode(secretBHash) : 0);
@@ -134,28 +152,6 @@ public class PubkeyChannelObject extends P2PDataObject {
         result = 31 * result + (signatureA != null ? Arrays.hashCode(signatureA) : 0);
         result = 31 * result + (signatureB != null ? Arrays.hashCode(signatureB) : 0);
         return result;
-    }
-
-    public static PubkeyChannelObject getRandomObject () {
-        PubkeyChannelObject obj = new PubkeyChannelObject();
-
-        obj.secretAHash = Tools.getRandomByte(20);
-        obj.secretBHash = Tools.getRandomByte(20);
-
-        obj.pubkeyB = Tools.getRandomByte(33);
-        obj.pubkeyB1 = Tools.getRandomByte(33);
-        obj.pubkeyB2 = Tools.getRandomByte(33);
-
-        obj.pubkeyA = Tools.getRandomByte(33);
-        obj.pubkeyA1 = Tools.getRandomByte(33);
-        obj.pubkeyA2 = Tools.getRandomByte(33);
-
-        obj.txidAnchor = Tools.getRandomByte(32);
-
-        obj.signatureA = Tools.getRandomByte(65);
-        obj.signatureB = Tools.getRandomByte(65);
-
-        return obj;
     }
 
     @Override
@@ -173,5 +169,9 @@ public class PubkeyChannelObject extends P2PDataObject {
             ", signatureA=" + Arrays.toString(signatureA) +
             ", signatureB=" + Arrays.toString(signatureB) +
             '}';
+    }
+
+    @Override
+    public void verify () {
     }
 }

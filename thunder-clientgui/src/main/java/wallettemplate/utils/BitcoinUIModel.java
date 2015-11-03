@@ -162,12 +162,6 @@ public class BitcoinUIModel {
 
     private class ProgressBarUpdater extends DownloadProgressTracker {
         @Override
-        protected void progress (double pct, int blocksLeft, Date date) {
-            super.progress(pct, blocksLeft, date);
-            Platform.runLater(() -> syncProgress.set(pct / 100.0));
-        }
-
-        @Override
         protected void doneDownload () {
             super.doneDownload();
 
@@ -188,6 +182,12 @@ public class BitcoinUIModel {
                 }
             });
 
+        }
+
+        @Override
+        protected void progress (double pct, int blocksLeft, Date date) {
+            super.progress(pct, blocksLeft, date);
+            Platform.runLater(() -> syncProgress.set(pct / 100.0));
         }
     }
 }

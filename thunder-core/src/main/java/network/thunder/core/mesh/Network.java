@@ -19,10 +19,10 @@ public class Network {
         nodeList.add(node);
     }
 
-    public void initialize(ArrayList<P2PDataObject> nodeList) {
+    public void initialize (ArrayList<P2PDataObject> nodeList) {
         //First load up all the nodes in memory..
-        for(P2PDataObject obj : nodeList) {
-            if(obj instanceof PubkeyChannelObject) {
+        for (P2PDataObject obj : nodeList) {
+            if (obj instanceof PubkeyChannelObject) {
                 PubkeyChannelObject pubkeyChannelObject = (PubkeyChannelObject) obj;
                 addNode(new Node(pubkeyChannelObject.pubkeyA));
                 addNode(new Node(pubkeyChannelObject.pubkeyB));
@@ -31,7 +31,5 @@ public class Network {
 
         //Now build the grid between the nodes
     }
-
-
 
 }

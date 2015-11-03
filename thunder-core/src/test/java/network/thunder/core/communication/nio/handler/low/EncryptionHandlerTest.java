@@ -34,6 +34,16 @@ public class EncryptionHandlerTest {
 
     EncryptionHandler handler;
 
+    @Test
+    public void clientShouldSendPublicKey () throws Exception {
+
+        ByteBuf buffer = (ByteBuf) channel1.readOutbound();
+        byte[] key = new byte[node1.getPubKeyTempServer().getPubKey().length];
+        buffer.readBytes(key);
+        assertTrue(Arrays.equals(key, node1.getPubKeyTempServer().getPubKey()));
+
+    }
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         context = new P2PContext(8992);
@@ -57,16 +67,6 @@ public class EncryptionHandlerTest {
     }
 
     @Test
-    public void clientShouldSendPublicKey () throws Exception {
-
-        ByteBuf buffer = (ByteBuf) channel1.readOutbound();
-        byte[] key = new byte[node1.getPubKeyTempServer().getPubKey().length];
-        buffer.readBytes(key);
-        assertTrue(Arrays.equals(key, node1.getPubKeyTempServer().getPubKey()));
-
-    }
-
-    @Test
     public void serverShouldRespondPublicKey () throws Exception {
 
         ByteBuf buffer = (ByteBuf) channel1.readOutbound();
@@ -82,6 +82,35 @@ public class EncryptionHandlerTest {
         buffer.readBytes(key);
         assertTrue(Arrays.equals(key, node2.getPubKeyTempServer().getPubKey()));
 
+    }
+
+    @Test
+    public void shouldEncrypt () throws InvalidKeyException, NoSuchAlgorithmException {
+        //Give each nodes the key of the other node..
+        channel2.writeInbound(channel1.readOutbound());
+        channel1.writeInbound(channel2.readOutbound());
+
+        //Create some gibberish to parse through them
+        byte[] message = new byte[1024];
+        Random r = new Random();
+        r.nextBytes(message);
+
+        ByteBuf messageB = node1.getNettyContext().alloc().buffer();
+        messageB.writeBytes(message);
+
+        channel1.writeOutbound(messageB);
+        ByteBuf buffer = (ByteBuf) channel1.readOutbound();
+        byte[] message1 = new byte[buffer.readableBytes()];
+        buffer.readBytes(message1);
+
+        //Check whether message1 is indeed correctly encrypted and constructed
+        byte[] encrypted = CryptoTools.encryptAES_CTR(message, handler.ecdhKeySet.getEncryptionKey(), handler.ecdhKeySet.getIvServer(), 0);
+        byte[] messageSelfEncrypted = CryptoTools.addHMAC(encrypted, handler.ecdhKeySet.getHmacKey());
+
+        System.out.println(Tools.bytesToHex(messageSelfEncrypted));
+        System.out.println(Tools.bytesToHex(message1));
+
+        assertTrue(Arrays.equals(messageSelfEncrypted, message1));
     }
 
     @Test
@@ -142,35 +171,6 @@ public class EncryptionHandlerTest {
         System.out.println(Tools.bytesToHex(message));
         System.out.println(Tools.bytesToHex(message1));
 
-    }
-
-    @Test
-    public void shouldEncrypt () throws InvalidKeyException, NoSuchAlgorithmException {
-        //Give each nodes the key of the other node..
-        channel2.writeInbound(channel1.readOutbound());
-        channel1.writeInbound(channel2.readOutbound());
-
-        //Create some gibberish to parse through them
-        byte[] message = new byte[1024];
-        Random r = new Random();
-        r.nextBytes(message);
-
-        ByteBuf messageB = node1.getNettyContext().alloc().buffer();
-        messageB.writeBytes(message);
-
-        channel1.writeOutbound(messageB);
-        ByteBuf buffer = (ByteBuf) channel1.readOutbound();
-        byte[] message1 = new byte[buffer.readableBytes()];
-        buffer.readBytes(message1);
-
-        //Check whether message1 is indeed correctly encrypted and constructed
-        byte[] encrypted = CryptoTools.encryptAES_CTR(message, handler.ecdhKeySet.getEncryptionKey(), handler.ecdhKeySet.getIvServer(), 0);
-        byte[] messageSelfEncrypted = CryptoTools.addHMAC(encrypted, handler.ecdhKeySet.getHmacKey());
-
-        System.out.println(Tools.bytesToHex(messageSelfEncrypted));
-        System.out.println(Tools.bytesToHex(message1));
-
-        assertTrue(Arrays.equals(messageSelfEncrypted, message1));
     }
 
 }

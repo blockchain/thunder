@@ -27,13 +27,12 @@ import network.thunder.core.mesh.Node;
  */
 public final class P2PClient {
 
+    static final int PORT = Integer.parseInt(System.getProperty("port", "8992"));
     private P2PContext context;
 
     public P2PClient (P2PContext context) {
         this.context = context;
     }
-
-    static final int PORT = Integer.parseInt(System.getProperty("port", "8992"));
 
     //We will add a new handler for the different layers
     //Furthermore, we will add a new handler for the different message types,
