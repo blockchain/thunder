@@ -11,6 +11,7 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 -- Dumping structure for table lightning.pubkey_ips
+DROP TABLE IF EXISTS `pubkey_ips`;
 CREATE TABLE IF NOT EXISTS `pubkey_ips` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `fragment_index` smallint(6) NOT NULL DEFAULT '0',
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS `pubkey_ips` (
   `signature` tinyblob,
   PRIMARY KEY (`id`),
   KEY `fragment_index` (`fragment_index`),
-  KEY `node_id` (`node_id`)
+  KEY `node_id` (`node_id`),
+  KEY `hash` (`hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Data exporting was unselected.

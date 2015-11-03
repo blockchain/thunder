@@ -11,6 +11,7 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 
 -- Dumping structure for table lightning.channels
+DROP TABLE IF EXISTS `channels`;
 CREATE TABLE IF NOT EXISTS `channels` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `fragment_index` smallint(6) DEFAULT NULL,
@@ -28,7 +29,8 @@ CREATE TABLE IF NOT EXISTS `channels` (
   `signature_b` tinyblob,
   PRIMARY KEY (`id`),
   KEY `node_id_a_node_id_b` (`node_id_a`,`node_id_b`),
-  KEY `fragment_index` (`fragment_index`)
+  KEY `fragment_index` (`fragment_index`),
+  KEY `hash` (`hash`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- Data exporting was unselected.
