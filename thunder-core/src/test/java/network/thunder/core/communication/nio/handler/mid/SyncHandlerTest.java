@@ -48,7 +48,7 @@ public class SyncHandlerTest {
         conn.createStatement().execute("DELETE FROM nodes;");
         conn.createStatement().execute("DELETE FROM pubkey_ips;");
 
-        for (int i = 1; i < 10000; i++) {
+        for (int i = 1; i < 100; i++) {
             PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject2 = PubkeyIPObject.getRandomObject();

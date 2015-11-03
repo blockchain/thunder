@@ -24,54 +24,65 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Payment {
+
     /**
      * Whether *in this context* this payment is towards us or towards the node.
      * Depends on the node we are currently talking with.
      */
     public boolean paymentToServer;
+
     int id;
     int channelIdSender;
     int channelIdReceiver;
+
     long amount;
-    int phaseReceiver;
 
     /*
      * Different phases of a payment:
-	 * <p>
-	 * 0 - sender requested payment
-	 * 1 - payment request complete - include in sender channel
-	 * also add it to the receivers channel next time..
-	 * <p>
-	 * 2 -
-	 * 3 - receiver channel updated, include in both channels
-	 * 4 - receiver released the secret
-	 * <p>
-	 * 10 - settled with sender only
-	 * 5 - settled with receiver only
-	 * 11 - payment settled
-	 * 5 - receiver/server requested refund
-	 * 6 - receiver refunded/timeouted
-	 * 12 - receiver and sender refunded (so it's settled aswell..)
-	 */ int phaseSender;
+     * <p>
+     * 0 - sender requested payment
+     * 1 - payment request complete - include in sender channel
+     * also add it to the receivers channel next time..
+     * <p>
+     * 2 -
+     * 3 - receiver channel updated, include in both channels
+     * 4 - receiver released the secret
+     * <p>
+     * 10 - settled with sender only
+     * 5 - settled with receiver only
+     * 11 - payment settled
+     * 5 - receiver/server requested refund
+     * 6 - receiver refunded/timeouted
+     * 12 - receiver and sender refunded (so it's settled aswell..)
+     */ int phaseReceiver;
+    int phaseSender;
     long fee;
-    /*
+
+	/*
      * Revocation hash and preimage for this payment.
-     * If we know the preimage, it means the payment made it to the final receiver and we can pull the funds.
-     */ byte[] secretHash;
+	 * If we know the preimage, it means the payment made it to the final receiver and we can pull the funds.
+	 */
+
+    byte[] secretHash;
     byte[] secret;
+
     int timestampAddedSender;
     int timestampAddedReceiver;
     int timestampSettledSender;
     int timestampSettledReceiver;
+
     boolean includeInSenderChannel;
     boolean includeInReceiverChannel;
     boolean includeInReceiverChannelTemp;
     boolean includeInSenderChannelTemp;
-    /*
-     * We use the version flags to allow for easier bruteforcing of the P2SH script.
-     * If we don't know at all which payments might be used together with which revocation hashes,
-     *  brute forcing it might be an expensive and lengthy task.
-     */ int versionAddedSender;
+
+	/*
+	 * We use the version flags to allow for easier bruteforcing of the P2SH script.
+	 * If we don't know at all which payments might be used together with which revocation hashes,
+	 *  brute forcing it might be an expensive and lengthy task.
+	 */
+
+    int versionAddedSender;
     int versionAddedReceiver;
     int versionSettledSender;
     int versionSettledReceiver;

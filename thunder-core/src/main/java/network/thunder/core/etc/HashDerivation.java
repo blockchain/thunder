@@ -18,13 +18,8 @@
  */
 package network.thunder.core.etc;
 
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.crypto.ChildNumber;
-import org.bitcoinj.crypto.DeterministicHierarchy;
-import org.bitcoinj.crypto.DeterministicKey;
-
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
 
 /*
  * For deterministic derivation of revocation hashes, use the following scheme
@@ -47,49 +42,23 @@ public class HashDerivation {
      * @param maxSiblingTries The amount of siblings calculating for each depth
      * @return The preimage hashing to the desired hash.
      */
-    public static byte[] bruteForceHash (byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
+    public static RevocationHash bruteForceHash (byte[] seed, byte[] target, int maxChildTries, int maxSiblingTries) {
 
         for (int i = 0; i < maxChildTries; i++) {
 
             for (int j = 0; j < maxSiblingTries; j++) {
-
+                RevocationHash test = HashDerivation.calculateRevocationHash(seed, 0, j);
+                if (Arrays.equals(test.getSecretHash(), target)) {
+                    return new RevocationHash(i, j, test.getSecret(), test.getSecretHash());
+                }
             }
 
             seed = Tools.hashSecret(seed);
 
         }
-    }
-
-    /**
-     * Brute force key.
-     *
-     * @param masterKey the master key
-     * @param pubkey    the pubkey
-     * @return the EC key
-     */
-    public static ECKey bruteForceKey (String masterKey, String pubkey) {
-        DeterministicKey hd = DeterministicKey.deserializeB58(masterKey, Constants.getNetwork());
-
-        DeterministicHierarchy hi = new DeterministicHierarchy(hd);
-
-        for (int j = 0; j < 1000; ++j) {
-            List<ChildNumber> childList = getChildList(j);
-
-            for (int i = 0; i < 1000; ++i) {
-
-                ChildNumber childNumber = new ChildNumber(i, true);
-                childList.set(j, childNumber);
-
-                DeterministicKey key = hi.get(childList, true, true);
-                String pubTemp = Tools.byteToString(key.getPubKey());
-                if (pubTemp.equals(pubkey)) {
-                    return key;
-                }
-            }
-        }
-
         return null;
     }
+
 
     /**
      * Calculate a revocation hash for a new channel state.
@@ -102,51 +71,26 @@ public class HashDerivation {
 
         byte[] childseed = seed;
         for (int i = 0; i < depth; i++) {
-            childSeed = Tools.hashSecret(childSeed);
+            childseed = Tools.hashSecret(childseed);
+        }
+
+        if(childNumber == 0) {
+            return new RevocationHash(depth, childNumber, childseed, null);
         }
 
         byte[] childseedWithNumber = new byte[24];
-        System.arraycopy(childseed, 0, childseedWithNumber, 20);
+        System.arraycopy(childseed, 0, childseedWithNumber, 0, 20);
 
-        //Copied over from http://stackoverflow.com/questions/2183240/java-integer-to-byte-array
-        //Workaround, as there is no native way to get integer to a byte array...
-        byte[] conv = new byte[4];
-        conv[3] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[2] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[1] = (byte) childNumber & 0xff;
-        input >>= 8;
-        conv[0] = (byte) childNumber;
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+        buffer.putInt(childNumber);
+        buffer.flip();
 
-        System.arraycopy(conv, 20, childseedWithNumber, 4);
+        System.arraycopy(buffer.array(), 0, childseedWithNumber, 20, 4);
 
         byte[] secret = Tools.hashSecret(childseedWithNumber);
         byte[] secretHash = Tools.hashSecret(secret);
 
         return new RevocationHash(depth, childNumber, secret, secretHash);
-
-    }
-
-    /**
-     * Call to get the MasterKey for a new Channel.
-     *
-     * @param number Query the Database to get the latest unused number
-     * @return DeterministicKey for the new Channel
-     */
-    public static DeterministicKey getMasterKey (int number) {
-
-        DeterministicKey hd = DeterministicKey.deserializeB58(SideConstants.KEY_B58, Constants.getNetwork());
-        //		DeterministicKey hd =  DeterministicKey.deserializeB58(null,KEY_B58);
-        //        DeterministicKey hd = HDKeyDerivation.createMasterPrivateKey(KEY.getBytes());
-        DeterministicHierarchy hi = new DeterministicHierarchy(hd);
-
-        List<ChildNumber> childList = new ArrayList<ChildNumber>();
-        ChildNumber childNumber = new ChildNumber(number, true);
-        childList.add(childNumber);
-
-        DeterministicKey key = hi.get(childList, true, true);
-        return key;
 
     }
 
