@@ -16,7 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package network.thunder.core.etc;
+package network.thunder.core.lightning;
+
+import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;

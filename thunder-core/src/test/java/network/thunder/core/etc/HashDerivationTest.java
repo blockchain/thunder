@@ -1,5 +1,7 @@
 package network.thunder.core.etc;
 
+import network.thunder.core.lightning.HashDerivation;
+import network.thunder.core.lightning.RevocationHash;
 import org.junit.Test;
 
 import java.util.Arrays;

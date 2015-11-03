@@ -27,24 +27,9 @@ import org.spongycastle.util.Arrays;
  */
 public class PerformanceLogger {
 
-    /**
-     * The time1.
-     */
     long time1;
-
-    /**
-     * The time2.
-     */
     long time2;
-
-    /**
-     * The title.
-     */
     String title;
-
-    /**
-     * The i.
-     */
     int i = 0;
 
     /**
@@ -63,11 +48,6 @@ public class PerformanceLogger {
         time1 = System.currentTimeMillis();
     }
 
-    /**
-     * Measure.
-     *
-     * @param event the event
-     */
     public void measure (String event) {
 
         time2 = System.currentTimeMillis();
@@ -77,9 +57,6 @@ public class PerformanceLogger {
         time1 = System.currentTimeMillis();
     }
 
-    /**
-     * Measure.
-     */
     public void measure () {
         i++;
         measure(title + " " + i);

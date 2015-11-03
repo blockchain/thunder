@@ -17,7 +17,9 @@
  *
  */
 
-package network.thunder.core.etc;
+package network.thunder.core.lightning;
+
+import network.thunder.core.etc.Tools;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
