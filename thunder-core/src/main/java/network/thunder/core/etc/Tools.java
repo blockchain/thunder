@@ -23,7 +23,6 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.Base58;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.ChildNumber;
@@ -577,7 +576,38 @@ public class Tools {
         }
     }
 
+    public static byte[] hashSha (byte[] secret) {
+
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+            md.update(secret);
+            byte[] digest = md.digest();
+
+            return digest;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static byte[] hashSha (byte[] secret, int rounds) {
+
+        try {
+            byte[] digest = secret;
+            for (int i = 0; i < rounds; i++) {
+                MessageDigest md = MessageDigest.getInstance("SHA-256");
+
+                md.update(digest);
+                digest = md.digest();
+            }
+            return digest;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public static byte[] hexStringToByteArray (String s) {
+        s = s.replaceAll(" ", "").toLowerCase();
         int len = s.length();
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
