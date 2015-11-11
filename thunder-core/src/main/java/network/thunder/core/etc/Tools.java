@@ -481,17 +481,13 @@ public class Tools {
     //		refundTransaction.addInput(channel.getOpeningTx().getOutput(0));
     //		refundTransaction.getInput(0).setSequenceNumber(0);
 
-    /**
-     * Gets the signature.
-     *
-     * @param transactionToSign the transaction to sign
-     * @param index             the index
-     * @param outputToSpend     the output to spend
-     * @param key               the key
-     * @return the signature
-     */
-    public static ECDSASignature getSignature (Transaction transactionToSign, int index, TransactionOutput outputToSpend, ECKey key) {
-        Sha256Hash hash = transactionToSign.hashForSignature(index, outputToSpend.getScriptPubKey(), SigHash.ALL, false);
+    public static TransactionSignature getSignature (Transaction transactionToSign, int index, TransactionOutput outputToSpend, ECKey key) {
+        return getSignature(transactionToSign, index, outputToSpend.getScriptBytes(), key);
+    }
+
+    public static TransactionSignature getSignature (Transaction transactionToSign, int index, byte[] outputToSpend, ECKey key) {
+        Sha256Hash hash = transactionToSign.hashForSignature(index, outputToSpend, SigHash.ALL, false);
+
         ECDSASignature signature = key.sign(hash);
         return new TransactionSignature(signature, SigHash.ALL, false);
     }
