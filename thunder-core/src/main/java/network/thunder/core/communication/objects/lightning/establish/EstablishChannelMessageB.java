@@ -19,28 +19,29 @@
 package network.thunder.core.communication.objects.lightning.establish;
 
 /**
- * First request for opening a channel.
+ * Response to first request for opening a channel.
  */
-public class EstablishChannelRequestOne {
+public class EstablishChannelMessageB {
 
     private byte[] pubKey;
     private byte[] pubKeyFE;
     private byte[] secretHashFE;
 
-    private long clientAmount;
     private long serverAmount;
 
-    public EstablishChannelRequestOne (byte[] pubKey, byte[] pubKeyFE, byte[] secretHashFE, long clientAmount, long serverAmount) {
+    private byte[] anchorHash;
+
+    public EstablishChannelMessageB (byte[] pubKey, byte[] pubKeyFE, byte[] secretHashFE, long serverAmount, byte[] anchorHash) {
         this.pubKey = pubKey;
         this.pubKeyFE = pubKeyFE;
         this.secretHashFE = secretHashFE;
-        this.clientAmount = clientAmount;
         this.serverAmount = serverAmount;
+        this.anchorHash = anchorHash;
     }
 
     //region Getter Setter
-    public long getClientAmount () {
-        return clientAmount;
+    public byte[] getAnchorHash () {
+        return anchorHash;
     }
 
     public byte[] getPubKey () {

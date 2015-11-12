@@ -171,6 +171,9 @@ public class Channel {
 
     }
 
+    public Channel () {
+    }
+
     /**
      * Gets the amount client.
      *

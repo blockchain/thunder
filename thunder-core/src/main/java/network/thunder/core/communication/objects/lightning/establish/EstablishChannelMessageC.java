@@ -19,15 +19,15 @@
 package network.thunder.core.communication.objects.lightning.establish;
 
 /**
- * Response to the second request for establishing a channel.
+ * Second request for opening a channel.
  */
-public class EstablishChannelResponseTwo {
+public class EstablishChannelMessageC {
 
     private byte[] anchorHash;
     private byte[] signatureE;
     private byte[] signatureFE;
 
-    public EstablishChannelResponseTwo (byte[] anchorHash, byte[] signatureE, byte[] signatureFE) {
+    public EstablishChannelMessageC (byte[] anchorHash, byte[] signatureE, byte[] signatureFE) {
         this.anchorHash = anchorHash;
         this.signatureE = signatureE;
         this.signatureFE = signatureFE;
