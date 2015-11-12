@@ -36,10 +36,7 @@ import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -542,6 +539,75 @@ public class Tools {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static Transaction addOutAndInputs (long value, Wallet wallet, HashMap<TransactionOutPoint, Integer> lockedOutputs, Script script) {
+        final int TIME_LOCK_IN_SECONDS = 60;
+
+        Transaction transaction = new Transaction(Constants.getNetwork());
+
+        long totalInput = 0;
+        long neededAmount = value + Tools.getTransactionFees(20, 2);
+        ArrayList<TransactionOutput> outputList = new ArrayList<>();
+        ArrayList<TransactionOutput> spendable = new ArrayList<>(wallet.calculateAllSpendCandidates());
+        ArrayList<TransactionOutput> tempList = new ArrayList<>(spendable);
+        for (TransactionOutput o : tempList) {
+            int timeLock = lockedOutputs.get(o);
+            if (timeLock > Tools.currentTime()) {
+                spendable.remove(o);
+            }
+        }
+        for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
+            if (o.getValue().value > neededAmount) {
+                /*
+                 * Ok, found a suitable output, need to split the change
+                 * TODO: Change (a few things), such that there will be no output < 500...
+                 */
+                outputList.add(o);
+                totalInput += o.getValue().value;
+
+            }
+        }
+        if (totalInput == 0) {
+            /*
+             * None of our outputs alone is sufficient, have to add multiples..
+             */
+            for (TransactionOutput o : wallet.calculateAllSpendCandidates()) {
+                if (totalInput >= neededAmount) {
+                    continue;
+                }
+                totalInput += o.getValue().value;
+                outputList.add(o);
+            }
+        }
+
+        if (totalInput < value) {
+            /*
+             * Not enough outputs in total to pay for the channel..
+             */
+            throw new RuntimeException("Wallet Balance not sufficient"); //TODO
+        } else {
+
+            transaction.addOutput(Coin.valueOf(value), script);
+            transaction.addOutput(Coin.valueOf(totalInput - value - Tools.getTransactionFees(2, 2)), wallet.freshReceiveAddress());
+
+            for (TransactionOutput o : outputList) {
+                transaction.addInput(o);
+            }
+
+            /*
+             * Sign all of our inputs..
+             */
+            int j = 0;
+            for (int i = 0; i < outputList.size(); i++) {
+                TransactionOutput o = outputList.get(i);
+                transaction.getInput(i).setScriptSig(new Script(Tools.getSignature(transaction, i, o, wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript
+                        (Constants.getNetwork()).getHash160())).encodeToDER()));
+                //TODO: Currently only working if we have P2PKH outputs in our wallet
+            }
+        }
+
+        return transaction;
     }
 
     /**

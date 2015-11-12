@@ -25,10 +25,10 @@ public class Type {
 
     public static int FAILURE = 000;
 
-    public static int ESTABLISH_CHANNEL_ONE_REQUEST = 110;
-    public static int ESTABLISH_CHANNEL_ONE_RESPONSE = 111;
-    public static int ESTABLISH_CHANNEL_TWO_REQUEST = 120;
-    public static int ESTABLISH_CHANNEL_TWO_RESPONSE = 121;
+    public static int ESTABLISH_CHANNEL_A = 110;
+    public static int ESTABLISH_CHANNEL_B = 111;
+    public static int ESTABLISH_CHANNEL_C = 120;
+    public static int ESTABLISH_CHANNEL_D = 121;
 
     public static int SEND_PAYMENT_ONE_REQUEST = 210;
     public static int SEND_PAYMENT_ONE_RESPONSE = 211;

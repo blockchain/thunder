@@ -16,28 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-package network.thunder.core.communication.objects.lightning.establish;
 
-/**
- * Response to the second request for establishing a channel.
- */
-public class EstablishChannelMessageD {
+package network.thunder.core.communication.objects.subobjects;
 
-    private byte[] signatureE;
-    private byte[] signatureFE;
+public class RevocationHash {
+	private int depth;
+	private int child;
+	private String secret;
+	private String secretHash;
 
-    public EstablishChannelMessageD (byte[] signatureE, byte[] signatureFE) {
-        this.signatureE = signatureE;
-        this.signatureFE = signatureFE;
-    }
+	public RevocationHash (int depth, int child, String secret, String secretHash) {
+		this.depth = depth;
+		this.child = child;
+		this.secret = secret;
+		this.secretHash = secretHash;
+	}
 
-    //region Getter
-    public byte[] getSignatureE () {
-        return signatureE;
-    }
+	public int getDepth () {
+		return depth;
+	}
 
-    public byte[] getSignatureFE () {
-        return signatureFE;
-    }
-    //endregion
+	public int getChild () {
+		return child;
+	}
+
+	public String getSecret () {
+		return secret;
+	}
+
+	public String getSecretHash () {
+		return secretHash;
+	}
 }
