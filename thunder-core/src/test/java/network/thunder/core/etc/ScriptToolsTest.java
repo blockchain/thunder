@@ -82,6 +82,143 @@ public class ScriptToolsTest {
     }
 
     @Test
+    public void shouldCreateSpendableEscapeTransactionWithRevocationTransaction () {
+
+        Script outputScript = ScriptTools.getEscapeOutputScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureClient = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClient);
+
+        Script inputScript = ScriptTools.getEscapeInputRevocationScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureClient
+                .encodeToBitcoin(), secretServer);
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test
+    public void shouldCreateSpendableEscapeTransactionWithTimeoutTransaction () {
+
+        Script outputScript = ScriptTools.getEscapeOutputScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer.encodeToBitcoin());
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test
+    public void shouldCreateSpendableFastEscapeTransactionWithSecretTransaction () {
+
+        Script outputScript = ScriptTools.getFastEscapeOutputScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getFastEscapeInputSecretScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer
+                .encodeToBitcoin(), secretClient);
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test
+    public void shouldCreateSpendableFastEscapeTransactionWithTimeoutTransaction () {
+
+        Script outputScript = ScriptTools.getFastEscapeOutputScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureClient = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClient);
+
+        Script inputScript = ScriptTools.getFastEscapeInputTimeoutScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000, signatureClient
+                .encodeToBitcoin());
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test(expected = ScriptException.class)
+    public void shouldThrowExceptionBecauseOfWrongSecretWhenTryingToSpendEscapeTransaction () {
+        Script outputScript = ScriptTools.getEscapeOutputScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureClient = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClient);
+
+        byte[] b = new byte[]{0x00};
+        System.arraycopy(b, 0, secretServer, 15, 1); //Copy a wrong byte into the secret, should not work anymore now
+
+        Script inputScript = ScriptTools.getEscapeInputRevocationScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureClient
+                .encodeToBitcoin(), secretServer);
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test(expected = ScriptException.class)
+    public void shouldThrowExceptionBecauseOfWrongSecretWhenTryingToSpendFastEscapeTransaction () {
+        Script outputScript = ScriptTools.getFastEscapeOutputScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
+
+        byte[] b = new byte[]{0x00};
+        System.arraycopy(b, 0, secretClient, 15, 1); //Copy a wrong byte into the secret, should not work anymore now
+
+        Script inputScript = ScriptTools.getFastEscapeInputSecretScript(secretClientHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer
+                .encodeToBitcoin(), secretClient);
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test(expected = ScriptException.class)
+    public void shouldThrowExceptionBecauseSignatureOrderIsNotCorrect () {
+
+        Script outputScript = ScriptTools.getAnchorOutputScript(secretServerHash, keyClient, keyClientA, keyServer);
+        Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
+
+        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
+        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
+
+        TransactionSignature signatureClientA = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClientA);
+        TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputScript(signatureServer.encodeToBitcoin(), signatureClientA.encodeToBitcoin(), secretServer,
+                secretServerHash, keyClient, keyClientA, keyServer);
+
+        transactionInput.getInput(0).setScriptSig(inputScript);
+
+        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
+    }
+
+    @Test
     public void shouldProduceCorrectScript () throws Exception {
 
         byte[] p1 = Tools.hexStringToByteArray("aa bb cc dd ee");

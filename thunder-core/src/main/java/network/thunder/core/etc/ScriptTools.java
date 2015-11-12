@@ -35,7 +35,7 @@ public class ScriptTools {
     /*
      * Input Script to spend the anchor
      */
-    
+
     public static Script getEscapeInputScript (byte[] signatureClientA, byte[] signatureServer, byte[] secretServer, byte[] secretServerHash, ECKey
             keyClient, ECKey keyClientA, ECKey keyServer) {
         byte[] redeemscript = getAnchorOutputScript(secretServerHash, keyClient, keyClientA, keyServer).getProgram();
@@ -58,29 +58,29 @@ public class ScriptTools {
 
     public static Script getEscapeInputRevocationScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
             signatureClient, byte[] secretServer) {
-        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyClient, keyServer, revocationDelay).getProgram();
+        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyServer, keyClient, revocationDelay).getProgram();
         return produceScript(ESCAPE_INPUT_REVOCATION_SCRIPT, signatureClient, secretServer, redeemScript);
     }
 
     public static Script getEscapeInputTimeoutScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
             signatureServer) {
-        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyClient, keyServer, revocationDelay).getProgram();
+        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyServer, keyClient, revocationDelay).getProgram();
         return produceScript(ESCAPE_INPUT_TIMEOUT_SCRIPT, signatureServer, redeemScript);
     }
 
     public static Script getFastEscapeOutputScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay) {
-        return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretClientHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+        return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
     }
 
-    public static Script getFastEscapeInputRevocationScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
+    public static Script getFastEscapeInputSecretScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
             signatureServer, byte[] secretClient) {
-        byte[] redeemScript = getFastEscapeOutputScript(secretClientHash, keyClient, keyServer, revocationDelay).getProgram();
+        byte[] redeemScript = getFastEscapeOutputScript(secretClientHash, keyServer, keyClient, revocationDelay).getProgram();
         return produceScript(FAST_ESCAPE_INPUT_SECRET_SCRIPT, signatureServer, secretClient, redeemScript);
     }
 
     public static Script getFastEscapeInputTimeoutScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
             signatureClient) {
-        byte[] redeemScript = getFastEscapeOutputScript(secretClientHash, keyClient, keyServer, revocationDelay).getProgram();
+        byte[] redeemScript = getFastEscapeOutputScript(secretClientHash, keyServer, keyClient, revocationDelay).getProgram();
         return produceScript(FAST_ESCAPE_INPUT_TIMEOUT_SCRIPT, signatureClient, redeemScript);
     }
 
