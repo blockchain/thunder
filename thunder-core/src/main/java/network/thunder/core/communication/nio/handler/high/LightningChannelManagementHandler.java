@@ -129,7 +129,6 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 Preconditions.checkNotNull(m.getSignatureFE());
                 Preconditions.checkArgument(status == 3, "Did not expect this message here - exit!");
 
-
                 newChannel.setAnchorTxHashClient(Sha256Hash.wrap(m.getAnchorHash()));
                 newChannel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureE(), true));
                 newChannel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureFE(), true));
@@ -151,6 +150,8 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 if (!newChannel.verifyEscapeSignatures()) {
                     throw new Exception("Signature does not match..");
                 }
+                //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
+                //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
             }
 
             //TODO: Do all the channel opening stuff here..
