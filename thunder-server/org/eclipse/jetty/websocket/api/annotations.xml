@@ -1,5 +1,0 @@
-<root>
-    <item name='org.eclipse.jetty.websocket.api.WebSocketAdapter'>
-        <annotation name='java.lang.annotation.Deprecated'/>
-    </item>
-</root>
