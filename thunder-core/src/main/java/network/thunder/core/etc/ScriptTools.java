@@ -57,31 +57,31 @@ public class ScriptTools {
      * Output scripts to build the escape and fast escape transactions.
      */
 
-    public static Script getEscapeOutputScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay) {
+    public static Script getEscapeOutputScript (byte[] revocationHashServer, ECKey keyServer, ECKey keyClient, int revocationDelay) {
         if (CLTV_CSV_ENABLED) {
-            return produceScript(ESCAPE_OUTPUT_SCRIPT, secretServerHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+            return produceScript(ESCAPE_OUTPUT_SCRIPT, revocationHashServer, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
         } else {
-            return produceScript(ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, secretServerHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+            return produceScript(ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, revocationHashServer, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
         }
     }
 
-    public static Script getEscapeInputRevocationScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
-            signatureClient, byte[] secretServer) {
-        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyServer, keyClient, revocationDelay).getProgram();
-        return produceScript(ESCAPE_INPUT_REVOCATION_SCRIPT, signatureClient, secretServer, redeemScript);
+    public static Script getEscapeInputRevocationScript (byte[] revocationHashServer, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
+            signatureClient, byte[] revocationClient) {
+        byte[] redeemScript = getEscapeOutputScript(revocationHashServer, keyServer, keyClient, revocationDelay).getProgram();
+        return produceScript(ESCAPE_INPUT_REVOCATION_SCRIPT, signatureClient, revocationClient, redeemScript);
     }
 
-    public static Script getEscapeInputTimeoutScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
+    public static Script getEscapeInputTimeoutScript (byte[] revocationHashServer, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
             signatureServer) {
-        byte[] redeemScript = getEscapeOutputScript(secretServerHash, keyServer, keyClient, revocationDelay).getProgram();
+        byte[] redeemScript = getEscapeOutputScript(revocationHashServer, keyServer, keyClient, revocationDelay).getProgram();
         return produceScript(ESCAPE_INPUT_TIMEOUT_SCRIPT, signatureServer, redeemScript);
     }
 
-    public static Script getFastEscapeOutputScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay) {
+    public static Script getFastEscapeOutputScript (byte[] secretHashClient, ECKey keyServer, ECKey keyClient, int revocationDelay) {
         if (CLTV_CSV_ENABLED) {
-            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
+            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretHashClient, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
         } else {
-            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
+            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, secretHashClient, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
         }
     }
 

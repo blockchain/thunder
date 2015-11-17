@@ -31,7 +31,12 @@ public class ScriptToolsTest {
     byte[] secretServerHash = Tools.hashSecret(secretServer);
     byte[] secretClientHash = Tools.hashSecret(secretClient);
 
-    NetworkParameters params = NetworkParameters.prodNet();
+    byte[] revocationServer = Tools.hexStringToByteArray("E3411336485A2E167EC4CB8BE4A8C75E19255CB0");
+    byte[] revocationClient = Tools.hexStringToByteArray("E65AA748832A949DDF1854E6206620F07F8C49ED");
+    byte[] revocationServerHash = Tools.hashSecret(revocationServer);
+    byte[] revocationClientHash = Tools.hashSecret(revocationClient);
+
+    NetworkParameters params = NetworkParameters.testNet3();
 
     @Before
     public void setup () throws NoSuchAlgorithmException {
@@ -84,7 +89,7 @@ public class ScriptToolsTest {
     @Test
     public void shouldCreateSpendableEscapeTransactionWithRevocationTransaction () {
 
-        Script outputScript = ScriptTools.getEscapeOutputScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScript = ScriptTools.getEscapeOutputScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000);
         Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
 
         transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
@@ -92,8 +97,8 @@ public class ScriptToolsTest {
 
         TransactionSignature signatureClient = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClient);
 
-        Script inputScript = ScriptTools.getEscapeInputRevocationScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureClient
-                .encodeToBitcoin(), secretServer);
+        Script inputScript = ScriptTools.getEscapeInputRevocationScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureClient
+                .encodeToBitcoin(), revocationServer);
 
         transactionInput.getInput(0).setScriptSig(inputScript);
 
@@ -103,7 +108,7 @@ public class ScriptToolsTest {
     @Test
     public void shouldCreateSpendableEscapeTransactionWithTimeoutTransaction () {
 
-        Script outputScript = ScriptTools.getEscapeOutputScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000);
+        Script outputScript = ScriptTools.getEscapeOutputScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000);
         Script outputScriptP2SH = ScriptBuilder.createP2SHOutputScript(outputScript);
 
         transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
@@ -111,7 +116,7 @@ public class ScriptToolsTest {
 
         TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
 
-        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(secretServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer.encodeToBitcoin());
+        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer.encodeToBitcoin());
 
         transactionInput.getInput(0).setScriptSig(inputScript);
 
