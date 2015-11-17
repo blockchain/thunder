@@ -26,14 +26,16 @@ public class EstablishChannelMessageA {
     private byte[] pubKey;
     private byte[] pubKeyFE;
     private byte[] secretHashFE;
+    private byte[] revocationHash;
 
     private long clientAmount;
     private long serverAmount;
 
-    public EstablishChannelMessageA (byte[] pubKey, byte[] pubKeyFE, byte[] secretHashFE, long clientAmount, long serverAmount) {
+    public EstablishChannelMessageA (byte[] pubKey, byte[] pubKeyFE, byte[] secretHashFE, byte[] revocationHash, long clientAmount, long serverAmount) {
         this.pubKey = pubKey;
         this.pubKeyFE = pubKeyFE;
         this.secretHashFE = secretHashFE;
+        this.revocationHash = revocationHash;
         this.clientAmount = clientAmount;
         this.serverAmount = serverAmount;
     }
@@ -57,6 +59,10 @@ public class EstablishChannelMessageA {
 
     public long getServerAmount () {
         return serverAmount;
+    }
+
+    public byte[] getRevocationHash () {
+        return revocationHash;
     }
     //endregion
 }
