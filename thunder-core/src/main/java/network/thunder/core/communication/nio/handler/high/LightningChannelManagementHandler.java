@@ -15,6 +15,7 @@
  */
 package network.thunder.core.communication.nio.handler.high;
 
+import com.google.common.base.Preconditions;
 import com.google.gson.Gson;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -25,8 +26,6 @@ import network.thunder.core.communication.objects.lightning.establish.EstablishC
 import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageC;
 import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageD;
 import network.thunder.core.database.objects.Channel;
-import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.*;
@@ -84,6 +83,11 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
 
             if (message.type == Type.ESTABLISH_CHANNEL_A) {
                 EstablishChannelMessageA m = new Gson().fromJson(message.data, EstablishChannelMessageA.class);
+                Preconditions.checkNotNull(m.getPubKey());
+                Preconditions.checkNotNull(m.getPubKeyFE());
+                Preconditions.checkNotNull(m.getRevocationHash());
+                Preconditions.checkNotNull(m.getSecretHashFE());
+
                 prepareNewChannel();
 
                 newChannel.setInitialAmountServer(m.getClientAmount());
@@ -94,16 +98,24 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 newChannel.setKeyClient(ECKey.fromPublicOnly(m.getPubKey()));
                 newChannel.setKeyClientA(ECKey.fromPublicOnly(m.getPubKeyFE()));
                 newChannel.setAnchorSecretHashClient(m.getSecretHashFE());
+                newChannel.setAnchorRevocationHashClient(m.getRevocationHash());
 
                 sendEstablishMessageB(ctx);
 
             } else if (message.type == Type.ESTABLISH_CHANNEL_B) {
                 EstablishChannelMessageB m = new Gson().fromJson(message.data, EstablishChannelMessageB.class);
+                Preconditions.checkNotNull(m.getPubKey());
+                Preconditions.checkNotNull(m.getPubKeyFE());
+                Preconditions.checkNotNull(m.getRevocationHash());
+                Preconditions.checkNotNull(m.getSecretHashFE());
+                Preconditions.checkNotNull(m.getAnchorHash());
+                Preconditions.checkArgument(status == 2, "Did not expect this message here - exit!");
 
                 newChannel.setKeyClient(ECKey.fromPublicOnly(m.getPubKey()));
                 newChannel.setKeyClientA(ECKey.fromPublicOnly(m.getPubKeyFE()));
 
                 newChannel.setAnchorSecretHashClient(m.getSecretHashFE());
+                newChannel.setAnchorRevocationHashClient(m.getRevocationHash());
                 newChannel.setAmountClient(m.getServerAmount());
                 newChannel.setInitialAmountClient(m.getServerAmount());
 
@@ -112,6 +124,11 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 sendEstablishMessageC(ctx);
             } else if (message.type == Type.ESTABLISH_CHANNEL_C) {
                 EstablishChannelMessageC m = new Gson().fromJson(message.data, EstablishChannelMessageC.class);
+                Preconditions.checkNotNull(m.getAnchorHash());
+                Preconditions.checkNotNull(m.getSignatureE());
+                Preconditions.checkNotNull(m.getSignatureFE());
+                Preconditions.checkArgument(status == 3, "Did not expect this message here - exit!");
+
 
                 newChannel.setAnchorTxHashClient(Sha256Hash.wrap(m.getAnchorHash()));
                 newChannel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureE(), true));
@@ -121,29 +138,12 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                     throw new Exception("Signature does not match..");
                 }
 
-                Transaction escape = newChannel.getEscapeTransactionServer();
-
-                System.out.println(escape);
-                System.out.println(Tools.bytesToHex(escape.bitcoinSerialize()));
-
-                Transaction getFundsFromEscape = new Transaction(Constants.getNetwork());
-                getFundsFromEscape.addInput(escape.getOutput(0));
-                getFundsFromEscape.addOutput(Coin.valueOf(escape.getOutput(0).getValue().value - 1000), wallet.freshReceiveAddress());
-
-                TransactionSignature signature = Tools.getSignature(getFundsFromEscape, 0, newChannel.getScriptEscapeOutputServer().getProgram(), newChannel
-                        .getKeyServer());
-
-                getFundsFromEscape.getInput(0).setScriptSig(ScriptTools.getEscapeInputTimeoutScript(newChannel.getAnchorSecretHashServer(), newChannel
-                        .getKeyServer(), newChannel.getKeyClient(), Constants.ESCAPE_REVOCATION_TIME, signature.encodeToBitcoin()));
-
-                getFundsFromEscape.getInput(0).getScriptSig().correctlySpends(getFundsFromEscape, 0, escape.getOutput(0).getScriptPubKey());
-
-                System.out.println(getFundsFromEscape);
-                System.out.println(Tools.bytesToHex(getFundsFromEscape.bitcoinSerialize()));
-
                 sendEstablishMessageD(ctx);
             } else if (message.type == Type.ESTABLISH_CHANNEL_D) {
                 EstablishChannelMessageD m = new Gson().fromJson(message.data, EstablishChannelMessageD.class);
+                Preconditions.checkNotNull(m.getSignatureE());
+                Preconditions.checkNotNull(m.getSignatureFE());
+                Preconditions.checkArgument(status == 4, "Did not expect this message here - exit!");
 
                 newChannel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureE(), true));
                 newChannel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureFE(), true));
@@ -163,6 +163,7 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
     @Override
     public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
+        ctx.writeAndFlush(new Message(null, Type.FAILURE));
         ctx.close();
     }
 
@@ -186,8 +187,11 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
         newChannel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 4)));
         newChannel.setMasterPrivateKeyServer(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 6));
         byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 8));
+        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 10));
         newChannel.setAnchorSecretServer(secretFE);
         newChannel.setAnchorSecretHashServer(Tools.hashSecret(secretFE));
+        newChannel.setAnchorRevocationServer(revocation);
+        newChannel.setAnchorRevocationHashServer(Tools.hashSecret(revocation));
         newChannel.setServerChainDepth(1000);
         newChannel.setServerChainChild(0);
         newChannel.setIsReady(false);
@@ -203,13 +207,14 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 newChannel.getKeyServer().getPubKey(),
                 newChannel.getKeyServerA().getPubKey(),
                 newChannel.getAnchorSecretHashServer(),
+                newChannel.getAnchorRevocationHashServer(),
                 newChannel.getInitialAmountServer(),
                 newChannel.getInitialAmountClient()
         );
 
         ctx.writeAndFlush(new Message(message, Type.ESTABLISH_CHANNEL_A));
 
-        status = 1;
+        status = 2;
     }
 
     public void sendEstablishMessageB (ChannelHandlerContext ctx) {
@@ -223,11 +228,12 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 newChannel.getKeyServer().getPubKey(),
                 newChannel.getKeyServerA().getPubKey(),
                 newChannel.getAnchorSecretHashServer(),
+                newChannel.getAnchorRevocationHashServer(),
                 newChannel.getInitialAmountServer(),
                 anchor.getHash().getBytes());
 
         ctx.writeAndFlush(new Message(message, Type.ESTABLISH_CHANNEL_B));
-        status = 2;
+        status = 3;
     }
 
     public void sendEstablishMessageC (ChannelHandlerContext ctx) {
@@ -247,7 +253,7 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 fastEscapeSig.encodeToBitcoin());
 
         ctx.writeAndFlush(new Message(message, Type.ESTABLISH_CHANNEL_C));
-        status = 3;
+        status = 4;
     }
 
     public void sendEstablishMessageD (ChannelHandlerContext ctx) {
@@ -264,7 +270,7 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
                 fastEscapeSig.encodeToBitcoin());
 
         ctx.writeAndFlush(new Message(message, Type.ESTABLISH_CHANNEL_D));
-        status = 4;
+        status = 5;
     }
 
 }

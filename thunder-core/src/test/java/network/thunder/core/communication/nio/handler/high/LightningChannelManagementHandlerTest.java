@@ -102,9 +102,7 @@ public class LightningChannelManagementHandlerTest {
         m = (Message) channel2.readOutbound();
         assertEquals(m.type, Type.ESTABLISH_CHANNEL_B);
 
-
         Channel newChannel = handler2.newChannel;
-
 
         //Should send keys, secretHash and amounts
         EstablishChannelMessageB message = new Gson().fromJson(m.data, EstablishChannelMessageB.class);
@@ -127,10 +125,8 @@ public class LightningChannelManagementHandlerTest {
 
         assertEquals(m.type, Type.ESTABLISH_CHANNEL_C);
 
-
         Channel newChannel1 = handler1.newChannel;
         Channel newChannel2 = handler2.newChannel;
-
 
         //Should send keys, secretHash and amounts
         EstablishChannelMessageC message = new Gson().fromJson(m.data, EstablishChannelMessageC.class);
@@ -159,9 +155,7 @@ public class LightningChannelManagementHandlerTest {
         m = (Message) channel2.readOutbound();
         assertEquals(m.type, Type.ESTABLISH_CHANNEL_D);
 
-
         Channel newChannel = handler1.newChannel;
-
 
         //Should send keys, secretHash and amounts
         EstablishChannelMessageD message = new Gson().fromJson(m.data, EstablishChannelMessageD.class);
@@ -177,28 +171,21 @@ public class LightningChannelManagementHandlerTest {
     }
 
     @Test
-    public void test () {
+    public void shouldNotAcceptSignature () {
         Message m;
         m = (Message) channel1.readOutbound();
         channel2.writeInbound(m);
         m = (Message) channel2.readOutbound();
         channel1.writeInbound(m);
-
         m = (Message) channel1.readOutbound();
+
+        EstablishChannelMessageC message = new Gson().fromJson(m.data, EstablishChannelMessageC.class);
+        EstablishChannelMessageC messageSwappedSign = new EstablishChannelMessageC(message.getAnchorHash(), message.getSignatureFE(), message.getSignatureE());
+        m = new Message(messageSwappedSign, m.type);
+
         channel2.writeInbound(m);
         m = (Message) channel2.readOutbound();
-        channel1.writeInbound(m);
-
-        m = (Message) channel1.readOutbound();
-        channel2.writeInbound(m);
-        m = (Message) channel2.readOutbound();
-        channel1.writeInbound(m);
-
-        m = (Message) channel1.readOutbound();
-        channel2.writeInbound(m);
-        m = (Message) channel2.readOutbound();
-        channel1.writeInbound(m);
-
+        assertEquals(m.type, Type.FAILURE);
     }
 
 }
