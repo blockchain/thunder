@@ -17,9 +17,6 @@
     </properties>
 
     <modules>
-        <module>thunder-client</module>
-        <module>thunder-server</module>
-        <module>thunder-clientgui</module>
         <module>thunder-core</module>
     </modules>
 
