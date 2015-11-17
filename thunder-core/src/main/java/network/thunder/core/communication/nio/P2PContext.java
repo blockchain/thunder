@@ -6,6 +6,8 @@ import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.TransactionOutPoint;
+import org.bitcoinj.core.Wallet;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -35,6 +37,13 @@ public class P2PContext {
     public TreeMapDatastructure syncDatastructure = new TreeMapDatastructure();
     public boolean needsInitialSyncing = false;
     public DataSource dataSource;
+
+    //Balance available for new channels
+    public long balance = 10000000000000L;
+    public Wallet wallet;
+    public HashMap<TransactionOutPoint, Integer> lockedOutputs = new HashMap<>();
+
+
     P2PServer server;
     boolean keepReconnectingToNewNodes = false;
     P2PContext context;

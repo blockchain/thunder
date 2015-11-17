@@ -14,17 +14,22 @@ import java.util.List;
  */
 public class ScriptTools {
 
+    //Due to some policy, miners won't include OP_NOP until they are activated. Not even on testnet.
+    public static final boolean CLTV_CSV_ENABLED = true;
+
     //Templates are like normal scripts but with 0x00 as placeholders for parameters
     public static final byte[] ANCHOR_OUTPUT_SCRIPT = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF 68 52 7C FF 52 AE");
 
     public static final byte[] ESCAPE_INPUT_SCRIPT = Tools.hexStringToByteArray("00 FF FF FF FF");
     public static final byte[] COMMIT_INPUT_SCRIPT = Tools.hexStringToByteArray("00 FF FF 00 FF");
 
-    public static final byte[] ESCAPE_OUTPUT_SCRIPT = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B2 75 FF 68 AC");
+    public static final byte[] ESCAPE_OUTPUT_SCRIPT = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B3 75 FF 68 AC");
+    public static final byte[] ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF 75 FF 68 AC");
     public static final byte[] ESCAPE_INPUT_REVOCATION_SCRIPT = Tools.hexStringToByteArray("FF FF FF");
     public static final byte[] ESCAPE_INPUT_TIMEOUT_SCRIPT = Tools.hexStringToByteArray("FF 00 FF");
 
-    public static final byte[] FAST_ESCAPE_OUTPUT_SCRIPT = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B2 75 FF 68 AC");
+    public static final byte[] FAST_ESCAPE_OUTPUT_SCRIPT = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B3 75 FF 68 AC");
+    public static final byte[] FAST_ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF 75 FF 68 AC");
     public static final byte[] FAST_ESCAPE_INPUT_SECRET_SCRIPT = Tools.hexStringToByteArray("FF FF FF");
     public static final byte[] FAST_ESCAPE_INPUT_TIMEOUT_SCRIPT = Tools.hexStringToByteArray("FF 00 FF");
 
@@ -53,7 +58,11 @@ public class ScriptTools {
      */
 
     public static Script getEscapeOutputScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay) {
-        return produceScript(ESCAPE_OUTPUT_SCRIPT, secretServerHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+        if (CLTV_CSV_ENABLED) {
+            return produceScript(ESCAPE_OUTPUT_SCRIPT, secretServerHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+        } else {
+            return produceScript(ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, secretServerHash, keyClient.getPubKey(), integerToByteArray(revocationDelay), keyServer.getPubKey());
+        }
     }
 
     public static Script getEscapeInputRevocationScript (byte[] secretServerHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]
@@ -69,7 +78,11 @@ public class ScriptTools {
     }
 
     public static Script getFastEscapeOutputScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay) {
-        return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
+        if (CLTV_CSV_ENABLED) {
+            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
+        } else {
+            return produceScript(FAST_ESCAPE_OUTPUT_SCRIPT_WITHOUT_CSV, secretClientHash, keyServer.getPubKey(), integerToByteArray(revocationDelay), keyClient.getPubKey());
+        }
     }
 
     public static Script getFastEscapeInputSecretScript (byte[] secretClientHash, ECKey keyServer, ECKey keyClient, int revocationDelay, byte[]

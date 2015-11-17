@@ -43,10 +43,10 @@ public class Channel {
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
      */
-    private ECKey KeyClient;
-    private ECKey KeyServer;
-    private ECKey KeyClientA;
-    private ECKey KeyServerA;
+    private ECKey keyClient;
+    private ECKey keyServer;
+    private ECKey keyClientA;
+    private ECKey keyServerA;
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
@@ -86,27 +86,27 @@ public class Channel {
      * tries to claim their initial funds after the first commitment.
      */
     private TransactionSignature escapeTxSig;
-    private TransactionSignature escapeFastTxSig;
+    private TransactionSignature fastEscapeTxSig;
     private TransactionSignature channelTxSig;
     private TransactionSignature channelTxTempSig;
     /*
      * Upcounting version number to keep track which revocation-hash is used with which payments.
-     * We increase it, whenever we commited to a new channel.
+     * We increase it, whenever we commit to a new channel.
      */
     private int channelTxVersion;
     /*
      * Hashes to build each channel transaction.
      */
-    private Sha256Hash openingTxHashServer;
-    private Sha256Hash openingTxHashClient;
+    private Sha256Hash anchorTxHashServer;
+    private Sha256Hash anchorTxHashClient;
     /*
      * The secrets for making the opening transactions.
      * We only use them once or in case the other party tries to cheat on us.
      */
-    private byte[] openingSecretServer;
-    private byte[] openingSecretClient;
-    private byte[] openingSecretHashServer;
-    private byte[] openingSecretHashClient;
+    private byte[] anchorSecretServer;
+    private byte[] anchorSecretClient;
+    private byte[] anchorSecretHashServer;
+    private byte[] anchorSecretHashClient;
     /**
      * Enum to mark the different phases.
      * <p>
@@ -120,10 +120,11 @@ public class Channel {
      */
     private boolean isReady;
 
+    //region Transaction Getter
     private Transaction anchorTransactionServer;
 
     public boolean verifyEscapeSignatures () {
-        if (getEscapeFastTxSig() == null || getEscapeTxSig() == null) {
+        if (getFastEscapeTxSig() == null || getEscapeTxSig() == null) {
             return false;
         }
 
@@ -133,7 +134,7 @@ public class Channel {
         Sha256Hash hashEscape = escape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
         Sha256Hash hashFastEscape = fastEscape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
 
-        return (KeyClientA.verify(hashEscape, getEscapeTxSig()) && KeyClientA.verify(hashFastEscape, getEscapeFastTxSig()));
+        return (keyClientA.verify(hashEscape, getEscapeTxSig()) && keyClientA.verify(hashFastEscape, getFastEscapeTxSig()));
     }
 
     public Transaction getAnchorTransactionServer (Wallet wallet, HashMap<TransactionOutPoint, Integer> lockedOutputs) {
@@ -147,13 +148,13 @@ public class Channel {
         Script anchorScriptServerP2SH = ScriptBuilder.createP2SHOutputScript(anchorScriptServer);
 
         anchorTransactionServer = Tools.addOutAndInputs(serverAmount, wallet, lockedOutputs, anchorScriptServerP2SH);
-        setOpeningTxHashServer(anchorTransactionServer.getHash());
+        setAnchorTxHashServer(anchorTransactionServer.getHash());
         return anchorTransactionServer;
     }
 
     public Transaction getEscapeTransactionClient () {
         Transaction escape = new Transaction(Constants.getNetwork());
-        escape.addInput(getOpeningTxHashClient(), 0, Tools.getDummyScript());
+        escape.addInput(getAnchorTxHashClient(), 0, Tools.getDummyScript());
         Coin output = Coin.valueOf(getInitialAmountClient() - Tools.getTransactionFees(5, 5)); //TODO maybe a better choice for fees?
         escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptEscapeOutputClient()));
         return escape;
@@ -161,15 +162,33 @@ public class Channel {
 
     public Transaction getEscapeTransactionServer () {
         Transaction escape = new Transaction(Constants.getNetwork());
-        escape.addInput(getOpeningTxHashServer(), 0, Tools.getDummyScript());
+        escape.addInput(getAnchorTxHashServer(), 0, Tools.getDummyScript());
         Coin output = Coin.valueOf(getInitialAmountServer() - Tools.getTransactionFees(5, 5)); //TODO maybe a better choice for fees?
         escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptEscapeOutputServer()));
+
+        if (getEscapeTxSig() != null) {
+            //We have everything we need to sign it..
+            Script outputScript = ScriptTools.getAnchorOutputScript(getAnchorSecretHashServer(), keyClient, keyClientA, keyServer);
+
+            TransactionSignature serverSig = Tools.getSignature(escape, 0, outputScript.getProgram(), keyServer);
+            Script inputScript = ScriptTools.getEscapeInputScript(
+                    getEscapeTxSig().encodeToBitcoin(),
+                    serverSig.encodeToBitcoin(),
+                    getAnchorSecretServer(),
+                    getAnchorSecretHashServer(),
+                    getKeyClient(),
+                    getKeyClientA(),
+                    getKeyServer());
+
+            escape.getInput(0).setScriptSig(inputScript);
+        }
+
         return escape;
     }
 
     public Transaction getFastEscapeTransactionClient () {
         Transaction escape = new Transaction(Constants.getNetwork());
-        escape.addInput(getOpeningTxHashClient(), 0, Tools.getDummyScript());
+        escape.addInput(getAnchorTxHashClient(), 0, Tools.getDummyScript());
         Coin output = Coin.valueOf(getInitialAmountClient() - Tools.getTransactionFees(5, 5)); //TODO maybe a better choice for fees?
         escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptFastEscapeOutputClient()));
         return escape;
@@ -177,35 +196,183 @@ public class Channel {
 
     public Transaction getFastEscapeTransactionServer () {
         Transaction escape = new Transaction(Constants.getNetwork());
-        escape.addInput(getOpeningTxHashServer(), 0, Tools.getDummyScript());
+        escape.addInput(getAnchorTxHashServer(), 0, Tools.getDummyScript());
         Coin output = Coin.valueOf(getInitialAmountServer() - Tools.getTransactionFees(5, 5)); //TODO maybe a better choice for fees?
         escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptFastEscapeOutputClient()));
+
+        if (getFastEscapeTxSig() != null) {
+            //We have everything we need to sign it..
+            Script outputScript = ScriptTools.getAnchorOutputScript(getAnchorSecretHashServer(), keyClient, keyClientA, keyServer);
+
+            TransactionSignature serverSig = Tools.getSignature(escape, 0, outputScript.getProgram(), keyServer);
+            Script inputScript = ScriptTools.getEscapeInputScript(
+                    getEscapeTxSig().encodeToBitcoin(),
+                    serverSig.encodeToBitcoin(),
+                    getAnchorSecretServer(),
+                    getAnchorSecretHashServer(),
+                    getKeyClient(),
+                    getKeyClientA(),
+                    getKeyServer());
+
+            escape.getInput(0).setScriptSig(inputScript);
+        }
+
         return escape;
     }
 
+    /* Get signed transaction for claiming OUR funds that are locked up in a Escape transaction after the timeout.
+     */
+    public Transaction getEscapeTimeoutRedemptionTransaction (Address payoutAddress, Sha256Hash parent) {
+        Transaction redeem = new Transaction(Constants.getNetwork());
+
+        redeem.addInput(parent, 0, Tools.getDummyScript());
+        redeem.addOutput(Coin.valueOf(getInitialAmountServer() - Tools.getTransactionFees(5, 5)), payoutAddress); //TODO
+
+        Script outputScript = ScriptTools.getEscapeOutputScript(
+                getAnchorSecretHashServer(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME
+        );
+
+        TransactionSignature serverSig = Tools.getSignature(redeem, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(
+                getAnchorSecretHashServer(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME,
+                serverSig.encodeToBitcoin());
+
+        redeem.getInput(0).setScriptSig(inputScript);
+
+        return redeem;
+    }
+
+    /* Get signed transaction for claiming THE OTHER PARTIES funds that are locked up in a Escape transaction after the
+     * other party cheated on us by trying to claim their funds even though we engaged in a channel already.
+     */
+    public Transaction getEscapeRevocationRedemptionTransaction (Address payoutAddress, Sha256Hash parent) {
+        if (getAnchorSecretClient() == null) {
+            throw new RuntimeException("We don't have the secret of the client, can't construct revocation..");
+        }
+        Transaction redeem = new Transaction(Constants.getNetwork());
+
+        redeem.addInput(parent, 0, Tools.getDummyScript());
+        redeem.addOutput(Coin.valueOf(getInitialAmountClient() - Tools.getTransactionFees(5, 5)), payoutAddress); //TODO
+
+        Script outputScript = ScriptTools.getEscapeOutputScript(
+                getAnchorSecretHashServer(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME
+        );
+
+        TransactionSignature serverSig = Tools.getSignature(redeem, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputRevocationScript(
+                getAnchorSecretHashClient(),
+                getKeyClient(),
+                getKeyServer(),
+                Constants.ESCAPE_REVOCATION_TIME,
+                serverSig.encodeToBitcoin(),
+                getAnchorSecretClient());
+
+        redeem.getInput(0).setScriptSig(inputScript);
+
+        return redeem;
+    }
+
+    /* Get signed transaction for claiming OUR funds that are locked up in a Escape transaction after the timeout.
+     */
+    public Transaction getFastEscapeTimeoutRedemptionTransaction (Address payoutAddress, Sha256Hash parent) {
+        Transaction redeem = new Transaction(Constants.getNetwork());
+
+        redeem.addInput(parent, 0, Tools.getDummyScript());
+        redeem.addOutput(Coin.valueOf(getInitialAmountServer() - Tools.getTransactionFees(5, 5)), payoutAddress); //TODO
+
+        Script outputScript = ScriptTools.getEscapeOutputScript(
+                getAnchorSecretHashServer(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME
+        );
+
+        TransactionSignature serverSig = Tools.getSignature(redeem, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(
+                getAnchorSecretHashServer(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME,
+                serverSig.encodeToBitcoin());
+
+        redeem.getInput(0).setScriptSig(inputScript);
+
+        return redeem;
+    }
+
+    /* Get signed transaction for claiming OUR funds locked up in a FastEscape transaction using the secret the other party used
+     * in their escape transaction.
+     */
+    public Transaction getFastEscapeRevocationRedemptionTransaction (Address payoutAddress, Sha256Hash parent) {
+        if (getAnchorSecretClient() == null) {
+            throw new RuntimeException("We don't have the secret of the client, can't construct revocation..");
+        }
+        Transaction redeem = new Transaction(Constants.getNetwork());
+
+        redeem.addInput(parent, 0, Tools.getDummyScript());
+        redeem.addOutput(Coin.valueOf(getInitialAmountClient() - Tools.getTransactionFees(5, 5)), payoutAddress); //TODO
+
+        Script outputScript = ScriptTools.getFastEscapeOutputScript(
+                getAnchorSecretHashClient(),
+                getKeyServer(),
+                getKeyClient(),
+                Constants.ESCAPE_REVOCATION_TIME
+        );
+
+        TransactionSignature serverSig = Tools.getSignature(redeem, 0, outputScript.getProgram(), keyServer);
+
+        Script inputScript = ScriptTools.getEscapeInputRevocationScript(
+                getAnchorSecretHashClient(),
+                getKeyClient(),
+                getKeyServer(),
+                Constants.ESCAPE_REVOCATION_TIME,
+                serverSig.encodeToBitcoin(),
+                getAnchorSecretClient());
+
+        redeem.getInput(0).setScriptSig(inputScript);
+
+        return redeem;
+    }
+    //endregion
+
+    //region Script Getter
     public Script getScriptAnchorOutputServer () {
-        return ScriptTools.getAnchorOutputScript(getOpeningSecretHashServer(), getKeyClient(), getKeyClientA(), getKeyServer());
+        return ScriptTools.getAnchorOutputScript(getAnchorSecretHashServer(), getKeyClient(), getKeyClientA(), getKeyServer());
     }
 
     public Script getScriptAnchorOutputClient () {
-        return ScriptTools.getAnchorOutputScript(getOpeningSecretHashServer(), getKeyServer(), getKeyServerA(), getKeyClient());
+        return ScriptTools.getAnchorOutputScript(getAnchorSecretHashClient(), getKeyServer(), getKeyServerA(), getKeyClient());
     }
 
     public Script getScriptEscapeOutputServer () {
-        return ScriptTools.getEscapeOutputScript(getOpeningSecretHashServer(), getKeyServer(), getKeyClient(), Constants.ESCAPE_REVOCATION_TIME);
-    }
-
-    public Script getScriptFastEscapeOutputServer () {
-        return ScriptTools.getFastEscapeOutputScript(getOpeningSecretHashClient(), getKeyServer(), getKeyClient(), Constants.ESCAPE_REVOCATION_TIME);
+        return ScriptTools.getEscapeOutputScript(getAnchorSecretHashServer(), getKeyServer(), getKeyClient(), Constants.ESCAPE_REVOCATION_TIME);
     }
 
     public Script getScriptEscapeOutputClient () {
-        return ScriptTools.getEscapeOutputScript(getOpeningSecretHashClient(), getKeyClient(), getKeyServer(), Constants.ESCAPE_REVOCATION_TIME);
+        return ScriptTools.getEscapeOutputScript(getAnchorSecretHashClient(), getKeyClient(), getKeyServer(), Constants.ESCAPE_REVOCATION_TIME);
+    }
+
+    public Script getScriptFastEscapeOutputServer () {
+        return ScriptTools.getFastEscapeOutputScript(getAnchorSecretHashClient(), getKeyServer(), getKeyClient(), Constants.ESCAPE_REVOCATION_TIME);
     }
 
     public Script getScriptFastEscapeOutputClient () {
-        return ScriptTools.getFastEscapeOutputScript(getOpeningSecretHashServer(), getKeyClient(), getKeyServer(), Constants.ESCAPE_REVOCATION_TIME);
+        return ScriptTools.getFastEscapeOutputScript(getAnchorSecretHashServer(), getKeyClient(), getKeyServer(), Constants.ESCAPE_REVOCATION_TIME);
     }
+
+    //endregion
 
     /**
      * Instantiates a new channel.
@@ -240,15 +407,15 @@ public class Channel {
         this.setTimestampOpen(result.getInt("timestamp_open"));
         this.setTimestampForceClose(result.getInt("timestamp_force_close"));
 
-        this.setOpeningTxHashClient(Sha256Hash.wrap(result.getBytes("opening_tx_hash_client")));
-        this.setOpeningTxHashClient(Sha256Hash.wrap(result.getBytes("opening_tx_hash_server")));
-        this.setOpeningSecretClient(result.getBytes("opening_secret_client"));
-        this.setOpeningSecretServer(result.getBytes("opening_secret_server"));
-        this.setOpeningSecretHashClient(result.getBytes("opening_secret_hash_client"));
-        this.setOpeningSecretHashServer(result.getBytes("opening_secret_hash_server"));
+        this.setAnchorTxHashClient(Sha256Hash.wrap(result.getBytes("opening_tx_hash_client")));
+        this.setAnchorTxHashClient(Sha256Hash.wrap(result.getBytes("opening_tx_hash_server")));
+        this.setAnchorSecretClient(result.getBytes("opening_secret_client"));
+        this.setAnchorSecretServer(result.getBytes("opening_secret_server"));
+        this.setAnchorSecretHashClient(result.getBytes("opening_secret_hash_client"));
+        this.setAnchorSecretHashServer(result.getBytes("opening_secret_hash_server"));
 
         this.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(result.getBytes("escape_tx_sig"), true));
-        this.setEscapeFastTxSig(TransactionSignature.decodeFromBitcoin(result.getBytes("escape_fast_tx_sig"), true));
+        this.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(result.getBytes("escape_fast_tx_sig"), true));
         this.setChannelTxSig(TransactionSignature.decodeFromBitcoin(result.getBytes("escape_fast_tx_sig"), true));
         this.setChannelTxTempSig(TransactionSignature.decodeFromBitcoin(result.getBytes("escape_fast_tx_sig"), true));
 
@@ -259,6 +426,8 @@ public class Channel {
 
     public Channel () {
     }
+
+    //region Getter Setter
 
     /**
      * Gets the amount client.
@@ -328,12 +497,12 @@ public class Channel {
         this.clientChainDepth = clientChainDepth;
     }
 
-    public TransactionSignature getEscapeFastTxSig () {
-        return escapeFastTxSig;
+    public TransactionSignature getFastEscapeTxSig () {
+        return fastEscapeTxSig;
     }
 
-    public void setEscapeFastTxSig (TransactionSignature escapeFastTxSig) {
-        this.escapeFastTxSig = escapeFastTxSig;
+    public void setFastEscapeTxSig (TransactionSignature fastEscapeTxSig) {
+        this.fastEscapeTxSig = fastEscapeTxSig;
     }
 
     public TransactionSignature getEscapeTxSig () {
@@ -399,35 +568,35 @@ public class Channel {
     }
 
     public ECKey getKeyClient () {
-        return KeyClient;
+        return keyClient;
     }
 
     public void setKeyClient (ECKey keyClient) {
-        KeyClient = keyClient;
+        this.keyClient = keyClient;
     }
 
     public ECKey getKeyClientA () {
-        return KeyClientA;
+        return keyClientA;
     }
 
     public void setKeyClientA (ECKey keyClientA) {
-        KeyClientA = keyClientA;
+        this.keyClientA = keyClientA;
     }
 
     public ECKey getKeyServer () {
-        return KeyServer;
+        return keyServer;
     }
 
     public void setKeyServer (ECKey keyServer) {
-        KeyServer = keyServer;
+        this.keyServer = keyServer;
     }
 
     public ECKey getKeyServerA () {
-        return KeyServerA;
+        return keyServerA;
     }
 
     public void setKeyServerA (ECKey keyServerA) {
-        KeyServerA = keyServerA;
+        this.keyServerA = keyServerA;
     }
 
     public byte[] getMasterPrivateKeyClient () {
@@ -454,36 +623,36 @@ public class Channel {
         this.nodeId = nodeId;
     }
 
-    public byte[] getOpeningSecretClient () {
-        return openingSecretClient;
+    public byte[] getAnchorSecretClient () {
+        return anchorSecretClient;
     }
 
-    public void setOpeningSecretClient (byte[] openingSecretClient) {
-        this.openingSecretClient = openingSecretClient;
+    public void setAnchorSecretClient (byte[] anchorSecretClient) {
+        this.anchorSecretClient = anchorSecretClient;
     }
 
-    public byte[] getOpeningSecretServer () {
-        return openingSecretServer;
+    public byte[] getAnchorSecretServer () {
+        return anchorSecretServer;
     }
 
-    public void setOpeningSecretServer (byte[] openingSecretServer) {
-        this.openingSecretServer = openingSecretServer;
+    public void setAnchorSecretServer (byte[] anchorSecretServer) {
+        this.anchorSecretServer = anchorSecretServer;
     }
 
-    public Sha256Hash getOpeningTxHashClient () {
-        return openingTxHashClient;
+    public Sha256Hash getAnchorTxHashClient () {
+        return anchorTxHashClient;
     }
 
-    public void setOpeningTxHashClient (Sha256Hash openingTxHashClient) {
-        this.openingTxHashClient = openingTxHashClient;
+    public void setAnchorTxHashClient (Sha256Hash anchorTxHashClient) {
+        this.anchorTxHashClient = anchorTxHashClient;
     }
 
-    public Sha256Hash getOpeningTxHashServer () {
-        return openingTxHashServer;
+    public Sha256Hash getAnchorTxHashServer () {
+        return anchorTxHashServer;
     }
 
-    public void setOpeningTxHashServer (Sha256Hash openingTxHashServer) {
-        this.openingTxHashServer = openingTxHashServer;
+    public void setAnchorTxHashServer (Sha256Hash anchorTxHashServer) {
+        this.anchorTxHashServer = anchorTxHashServer;
     }
 
     public Phase getPhase () {
@@ -614,19 +783,20 @@ public class Channel {
 
     }
 
-    public byte[] getOpeningSecretHashServer () {
-        return openingSecretHashServer;
+    public byte[] getAnchorSecretHashServer () {
+        return anchorSecretHashServer;
     }
 
-    public void setOpeningSecretHashServer (byte[] openingSecretHashServer) {
-        this.openingSecretHashServer = openingSecretHashServer;
+    public void setAnchorSecretHashServer (byte[] anchorSecretHashServer) {
+        this.anchorSecretHashServer = anchorSecretHashServer;
     }
 
-    public byte[] getOpeningSecretHashClient () {
-        return openingSecretHashClient;
+    public byte[] getAnchorSecretHashClient () {
+        return anchorSecretHashClient;
     }
 
-    public void setOpeningSecretHashClient (byte[] openingSecretHashClient) {
-        this.openingSecretHashClient = openingSecretHashClient;
+    public void setAnchorSecretHashClient (byte[] anchorSecretHashClient) {
+        this.anchorSecretHashClient = anchorSecretHashClient;
     }
+    //endregion
 }

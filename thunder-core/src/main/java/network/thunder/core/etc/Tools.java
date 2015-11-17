@@ -485,7 +485,7 @@ public class Tools {
     public static TransactionSignature getSignature (Transaction transactionToSign, int index, byte[] outputToSpend, ECKey key) {
         Sha256Hash hash = transactionToSign.hashForSignature(index, outputToSpend, SigHash.ALL, false);
 
-        ECDSASignature signature = key.sign(hash);
+        ECDSASignature signature = key.sign(hash).toCanonicalised();
         return new TransactionSignature(signature, SigHash.ALL, false);
     }
     //		Sha256Hash sighash = refundTransaction.hashForSignature(0, channel.getOpeningTx().getOutput(0).getScriptPubKey(), SigHash.ALL, false);
@@ -552,8 +552,8 @@ public class Tools {
         ArrayList<TransactionOutput> spendable = new ArrayList<>(wallet.calculateAllSpendCandidates());
         ArrayList<TransactionOutput> tempList = new ArrayList<>(spendable);
         for (TransactionOutput o : tempList) {
-            int timeLock = lockedOutputs.get(o);
-            if (timeLock > Tools.currentTime()) {
+            Integer timeLock = lockedOutputs.get(o);
+            if (timeLock != null && timeLock > Tools.currentTime()) {
                 spendable.remove(o);
             }
         }
@@ -601,8 +601,14 @@ public class Tools {
             int j = 0;
             for (int i = 0; i < outputList.size(); i++) {
                 TransactionOutput o = outputList.get(i);
-                transaction.getInput(i).setScriptSig(new Script(Tools.getSignature(transaction, i, o, wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript
-                        (Constants.getNetwork()).getHash160())).encodeToDER()));
+                ECKey key = wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160());
+                System.out.println(key.toAddress(Constants.getNetwork()));
+                TransactionSignature sig = Tools.getSignature(transaction, i, o, key);
+                byte[] s = sig.encodeToBitcoin();
+                ScriptBuilder builder = new ScriptBuilder();
+                builder.data(s);
+                builder.data(key.getPubKey());
+                transaction.getInput(i).setScriptSig(builder.build());
                 //TODO: Currently only working if we have P2PKH outputs in our wallet
             }
         }
