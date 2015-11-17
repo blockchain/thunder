@@ -1,5 +1,7 @@
 # thundernetwork
 
+[![Build Status](https://travis-ci.org/matsjj/thundernetwork.svg?branch=master)](https://travis-ci.org/matsjj/thundernetwork)
+
 P2P Software to send Off-Chain Bitcoin Payments
 
 Based on lightning.network[1], with some modifications that enable similar functionalities at the current time.
