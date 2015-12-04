@@ -11,10 +11,10 @@ import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHan
 import network.thunder.core.communication.nio.handler.low.NodeConnectionHandler;
 import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
-import network.thunder.core.communication.objects.messages.impl.MessageSerializatierImpl;
+import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
@@ -56,11 +56,11 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
         ch.pipeline().addLast(new LengthFieldPrepender(4));
 
-        MessageSerializater messageSerializater = new MessageSerializatierImpl();
-        ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializater));
-        ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializater));
+        MessageSerializer messageSerializer = new MessageSerializerImpl();
+        ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializer));
+        ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializer));
 
-        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(messageSerializater));
+        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(messageSerializer));
         EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, node);
         ch.pipeline().addLast(new EncryptionHandler(encryptionProcessor));
 

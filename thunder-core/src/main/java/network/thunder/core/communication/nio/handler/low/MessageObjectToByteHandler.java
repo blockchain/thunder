@@ -4,16 +4,16 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 
 /**
  * Created by matsjerratsch on 13/10/2015.
  */
 public class MessageObjectToByteHandler extends MessageToByteEncoder {
 
-    MessageSerializater serializater;
+    MessageSerializer serializater;
 
-    public MessageObjectToByteHandler (MessageSerializater serializater) {
+    public MessageObjectToByteHandler (MessageSerializer serializater) {
         this.serializater = serializater;
     }
 

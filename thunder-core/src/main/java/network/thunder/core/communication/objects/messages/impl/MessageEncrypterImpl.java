@@ -3,7 +3,7 @@ package network.thunder.core.communication.objects.messages.impl;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessageImpl;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.etc.crypto.ECDHKeySet;
@@ -13,11 +13,11 @@ import network.thunder.core.etc.crypto.ECDHKeySet;
  */
 public class MessageEncrypterImpl implements MessageEncrypter {
 
-    public MessageEncrypterImpl (MessageSerializater serializater) {
+    public MessageEncrypterImpl (MessageSerializer serializater) {
         this.serializater = serializater;
     }
 
-    MessageSerializater serializater;
+    MessageSerializer serializater;
 
     @Override
     public EncryptedMessage encrypt (Message data, ECDHKeySet keySet) {

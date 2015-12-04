@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 
 import java.util.List;
 
@@ -12,9 +12,9 @@ import java.util.List;
  * Created by matsjerratsch on 13/10/2015.
  */
 public class ByteToMessageObjectHandler extends ByteToMessageDecoder {
-    MessageSerializater serializater;
+    MessageSerializer serializater;
 
-    public ByteToMessageObjectHandler (MessageSerializater serializater) {
+    public ByteToMessageObjectHandler (MessageSerializer serializater) {
         this.serializater = serializater;
     }
 

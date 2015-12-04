@@ -3,11 +3,11 @@ package network.thunder.core.communication.objects.messages.impl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 
 import java.io.UnsupportedEncodingException;
 
-public class MessageSerializatierImpl implements MessageSerializater {
+public class MessageSerializerImpl implements MessageSerializer {
     @Override
     public byte[] serializeMessage (Message message) {
         try {

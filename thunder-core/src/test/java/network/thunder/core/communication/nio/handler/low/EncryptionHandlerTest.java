@@ -4,7 +4,7 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
-import network.thunder.core.communication.objects.messages.impl.MessageSerializatierImpl;
+import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
@@ -56,7 +56,7 @@ public class EncryptionHandlerTest {
         context.connectedNodes.add(node1);
         context.connectedNodes.add(node2);
 
-        EncryptionMessageFactory messageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(new MessageSerializatierImpl()));
+        EncryptionMessageFactory messageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(new MessageSerializerImpl()));
 
         EncryptionProcessor encryptionProcessor1 = new EncryptionProcessorImpl(messageFactory, node1);
         EncryptionProcessor encryptionProcessor2 = new EncryptionProcessorImpl(messageFactory, node2);
@@ -100,7 +100,7 @@ public class EncryptionHandlerTest {
         channel1.writeOutbound(testMessage);
 
         EncryptedMessage encryptedMessage = (EncryptedMessage) channel1.readOutbound();
-        MessageEncrypter encrypter = new MessageEncrypterImpl(new MessageSerializatierImpl());
+        MessageEncrypter encrypter = new MessageEncrypterImpl(new MessageSerializerImpl());
 
         EncryptedMessage messageSelfEncrypted = encrypter.encrypt(testMessage, keySetBeforeEncryption1);
         assertTrue(Arrays.equals(messageSelfEncrypted.getEncryptedBytes(), encryptedMessage.getEncryptedBytes()));
