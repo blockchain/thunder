@@ -7,7 +7,9 @@ import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by matsjerratsch on 04/12/2015.
@@ -20,11 +22,16 @@ public class SyncDBHandlerMock implements DBHandler {
 
     public List<P2PDataObject> totalList = new ArrayList<>();
 
+    public Map<Integer, List<P2PDataObject>> fragmentToListMap = new HashMap<>();
+
     public SyncDBHandlerMock () {
     }
 
     public void fillWithRandomData () {
-        for (int i = 1; i < 100; i++) {
+        for (int i = 0; i < 1001; i++) {
+            fragmentToListMap.put(i, new ArrayList<>());
+        }
+        for (int i = 1; i < 1000; i++) {
             PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject2 = PubkeyIPObject.getRandomObject();
@@ -45,18 +52,17 @@ public class SyncDBHandlerMock implements DBHandler {
             totalList.add(pubkeyIPObject1);
             totalList.add(pubkeyIPObject2);
             totalList.add(channelStatusObject);
+
+            fragmentToListMap.get(pubkeyChannelObject.getFragmentIndex()).add(pubkeyChannelObject);
+            fragmentToListMap.get(pubkeyIPObject1.getFragmentIndex()).add(pubkeyIPObject1);
+            fragmentToListMap.get(pubkeyIPObject2.getFragmentIndex()).add(pubkeyIPObject2);
+            fragmentToListMap.get(channelStatusObject.getFragmentIndex()).add(channelStatusObject);
         }
     }
 
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
-        List<P2PDataObject> dataObjectList = new ArrayList<>();
-        for (P2PDataObject object : totalList) {
-            if (object.getFragmentIndex() == fragmentIndex) {
-                dataObjectList.add(object);
-            }
-        }
-        return dataObjectList;
+        return fragmentToListMap.get(fragmentIndex);
     }
 
     @Override
