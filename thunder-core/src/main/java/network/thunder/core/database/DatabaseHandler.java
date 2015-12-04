@@ -2,9 +2,8 @@ package network.thunder.core.database;
 
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import network.thunder.core.communication.objects.p2p.DataObject;
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.TreeMapDatastructure;
+import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
@@ -220,9 +219,9 @@ public class DatabaseHandler {
 
 //            //Lets see if we have the object in the db already
             stmt = conn.prepareStatement("SELECT channels.id FROM channels " +
-                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id = channels.node_id_a " +
-                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id = channels.node_id_b " +
-                                             "WHERE ((nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?) OR (nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?))");
+                    "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id = channels.node_id_a " +
+                    "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id = channels.node_id_b " +
+                    "WHERE ((nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?) OR (nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?))");
 
             stmt.setBytes(1, pubkeyA);
             stmt.setBytes(2, pubkeyB);
@@ -244,8 +243,8 @@ public class DatabaseHandler {
         }
     }
 
-    public static ArrayList<DataObject> getDataObjectByHash (Connection conn, ArrayList<byte[]> inv) throws SQLException {
-        ArrayList<DataObject> dataList = new ArrayList<>();
+    public static ArrayList<P2PDataObject> getP2PDataObjectByHash (Connection conn, ArrayList<byte[]> inv) throws SQLException {
+        ArrayList<P2PDataObject> dataList = new ArrayList<>();
 
         PreparedStatement stmt = null;
         try {
@@ -253,43 +252,43 @@ public class DatabaseHandler {
 
                 //Lets see if we have the object in the db already
                 stmt = conn.prepareStatement("SELECT * FROM channels " +
-                                                 "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
-                                                 "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
-                                                 "WHERE channels.hash=?");
+                        "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                        "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                        "WHERE channels.hash=?");
 
                 stmt.setBytes(1, hash);
                 ResultSet set = stmt.executeQuery();
                 if (set.first()) {
                     PubkeyChannelObject pubkeyChannelObject = new PubkeyChannelObject(set);
-                    dataList.add(new DataObject(pubkeyChannelObject));
+                    dataList.add(pubkeyChannelObject);
                     set.close();
                     stmt.close();
                     continue;
                 }
 
                 stmt = conn.prepareStatement("SELECT * FROM channel_status " +
-                                                 "INNER JOIN channels ON channel_status.channel_id=channels.id " +
-                                                 "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
-                                                 "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
-                                                 "WHERE channel_status.hash=?");
+                        "INNER JOIN channels ON channel_status.channel_id=channels.id " +
+                        "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                        "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                        "WHERE channel_status.hash=?");
                 stmt.setBytes(1, hash);
                 set = stmt.executeQuery();
                 if (set.first()) {
                     ChannelStatusObject pubkeyChannelObject = new ChannelStatusObject(set);
-                    dataList.add(new DataObject(pubkeyChannelObject));
+                    dataList.add(pubkeyChannelObject);
                     set.close();
                     stmt.close();
                     continue;
                 }
 
                 stmt = conn.prepareStatement("SELECT * FROM pubkey_ips " +
-                                                 "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
-                                                 "WHERE pubkey_ips.hash=?");
+                        "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
+                        "WHERE pubkey_ips.hash=?");
                 stmt.setBytes(1, hash);
                 set = stmt.executeQuery();
                 if (set.first()) {
                     PubkeyIPObject pubkeyChannelObject = new PubkeyIPObject(set);
-                    dataList.add(new DataObject(pubkeyChannelObject));
+                    dataList.add(pubkeyChannelObject);
                     set.close();
                     stmt.close();
                 }
@@ -362,8 +361,8 @@ public class DatabaseHandler {
 
             //Lets see if we have the object in the db already
             stmt = conn.prepareStatement("SELECT pubkey_ips.id FROM pubkey_ips" +
-                                             " INNER JOIN nodes ON nodes.id=pubkey_ips.node_id" +
-                                             " WHERE nodes.pubkey=?");
+                    " INNER JOIN nodes ON nodes.id=pubkey_ips.node_id" +
+                    " WHERE nodes.pubkey=?");
 
             stmt.setBytes(1, pubkey);
 
@@ -487,21 +486,21 @@ public class DatabaseHandler {
         }
     }
 
-    public static ArrayList<DataObject> getSyncDataByFragmentIndex (Connection conn, int index) throws SQLException {
+    public static ArrayList<P2PDataObject> getSyncDataByFragmentIndex (Connection conn, int index) throws SQLException {
         PreparedStatement stmt = null;
-        ArrayList<DataObject> dataObjectList = new ArrayList<>();
+        ArrayList<P2PDataObject> dataObjectList = new ArrayList<>();
         try {
             stmt = conn.prepareStatement("SELECT * FROM channels " +
-                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
-                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
-                                             "WHERE channels.fragment_index=?");
+                    "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                    "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                    "WHERE channels.fragment_index=?");
 
             stmt.setInt(1, index);
             ResultSet result = stmt.executeQuery();
 
             if (result.first()) {
                 while (!result.isAfterLast()) {
-                    dataObjectList.add(new DataObject(new PubkeyChannelObject(result)));
+                    dataObjectList.add(new PubkeyChannelObject(result));
                     result.next();
                 }
             }
@@ -509,17 +508,17 @@ public class DatabaseHandler {
             stmt.close();
 
             stmt = conn.prepareStatement("SELECT * FROM channel_status " +
-                                             "INNER JOIN channels ON channel_status.channel_id=channels.id " +
-                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
-                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
-                                             "WHERE channel_status.fragment_index=?");
+                    "INNER JOIN channels ON channel_status.channel_id=channels.id " +
+                    "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id=channels.node_id_a " +
+                    "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id=channels.node_id_b " +
+                    "WHERE channel_status.fragment_index=?");
 
             stmt.setInt(1, index);
             result = stmt.executeQuery();
 
             if (result.first()) {
                 while (!result.isAfterLast()) {
-                    dataObjectList.add(new DataObject(new ChannelStatusObject(result)));
+                    dataObjectList.add(new ChannelStatusObject(result));
                     result.next();
                 }
             }
@@ -527,24 +526,25 @@ public class DatabaseHandler {
             stmt.close();
 
             stmt = conn.prepareStatement("SELECT * FROM pubkey_ips " +
-                                             "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
-                                             "WHERE pubkey_ips.fragment_index=?");
+                    "INNER JOIN nodes ON nodes.id=pubkey_ips.node_id " +
+                    "WHERE pubkey_ips.fragment_index=?");
 
             stmt.setInt(1, index);
             result = stmt.executeQuery();
 
             if (result.first()) {
                 while (!result.isAfterLast()) {
-                    dataObjectList.add(new DataObject(new PubkeyIPObject(result)));
+                    dataObjectList.add(new PubkeyIPObject(result));
                     result.next();
                 }
             }
 
             result.close();
 
-            for (DataObject o : dataObjectList) {
-                if (TreeMapDatastructure.objectToFragmentIndex(o.getObject()) != index) {
-                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: " + index + " Should be: " + TreeMapDatastructure.objectToFragmentIndex(o.getObject()));
+            for (P2PDataObject o : dataObjectList) {
+                if (SynchronizationHelper.objectToFragmentIndex(o) != index) {
+                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: " + index + " Should be: " + SynchronizationHelper
+                            .objectToFragmentIndex(o));
 
                 }
             }
@@ -575,10 +575,10 @@ public class DatabaseHandler {
             if (id != 0) {
                 //TODO: We already have this channel in our database. Maybe change the object? These should be fairly static though..
                 stmt = conn.prepareStatement("UPDATE channels SET fragment_index=?, secret_a_hash=?, secret_b_hash=?, pubkey_a1=?, pubkey_a2=?, pubkey_b1=?, " +
-                                                 "pubkey_b2=?, " +
-                                                 "txid_anchor=?, signature_a=?, signature_b=?, hash=? WHERE id=?");
+                        "pubkey_b2=?, " +
+                        "txid_anchor=?, signature_a=?, signature_b=?, hash=? WHERE id=?");
 
-                stmt.setInt(1, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
+                stmt.setInt(1, SynchronizationHelper.objectToFragmentIndex(pubkeyChannelObject));
                 stmt.setBytes(2, pubkeyChannelObject.secretAHash);
                 stmt.setBytes(3, pubkeyChannelObject.secretBHash);
                 stmt.setBytes(4, pubkeyChannelObject.pubkeyA1);
@@ -605,7 +605,7 @@ public class DatabaseHandler {
             stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             int i = 1;
             stmt.setInt(i++, id);
-            stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(pubkeyChannelObject));
+            stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(pubkeyChannelObject));
             stmt.setBytes(i++, pubkeyChannelObject.getHash());
             stmt.setInt(i++, nodeIdA);
             stmt.setInt(i++, nodeIdB);
@@ -640,10 +640,10 @@ public class DatabaseHandler {
 
             //Lets see if we have the object in the db already
             stmt = conn.prepareStatement("SELECT channel_status.id, channel_status.channel_id FROM channel_status " +
-                                             "INNER JOIN channels ON channel_status.channel_id = channels.id " +
-                                             "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id = channels.node_id_a " +
-                                             "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id = channels.node_id_b " +
-                                             "WHERE ((nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?) OR (nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?))");
+                    "INNER JOIN channels ON channel_status.channel_id = channels.id " +
+                    "INNER JOIN nodes AS nodes_a_table ON nodes_a_table.id = channels.node_id_a " +
+                    "INNER JOIN nodes AS nodes_b_table ON nodes_b_table.id = channels.node_id_b " +
+                    "WHERE ((nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?) OR (nodes_a_table.pubkey = ? AND nodes_b_table.pubkey=?))");
 
             stmt.setBytes(1, channelStatusObject.pubkeyA);
             stmt.setBytes(2, channelStatusObject.pubkeyB);
@@ -668,7 +668,7 @@ public class DatabaseHandler {
                 stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
                 int i = 1;
                 stmt.setInt(i++, id);
-                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
+                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(channelStatusObject));
                 stmt.setBytes(i++, channelStatusObject.getHash());
                 stmt.setInt(i++, channelId);
                 stmt.setBytes(i++, channelStatusObject.infoA);
@@ -696,10 +696,10 @@ public class DatabaseHandler {
                 stmt.close();
 
                 stmt = conn.prepareStatement("UPDATE channel_status SET fragment_index=?, hash=?, info_a=?, info_b=?, timestamp=?, signature_a=?, " +
-                                                 "signature_b=? " +
-                                                 "WHERE" + " id=?");
+                        "signature_b=? " +
+                        "WHERE" + " id=?");
                 int i = 1;
-                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(channelStatusObject));
+                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(channelStatusObject));
                 stmt.setBytes(i++, channelStatusObject.getHash());
                 stmt.setBytes(i++, channelStatusObject.infoA);
                 stmt.setBytes(i++, channelStatusObject.infoB);
@@ -723,8 +723,7 @@ public class DatabaseHandler {
         }
     }
 
-    public static void newGossipData (Connection conn, DataObject dataObject) throws SQLException {
-        P2PDataObject object = dataObject.getObject();
+    public static void newGossipData (Connection conn, P2PDataObject object) throws SQLException {
         if (object instanceof PubkeyChannelObject) {
             DatabaseHandler.newChannel(conn, (PubkeyChannelObject) object);
         }
@@ -747,9 +746,10 @@ public class DatabaseHandler {
 
             if (id != 0) {
 
-                stmt = conn.prepareStatement("UPDATE pubkey_ips SET fragment_index=?, hash=?, host=?, port=?, timestamp=?, signature=? WHERE id=? AND " + "timestamp<?");
+                stmt = conn.prepareStatement("UPDATE pubkey_ips SET fragment_index=?, hash=?, host=?, port=?, timestamp=?, signature=? WHERE id=? AND " +
+                        "timestamp<?");
                 int i = 1;
-                stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(IPObject));
+                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(IPObject));
                 stmt.setBytes(i++, IPObject.getHash());
                 stmt.setString(i++, IPObject.IP);
                 stmt.setInt(i++, IPObject.port);
@@ -771,7 +771,7 @@ public class DatabaseHandler {
 
             int i = 1;
             stmt.setInt(i++, id);
-            stmt.setInt(i++, TreeMapDatastructure.objectToFragmentIndex(IPObject));
+            stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(IPObject));
             stmt.setBytes(i++, IPObject.getHash());
             stmt.setInt(i++, DatabaseHandler.getNodeId(conn, IPObject.pubkey));
             stmt.setString(i++, IPObject.IP);

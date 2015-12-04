@@ -7,13 +7,16 @@ import java.security.NoSuchProviderException;
 /**
  * Created by matsjerratsch on 14/10/2015.
  */
-public class ECDHKeySet {
+public class ECDHKeySet implements Cloneable{
 
-    private byte[] masterKey;
-    private byte[] encryptionKey;
-    private byte[] hmacKey;
-    private byte[] ivClient;
-    private byte[] ivServer;
+    public byte[] masterKey;
+    public byte[] encryptionKey;
+    public byte[] hmacKey;
+    public byte[] ivClient;
+    public byte[] ivServer;
+
+    public long counterIn;
+    public long counterOut;
 
     public ECDHKeySet (byte[] masterKey, byte[] serverPubkey, byte[] clientPubkey) throws NoSuchProviderException, NoSuchAlgorithmException {
         this.masterKey = masterKey;
@@ -54,19 +57,12 @@ public class ECDHKeySet {
 //		return hash.digest();
     }
 
-    public byte[] getEncryptionKey () {
-        return encryptionKey;
+    public ECDHKeySet clone () {
+        try {
+            return (ECDHKeySet) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public byte[] getHmacKey () {
-        return hmacKey;
-    }
-
-    public byte[] getIvClient () {
-        return ivClient;
-    }
-
-    public byte[] getIvServer () {
-        return ivServer;
-    }
 }

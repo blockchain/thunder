@@ -1,5 +1,6 @@
 package network.thunder.core.communication.objects.p2p;
 
+import network.thunder.core.communication.Message;
 import network.thunder.core.etc.Tools;
 
 /**
@@ -7,8 +8,8 @@ import network.thunder.core.etc.Tools;
  * <p>
  * We use the getHashAsLong() to determine the fragment block this object should be sent with.
  */
-public class P2PDataObject {
-    public byte[] getData () {return null;}
+public abstract class P2PDataObject implements Message {
+    public abstract byte[] getData ();
 
     public byte[] getHash () {
         byte[] hash = new byte[20];
@@ -17,11 +18,7 @@ public class P2PDataObject {
         return hash;
     }
 
-    public long getHashAsLong () {
-        return 0;
-    }
+    public abstract long getHashAsLong ();
 
-    public void verify () {
-
-    }
+    public abstract void verify ();
 }

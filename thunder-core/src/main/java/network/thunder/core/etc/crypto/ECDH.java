@@ -5,7 +5,9 @@ import org.bouncycastle.jce.provider.JCEECPrivateKey;
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 
 import javax.crypto.KeyAgreement;
-import java.security.*;
+import java.security.AlgorithmParameters;
+import java.security.KeyFactory;
+import java.security.Security;
 import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.*;
@@ -15,31 +17,36 @@ public class ECDH {
     /*
      * Quite some mess here to have all objects with the correct types...
      */
-    public static ECDHKeySet getSharedSecret (ECKey keyServer, ECKey keyClient) throws NoSuchProviderException, NoSuchAlgorithmException, InvalidKeyException, InvalidParameterSpecException, InvalidKeySpecException {
+    public static ECDHKeySet getSharedSecret (ECKey keyServer, ECKey keyClient) {
+        try {
 
-        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC", "SunEC");
-        parameters.init(new ECGenParameterSpec("secp256k1"));
-        ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
-        ECPrivateKeySpec specPrivate = new ECPrivateKeySpec(keyServer.getPrivKey(), ecParameters);
-        ECPublicKeySpec specPublic = new ECPublicKeySpec(new ECPoint(keyClient.getPubKeyPoint().getXCoord().toBigInteger(), keyClient.getPubKeyPoint().getYCoord().toBigInteger()), ecParameters);
+            AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC", "SunEC");
+            parameters.init(new ECGenParameterSpec("secp256k1"));
+            ECParameterSpec ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
+            ECPrivateKeySpec specPrivate = new ECPrivateKeySpec(keyServer.getPrivKey(), ecParameters);
+            ECPublicKeySpec specPublic = new ECPublicKeySpec(new ECPoint(keyClient.getPubKeyPoint().getXCoord().toBigInteger(), keyClient.getPubKeyPoint()
+                    .getYCoord().toBigInteger()), ecParameters);
 
-        KeyFactory kf = KeyFactory.getInstance("EC");
-        ECPrivateKey privateKey = (ECPrivateKey) kf.generatePrivate(specPrivate);
-        ECPublicKey publicKey = (ECPublicKey) kf.generatePublic(specPublic);
+            KeyFactory kf = KeyFactory.getInstance("EC");
+            ECPrivateKey privateKey = (ECPrivateKey) kf.generatePrivate(specPrivate);
+            ECPublicKey publicKey = (ECPublicKey) kf.generatePublic(specPublic);
 
-        JCEECPrivateKey ecPrivKey = new JCEECPrivateKey(privateKey);
-        JCEECPublicKey ecPubKey = new JCEECPublicKey(publicKey);
+            JCEECPrivateKey ecPrivKey = new JCEECPrivateKey(privateKey);
+            JCEECPublicKey ecPubKey = new JCEECPublicKey(publicKey);
 
-        new ECKey().getKeyCrypter();
+            new ECKey().getKeyCrypter();
 
-        KeyAgreement aKeyAgree = KeyAgreement.getInstance("ECDH", "BC");
+            KeyAgreement aKeyAgree = KeyAgreement.getInstance("ECDH", "BC");
 
-        aKeyAgree.init(ecPrivKey);
-        aKeyAgree.doPhase(ecPubKey, true);
+            aKeyAgree.init(ecPrivKey);
+            aKeyAgree.doPhase(ecPubKey, true);
 
-        return new ECDHKeySet(aKeyAgree.generateSecret(), keyServer.getPubKey(), keyClient.getPubKey());
+            return new ECDHKeySet(aKeyAgree.generateSecret(), keyServer.getPubKey(), keyClient.getPubKey());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
 //		MessageDigest hash = MessageDigest.getInstance("SHA1", "BC");
 //

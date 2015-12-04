@@ -1,6 +1,6 @@
 package network.thunder.core.communication.nio;
 
-import network.thunder.core.communication.objects.p2p.TreeMapDatastructure;
+import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
@@ -13,7 +13,6 @@ import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,7 +33,7 @@ public class P2PContext {
     public HashMap<String, PubkeyChannelObject> pubkeyChannelObjectHashMap = new HashMap<>();
     public ECKey nodeKey;
     public boolean fetchFreshIPs = true;
-    public TreeMapDatastructure syncDatastructure = new TreeMapDatastructure();
+    public SynchronizationHelper syncDatastructure = new SynchronizationHelper();
     public boolean needsInitialSyncing = false;
     public DataSource dataSource;
 
@@ -42,7 +41,6 @@ public class P2PContext {
     public long balance = 10000000000000L;
     public Wallet wallet;
     public HashMap<TransactionOutPoint, Integer> lockedOutputs = new HashMap<>();
-
 
     P2PServer server;
     boolean keepReconnectingToNewNodes = false;
@@ -188,19 +186,19 @@ public class P2PContext {
         }
 
         System.out.println("Received all sync data...");
+        syncDatastructure.saveFullSyncToDatabase();
 
-        //TODO: Validate all anchors we received. We need some kind of full blockchain to do that..
+    }
 
-        //Save all data into our database
-//        for(P2PDataObject obj : this.syncDatastructure.fullDataList) {
-        try {
-            DatabaseHandler.syncDatalist(dataSource.getConnection(), this.syncDatastructure.fullDataList);
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-//            System.out.println(obj);
-//        }
+    public HashMap<TransactionOutPoint, Integer> getLockedOutputs () {
+        return lockedOutputs;
+    }
 
-        //Now figure out to which nodes we want to build lightning channels..
+    public Wallet getWallet () {
+        return wallet;
+    }
+
+    public long getAmountForNewChannel () {
+        return balance / 10;
     }
 }

@@ -10,7 +10,16 @@ import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
 import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
 import network.thunder.core.communication.nio.handler.low.NodeConnectionHandler;
 import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
-import network.thunder.core.communication.nio.handler.mid.SyncHandler;
+import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
+import network.thunder.core.communication.objects.messages.impl.MessageSerializatierImpl;
+import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
+import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializater;
+import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
+import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
+import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
+import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.mesh.Node;
 
 /**
@@ -37,23 +46,28 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         if (isServer) {
             node = new Node();
         }
+        node.isServer = isServer;
 
-//		ch.pipeline().addLast(new DumpHexHandler());
+//        ch.pipeline().addLast(new DumpHexHandler());
 
-//		ch.pipeline().addLast(new LoggingHandler(LogLevel.INFO));
+//        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
         ch.pipeline().addLast(new NodeConnectionHandler(context, node));
 
         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
         ch.pipeline().addLast(new LengthFieldPrepender(4));
 
-        ch.pipeline().addLast("EncryptionHandler", new EncryptionHandler(isServer, node));
+        MessageSerializater messageSerializater = new MessageSerializatierImpl();
+        ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializater));
+        ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializater));
 
-        ch.pipeline().addLast(new ByteToMessageObjectHandler());
-        ch.pipeline().addLast(new MessageObjectToByteHandler());
+        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(messageSerializater));
+        EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, node);
+        ch.pipeline().addLast(new EncryptionHandler(encryptionProcessor));
 
-        ch.pipeline().addLast("AuthenticationHandler", new AuthenticationHandler(context.nodeKey, isServer, node));
+        AuthenticationProcessor authenticationProcessor = new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);
+        ch.pipeline().addLast(new AuthenticationHandler(authenticationProcessor));
 
-        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
+//        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 
     }
 }

@@ -15,149 +15,74 @@
  */
 package network.thunder.core.communication.nio.handler.low;
 
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Type;
-import network.thunder.core.etc.crypto.CryptoTools;
-import network.thunder.core.etc.crypto.ECDH;
-import network.thunder.core.etc.crypto.ECDHKeySet;
-import network.thunder.core.mesh.Node;
-import org.bitcoinj.core.ECKey;
-
-import java.security.SecureRandom;
+import network.thunder.core.communication.objects.messages.impl.MessageExecutorImpl;
+import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
+import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 
 //TODO: Add a nonce to prevent replay attacks
 public class EncryptionHandler extends ChannelDuplexHandler {
 
-    protected ECDHKeySet ecdhKeySet;
-    long counterIn;
-    long counterOut;
-    Node node;
-    private ECKey keyServer;
-    private ECKey keyClient;
-    private boolean sentOurKey = false;
-    private boolean keyReceived = false;
-    private boolean isServer;
+    EncryptionProcessor encryptionProcessor;
 
-    public EncryptionHandler (boolean isServer, Node node) {
-        //TODO: Probably not save yet...
-        keyServer = new ECKey(new SecureRandom());
-        this.isServer = isServer;
-        this.node = node;
-        node.setPubKeyTempServer(keyServer);
+    public EncryptionHandler (EncryptionProcessor encryptionProcessor) {
+        this.encryptionProcessor = encryptionProcessor;
     }
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
-        if (node.getNettyContext() == null) {
-            node.setNettyContext(ctx);
+        try {
+            System.out.println("CHANNEL ACTIVE ENCRYPTION");
+            encryptionProcessor.onLayerActive(new MessageExecutorImpl(ctx));
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        System.out.println("CHANNEL ACTIVE ENCRYPTION");
-        //The node doing the incoming connection sends out his key first
-        if (!isServer) {
-            sendOurKey(ctx);
-        }
-
     }
 
     @Override
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-            if (keyReceived) {
-
-                ByteBuf buf = (ByteBuf) msg;
-                ByteBuf out = ctx.alloc().buffer();
-                byte[] data = new byte[buf.readableBytes()];
-                buf.readBytes(data);
-                buf.release();
-
-                data = CryptoTools.checkAndRemoveHMAC(data, ecdhKeySet.getHmacKey());
-
-                byte[] enc = CryptoTools.decryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvClient(), counterIn);
-
-                out.writeBytes(enc);
-
-                counterIn++;
-
-                ctx.fireChannelRead(out);
+            checkIfMessage(msg);
+            if (msg instanceof FailureMessage) {
+                System.out.println("In Failure: " + ((FailureMessage) msg).getFailure());
             } else {
-                keyReceived = true;
-                byte[] pubkey = new byte[33];
-
-                ByteBuf buffer = (ByteBuf) msg;
-                buffer.readBytes(pubkey);
-                keyClient = ECKey.fromPublicOnly(pubkey);
-                node.setPubKeyTempClient(keyClient);
-
-                if (!sentOurKey) {
-                    sendOurKey(ctx);
-                }
-
-                try {
-                    this.ecdhKeySet = ECDH.getSharedSecret(keyServer, keyClient);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                ctx.fireChannelActive();
-
+                System.out.println("I: " + msg);
+                encryptionProcessor.onInboundMessageMessage((Message) msg);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
     public void exceptionCaught (ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
-    }
-
-    public void sendOurKey (ChannelHandlerContext ctx) {
-        System.out.println("EncryptionHandler sendOurKey");
-        sentOurKey = true;
-
-        Object data = new Message(keyServer.getPubKey(), Type.KEY_ENC_SEND);
-        ByteBuf buf = ctx.alloc().buffer();
-        buf.writeBytes(keyServer.getPubKey());
-
-        try {
-            ctx.writeAndFlush(buf).sync().addListener(new ChannelFutureListener() {
-                @Override
-                public void operationComplete (ChannelFuture future) throws Exception {
-                    System.out.println(future);
-                }
-            });
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        throw new RuntimeException(cause);
     }
 
     @Override
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+        promise.setSuccess();
+        if (msg instanceof FailureMessage) {
+            System.out.println("Out Failure: " + ((FailureMessage) msg).getFailure());
+        }
         try {
-            ByteBuf buf = (ByteBuf) msg;
-
-            ByteBuf out = ctx.alloc().buffer();
-
-            byte[] data = new byte[buf.readableBytes()];
-            buf.readBytes(data);
-            buf.release();
-
-            byte[] enc = CryptoTools.encryptAES_CTR(data, ecdhKeySet.getEncryptionKey(), ecdhKeySet.getIvServer(), counterOut);
-
-            enc = CryptoTools.addHMAC(enc, ecdhKeySet.getHmacKey());
-
-            out.writeBytes(enc);
-
-            counterOut++;
-
-            //TODO: Add Encryption
-//		System.out.println("test");
-            ctx.writeAndFlush(out, promise);
+            checkIfMessage(msg);
+            encryptionProcessor.onOutboundMessage((Message) msg);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void checkIfMessage (Object msg) {
+        if (msg instanceof Message) {
+            return;
+        } else {
+            throw new RuntimeException("Received a wrong type? " + msg);
         }
     }
 

@@ -1,5 +1,6 @@
 package network.thunder.core.etc.crypto;
 
+import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
@@ -32,19 +33,32 @@ public class CryptoTools {
         return total;
     }
 
-    public static byte[] checkAndRemoveHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
-        byte[] hmac = new byte[20];
-        byte[] rest = new byte[data.length - hmac.length];
-        System.arraycopy(data, 0, hmac, 0, hmac.length);
-        System.arraycopy(data, hmac.length, rest, 0, data.length - hmac.length);
+    public static byte[] getHMAC (byte[] data, byte[] keyBytes) {
+        try {
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(keySpec);
+            return mac.doFinal(data);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
-        Mac mac = Mac.getInstance("HmacSHA1");
-        mac.init(keySpec);
-        byte[] result = mac.doFinal(rest);
+    public static byte[] checkAndRemoveHMAC (EncryptedMessage message, byte[] keyBytes) {
+        try {
+            byte[] hmac = message.getHMAC();
+            byte[] rest = message.getEncryptedBytes();
 
-        if (Arrays.equals(result, hmac)) {
-            return rest;
+            SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
+            Mac mac = Mac.getInstance("HmacSHA1");
+            mac.init(keySpec);
+            byte[] result = mac.doFinal(rest);
+
+            if (Arrays.equals(result, hmac)) {
+                return rest;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         throw new RuntimeException("HMAC does not match..");

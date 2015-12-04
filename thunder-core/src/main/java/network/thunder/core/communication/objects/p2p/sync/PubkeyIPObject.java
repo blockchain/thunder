@@ -24,7 +24,8 @@ public class PubkeyIPObject extends P2PDataObject {
     public byte[] signature;
     public int timestamp;
 
-    public PubkeyIPObject () {}
+    public PubkeyIPObject () {
+    }
 
     public PubkeyIPObject (ResultSet set) throws SQLException {
         this.IP = set.getString("host");
@@ -120,8 +121,12 @@ public class PubkeyIPObject extends P2PDataObject {
         return result;
     }
 
-    public void sign (ECKey key) throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
-        this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
+    public void sign (ECKey key) {
+        try {
+            this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void verify () {

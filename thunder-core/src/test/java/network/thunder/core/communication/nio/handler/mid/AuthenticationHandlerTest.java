@@ -1,14 +1,16 @@
 package network.thunder.core.communication.nio.handler.mid;
 
-import com.google.gson.Gson;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.Type;
-import network.thunder.core.communication.nio.P2PContext;
-import network.thunder.core.communication.objects.subobjects.AuthenticationObject;
-import network.thunder.core.database.DatabaseHandler;
+import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
+import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
+import network.thunder.core.communication.objects.messages.interfaces.message.authentication.types.AuthenticationMessage;
+import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
+import network.thunder.core.etc.RandomDataMessage;
+import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
-import org.bitcoinj.core.ECKey;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -28,78 +30,139 @@ public class AuthenticationHandlerTest {
 
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
-    Message m;
-    P2PContext context;
+
     Node node1;
     Node node2;
 
-    ECKey key1 = new ECKey();
-    ECKey key2 = new ECKey();
-    ECKey tempKey1 = new ECKey();
-    ECKey tempKey2 = new ECKey();
+    AuthenticationMessageFactory messageFactory;
 
-//    EncryptionHandler handler;
+    AuthenticationProcessor processor1;
+    AuthenticationProcessor processor2;
 
-    @Test
-    public void authenticationFail () throws NoSuchProviderException, NoSuchAlgorithmException {
-        m = (Message) channel1.readOutbound();
-        assertEquals(m.type, Type.AUTH_SEND);
-        AuthenticationObject authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
-        assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey2));
 
-        byte[] b = new byte[4];
-        Random r = new Random();
-        r.nextBytes(b);
-        System.arraycopy(b, 0, authObject.signature, 10, 4);
-
-        channel2.writeInbound(new Message(authObject, Type.AUTH_SEND));
-
-        m = (Message) channel2.readOutbound();
-        assertEquals(m.type, Type.AUTH_FAILED);
-
-    }
-
+    //    EncryptionHandler handler;
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        context = new P2PContext(8992);
 
         node1 = new Node();
-        node1.setPubKeyTempServer(tempKey1);
-        node1.setPubKeyTempClient(tempKey2);
-        node1.conn = DatabaseHandler.getDataSource().getConnection();
-
         node2 = new Node();
-        node2.setPubKeyTempServer(tempKey2);
-        node2.setPubKeyTempClient(tempKey1);
-        node2.conn = DatabaseHandler.getDataSource().getConnection();
 
-        context.connectedNodes.add(node1);
-        context.connectedNodes.add(node2);
+        node1.isServer = false;
+        node2.isServer = true;
 
-//        handler = new EncryptionHandler(false, node1);
-        channel1 = new EmbeddedChannel(new AuthenticationHandler(key1, false, node1));
-        channel2 = new EmbeddedChannel(new AuthenticationHandler(key2, true, node2));
+        node1.ephemeralKeyClient = node2.ephemeralKeyServer;
+        node2.ephemeralKeyClient = node1.ephemeralKeyServer;
 
-        m = (Message) channel2.readOutbound();
+
+        node1.ecdhKeySet = ECDH.getSharedSecret(node1.ephemeralKeyServer, node1.ephemeralKeyClient);
+        node2.ecdhKeySet = ECDH.getSharedSecret(node2.ephemeralKeyServer, node2.ephemeralKeyClient);
+
+        messageFactory = new AuthenticationMessageFactoryImpl();
+
+        processor1 = new AuthenticationProcessorImpl(messageFactory, node1);
+        processor2 = new AuthenticationProcessorImpl(messageFactory, node2);
+
+        channel1 = new EmbeddedChannel(new AuthenticationHandler(processor1));
+        channel2 = new EmbeddedChannel(new AuthenticationHandler(processor2));
+
+        Message m = (Message) channel2.readOutbound();
         assertNull(m);
 
     }
 
     @Test
+    public void authenticationFail () throws NoSuchProviderException, NoSuchAlgorithmException {
+        AuthenticationMessage authenticationMessage = (AuthenticationMessage) channel1.readOutbound();
+
+        byte[] sig = authenticationMessage.getSignature();
+        byte[] b = new byte[4];
+        Random r = new Random();
+        r.nextBytes(b);
+        System.arraycopy(b, 0, sig, 10, 4);
+
+        AuthenticationMessage falseMessage = new AuthenticationMessageMock(authenticationMessage.getPubkeyServer(), sig);
+
+        channel2.writeInbound(falseMessage);
+
+        Message failureMessage = (Message) channel2.readOutbound();
+        assertTrue(failureMessage instanceof FailureMessage);
+        assertEquals(((FailureMessage) failureMessage).getFailure(), "Signature does not match..");
+    }
+
+    @Test
     public void testAuthenticationHandshake () throws NoSuchProviderException, NoSuchAlgorithmException {
-        m = (Message) channel1.readOutbound();
-        assertEquals(m.type, Type.AUTH_SEND);
-        AuthenticationObject authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
-        assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey2));
+        channel2.writeInbound(channel1.readOutbound());
+        channel1.writeInbound(channel2.readOutbound());
 
-        channel2.writeInbound(m);
-        m = (Message) channel2.readOutbound();
-        assertEquals(m.type, Type.AUTH_SEND);
-        authObject = new Gson().fromJson(m.data, AuthenticationObject.class);
-        assertTrue(node2.processAuthentication(authObject, ECKey.fromPublicOnly(authObject.pubkeyServer), tempKey1));
+        assertNull(channel1.readOutbound());
+        assertNull(channel2.readOutbound());
 
+        RandomDataMessage randomDataMessage1 = new RandomDataMessage();
+        RandomDataMessage randomDataMessage2 = new RandomDataMessage();
+
+        //Should allow both directions now..
+        channel1.writeInbound(randomDataMessage1);
+        channel2.writeInbound(randomDataMessage2);
+
+        assertEquals(channel1.readInbound(), randomDataMessage1);
+        assertEquals(channel2.readInbound(), randomDataMessage2);
+
+        channel1.writeOutbound(randomDataMessage1);
+        channel2.writeOutbound(randomDataMessage2);
+
+        assertEquals(channel1.readOutbound(), randomDataMessage1);
+        assertEquals(channel2.readOutbound(), randomDataMessage2);
+    }
+
+    @Test
+    public void shouldNotAllowMessagePassthrough () throws NoSuchProviderException, NoSuchAlgorithmException {
+        channel1.readOutbound();
+
+        assertNull(channel1.readOutbound());
+        assertNull(channel2.readOutbound());
+
+        RandomDataMessage randomDataMessage1 = new RandomDataMessage();
+        RandomDataMessage randomDataMessage2 = new RandomDataMessage();
+
+        //Should allow both directions now..
+        channel1.writeInbound(randomDataMessage1);
+        channel2.writeInbound(randomDataMessage2);
+
+        assertNull(channel1.readInbound());
+        assertNull(channel2.readInbound());
+
+        channel1.writeOutbound(randomDataMessage1);
+        channel2.writeOutbound(randomDataMessage2);
+
+        assertTrue(channel1.readOutbound() instanceof FailureMessage);
+        assertTrue(channel2.readOutbound() instanceof FailureMessage);
+    }
+
+    private class AuthenticationMessageMock implements AuthenticationMessage {
+        byte[] pubkeyServer;
+        byte[] signature;
+
+        public AuthenticationMessageMock (byte[] pubkeyServer, byte[] signature) {
+            this.pubkeyServer = pubkeyServer;
+            this.signature = signature;
+        }
+
+        @Override
+        public byte[] getPubkeyServer () {
+            return pubkeyServer;
+        }
+
+        @Override
+        public byte[] getSignature () {
+            return signature;
+        }
+
+        @Override
+        public void verify () {
+
+        }
     }
 
 }

@@ -1,10 +1,11 @@
 package network.thunder.core.communication.objects.p2p;
 
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Structure for synchronizing new nodes.
@@ -12,18 +13,25 @@ import java.util.HashMap;
  * While it is not important the new node gets a 100% consistent view of the network, it should still be fairly accurate.
  * If the topography after the complete sync is not good enough, we can always add further queries to it.
  */
-public class TreeMapDatastructure {
+public class SynchronizationHelper {
 
     public final static int NUMBER_OF_FRAGMENTS = 1000;
+
+    private final static int NUMBER_OF_NODE_TO_SYNC_FROM = 10;
+
     private final static long FRAGMENT_SIZE = Long.MAX_VALUE / NUMBER_OF_FRAGMENTS;
 
-    public HashMap<Integer, ArrayList<P2PDataObject>> list = new HashMap<>();
-    public ArrayList<P2PDataObject> fullDataList = new ArrayList<>();
+    private HashMap<Integer, ArrayList<P2PDataObject>> list = new HashMap<>();
+    private ArrayList<P2PDataObject> fullDataList = new ArrayList<>();
 
-    public HashMap<Integer, Boolean> fragmentIsSyncedList = new HashMap<>();
-    public HashMap<Integer, Integer> fragmentJobList = new HashMap<>();
+    private HashMap<Integer, Boolean> fragmentIsSyncedList = new HashMap<>();
+    private HashMap<Integer, Integer> fragmentJobList = new HashMap<>();
 
-    public TreeMapDatastructure () {
+    private boolean fullySynchronized = false;
+
+    private DBHandler dbHandler;
+
+    public SynchronizationHelper () {
         for (int i = 1; i < NUMBER_OF_FRAGMENTS + 1; i++) {
             ArrayList<P2PDataObject> objList = new ArrayList<>();
             list.put(i, objList);
@@ -42,12 +50,16 @@ public class TreeMapDatastructure {
     }
 
     public boolean fullySynchronized () {
+        if (fullySynchronized()) {
+            return fullySynchronized;
+        }
         for (int i = 1; i < NUMBER_OF_FRAGMENTS + 1; i++) {
 //            if(i>100) return true;
             if (!fragmentIsSyncedList.get(i)) {
                 return false;
             }
         }
+        fullySynchronized = true;
         return true;
     }
 
@@ -72,16 +84,11 @@ public class TreeMapDatastructure {
         list.get(objectToFragmentIndex(obj)).add(obj);
     }
 
-    public void newFragment (int index, DataObject[] newFragment) {
-        newFragment(index, new ArrayList<>(Arrays.asList(newFragment)));
-    }
-
-    public void newFragment (int index, ArrayList<DataObject> newFragment) {
+    public void newFragment (int index, List<P2PDataObject> newFragment) {
 
         ArrayList<P2PDataObject> objectArrayList = list.get(index);
 
-        for (DataObject o : newFragment) {
-            P2PDataObject object = o.getObject();
+        for (P2PDataObject object : newFragment) {
             //TODO: Probably a bottleneck here, maybe we can trust the data?
             if (index != objectToFragmentIndex(object)) {
 //                throw new RuntimeException("Object should not be in that index..");
@@ -105,6 +112,19 @@ public class TreeMapDatastructure {
         }
 
         fragmentIsSyncedList.put(index, true);
+    }
+
+    public void saveFullSyncToDatabase () {
+
+
+        System.out.println("Received all sync data...");
+
+        //TODO: Validate all anchors we received. We need some kind of full blockchain to do that..
+
+        //Save all data into our database
+        dbHandler.syncDatalist( fullDataList);
+
+        //Now figure out to which nodes we want to build lightning channels..
     }
 
 }
