@@ -9,6 +9,11 @@ public class SyncGetMessageImpl implements SyncGetMessage {
     int fragmentIndex;
     boolean getIPs;
 
+    public SyncGetMessageImpl (int fragmentIndex, boolean getIPs) {
+        this.fragmentIndex = fragmentIndex;
+        this.getIPs = getIPs;
+    }
+
     @Override
     public int getFragmentIndex () {
         return fragmentIndex;

@@ -9,7 +9,6 @@ import network.thunder.core.communication.objects.messages.interfaces.message.sy
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
 import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
-import network.thunder.core.database.DBHandler;
 import network.thunder.core.mesh.Node;
 
 import java.util.List;
@@ -18,15 +17,29 @@ import java.util.List;
  * Created by matsjerratsch on 30/11/2015.
  */
 public class SyncProcessorImpl implements SyncProcessor {
-    MessageExecutor messageExecutor;
     SyncMessageFactory messageFactory;
-
-    SynchronizationHelper syncStructure;
-    DBHandler dbHandler;
-
     Node node;
+    SynchronizationHelper syncStructure;
+
+    MessageExecutor messageExecutor;
 
     int lastIndex;
+
+    public SyncProcessorImpl (SyncMessageFactory messageFactory, Node node, SynchronizationHelper syncStructure) {
+        this.messageFactory = messageFactory;
+        this.node = node;
+        this.syncStructure = syncStructure;
+    }
+
+    @Override
+    public void onLayerActive (MessageExecutor messageExecutor) {
+        this.messageExecutor = messageExecutor;
+        if (shouldSync()) {
+            startSyncing();
+        } else {
+            messageExecutor.sendNextLayerActive();
+        }
+    }
 
     @Override
     public void onInboundMessageMessage (Message message) {
@@ -46,17 +59,8 @@ public class SyncProcessorImpl implements SyncProcessor {
         //TODO: Maybe change the handler to be duplex and handle the passthrough here?
     }
 
-    @Override
-    public void onLayerActive (MessageExecutor messageExecutor) {
-        this.messageExecutor = messageExecutor;
-        this.node = node;
-        if (node.isServer) {
-            messageExecutor.sendNextLayerActive();
-        } else if (synchronizationComplete()) {
-            messageExecutor.sendNextLayerActive();
-        } else {
-            startSyncing();
-        }
+    public boolean shouldSync () {
+        return !node.isServer && !synchronizationComplete();
     }
 
     private void startSyncing () {
@@ -70,11 +74,14 @@ public class SyncProcessorImpl implements SyncProcessor {
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
         if (node.justFetchNewIpAddresses) {
-            dbHandler.insertIPObjects(syncMessage.getSyncData());
+            syncStructure.newIPList(syncMessage.getSyncData());
             messageExecutor.closeConnection();
         } else {
             syncStructure.newFragment(lastIndex, syncMessage.getSyncData());
-            sendGetNextSyncData();
+
+            if (!syncStructure.fullySynchronized()) {
+                sendGetNextSyncData();
+            }
         }
     }
 
@@ -99,13 +106,13 @@ public class SyncProcessorImpl implements SyncProcessor {
     }
 
     private void sendSyncData (int fragmentIndex) {
-        List<P2PDataObject> dataObjects = dbHandler.getSyncDataByFragmentIndex(fragmentIndex);
+        List<P2PDataObject> dataObjects = syncStructure.getFragment(fragmentIndex);
         Message syncSendMessage = messageFactory.getSyncSendMessage(dataObjects);
         messageExecutor.sendMessageUpwards(syncSendMessage);
     }
 
     private void sendSyncIPs () {
-        List<P2PDataObject> ipList = dbHandler.getSyncDataIPObjects();
+        List<P2PDataObject> ipList = syncStructure.getIPAddresses();
         Message syncIpMessage = messageFactory.getSyncSendMessage(ipList);
         messageExecutor.sendMessageUpwards(syncIpMessage);
     }

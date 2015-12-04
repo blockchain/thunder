@@ -1,141 +1,112 @@
-//package network.thunder.core.communication.nio.handler.mid;
-//
-//import io.netty.channel.embedded.EmbeddedChannel;
-//import network.thunder.core.communication.Message;
-//import network.thunder.core.communication.Type;
-//import network.thunder.core.communication.nio.P2PContext;
-//import network.thunder.core.communication.objects.p2p.P2PDataObject;
-//import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
-//import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
-//import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
-//import network.thunder.core.database.DatabaseHandler;
-//import network.thunder.core.mesh.Node;
-//import org.junit.Before;
-//import org.junit.BeforeClass;
-//import org.junit.Test;
-//
-//import java.beans.PropertyVetoException;
-//import java.sql.Connection;
-//import java.sql.SQLException;
-//import java.util.ArrayList;
-//
-//import static org.junit.Assert.*;
-//
-///**
-// * Created by matsjerratsch on 02/11/2015.
-// */
-//public class SyncHandlerTest {
-//
-//    static ArrayList<PubkeyChannelObject> pubkeyChannelObjectArrayList = new ArrayList<>();
-//    static ArrayList<PubkeyIPObject> pubkeyIPObjectArrayList = new ArrayList<>();
-//    static ArrayList<ChannelStatusObject> channelStatusObjectArrayList = new ArrayList<>();
-//    EmbeddedChannel channel1;
-//    EmbeddedChannel channel2;
-//    Message m;
-//    P2PContext context;
-//    Node node1;
-//    Node node2;
-//
-//    @BeforeClass
-//    public static void buildDatabase () throws PropertyVetoException, SQLException {
-//        Connection conn = DatabaseHandler.getDataSource().getConnection();
-//
-//        //TODO: Think about doing this in a separate database?
-//
-//        //Clean up database before the test..
-//        conn.createStatement().execute("DELETE FROM channels;");
-//        conn.createStatement().execute("DELETE FROM channel_status;");
-//        conn.createStatement().execute("DELETE FROM nodes;");
-//        conn.createStatement().execute("DELETE FROM pubkey_ips;");
-//
-//        for (int i = 1; i < 100; i++) {
-//            PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
-//            PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
-//            PubkeyIPObject pubkeyIPObject2 = PubkeyIPObject.getRandomObject();
-//            ChannelStatusObject channelStatusObject = ChannelStatusObject.getRandomObject();
-//
-//            pubkeyIPObject1.pubkey = pubkeyChannelObject.pubkeyA;
-//            pubkeyIPObject2.pubkey = pubkeyChannelObject.pubkeyB;
-//
-//            channelStatusObject.pubkeyA = pubkeyChannelObject.pubkeyA;
-//            channelStatusObject.pubkeyB = pubkeyChannelObject.pubkeyB;
-//
-//            DatabaseHandler.newChannel(conn, pubkeyChannelObject);
-//            DatabaseHandler.newIPObject(conn, pubkeyIPObject1);
-//            DatabaseHandler.newIPObject(conn, pubkeyIPObject2);
-//            DatabaseHandler.newChannelStatus(conn, channelStatusObject);
-//
-//            pubkeyChannelObjectArrayList.add(pubkeyChannelObject);
-//            pubkeyIPObjectArrayList.add(pubkeyIPObject1);
-//            pubkeyIPObjectArrayList.add(pubkeyIPObject2);
-//            channelStatusObjectArrayList.add(channelStatusObject);
-//        }
-//    }
-//
-//    @Before
-//    public void prepare () throws PropertyVetoException, SQLException {
-//
-//        context = new P2PContext(8992);
-//        context.needsInitialSyncing = true;
-//
-//        node1 = new Node();
-//        node1.conn = DatabaseHandler.getDataSource().getConnection();
-//
-//        node2 = new Node();
-//        node2.conn = DatabaseHandler.getDataSource().getConnection();
-//
-//        context.connectedNodes.add(node1);
-//        context.connectedNodes.add(node2);
-//
-//        channel1 = new EmbeddedChannel(new SyncHandler(false, node1, context));
-//        channel2 = new EmbeddedChannel(new SyncHandler(true, node2, context));
-//
-//        m = (Message) channel2.readOutbound();
-//        assertNull(m);
-//    }
-//
-//    @Test
-//    public void testSyncingProcess () {
-//
-//        ArrayList<PubkeyChannelObject> pubkeyChannelObjectArrayListReceived = new ArrayList<>();
-//        ArrayList<PubkeyIPObject> pubkeyIPObjectArrayListReceived = new ArrayList<>();
-//        ArrayList<ChannelStatusObject> channelStatusObjectArrayListReceived = new ArrayList<>();
-//
-//        while (!context.syncDatastructure.fullySynchronized()) {
-//
-//            Message m1 = (Message) channel1.readOutbound();
-//            assertNotNull(m1);
-//            assertEquals(m1.type, Type.SYNC_GET_FRAGMENT);
-//
-//            channel2.writeInbound(m1);
-//            Message m2 = (Message) channel2.readOutbound();
-//            assertEquals(m2.type, Type.SYNC_SEND_FRAGMENT);
-//
-//            channel1.writeInbound(m2);
-//        }
-//
-//        for (P2PDataObject o : context.syncDatastructure.fullDataList) {
-//            if (o instanceof ChannelStatusObject) {
-//                channelStatusObjectArrayListReceived.add((ChannelStatusObject) o);
-//            }
-//            if (o instanceof PubkeyIPObject) {
-//                pubkeyIPObjectArrayListReceived.add((PubkeyIPObject) o);
-//            }
-//            if (o instanceof PubkeyChannelObject) {
-//                pubkeyChannelObjectArrayListReceived.add((PubkeyChannelObject) o);
-//            }
-//        }
-//
-//        //Check whether we actually received all objects
-//        assertTrue(pubkeyChannelObjectArrayList.containsAll(pubkeyChannelObjectArrayListReceived));
-//        assertTrue(pubkeyIPObjectArrayList.containsAll(pubkeyIPObjectArrayListReceived));
-//        assertTrue(channelStatusObjectArrayList.containsAll(channelStatusObjectArrayListReceived));
-//
-//        //Also don't want any strange objects in here..
-//        assertTrue(pubkeyChannelObjectArrayListReceived.containsAll(pubkeyChannelObjectArrayList));
-//        assertTrue(pubkeyIPObjectArrayListReceived.containsAll(pubkeyIPObjectArrayList));
-//        assertTrue(channelStatusObjectArrayListReceived.containsAll(channelStatusObjectArrayList));
-//
-//    }
-//
-//}
+package network.thunder.core.communication.nio.handler.mid;
+
+import io.netty.channel.embedded.EmbeddedChannel;
+import network.thunder.core.communication.Message;
+import network.thunder.core.communication.objects.messages.impl.factories.SyncMessageFactoryImpl;
+import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
+import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
+import network.thunder.core.communication.processor.implementations.SyncProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.SyncProcessor;
+import network.thunder.core.etc.SyncDBHandlerMock;
+import network.thunder.core.mesh.Node;
+import org.junit.Test;
+
+import java.util.List;
+
+import static org.junit.Assert.*;
+
+/**
+ * Created by matsjerratsch on 02/11/2015.
+ */
+public class SyncHandlerTest {
+
+    EmbeddedChannel channel1;
+    EmbeddedChannel channel2;
+
+    Node node1;
+    Node node2;
+
+    SyncMessageFactory messageFactory;
+
+    SyncProcessor syncProcessor1;
+    SyncProcessor syncProcessor2;
+
+    SynchronizationHelper syncStructure1;
+    SynchronizationHelper syncStructure2;
+
+    SyncDBHandlerMock handler1;
+    SyncDBHandlerMock handler2;
+
+    public void buildDatabase () {
+
+        handler1 = new SyncDBHandlerMock();
+
+        handler2 = new SyncDBHandlerMock();
+        handler2.fillWithRandomData();
+
+    }
+
+    public void prepare (boolean shouldOnlyFetchIPs) {
+        node1 = new Node();
+        node2 = new Node();
+
+        node1.isServer = false;
+        node1.justFetchNewIpAddresses = shouldOnlyFetchIPs;
+
+        node2.isServer = true;
+
+        messageFactory = new SyncMessageFactoryImpl();
+
+        syncStructure1 = new SynchronizationHelper(handler1);
+        syncStructure2 = new SynchronizationHelper(handler2);
+
+        syncProcessor1 = new SyncProcessorImpl(messageFactory, node1, syncStructure1);
+        syncProcessor2 = new SyncProcessorImpl(messageFactory, node2, syncStructure2);
+
+        channel1 = new EmbeddedChannel(new SyncHandler(syncProcessor1));
+        channel2 = new EmbeddedChannel(new SyncHandler(syncProcessor2));
+
+        Message m = (Message) channel2.readOutbound();
+        assertNull(m);
+    }
+
+    @Test
+    public void testSyncingIPObjects () {
+        buildDatabase();
+        prepare(true);
+
+        channel2.writeInbound(channel1.readOutbound());
+        channel1.writeInbound(channel2.readOutbound());
+
+        assertEquals(100, handler1.pubkeyIPObjectArrayList.size());
+    }
+
+    @Test
+    public void testSyncingDataObjects () {
+        buildDatabase();
+        prepare(false);
+
+        while (!syncStructure1.fullySynchronized()) {
+            Message m1 = (Message) channel1.readOutbound();
+            channel2.writeInbound(m1);
+            Message m2 = (Message) channel2.readOutbound();
+            channel1.writeInbound(m2);
+        }
+
+        assertNull(channel1.readOutbound());
+        assertNull(channel2.readOutbound());
+
+        syncStructure1.saveFullSyncToDatabase();
+
+        assertTrue(checkListsEqual(handler1.channelStatusObjectArrayList, handler2.channelStatusObjectArrayList));
+        assertTrue(checkListsEqual(handler1.pubkeyChannelObjectArrayList, handler2.pubkeyChannelObjectArrayList));
+        assertTrue(checkListsEqual(handler1.pubkeyIPObjectArrayList, handler2.pubkeyIPObjectArrayList));
+        assertTrue(checkListsEqual(handler1.totalList, handler2.totalList));
+
+    }
+
+    public boolean checkListsEqual (List list1, List list2) {
+        return list1.containsAll(list2) && list2.containsAll(list1);
+    }
+
+}

@@ -2,7 +2,6 @@ package network.thunder.core.database;
 
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -17,5 +16,5 @@ public interface DBHandler {
 
     P2PDataObject getP2PDataObjectByHash (byte[] hash);
 
-    void syncDatalist (ArrayList<P2PDataObject> dataList);
+    void syncDatalist (List<P2PDataObject> dataList);
 }

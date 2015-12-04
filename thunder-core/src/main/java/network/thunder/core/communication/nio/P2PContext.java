@@ -1,6 +1,5 @@
 package network.thunder.core.communication.nio;
 
-import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
 import network.thunder.core.database.DatabaseHandler;
@@ -33,7 +32,7 @@ public class P2PContext {
     public HashMap<String, PubkeyChannelObject> pubkeyChannelObjectHashMap = new HashMap<>();
     public ECKey nodeKey;
     public boolean fetchFreshIPs = true;
-    public SynchronizationHelper syncDatastructure = new SynchronizationHelper();
+//    public SynchronizationHelper syncDatastructure = new SynchronizationHelper();
     public boolean needsInitialSyncing = false;
     public DataSource dataSource;
 
@@ -120,7 +119,7 @@ public class P2PContext {
         new Thread(new Runnable() {
             @Override
             public void run () {
-                while (!syncDatastructure.fullySynchronized()) {
+//                while (!syncDatastructure.fullySynchronized()) {
 
                     try {
                         if (connectedNodes.size() < 10) {
@@ -138,7 +137,7 @@ public class P2PContext {
                         e.printStackTrace();
                     }
 
-                }
+//                }
 
                 stopConnectingToRandomNodes();
             }
@@ -186,7 +185,7 @@ public class P2PContext {
         }
 
         System.out.println("Received all sync data...");
-        syncDatastructure.saveFullSyncToDatabase();
+//        syncDatastructure.saveFullSyncToDatabase();
 
     }
 

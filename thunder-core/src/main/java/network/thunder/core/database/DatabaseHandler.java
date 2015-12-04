@@ -3,7 +3,6 @@ package network.thunder.core.database;
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
@@ -542,9 +541,8 @@ public class DatabaseHandler {
             result.close();
 
             for (P2PDataObject o : dataObjectList) {
-                if (SynchronizationHelper.objectToFragmentIndex(o) != index) {
-                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: " + index + " Should be: " + SynchronizationHelper
-                            .objectToFragmentIndex(o));
+                if (o.getFragmentIndex() != index) {
+                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: " + index + " Should be: " + o.getFragmentIndex());
 
                 }
             }
@@ -578,7 +576,7 @@ public class DatabaseHandler {
                         "pubkey_b2=?, " +
                         "txid_anchor=?, signature_a=?, signature_b=?, hash=? WHERE id=?");
 
-                stmt.setInt(1, SynchronizationHelper.objectToFragmentIndex(pubkeyChannelObject));
+                stmt.setInt(1, pubkeyChannelObject.getFragmentIndex());
                 stmt.setBytes(2, pubkeyChannelObject.secretAHash);
                 stmt.setBytes(3, pubkeyChannelObject.secretBHash);
                 stmt.setBytes(4, pubkeyChannelObject.pubkeyA1);
@@ -605,7 +603,7 @@ public class DatabaseHandler {
             stmt = conn.prepareStatement("INSERT INTO channels VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
             int i = 1;
             stmt.setInt(i++, id);
-            stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(pubkeyChannelObject));
+            stmt.setInt(i++, pubkeyChannelObject.getFragmentIndex());
             stmt.setBytes(i++, pubkeyChannelObject.getHash());
             stmt.setInt(i++, nodeIdA);
             stmt.setInt(i++, nodeIdB);
@@ -668,7 +666,7 @@ public class DatabaseHandler {
                 stmt = conn.prepareStatement("INSERT INTO channel_status VALUES(?,?,?,?,?,?,?,?,?)", PreparedStatement.RETURN_GENERATED_KEYS);
                 int i = 1;
                 stmt.setInt(i++, id);
-                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(channelStatusObject));
+                stmt.setInt(i++, channelStatusObject.getFragmentIndex());
                 stmt.setBytes(i++, channelStatusObject.getHash());
                 stmt.setInt(i++, channelId);
                 stmt.setBytes(i++, channelStatusObject.infoA);
@@ -699,7 +697,7 @@ public class DatabaseHandler {
                         "signature_b=? " +
                         "WHERE" + " id=?");
                 int i = 1;
-                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(channelStatusObject));
+                stmt.setInt(i++, channelStatusObject.getFragmentIndex());
                 stmt.setBytes(i++, channelStatusObject.getHash());
                 stmt.setBytes(i++, channelStatusObject.infoA);
                 stmt.setBytes(i++, channelStatusObject.infoB);
@@ -749,7 +747,7 @@ public class DatabaseHandler {
                 stmt = conn.prepareStatement("UPDATE pubkey_ips SET fragment_index=?, hash=?, host=?, port=?, timestamp=?, signature=? WHERE id=? AND " +
                         "timestamp<?");
                 int i = 1;
-                stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(IPObject));
+                stmt.setInt(i++, IPObject.getFragmentIndex());
                 stmt.setBytes(i++, IPObject.getHash());
                 stmt.setString(i++, IPObject.IP);
                 stmt.setInt(i++, IPObject.port);
@@ -771,7 +769,7 @@ public class DatabaseHandler {
 
             int i = 1;
             stmt.setInt(i++, id);
-            stmt.setInt(i++, SynchronizationHelper.objectToFragmentIndex(IPObject));
+            stmt.setInt(i++, IPObject.getFragmentIndex());
             stmt.setBytes(i++, IPObject.getHash());
             stmt.setInt(i++, DatabaseHandler.getNodeId(conn, IPObject.pubkey));
             stmt.setString(i++, IPObject.IP);
