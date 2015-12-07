@@ -63,7 +63,7 @@ public class AuthenticationProcessorImpl implements AuthenticationProcessor {
 
     public void sendAuthentication () {
         if (!sentAuth) {
-            messageExecutor.sendMessageUpwards(messageFactory.getAuthenticationMessage(node));
+            messageExecutor.sendMessageUpwards(getAuthenticationMessage());
             sentAuth = true;
         }
     }
@@ -96,6 +96,25 @@ public class AuthenticationProcessorImpl implements AuthenticationProcessor {
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
         }
 
+    }
+
+    public AuthenticationMessage getAuthenticationMessage () {
+        try {
+            ECKey keyServer = node.pubKeyServer;
+            ECKey keyClient = node.ephemeralKeyClient;
+
+            byte[] data = new byte[keyServer.getPubKey().length + keyClient.getPubKey().length];
+            System.arraycopy(keyServer.getPubKey(), 0, data, 0, keyServer.getPubKey().length);
+            System.arraycopy(keyClient.getPubKey(), 0, data, keyServer.getPubKey().length, keyClient.getPubKey().length);
+
+            byte[] pubkeyServer = keyServer.getPubKey();
+            byte[] signature = CryptoTools.createSignature(keyServer, data);
+
+            return messageFactory.getAuthenticationMessage(pubkeyServer, signature);
+
+        } catch (NoSuchProviderException | NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void checkAuthenticationMessage (AuthenticationMessage authentication, Node node) throws NoSuchProviderException,
