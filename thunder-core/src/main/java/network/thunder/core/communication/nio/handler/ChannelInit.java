@@ -14,8 +14,9 @@ import network.thunder.core.communication.objects.messages.impl.MessageEncrypter
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
@@ -60,8 +61,9 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializer));
         ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializer));
 
-        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(messageSerializer));
-        EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, node);
+        MessageEncrypter messageEncrypter = new MessageEncrypterImpl(messageSerializer);
+        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl();
+        EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, messageEncrypter, node);
         ch.pipeline().addLast(new EncryptionHandler(encryptionProcessor));
 
         AuthenticationProcessor authenticationProcessor = new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);

@@ -54,10 +54,12 @@ public class EncryptionHandlerTest {
         context.connectedNodes.add(node1);
         context.connectedNodes.add(node2);
 
-        EncryptionMessageFactory messageFactory = new EncryptionMessageFactoryImpl(new MessageEncrypterImpl(new MessageSerializerImpl()));
+        MessageEncrypter messageEncrypter = new MessageEncrypterImpl(new MessageSerializerImpl());
 
-        EncryptionProcessor encryptionProcessor1 = new EncryptionProcessorImpl(messageFactory, node1);
-        EncryptionProcessor encryptionProcessor2 = new EncryptionProcessorImpl(messageFactory, node2);
+        EncryptionMessageFactory messageFactory = new EncryptionMessageFactoryImpl();
+
+        EncryptionProcessor encryptionProcessor1 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node1);
+        EncryptionProcessor encryptionProcessor2 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node2);
 
         handler1 = new EncryptionHandler(encryptionProcessor1);
         handler2 = new EncryptionHandler(encryptionProcessor2);

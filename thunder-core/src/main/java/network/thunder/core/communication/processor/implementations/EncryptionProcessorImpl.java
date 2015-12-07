@@ -5,6 +5,7 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
@@ -15,6 +16,7 @@ import org.bitcoinj.core.ECKey;
  */
 public class EncryptionProcessorImpl implements EncryptionProcessor {
     EncryptionMessageFactory messageFactory;
+    MessageEncrypter messageEncrypter;
     Node node;
 
     MessageExecutor executor;
@@ -22,8 +24,9 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
     boolean encSent;
     boolean encFinished;
 
-    public EncryptionProcessorImpl (EncryptionMessageFactory messageFactory, Node node) {
+    public EncryptionProcessorImpl (EncryptionMessageFactory messageFactory, MessageEncrypter messageEncrypter, Node node) {
         this.messageFactory = messageFactory;
+        this.messageEncrypter = messageEncrypter;
         this.node = node;
     }
 
@@ -59,7 +62,7 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
 
     private void sendInitialMessageIfNotSent () {
         if (!encSent) {
-            executor.sendMessageUpwards(messageFactory.getEncryptionInitialMessage(node));
+            executor.sendMessageUpwards(messageFactory.getEncryptionInitialMessage(node.ephemeralKeyServer.getPubKey()));
             encSent = true;
         }
     }
@@ -78,7 +81,7 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
     }
 
     private void processMessageToBeDecrypted (EncryptedMessage message) {
-        Message decryptedMessage = messageFactory.getDecryptedMessage(message, node);
+        Message decryptedMessage = messageEncrypter.decrypt(message, node.ecdhKeySet);
         executor.sendMessageDownwards(decryptedMessage);
     }
 
@@ -102,7 +105,7 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
     }
 
     private void processMessageToBeEncrypted (Message message) {
-        Message encryptedMessage = messageFactory.getEncryptedMessage(message, node);
+        Message encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         executor.sendMessageUpwards(encryptedMessage);
     }
 
