@@ -42,7 +42,7 @@ public class SyncProcessorImpl implements SyncProcessor {
     }
 
     @Override
-    public void onInboundMessageMessage (Message message) {
+    public void onInboundMessage (Message message) {
         if (message instanceof Sync) {
             if (message instanceof SyncSendMessage) {
                 processSyncSendMessage(message);

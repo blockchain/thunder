@@ -32,7 +32,7 @@ public class LNEstablishProcessorImpl implements LightningChannelManagamentProce
     int status = 0;
 
     @Override
-    public void onInboundMessageMessage (Message message) {
+    public void onInboundMessage (Message message) {
         if (message instanceof LNEstablish) {
             consumeMessage(message);
         } else {

@@ -48,7 +48,7 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
     @Override
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         checkIfMessage(msg);
-        messageProcessor.onInboundMessageMessage((Message) msg);
+        messageProcessor.onInboundMessage((Message) msg);
     }
 
     @Override

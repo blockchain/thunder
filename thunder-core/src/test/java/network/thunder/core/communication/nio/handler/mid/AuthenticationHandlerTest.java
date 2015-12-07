@@ -2,6 +2,7 @@ package network.thunder.core.communication.nio.handler.mid;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
+import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
@@ -61,8 +62,8 @@ public class AuthenticationHandlerTest {
         processor1 = new AuthenticationProcessorImpl(messageFactory, node1);
         processor2 = new AuthenticationProcessorImpl(messageFactory, node2);
 
-        channel1 = new EmbeddedChannel(new AuthenticationHandler(processor1));
-        channel2 = new EmbeddedChannel(new AuthenticationHandler(processor2));
+        channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "Encryption1"));
+        channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "Encryption2"));
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);

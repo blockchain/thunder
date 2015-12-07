@@ -53,7 +53,7 @@ public class GossipHandler extends ChannelInboundHandlerAdapter {
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
             checkIfMessage(msg);
-            processor.onInboundMessageMessage((Message) msg);
+            processor.onInboundMessage((Message) msg);
         } catch (Exception e) {
             e.printStackTrace();
         }

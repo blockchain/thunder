@@ -34,7 +34,7 @@ public class GossipProcessorImpl implements GossipProcessor {
     List<P2PDataObject> objectListTemp = new ArrayList<>();
 
     @Override
-    public void onInboundMessageMessage (Message message) {
+    public void onInboundMessage (Message message) {
         if (message instanceof Gossip) {
             consumeMessage(message);
         } else {

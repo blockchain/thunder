@@ -37,7 +37,7 @@ public class AuthenticationProcessorImpl implements AuthenticationProcessor {
     }
 
     @Override
-    public void onInboundMessageMessage (Message message) {
+    public void onInboundMessage (Message message) {
         if (message instanceof Authentication) {
             processMessage(message);
         } else if (!authenticationExchangeFinished()) {

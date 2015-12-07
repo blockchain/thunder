@@ -31,7 +31,7 @@ public class MessageExecutorImpl implements MessageExecutor {
 
     @Override
     public void sendMessageDownwards (Message message) {
-        System.out.println("I: " + message);
+//        System.out.println("I: " + message);
         context.fireChannelRead(message);
     }
 

@@ -2,6 +2,7 @@ package network.thunder.core.communication.nio.handler.mid;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
+import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.factories.SyncMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
 import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
@@ -63,8 +64,8 @@ public class SyncHandlerTest {
         syncProcessor1 = new SyncProcessorImpl(messageFactory, node1, syncStructure1);
         syncProcessor2 = new SyncProcessorImpl(messageFactory, node2, syncStructure2);
 
-        channel1 = new EmbeddedChannel(new SyncHandler(syncProcessor1));
-        channel2 = new EmbeddedChannel(new SyncHandler(syncProcessor2));
+        channel1 = new EmbeddedChannel(new ProcessorHandler(syncProcessor1, "Sync1"));
+        channel2 = new EmbeddedChannel(new ProcessorHandler(syncProcessor2, "Sync2"));
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);

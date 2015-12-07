@@ -3,6 +3,7 @@ package network.thunder.core.communication.nio.handler.low;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.P2PContext;
+import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
@@ -38,8 +39,8 @@ public class EncryptionHandlerTest {
     Node node1;
     Node node2;
 
-    EncryptionHandler handler1;
-    EncryptionHandler handler2;
+    ProcessorHandler handler1;
+    ProcessorHandler handler2;
 
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
@@ -61,8 +62,8 @@ public class EncryptionHandlerTest {
         EncryptionProcessor encryptionProcessor1 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node1);
         EncryptionProcessor encryptionProcessor2 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node2);
 
-        handler1 = new EncryptionHandler(encryptionProcessor1);
-        handler2 = new EncryptionHandler(encryptionProcessor2);
+        handler1 = new ProcessorHandler(encryptionProcessor1, "Encryption1");
+        handler2 = new ProcessorHandler(encryptionProcessor2, "Encryption2");
 
         channel1 = new EmbeddedChannel(handler1);
         channel2 = new EmbeddedChannel(handler2);

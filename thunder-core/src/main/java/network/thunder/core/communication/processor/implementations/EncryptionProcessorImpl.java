@@ -39,7 +39,7 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
     }
 
     @Override
-    public void onInboundMessageMessage (Message message) {
+    public void onInboundMessage (Message message) {
         if (encryptionKeyExchangeFinished()) {
             processEncryptedMessage(message);
         } else {

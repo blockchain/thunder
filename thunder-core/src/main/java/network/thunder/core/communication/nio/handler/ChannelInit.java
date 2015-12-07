@@ -6,10 +6,8 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
-import network.thunder.core.communication.nio.handler.low.EncryptionHandler;
 import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
 import network.thunder.core.communication.nio.handler.low.NodeConnectionHandler;
-import network.thunder.core.communication.nio.handler.mid.AuthenticationHandler;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
@@ -64,10 +62,10 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         MessageEncrypter messageEncrypter = new MessageEncrypterImpl(messageSerializer);
         EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl();
         EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, messageEncrypter, node);
-        ch.pipeline().addLast(new EncryptionHandler(encryptionProcessor));
+        ch.pipeline().addLast(new ProcessorHandler(encryptionProcessor, "Encryption"));
 
         AuthenticationProcessor authenticationProcessor = new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);
-        ch.pipeline().addLast(new AuthenticationHandler(authenticationProcessor));
+        ch.pipeline().addLast(new ProcessorHandler(authenticationProcessor, "Authentication"));
 
 //        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 

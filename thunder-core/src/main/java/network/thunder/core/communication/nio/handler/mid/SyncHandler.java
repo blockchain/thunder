@@ -47,7 +47,7 @@ public class SyncHandler extends ChannelInboundHandlerAdapter {
     public void channelRead (ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
             checkIfMessage(msg);
-            syncProcessor.onInboundMessageMessage((Message) msg);
+            syncProcessor.onInboundMessage((Message) msg);
 
         } catch (Exception e) {
             e.printStackTrace();
