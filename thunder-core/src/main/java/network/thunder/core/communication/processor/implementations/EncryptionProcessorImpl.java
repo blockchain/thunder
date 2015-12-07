@@ -2,9 +2,9 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptionInitial;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
@@ -83,12 +83,12 @@ public class EncryptionProcessorImpl implements EncryptionProcessor {
     }
 
     private void processEncryptionInitialMessage (Message message) {
-        if (!(message instanceof EncryptionInitial)) {
+        if (!(message instanceof EncryptionInitialMessage)) {
             executor.sendMessageUpwards(messageFactory.getFailureMessage("Expecting EncryptionInitial Message.. " + message));
         } else {
-            EncryptionInitial encryptionInitial = (EncryptionInitial) message;
+            EncryptionInitialMessage encryptionInitial = (EncryptionInitialMessage) message;
 
-            node.ephemeralKeyClient = ECKey.fromPublicOnly(encryptionInitial.getKey());
+            node.ephemeralKeyClient = ECKey.fromPublicOnly(encryptionInitial.key);
             node.ecdhKeySet = ECDH.getSharedSecret(node.ephemeralKeyServer, node.ephemeralKeyClient);
 
             sendInitialMessageIfNotSent();

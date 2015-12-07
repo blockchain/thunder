@@ -1,8 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
-import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessageImpl;
+import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.authentication.types.AuthenticationMessage;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
@@ -24,7 +23,7 @@ public class AuthenticationMessageFactoryImpl extends MesssageFactoryImpl implem
             byte[] pubkeyServer = keyServer.getPubKey();
             byte[] signature = CryptoTools.createSignature(keyServer, data);
 
-            return new AuthenticationMessageImpl(pubkeyServer, signature);
+            return new AuthenticationMessage(pubkeyServer, signature);
 
         } catch (NoSuchProviderException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);

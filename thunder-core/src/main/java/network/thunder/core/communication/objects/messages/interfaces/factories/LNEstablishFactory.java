@@ -1,9 +1,9 @@
 package network.thunder.core.communication.objects.messages.interfaces.factories;
 
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishAMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishBMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishCMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishDMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.database.objects.Channel;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;

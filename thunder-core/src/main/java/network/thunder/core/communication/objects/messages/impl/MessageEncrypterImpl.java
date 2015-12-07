@@ -1,10 +1,9 @@
 package network.thunder.core.communication.objects.messages.impl;
 
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessageImpl;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 
@@ -26,12 +25,12 @@ public class MessageEncrypterImpl implements MessageEncrypter {
         byte[] enc = CryptoTools.encryptAES_CTR(bytes, keySet.encryptionKey, keySet.ivServer, keySet.counterOut);
         byte[] hmac = CryptoTools.getHMAC(enc, keySet.hmacKey);
 
-        return new EncryptedMessageImpl(hmac, enc);
+        return new EncryptedMessage(hmac, enc);
     }
 
     @Override
     public Message decrypt (EncryptedMessage message, ECDHKeySet ecdhKeySet) {
-        byte[] bytes = message.getEncryptedBytes();
+        byte[] bytes = message.payload;
 
         bytes = CryptoTools.checkAndRemoveHMAC(message, ecdhKeySet.hmacKey);
         bytes = CryptoTools.decryptAES_CTR(bytes, ecdhKeySet.encryptionKey, ecdhKeySet.ivClient, ecdhKeySet.counterIn);

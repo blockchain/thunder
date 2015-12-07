@@ -1,14 +1,10 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
-import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessageImpl;
-import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessageImpl;
-import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessageImpl;
-import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessageImpl;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishAMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishBMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishCMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.types.LNEstablishDMessage;
 import network.thunder.core.database.objects.Channel;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -20,7 +16,7 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
 
     @Override
     public LNEstablishAMessage getEstablishMessageA (Channel channel) {
-        LNEstablishAMessage message = new LNEstablishAMessageImpl(
+        LNEstablishAMessage message = new LNEstablishAMessage(
                 channel.getKeyServer().getPubKey(),
                 channel.getKeyServerA().getPubKey(),
                 channel.getAnchorSecretHashServer(),
@@ -32,7 +28,7 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
 
     @Override
     public LNEstablishBMessage getEstablishMessageB (Channel channel, Transaction anchor) {
-        LNEstablishBMessage message = new LNEstablishBMessageImpl(
+        LNEstablishBMessage message = new LNEstablishBMessage(
                 channel.getKeyServer().getPubKey(),
                 channel.getKeyServerA().getPubKey(),
                 channel.getAnchorSecretHashServer(),
@@ -46,7 +42,7 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
 
     @Override
     public LNEstablishCMessage getEstablishMessageC (Transaction anchor, TransactionSignature escapeSignature, TransactionSignature escapeFastSignature) {
-        LNEstablishCMessage message = new LNEstablishCMessageImpl(
+        LNEstablishCMessage message = new LNEstablishCMessage(
                 escapeSignature.encodeToBitcoin(),
                 escapeFastSignature.encodeToBitcoin(),
                 anchor.getHash().getBytes());
@@ -55,7 +51,7 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
 
     @Override
     public LNEstablishDMessage getEstablishMessageD (TransactionSignature escapeSignature, TransactionSignature escapeFastSignature) {
-        LNEstablishDMessage message = new LNEstablishDMessageImpl(
+        LNEstablishDMessage message = new LNEstablishDMessage(
                 escapeSignature.encodeToBitcoin(),
                 escapeFastSignature.encodeToBitcoin()
         );

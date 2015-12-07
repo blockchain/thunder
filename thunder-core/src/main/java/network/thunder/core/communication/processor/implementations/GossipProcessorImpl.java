@@ -2,11 +2,11 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipGetMessage;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipInvMessage;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
-import network.thunder.core.communication.objects.messages.interfaces.message.gossip.types.GossipGetMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.gossip.types.GossipInvMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.gossip.types.GossipSendMessage;
 import network.thunder.core.communication.objects.p2p.GossipSubject;
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
 import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
@@ -85,7 +85,7 @@ public class GossipProcessorImpl implements GossipProcessor {
     private void processGossipInvMessage (Message message) {
         GossipInvMessage invMessage = (GossipInvMessage) message;
         List<byte[]> objectsToGet = new ArrayList<>();
-        for (byte[] hash : invMessage.getInventoryList()) {
+        for (byte[] hash : invMessage.inventoryList) {
             if (subject.knowsObjectAlready(hash)) {
                 objectsToGet.add(hash);
             }
@@ -97,12 +97,12 @@ public class GossipProcessorImpl implements GossipProcessor {
 
     private void processGossipSendMessage (Message message) {
         GossipSendMessage sendMessage = (GossipSendMessage) message;
-        subject.newDataObjects(this, sendMessage.getDataObjects());
+        subject.newDataObjects(this, sendMessage.dataObjects);
     }
 
     private void processGossipGetMessage (Message message) {
         GossipGetMessage getMessage = (GossipGetMessage) message;
-        sendGossipSendMessage(getMessage.getInventoryList());
+        sendGossipSendMessage(getMessage.inventoryList);
     }
 
     private void sendInvMessage () {

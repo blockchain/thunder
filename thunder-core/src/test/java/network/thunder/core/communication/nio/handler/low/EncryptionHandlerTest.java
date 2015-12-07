@@ -6,10 +6,10 @@ import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptionInitial;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.etc.RandomDataMessage;
@@ -24,9 +24,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by matsjerratsch on 29/10/2015.
@@ -74,15 +72,15 @@ public class EncryptionHandlerTest {
 
     @Test
     public void clientShouldSendPublicKey () throws Exception {
-        EncryptionInitial encryptionInitial1 = (EncryptionInitial) channel1.readOutbound();
-        assertTrue(Arrays.equals(encryptionInitial1.getKey(), node1.ephemeralKeyServer.getPubKey()));
+        EncryptionInitialMessage EncryptionInitialMessage1 = (EncryptionInitialMessage) channel1.readOutbound();
+        assertTrue(Arrays.equals(EncryptionInitialMessage1.key, node1.ephemeralKeyServer.getPubKey()));
     }
 
     @Test
     public void serverShouldRespondPublicKey () throws Exception {
         channel2.writeInbound(channel1.readOutbound());
-        EncryptionInitial encryptionInitial2 = (EncryptionInitial) channel2.readOutbound();
-        assertTrue(Arrays.equals(encryptionInitial2.getKey(), node2.ephemeralKeyServer.getPubKey()));
+        EncryptionInitialMessage EncryptionInitialMessage2 = (EncryptionInitialMessage) channel2.readOutbound();
+        assertTrue(Arrays.equals(EncryptionInitialMessage2.key, node2.ephemeralKeyServer.getPubKey()));
     }
 
     //        byte[] encrypted = CryptoTools.encryptAES_CTR(testMessage.data, node1.ecdhKeySet.encryptionKey, node1.ecdhKeySet.ivServer, 0);
@@ -103,8 +101,8 @@ public class EncryptionHandlerTest {
         MessageEncrypter encrypter = new MessageEncrypterImpl(new MessageSerializerImpl());
 
         EncryptedMessage messageSelfEncrypted = encrypter.encrypt(testMessage, keySetBeforeEncryption1);
-        assertTrue(Arrays.equals(messageSelfEncrypted.getEncryptedBytes(), encryptedMessage.getEncryptedBytes()));
-        assertTrue(Arrays.equals(encryptedMessage.getHMAC(), encryptedMessage.getHMAC()));
+        assertTrue(Arrays.equals(messageSelfEncrypted.payload, encryptedMessage.payload));
+        assertTrue(Arrays.equals(encryptedMessage.hmac, encryptedMessage.hmac));
     }
 
     @Test

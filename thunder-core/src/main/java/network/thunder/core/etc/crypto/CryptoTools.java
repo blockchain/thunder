@@ -1,6 +1,6 @@
 package network.thunder.core.etc.crypto;
 
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
@@ -46,8 +46,8 @@ public class CryptoTools {
 
     public static byte[] checkAndRemoveHMAC (EncryptedMessage message, byte[] keyBytes) {
         try {
-            byte[] hmac = message.getHMAC();
-            byte[] rest = message.getEncryptedBytes();
+            byte[] hmac = message.hmac;
+            byte[] rest = message.payload;
 
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
             Mac mac = Mac.getInstance("HmacSHA1");

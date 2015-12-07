@@ -1,11 +1,10 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialImpl;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptionInitial;
+import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import network.thunder.core.mesh.Node;
 
@@ -38,7 +37,7 @@ public class EncryptionMessageFactoryImpl extends MesssageFactoryImpl implements
     }
 
     @Override
-    public EncryptionInitial getEncryptionInitialMessage (Node node) {
-        return new EncryptionInitialImpl(node.ephemeralKeyServer.getPubKey());
+    public EncryptionInitialMessage getEncryptionInitialMessage (Node node) {
+        return new EncryptionInitialMessage(node.ephemeralKeyServer.getPubKey());
     }
 }

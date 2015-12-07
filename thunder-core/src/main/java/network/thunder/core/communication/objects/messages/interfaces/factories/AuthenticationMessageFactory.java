@@ -1,6 +1,6 @@
 package network.thunder.core.communication.objects.messages.interfaces.factories;
 
-import network.thunder.core.communication.objects.messages.interfaces.message.authentication.types.AuthenticationMessage;
+import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.mesh.Node;
 
 /**

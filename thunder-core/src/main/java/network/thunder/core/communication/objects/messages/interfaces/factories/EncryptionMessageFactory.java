@@ -1,8 +1,8 @@
 package network.thunder.core.communication.objects.messages.interfaces.factories;
 
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptedMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.encryption.types.EncryptionInitial;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
+import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
 import network.thunder.core.mesh.Node;
 
 /**
@@ -13,5 +13,5 @@ public interface EncryptionMessageFactory extends MessageFactory {
 
     Message getDecryptedMessage (EncryptedMessage message, Node node);
 
-    EncryptionInitial getEncryptionInitialMessage (Node node);
+    EncryptionInitialMessage getEncryptionInitialMessage (Node node);
 }

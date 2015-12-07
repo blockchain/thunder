@@ -2,10 +2,10 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.sync.SyncGetMessage;
+import network.thunder.core.communication.objects.messages.impl.message.sync.SyncSendMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.sync.Sync;
-import network.thunder.core.communication.objects.messages.interfaces.message.sync.types.SyncGetMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.sync.types.SyncSendMessage;
 import network.thunder.core.communication.objects.p2p.P2PDataObject;
 import network.thunder.core.communication.objects.p2p.SynchronizationHelper;
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
@@ -74,10 +74,10 @@ public class SyncProcessorImpl implements SyncProcessor {
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
         if (node.justFetchNewIpAddresses) {
-            syncStructure.newIPList(syncMessage.getSyncData());
+            syncStructure.newIPList(syncMessage.dataObjects);
             messageExecutor.closeConnection();
         } else {
-            syncStructure.newFragment(lastIndex, syncMessage.getSyncData());
+            syncStructure.newFragment(lastIndex, syncMessage.dataObjects);
 
             if (!syncStructure.fullySynchronized()) {
                 sendGetNextSyncData();
@@ -87,10 +87,10 @@ public class SyncProcessorImpl implements SyncProcessor {
 
     private void processSyncGetMessage (Message message) {
         SyncGetMessage syncMessage = (SyncGetMessage) message;
-        if (syncMessage.getIPs()) {
+        if (syncMessage.getIPs) {
             sendSyncIPs();
         } else {
-            sendSyncData(syncMessage.getFragmentIndex());
+            sendSyncData(syncMessage.fragmentIndex);
         }
     }
 

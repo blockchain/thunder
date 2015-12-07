@@ -3,9 +3,9 @@ package network.thunder.core.communication.nio.handler.mid;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
+import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
-import network.thunder.core.communication.objects.messages.interfaces.message.authentication.types.AuthenticationMessage;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.etc.RandomDataMessage;
@@ -39,12 +39,10 @@ public class AuthenticationHandlerTest {
     AuthenticationProcessor processor1;
     AuthenticationProcessor processor2;
 
-
     //    EncryptionHandler handler;
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-
 
         node1 = new Node();
         node2 = new Node();
@@ -54,7 +52,6 @@ public class AuthenticationHandlerTest {
 
         node1.ephemeralKeyClient = node2.ephemeralKeyServer;
         node2.ephemeralKeyClient = node1.ephemeralKeyServer;
-
 
         node1.ecdhKeySet = ECDH.getSharedSecret(node1.ephemeralKeyServer, node1.ephemeralKeyClient);
         node2.ecdhKeySet = ECDH.getSharedSecret(node2.ephemeralKeyServer, node2.ephemeralKeyClient);
@@ -76,13 +73,13 @@ public class AuthenticationHandlerTest {
     public void authenticationFail () throws NoSuchProviderException, NoSuchAlgorithmException {
         AuthenticationMessage authenticationMessage = (AuthenticationMessage) channel1.readOutbound();
 
-        byte[] sig = authenticationMessage.getSignature();
+        byte[] sig = authenticationMessage.signature;
         byte[] b = new byte[4];
         Random r = new Random();
         r.nextBytes(b);
         System.arraycopy(b, 0, sig, 10, 4);
 
-        AuthenticationMessage falseMessage = new AuthenticationMessageMock(authenticationMessage.getPubkeyServer(), sig);
+        AuthenticationMessage falseMessage = new AuthenticationMessage(authenticationMessage.pubKeyServer, sig);
 
         channel2.writeInbound(falseMessage);
 
@@ -138,31 +135,6 @@ public class AuthenticationHandlerTest {
 
         assertTrue(channel1.readOutbound() instanceof FailureMessage);
         assertTrue(channel2.readOutbound() instanceof FailureMessage);
-    }
-
-    private class AuthenticationMessageMock implements AuthenticationMessage {
-        byte[] pubkeyServer;
-        byte[] signature;
-
-        public AuthenticationMessageMock (byte[] pubkeyServer, byte[] signature) {
-            this.pubkeyServer = pubkeyServer;
-            this.signature = signature;
-        }
-
-        @Override
-        public byte[] getPubkeyServer () {
-            return pubkeyServer;
-        }
-
-        @Override
-        public byte[] getSignature () {
-            return signature;
-        }
-
-        @Override
-        public void verify () {
-
-        }
     }
 
 }

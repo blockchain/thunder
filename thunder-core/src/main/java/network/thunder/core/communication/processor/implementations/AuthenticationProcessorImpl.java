@@ -2,9 +2,9 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.authentication.Authentication;
-import network.thunder.core.communication.objects.messages.interfaces.message.authentication.types.AuthenticationMessage;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.etc.crypto.CryptoTools;
 import network.thunder.core.mesh.Node;
@@ -102,7 +102,7 @@ public class AuthenticationProcessorImpl implements AuthenticationProcessor {
             NoSuchAlgorithmException {
 
         //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting
-        node.pubKeyClient = ECKey.fromPublicOnly(authentication.getPubkeyServer());
+        node.pubKeyClient = ECKey.fromPublicOnly(authentication.pubKeyServer);
 
         ECKey pubKeyClient = node.pubKeyClient;
         ECKey pubKeyTempServer = node.ephemeralKeyServer;
@@ -111,7 +111,7 @@ public class AuthenticationProcessorImpl implements AuthenticationProcessor {
         System.arraycopy(pubKeyClient.getPubKey(), 0, data, 0, pubKeyClient.getPubKey().length);
         System.arraycopy(pubKeyTempServer.getPubKey(), 0, data, pubKeyClient.getPubKey().length, pubKeyTempServer.getPubKey().length);
 
-        CryptoTools.verifySignature(pubKeyClient, data, authentication.getSignature());
+        CryptoTools.verifySignature(pubKeyClient, data, authentication.signature);
     }
 
     private boolean authenticationExchangeFinished () {
