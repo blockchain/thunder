@@ -1,6 +1,5 @@
 package network.thunder.core.etc.crypto;
 
-import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
@@ -44,25 +43,20 @@ public class CryptoTools {
         }
     }
 
-    public static byte[] checkAndRemoveHMAC (EncryptedMessage message, byte[] keyBytes) {
+    public static void checkHMAC (byte[] hmac, byte[] rest, byte[] keyBytes) {
         try {
-            byte[] hmac = message.hmac;
-            byte[] rest = message.payload;
 
             SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
             Mac mac = Mac.getInstance("HmacSHA1");
             mac.init(keySpec);
             byte[] result = mac.doFinal(rest);
 
-            if (Arrays.equals(result, hmac)) {
-                return rest;
+            if (!Arrays.equals(result, hmac)) {
+                throw new RuntimeException("HMAC does not match..");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-
-        throw new RuntimeException("HMAC does not match..");
-
     }
 
     public static byte[] createSignature (ECKey pubkey, byte[] data) throws NoSuchProviderException, NoSuchAlgorithmException {

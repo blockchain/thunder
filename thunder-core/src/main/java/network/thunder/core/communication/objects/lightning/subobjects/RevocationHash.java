@@ -17,7 +17,7 @@
  *
  */
 
-package network.thunder.core.communication.objects.subobjects;
+package network.thunder.core.communication.objects.lightning.subobjects;
 
 public class RevocationHash {
 	private int depth;
