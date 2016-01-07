@@ -18,6 +18,7 @@
  */
 package network.thunder.core.database.objects;
 
+import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
@@ -138,6 +139,8 @@ public class Channel {
      * We set this to false if the channel is closed.
      */
     private boolean isReady;
+
+    public ChannelStatus channelStatus;
 
     //region Transaction Getter
     /*
