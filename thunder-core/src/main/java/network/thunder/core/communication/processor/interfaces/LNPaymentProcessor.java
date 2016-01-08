@@ -15,4 +15,6 @@ public interface LNPaymentProcessor extends Processor {
     public void redeemPayment (PaymentData paymentData);
 
     public void refundPayment (PaymentData paymentData);
+
+    public void abortCurrentExchange ();
 }

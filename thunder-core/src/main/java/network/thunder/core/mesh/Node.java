@@ -42,6 +42,8 @@ public class Node {
     private ArrayList<byte[]> inventoryList = new ArrayList<>();
     private OnConnectionCloseListener onConnectionCloseListener;
 
+    public String name;
+
     public Node (String host, int port) {
         this.host = host;
         this.port = port;
@@ -118,8 +120,6 @@ public class Node {
     public void setPort (int port) {
         this.port = port;
     }
-
-
 
     @Override
     public int hashCode () {
