@@ -9,9 +9,9 @@
 //import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageB;
 //import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageC;
 //import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageD;
-//import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
-//import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
-//import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+//import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
+//import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
+//import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 //import network.thunder.core.database.objects.Channel;
 //import network.thunder.core.etc.Constants;
 //import network.thunder.core.etc.MockWallet;

@@ -1,9 +1,9 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
 
 import java.util.ArrayList;

@@ -1,6 +1,5 @@
-package network.thunder.core.communication.objects.p2p.sync;
+package network.thunder.core.communication.objects.messages.impl.message.gossip.objects;
 
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
 import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;

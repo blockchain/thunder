@@ -5,7 +5,7 @@
 //import network.thunder.core.communication.Message;
 //import network.thunder.core.communication.Type;
 //import network.thunder.core.communication.nio.P2PContext;
-//import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
+//import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 //import network.thunder.core.database.DatabaseHandler;
 //import network.thunder.core.etc.Tools;
 //import network.thunder.core.mesh.Node;

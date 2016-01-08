@@ -1,4 +1,4 @@
-package network.thunder.core.communication.processor.interfaces;
+package network.thunder.core.communication.processor.interfaces.lnpayment;
 
 import network.thunder.core.communication.objects.OnionObject;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;

@@ -3,7 +3,7 @@ package network.thunder.core.communication.objects.messages.interfaces.helper;
 import network.thunder.core.communication.objects.OnionObject;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
-import network.thunder.core.communication.processor.interfaces.LNPaymentProcessor;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 
 public interface LNPaymentHelper {
     public void addProcessor (LNPaymentProcessor processor);

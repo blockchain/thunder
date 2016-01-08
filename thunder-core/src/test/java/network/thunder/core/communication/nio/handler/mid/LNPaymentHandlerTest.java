@@ -9,8 +9,8 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
-import network.thunder.core.communication.processor.implementations.LNPaymentProcessorImpl;
-import network.thunder.core.communication.processor.interfaces.LNPaymentProcessor;
+import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
 import org.junit.Before;

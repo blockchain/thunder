@@ -1,4 +1,4 @@
-package network.thunder.core.communication.processor.implementations;
+package network.thunder.core.communication.processor.implementations.gossip;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
@@ -7,9 +7,8 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.G
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
-import network.thunder.core.communication.objects.p2p.GossipSubject;
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;

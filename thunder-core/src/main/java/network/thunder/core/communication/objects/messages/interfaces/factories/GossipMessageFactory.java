@@ -3,7 +3,7 @@ package network.thunder.core.communication.objects.messages.interfaces.factories
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipInvMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 
 import java.util.List;
 

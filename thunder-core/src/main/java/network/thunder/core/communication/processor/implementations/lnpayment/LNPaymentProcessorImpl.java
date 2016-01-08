@@ -1,4 +1,4 @@
-package network.thunder.core.communication.processor.implementations;
+package network.thunder.core.communication.processor.implementations.lnpayment;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.OnionObject;
@@ -11,8 +11,8 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
-import network.thunder.core.communication.processor.implementations.helper.*;
-import network.thunder.core.communication.processor.interfaces.LNPaymentProcessor;
+import network.thunder.core.communication.processor.implementations.lnpayment.helper.*;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.mesh.Node;
 
@@ -21,7 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-import static network.thunder.core.communication.processor.implementations.LNPaymentProcessorImpl.Status.*;
+import static network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl.Status.*;
 
 /**
  * Created by matsjerratsch on 04/01/2016.

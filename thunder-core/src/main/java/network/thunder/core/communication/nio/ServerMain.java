@@ -1,6 +1,6 @@
 package network.thunder.core.communication.nio;
 
-import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import org.bitcoinj.core.ECKey;
 
 import java.math.BigInteger;

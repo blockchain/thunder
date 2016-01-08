@@ -1,4 +1,4 @@
-package network.thunder.core.communication.objects.p2p;
+package network.thunder.core.communication.objects.messages.impl.message.gossip.objects;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.etc.Tools;

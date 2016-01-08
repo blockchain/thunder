@@ -1,6 +1,7 @@
-package network.thunder.core.communication.objects.p2p;
+package network.thunder.core.communication.processor.implementations.sync;
 
-import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 

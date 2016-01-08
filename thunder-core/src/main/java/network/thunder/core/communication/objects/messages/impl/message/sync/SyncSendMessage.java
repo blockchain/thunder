@@ -2,7 +2,7 @@ package network.thunder.core.communication.objects.messages.impl.message.sync;
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.messages.interfaces.message.sync.Sync;
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 
 import java.util.List;
 

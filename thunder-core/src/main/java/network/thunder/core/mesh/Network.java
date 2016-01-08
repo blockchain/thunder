@@ -1,8 +1,8 @@
 package network.thunder.core.mesh;
 
 import com.sun.javafx.geom.Edge;
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 
 import java.util.ArrayList;
 

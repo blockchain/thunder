@@ -2,10 +2,10 @@ package network.thunder.core.database;
 
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import network.thunder.core.communication.objects.p2p.P2PDataObject;
-import network.thunder.core.communication.objects.p2p.sync.ChannelStatusObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyChannelObject;
-import network.thunder.core.communication.objects.p2p.sync.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
 

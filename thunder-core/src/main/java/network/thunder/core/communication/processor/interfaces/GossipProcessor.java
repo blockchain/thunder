@@ -1,6 +1,6 @@
 package network.thunder.core.communication.processor.interfaces;
 
-import network.thunder.core.communication.objects.p2p.NodeObserver;
+import network.thunder.core.communication.processor.implementations.gossip.NodeObserver;
 import network.thunder.core.communication.processor.Processor;
 
 /**
