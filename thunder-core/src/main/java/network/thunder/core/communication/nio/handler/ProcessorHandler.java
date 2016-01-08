@@ -14,7 +14,7 @@ import network.thunder.core.communication.processor.Processor;
 public class ProcessorHandler extends ChannelDuplexHandler {
 
     Processor processor;
-    String layerName;
+    String layerName = "";
 
     public ProcessorHandler (Processor processor, String layerName) {
         this.processor = processor;
@@ -25,7 +25,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
     public void channelActive (final ChannelHandlerContext ctx) {
         try {
             System.out.println("CHANNEL ACTIVE " + layerName);
-            processor.onLayerActive(new MessageExecutorImpl(ctx));
+            processor.onLayerActive(new MessageExecutorImpl(ctx, layerName));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,9 +38,9 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             if (msg instanceof FailureMessage) {
                 System.out.println("In Failure: " + ((FailureMessage) msg).getFailure());
             } else {
-                System.out.println("I: " + msg);
+                System.out.println(layerName + " I: " + msg);
                 Message message = (Message) msg;
-                message.verify();
+//                message.verify();
                 processor.onInboundMessage(message);
             }
         } catch (Exception e) {
@@ -57,7 +57,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
         try {
             checkIfMessage(msg);
             Message message = (Message) msg;
-            message.verify();
+//            message.verify();
             processor.onOutboundMessage(message);
         } catch (Exception e) {
             e.printStackTrace();
