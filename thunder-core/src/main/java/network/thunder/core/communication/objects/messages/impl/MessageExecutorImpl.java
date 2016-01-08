@@ -9,9 +9,15 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
  */
 public class MessageExecutorImpl implements MessageExecutor {
     ChannelHandlerContext context;
+    String layerName;
 
     public MessageExecutorImpl (ChannelHandlerContext context) {
         this.context = context;
+    }
+
+    public MessageExecutorImpl (ChannelHandlerContext context, String layerName) {
+        this.context = context;
+        this.layerName = layerName;
     }
 
     public void setContext (ChannelHandlerContext context) {
@@ -25,7 +31,7 @@ public class MessageExecutorImpl implements MessageExecutor {
 
     @Override
     public void sendMessageUpwards (Message message) {
-        System.out.println("O: " + message);
+        System.out.println(layerName + " O: " + message);
         context.writeAndFlush(message);
     }
 
