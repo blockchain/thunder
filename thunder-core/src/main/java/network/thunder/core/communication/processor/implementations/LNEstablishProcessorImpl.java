@@ -2,11 +2,11 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.P2PContext;
-import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageA;
-import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageB;
-import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageC;
-import network.thunder.core.communication.objects.lightning.establish.EstablishChannelMessageD;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 import network.thunder.core.communication.processor.interfaces.LightningChannelManagamentProcessor;
@@ -54,13 +54,13 @@ public class LNEstablishProcessorImpl implements LightningChannelManagamentProce
     }
 
     private void consumeMessage (Message message) {
-        if (message instanceof EstablishChannelMessageA) {
+        if (message instanceof LNEstablishAMessage) {
             processMessageA(message);
-        } else if (message instanceof EstablishChannelMessageB) {
+        } else if (message instanceof LNEstablishBMessage) {
             processMessageB(message);
-        } else if (message instanceof EstablishChannelMessageC) {
+        } else if (message instanceof LNEstablishCMessage) {
             processMessageC(message);
-        } else if (message instanceof EstablishChannelMessageD) {
+        } else if (message instanceof LNEstablishDMessage) {
             processMessageD(message);
         } else {
             throw new UnsupportedOperationException("Don't know this LNEstablish Message: " + message);
@@ -68,44 +68,44 @@ public class LNEstablishProcessorImpl implements LightningChannelManagamentProce
     }
 
     private void processMessageA (Message message) {
-        EstablishChannelMessageA m = (EstablishChannelMessageA) message;
+        LNEstablishAMessage m = (LNEstablishAMessage) message;
         prepareNewChannel();
 
-        channel.setInitialAmountServer(m.getClientAmount());
-        channel.setAmountServer(m.getClientAmount());
-        channel.setInitialAmountClient(m.getServerAmount());
-        channel.setAmountClient(m.getServerAmount());
+        channel.setInitialAmountServer(m.clientAmount);
+        channel.setAmountServer(m.clientAmount);
+        channel.setInitialAmountClient(m.serverAmount);
+        channel.setAmountClient(m.serverAmount);
 
-        channel.setKeyClient(ECKey.fromPublicOnly(m.getPubKey()));
-        channel.setKeyClientA(ECKey.fromPublicOnly(m.getPubKeyFE()));
-        channel.setAnchorSecretHashClient(m.getSecretHashFE());
-        channel.setAnchorRevocationHashClient(m.getRevocationHash());
+        channel.setKeyClient(ECKey.fromPublicOnly(m.pubKeyEscape));
+        channel.setKeyClientA(ECKey.fromPublicOnly(m.pubKeyFastEscape));
+        channel.setAnchorSecretHashClient(m.secretHashFastEscape);
+        channel.setAnchorRevocationHashClient(m.revocationHash);
 
         sendEstablishMessageB();
     }
 
     private void processMessageB (Message message) {
-        EstablishChannelMessageB m = (EstablishChannelMessageB) message;
+        LNEstablishBMessage m = (LNEstablishBMessage) message;
 
-        channel.setKeyClient(ECKey.fromPublicOnly(m.getPubKey()));
-        channel.setKeyClientA(ECKey.fromPublicOnly(m.getPubKeyFE()));
+        channel.setKeyClient(ECKey.fromPublicOnly(m.pubKeyEscape));
+        channel.setKeyClientA(ECKey.fromPublicOnly(m.pubKeyFastEscape));
 
-        channel.setAnchorSecretHashClient(m.getSecretHashFE());
-        channel.setAnchorRevocationHashClient(m.getRevocationHash());
-        channel.setAmountClient(m.getServerAmount());
-        channel.setInitialAmountClient(m.getServerAmount());
+        channel.setAnchorSecretHashClient(m.secretHashFastEscape);
+        channel.setAnchorRevocationHashClient(m.revocationHash);
+        channel.setAmountClient(m.serverAmount);
+        channel.setInitialAmountClient(m.serverAmount);
 
-        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.getAnchorHash()));
+        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.anchorHash));
 
         sendEstablishMessageC();
     }
 
     private void processMessageC (Message message) {
-        EstablishChannelMessageC m = (EstablishChannelMessageC) message;
+        LNEstablishCMessage m = (LNEstablishCMessage) message;
 
-        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.getAnchorHash()));
-        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureE(), true));
-        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureFE(), true));
+        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.anchorHash));
+        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
+        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
 
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
@@ -115,10 +115,10 @@ public class LNEstablishProcessorImpl implements LightningChannelManagamentProce
     }
 
     private void processMessageD (Message message) {
-        EstablishChannelMessageD m = (EstablishChannelMessageD) message;
+        LNEstablishDMessage m = (LNEstablishDMessage) message;
 
-        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureE(), true));
-        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.getSignatureFE(), true));
+        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
+        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
 
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
