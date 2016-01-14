@@ -30,6 +30,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Random;
 
 /*
  * TODO: We probably want very flexible rules for channels in the future. Currently, these rules are set as Constants in Constants.class.
@@ -38,80 +39,80 @@ import java.util.HashMap;
 
 public class Channel {
 
-    private int id;
-    private int nodeId;
+    public int id;
+    public int nodeId;
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
      */
-    private ECKey keyClient;
-    private ECKey keyServer;
-    private ECKey keyClientA;
-    private ECKey keyServerA;
+    public ECKey keyClient;
+    public ECKey keyServer;
+    public ECKey keyClientA;
+    public ECKey keyServerA;
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
-    private byte[] masterPrivateKeyClient;
-    private byte[] masterPrivateKeyServer;
+    public byte[] masterPrivateKeyClient;
+    public byte[] masterPrivateKeyServer;
     /*
      * Keeping track of the revocation hashes we gave out.
      * When we open the channel we set the depth to some high value and decrease it every X hours.
      * Whenever we commit to a new version of the channel, we use a new child derived from the depth.
      */
-    private int serverChainDepth;
-    private int serverChainChild;
+    public int serverChainDepth;
+    public int serverChainChild;
     /*
      * We keep track of the key chain of the other party.
      * Doing so allows us to recreate and check old keys, as we know the depth of the current key we hold without poking around in the dark.
      */
-    private int clientChainDepth;
+    public int clientChainDepth;
     /*
      * Current and initial balances in microsatoshi ( = 1 / 1000 satoshi )
      * We update the current balances whenever a payment is settled or refunded.
      * Open payments are included in the current amounts.
      */
-    private long initialAmountServer;
-    private long initialAmountClient;
-    private long amountServer;
-    private long amountClient;
+    public long initialAmountServer;
+    public long initialAmountClient;
+    public long amountServer;
+    public long amountClient;
     /*
      * Timestamps for the channel management.
      * For now we keep the force close timestamp. It is updated when the channel changed.
      * It is easy to keep track when to force broadcast a channel to the blockchain this way.
      */
-    private int timestampOpen;
-    private int timestampForceClose;
+    public int timestampOpen;
+    public int timestampForceClose;
     /*
      * Signatures for broadcasting transactions.
      * Escape and FastEscape Transactions are for claiming our initial funds when something goes wrong before the first commitment or if the other party
      * tries to claim their initial funds after the first commitment.
      */
-    private TransactionSignature escapeTxSig;
-    private TransactionSignature fastEscapeTxSig;
-    private TransactionSignature channelTxSig;
-    private TransactionSignature channelTxTempSig;
+    public TransactionSignature escapeTxSig;
+    public TransactionSignature fastEscapeTxSig;
+    public TransactionSignature channelTxSig;
+    public TransactionSignature channelTxTempSig;
 
     /*
      * We also want to save the actual transactions as soon as we see them on the network / create them.
      * While this might not be completely necessary, it allows for efficient lookup in case anything goes wrong and we need it.
      */
-    private Transaction anchorTransactionServer;
-    private Transaction anchorTransactionClient;
-    private Transaction escapeTxServer;
-    private Transaction escapeTxClient;
-    private Transaction fastEscapeTxServer;
-    private Transaction fastEscapeTxClient;
+    public Transaction anchorTransactionServer;
+    public Transaction anchorTransactionClient;
+    public Transaction escapeTxServer;
+    public Transaction escapeTxClient;
+    public Transaction fastEscapeTxServer;
+    public Transaction fastEscapeTxClient;
 
     /*
      * Upcounting version number to keep track which revocation-hash is used with which payments.
      * We increase it, whenever we commit to a new channel.
      */
-    private int channelTxVersion;
+    public int channelTxVersion;
     /*
      * Hashes to build each channel transaction.
      */
-    private Sha256Hash anchorTxHashServer;
-    private Sha256Hash anchorTxHashClient;
+    public Sha256Hash anchorTxHashServer;
+    public Sha256Hash anchorTxHashClient;
     /*
      * The secrets for making the opening transactions.
      * We only use them once or in case the other party tries to cheat on us.
@@ -119,26 +120,26 @@ public class Channel {
      * The revocation gets revealed to allow for the first commitment, the secret should stay hidden until
      * the end of the channel.
      */
-    private byte[] anchorSecretServer;
-    private byte[] anchorSecretClient;
-    private byte[] anchorSecretHashServer;
-    private byte[] anchorSecretHashClient;
-    private byte[] anchorRevocationServer;
-    private byte[] anchorRevocationHashServer;
-    private byte[] anchorRevocationClient;
-    private byte[] anchorRevocationHashClient;
+    public byte[] anchorSecretServer;
+    public byte[] anchorSecretClient;
+    public byte[] anchorSecretHashServer;
+    public byte[] anchorSecretHashClient;
+    public byte[] anchorRevocationServer;
+    public byte[] anchorRevocationHashServer;
+    public byte[] anchorRevocationClient;
+    public byte[] anchorRevocationHashClient;
     /*
      * Enum to mark the different phases.
      *
      * These are necessary, as we save the state back to the database after each communication.
      */
-    private Phase phase;
+    public Phase phase;
     /*
      * Determines if the channel is ready to make/receive payments.
      * We set this to true once the opening txs have enough confirmations.
      * We set this to false if the channel is closed.
      */
-    private boolean isReady;
+    public boolean isReady;
 
     public ChannelStatus channelStatus;
 
@@ -461,6 +462,26 @@ public class Channel {
     }
 
     public Channel () {
+        keyClient = new ECKey();
+        keyClientA = new ECKey();
+        keyServer = new ECKey();
+        keyServerA = new ECKey();
+
+        Random random = new Random();
+        masterPrivateKeyClient = new byte[20];
+        masterPrivateKeyServer = new byte[20];
+        random.nextBytes(masterPrivateKeyClient);
+        random.nextBytes(masterPrivateKeyServer);
+
+        anchorSecretClient = new byte[20];
+        anchorSecretServer = new byte[20];
+        anchorRevocationClient = new byte[20];
+        anchorRevocationServer = new byte[20];
+
+        anchorSecretHashClient = Tools.hashSecret(anchorSecretClient);
+        anchorSecretHashServer = Tools.hashSecret(anchorSecretServer);
+        anchorRevocationHashClient = Tools.hashSecret(anchorRevocationClient);
+        anchorRevocationHashServer = Tools.hashSecret(anchorRevocationServer);
     }
 
     //region Getter Setter
