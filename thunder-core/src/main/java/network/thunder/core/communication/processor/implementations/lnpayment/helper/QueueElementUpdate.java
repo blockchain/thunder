@@ -1,14 +1,14 @@
 package network.thunder.core.communication.processor.implementations.lnpayment.helper;
 
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
-import network.thunder.core.database.objects.Channel;
 
 /**
  * Created by matsjerratsch on 07/01/2016.
  */
-public class QueueElementUpdate implements QueueElement {
+public class QueueElementUpdate extends QueueElement {
+
     @Override
-    public ChannelStatus produceNewChannelStatus (Channel channel) {
-        return null;
+    public ChannelStatus produceNewChannelStatus (ChannelStatus channel) {
+        return channel;
     }
 }

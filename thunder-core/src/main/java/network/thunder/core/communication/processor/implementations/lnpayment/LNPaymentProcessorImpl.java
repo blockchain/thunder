@@ -2,6 +2,7 @@ package network.thunder.core.communication.processor.implementations.lnpayment;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.OnionObject;
+import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
@@ -12,7 +13,9 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.processor.implementations.lnpayment.helper.*;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.mesh.Node;
 
@@ -32,9 +35,10 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     LNPaymentMessageFactory messageFactory;
     Node node;
+    LNPaymentLogic paymentLogic;
+    DBHandler dbHandler;
 
     MessageExecutor messageExecutor;
-
     LNPaymentHelper paymentHelper;
 
     Channel channel;
@@ -43,9 +47,9 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     LinkedBlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
     QueueElement currentQueueElement;
+    ChannelStatus channelStatus;
     boolean aborted = false;
     boolean finished = false;
-
 
     boolean weStartedExchange = false;
 
@@ -54,9 +58,13 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     int latestDice = 0;
 
-    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, Node node) {
+    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, Node node, LNPaymentLogic paymentLogic, DBHandler dbHandler) {
         this.messageFactory = messageFactory;
         this.node = node;
+        this.paymentLogic = paymentLogic;
+        this.dbHandler = dbHandler;
+
+        channel = dbHandler.getChannel(node);
     }
 
     private void startQueueListener () {
@@ -69,6 +77,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
                         if (element != null) {
                             if (status == IDLE) {
                                 currentQueueElement = element;
+                                channelStatus = currentQueueElement.produceNewChannelStatus(channel.channelStatus);
                                 sendMessageA();
                                 restartCountDown(TIMEOUT_NEGOTIATION);
 
@@ -124,7 +133,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     @Override
     public void makePayment (PaymentData paymentData, OnionObject onionObject) {
         QueueElementPayment payment = new QueueElementPayment();
-        //TODO
+        payment.paymentData = paymentData;
         queueList.add(payment);
     }
 
@@ -177,8 +186,9 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         testStatus(IDLE);
         weStartedExchange = true;
 
-        //TODO sending and constructing message..
-        LNPaymentAMessage message = messageFactory.getMessageA();
+        LNPaymentAMessage message = messageFactory.getMessageA(channel, channelStatus);
+        paymentLogic.putCurrentRevocationHashServer(message.newRevocation);
+        paymentLogic.putNewChannelStatus(channelStatus);
         latestDice = message.dice;
         sendMessage(message);
 
@@ -188,8 +198,8 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     private void sendMessageB () {
         testStatus(RECEIVED_A);
 
-        //TODO sending and constructing message..
-        Message message = messageFactory.getMessageB();
+        LNPaymentBMessage message = messageFactory.getMessageB(channel);
+        paymentLogic.putCurrentRevocationHashServer(message.newRevocation);
         sendMessage(message);
 
         setStatus(SENT_B);
@@ -204,7 +214,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        Message message = messageFactory.getMessageC();
+        Message message = messageFactory.getMessageC(channel, paymentLogic.getClientTransaction());
         sendMessage(message);
 
         setStatus(SENT_C);
@@ -218,7 +228,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        Message message = messageFactory.getMessageD();
+        Message message = messageFactory.getMessageD(channel);
         sendMessage(message);
 
         setStatus(SENT_D);
@@ -249,7 +259,8 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         weStartedExchange = false;
         currentTaskStarted = System.currentTimeMillis();
 
-        //TODO PROCESS
+        paymentLogic.checkMessage(message);
+
         setStatus(RECEIVED_A);
         sendMessageB();
     }
@@ -257,7 +268,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     private void readMessageB (LNPaymentBMessage message) {
         testStatus(SENT_A);
 
-        //TODO PROCESS
+        paymentLogic.checkMessage(message);
         setStatus(RECEIVED_B);
         sendMessageC();
 
@@ -269,7 +280,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
             System.out.println(node.name + " ERROR READ MESSAGE C");
 
         } else {
-            //TODO PROCESS
+            paymentLogic.checkMessage(message);
             setStatus(RECEIVED_C);
             if (weStartedExchange) {
                 sendMessageD();
@@ -285,7 +296,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
             System.out.println(node.name + " ERROR READ MESSAGE D");
             return;
         } else {
-            //TODO PROCESS
+            paymentLogic.checkMessage(message);
             setStatus(RECEIVED_D);
         }
         if (weStartedExchange) {
@@ -321,7 +332,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         finished = true;
         aborted = false;
         setStatus(IDLE);
-        System.out.println(node.name +" finishCurrentTask");
+        System.out.println(node.name + " finishCurrentTask");
         abortCountDown();
     }
 

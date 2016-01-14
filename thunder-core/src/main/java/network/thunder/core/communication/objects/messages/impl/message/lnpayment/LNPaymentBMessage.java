@@ -11,8 +11,12 @@ public class LNPaymentBMessage implements LNPayment {
 
     public RevocationHash newRevocation;
 
-    boolean success;
-    String error;
+    public boolean success;
+    public String error;
+
+    public LNPaymentBMessage (RevocationHash newRevocation) {
+        this.newRevocation = newRevocation;
+    }
 
     @Override
     public void verify () {

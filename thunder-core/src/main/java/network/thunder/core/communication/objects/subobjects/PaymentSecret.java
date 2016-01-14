@@ -21,19 +21,15 @@ package network.thunder.core.communication.objects.subobjects;
 
 public class PaymentSecret {
 
-	private String secret;
-	private String hash;
+    public byte[] secret;
+    public byte[] hash;
 
-	public PaymentSecret (String secret, String hash) {
-		this.secret = secret;
-		this.hash = hash;
-	}
+    public PaymentSecret (byte[] secret, byte[] hash) {
+        this.secret = secret;
+        this.hash = hash;
+    }
 
-	public String getSecret () {
-		return secret;
-	}
-
-	public String getHash () {
-		return hash;
-	}
+    public boolean verify () {
+        return true;
+    }
 }

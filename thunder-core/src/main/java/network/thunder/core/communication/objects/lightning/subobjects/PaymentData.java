@@ -17,6 +17,7 @@ package network.thunder.core.communication.objects.lightning.subobjects;/*
  *
  */
 
+import network.thunder.core.communication.objects.OnionObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 
 public class PaymentData {
@@ -26,9 +27,11 @@ public class PaymentData {
     public long fee;
 
     public PaymentSecret secret;
-    public long timestampOpen;
-    public long timestampRefund;
-    public long csvDelay;
+    public int timestampOpen;
+    public int timestampRefund;
+    public int csvDelay;
+
+    public OnionObject onionObject;
 
 	/*
      * TODO: We probably need further fields here, can't think of any now..
