@@ -1,10 +1,9 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
-import network.thunder.core.database.DBHandler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +13,7 @@ import java.util.Map;
 /**
  * Created by matsjerratsch on 04/12/2015.
  */
-public class SyncDBHandlerMock implements DBHandler {
+public class SyncDBHandlerMock extends DBHandlerMock {
 
     public List<PubkeyChannelObject> pubkeyChannelObjectArrayList = new ArrayList<>();
     public List<PubkeyIPObject> pubkeyIPObjectArrayList = new ArrayList<>();
