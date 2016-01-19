@@ -19,6 +19,8 @@
 
 package network.thunder.core.communication.objects.subobjects;
 
+import network.thunder.core.etc.Tools;
+
 public class PaymentSecret {
 
     public byte[] secret;
@@ -27,6 +29,11 @@ public class PaymentSecret {
     public PaymentSecret (byte[] secret, byte[] hash) {
         this.secret = secret;
         this.hash = hash;
+    }
+
+    public PaymentSecret (byte[] secret) {
+        this.secret = secret;
+        this.hash = Tools.hashSecret(secret);
     }
 
     public boolean verify () {
