@@ -2,7 +2,7 @@ package network.thunder.core.communication.processor.interfaces.lnpayment;
 
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
-import network.thunder.core.lightning.RevocationHash;
+import network.thunder.core.database.objects.Channel;
 import org.bitcoinj.core.Transaction;
 
 /**
@@ -10,16 +10,15 @@ import org.bitcoinj.core.Transaction;
  */
 public interface LNPaymentLogic {
 
+    public void initialise (Channel channel);
+
     public Transaction getClientTransaction ();
 
     public Transaction getServerTransaction ();
 
-    public void checkMessage (LNPayment message);
+    public void checkMessageIncoming (LNPayment message);
+
+    public void readMessageOutbound (LNPayment message);
 
     public ChannelStatus getTemporaryChannelStatus ();
-
-    public void putCurrentRevocationHashServer (RevocationHash revocationHash);
-
-    public void putNewChannelStatus (ChannelStatus channelStatus);
-
 }

@@ -1,5 +1,6 @@
 package network.thunder.core.communication.processor.implementations.lnpayment;
 
+import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
@@ -30,8 +31,9 @@ import java.util.List;
  */
 public class LNPaymentLogicImpl implements LNPaymentLogic {
 
-    Channel channel;
+    DBHandler dbHandler;
 
+    Channel channel;
     ChannelStatus statusTemp;
     TransactionSignature signature1;
     TransactionSignature signature2;
@@ -39,10 +41,19 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     RevocationHash revocationHashClient;
     RevocationHash revocationHashServer;
 
-    DBHandler dbHandler;
+    public LNPaymentLogicImpl (DBHandler dbHandler) {
+        this.dbHandler = dbHandler;
+    }
+
+    @Override
+    public void initialise (Channel channel) {
+        this.channel = channel;
+    }
 
     @Override
     public Transaction getClientTransaction () {
+        Preconditions.checkNotNull(channel);
+
         Transaction transaction = new Transaction(Constants.getNetwork());
         transaction.addInput(channel.anchorTxHashClient, 0, Tools.getDummyScript());
         transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
@@ -56,12 +67,14 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     @Override
     public Transaction getServerTransaction () {
+        Preconditions.checkNotNull(channel);
+
         Transaction transaction = new Transaction(Constants.getNetwork());
         transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
         transaction.addInput(channel.anchorTxHashClient, 0, Tools.getDummyScript());
-        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashClient,
-                channel.keyClient, channel.keyServer, Constants.ESCAPE_REVOCATION_TIME));
-        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputPlain(channel.keyServer));
+        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashServer,
+                channel.keyServer, channel.keyClient, Constants.ESCAPE_REVOCATION_TIME));
+        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputPlain(channel.keyClient));
 
         return addPayments(transaction, statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
     }
@@ -81,39 +94,47 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             }
             transaction.addOutput(value, script);
         }
-
         return transaction;
     }
 
     @Override
-    public void checkMessage (LNPayment message) {
+    public void checkMessageIncoming (LNPayment message) {
+        Preconditions.checkNotNull(channel);
+
         if (message instanceof LNPaymentAMessage) {
-            parseMessageA((LNPaymentAMessage) message);
+            parseAMessage((LNPaymentAMessage) message);
         } else if (message instanceof LNPaymentBMessage) {
-            parseMessageB((LNPaymentBMessage) message);
+            parseBMessage((LNPaymentBMessage) message);
         } else if (message instanceof LNPaymentCMessage) {
-            parseMessageC((LNPaymentCMessage) message);
+            parseCMessage((LNPaymentCMessage) message);
         } else if (message instanceof LNPaymentDMessage) {
-            parseMessageD((LNPaymentDMessage) message);
+            parseDMessage((LNPaymentDMessage) message);
+        }
+    }
+
+    @Override
+    public void readMessageOutbound (LNPayment message) {
+        Preconditions.checkNotNull(channel);
+
+        if (message instanceof LNPaymentAMessage) {
+            readOutgoingAMessage((LNPaymentAMessage) message);
+        } else if (message instanceof LNPaymentBMessage) {
+            readOutgoingBMessage((LNPaymentBMessage) message);
+        } else if (message instanceof LNPaymentCMessage) {
+            readOutgoingCMessage((LNPaymentCMessage) message);
+        } else if (message instanceof LNPaymentDMessage) {
+            readOutgoingDMessage((LNPaymentDMessage) message);
         }
     }
 
     @Override
     public ChannelStatus getTemporaryChannelStatus () {
+        Preconditions.checkNotNull(channel);
+
         return statusTemp.getClone();
     }
 
-    @Override
-    public void putCurrentRevocationHashServer (RevocationHash revocationHash) {
-        revocationHashServer = revocationHash;
-    }
-
-    @Override
-    public void putNewChannelStatus (ChannelStatus channelStatus) {
-        statusTemp = channelStatus;
-    }
-
-    private void parseMessageA (LNPaymentAMessage message) {
+    private void parseAMessage (LNPaymentAMessage message) {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
         long amountServer = channel.amountServer;
         long amountClient = channel.amountClient;
@@ -151,7 +172,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         revocationHashClient = message.newRevocation;
     }
 
-    private void parseMessageB (LNPaymentBMessage message) {
+    private void parseBMessage (LNPaymentBMessage message) {
         if (!message.success) {
             throw new LNPaymentException(message.error);
         }
@@ -159,21 +180,26 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         dbHandler.insertRevocationHash(message.newRevocation);
     }
 
-    private void parseMessageC (LNPaymentCMessage message) {
-        Transaction t = getServerTransaction();
+    private void parseCMessage (LNPaymentCMessage message) {
         //TODO Check the signatures we got from the other party
         signature1 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature1, true);
         signature2 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature2, true);
 
-        Sha256Hash hash1 = channel.anchorTransactionClient.hashForSignature(0, channel.getScriptAnchorOutputClient(), Transaction.SigHash.ALL, false);
-        Sha256Hash hash2 = channel.anchorTransactionServer.hashForSignature(0, channel.getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
+        Transaction channelTransaction = getServerTransaction();
 
-        if (!channel.keyClient.verify(hash1, signature1) || !channel.keyClient.verify(hash2, signature2)) {
+        Sha256Hash hash1 = channelTransaction.hashForSignature(0, channel.getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
+        Sha256Hash hash2 = channelTransaction.hashForSignature(1, channel.getScriptAnchorOutputClient(), Transaction.SigHash.ALL, false);
+
+        if (!channel.keyClient.verify(hash1, signature1)) {
+            throw new LNPaymentException("Signature is not correct..");
+        }
+
+        if (!channel.keyClient.verify(hash2, signature2)) {
             throw new LNPaymentException("Signature is not correct..");
         }
     }
 
-    private void parseMessageD (LNPaymentDMessage message) {
+    private void parseDMessage (LNPaymentDMessage message) {
         for (RevocationHash hash : message.oldRevocationHashes) {
             if (!hash.check()) {
                 throw new LNPaymentException("hash.check() returned false");
@@ -226,5 +252,22 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
                 throw new LNPaymentException("Trying to redeem but failed to verify secret.");
             }
         }
+    }
+
+    private void readOutgoingAMessage (LNPaymentAMessage message) {
+        this.statusTemp = message.channelStatus;
+        this.revocationHashServer = message.newRevocation;
+    }
+
+    private void readOutgoingBMessage (LNPaymentBMessage message) {
+        this.revocationHashServer = message.newRevocation;
+    }
+
+    private void readOutgoingCMessage (LNPaymentCMessage message) {
+
+    }
+
+    private void readOutgoingDMessage (LNPaymentDMessage message) {
+
     }
 }
