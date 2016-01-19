@@ -9,7 +9,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
-import network.thunder.core.communication.processor.interfaces.LightningChannelManagamentProcessor;
+import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
@@ -21,7 +21,11 @@ import org.bitcoinj.crypto.TransactionSignature;
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
-public class LNEstablishProcessorImpl implements LightningChannelManagamentProcessor {
+public class LNEstablishProcessorImpl implements LNEstablishProcessor {
+    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
+
+    WalletHelper walletHelper;
+    LNEstablishFactory messageFactory;
     Node node;
     MessageExecutor messageExecutor;
     LNEstablishFactory messageFactory;

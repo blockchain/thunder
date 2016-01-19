@@ -20,7 +20,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.MessageExecutorImpl;
-import network.thunder.core.communication.processor.interfaces.LightningChannelManagamentProcessor;
+import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
 import network.thunder.core.mesh.Node;
 
 /**
@@ -36,7 +36,7 @@ public class LightningChannelManagementHandler extends ChannelInboundHandlerAdap
     private Node node;
 
     MessageExecutor messageExecutor;
-    LightningChannelManagamentProcessor messageProcessor;
+    LNEstablishProcessor messageProcessor;
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
