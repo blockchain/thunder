@@ -8,15 +8,8 @@ import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
 import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
 import network.thunder.core.communication.nio.handler.low.NodeConnectionHandler;
-import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
-import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
-import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
-import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.mesh.Node;
@@ -25,6 +18,7 @@ import network.thunder.core.mesh.Node;
  * Created by matsjerratsch on 19/10/2015.
  */
 public class ChannelInit extends ChannelInitializer<SocketChannel> {
+    ContextFactory contextFactory;
     boolean isServer;
     Node node;
     P2PContext context;
@@ -55,16 +49,14 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
         ch.pipeline().addLast(new LengthFieldPrepender(4));
 
-        MessageSerializer messageSerializer = new MessageSerializerImpl();
+        MessageSerializer messageSerializer = contextFactory.getMessageSerializer();
         ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializer));
         ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializer));
 
-        MessageEncrypter messageEncrypter = new MessageEncrypterImpl(messageSerializer);
-        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl();
-        EncryptionProcessor encryptionProcessor = new EncryptionProcessorImpl(encryptionMessageFactory, messageEncrypter, node);
+        EncryptionProcessor encryptionProcessor = contextFactory.getEncryptionProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(encryptionProcessor, "Encryption"));
 
-        AuthenticationProcessor authenticationProcessor = new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);
+        AuthenticationProcessor authenticationProcessor = contextFactory.getAuthenticationProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(authenticationProcessor, "Authentication"));
 
 //        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
