@@ -21,16 +21,23 @@ import java.util.List;
 public class GossipProcessorImpl implements GossipProcessor {
     final static int OBJECT_AMOUNT_TO_SEND = 50;
 
-    MessageExecutor messageExecutor;
     GossipMessageFactory messageFactory;
-
     GossipSubject subject;
     DBHandler dbHandler;
-
     Node node;
+
+    MessageExecutor messageExecutor;
+
 
     List<P2PDataObject> objectList = new ArrayList<>();
     List<P2PDataObject> objectListTemp = new ArrayList<>();
+
+    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, Node node) {
+        this.messageFactory = messageFactory;
+        this.subject = subject;
+        this.dbHandler = dbHandler;
+        this.node = node;
+    }
 
     @Override
     public void onInboundMessage (Message message) {
