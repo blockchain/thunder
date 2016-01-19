@@ -11,7 +11,7 @@ public class LNPaymentBMessage implements LNPayment {
 
     public RevocationHash newRevocation;
 
-    public boolean success;
+    public boolean success = true;
     public String error;
 
     public LNPaymentBMessage (RevocationHash newRevocation) {
