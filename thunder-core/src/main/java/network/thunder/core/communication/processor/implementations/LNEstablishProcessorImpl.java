@@ -1,13 +1,13 @@
 package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
 import network.thunder.core.database.objects.Channel;
@@ -27,13 +27,17 @@ public class LNEstablishProcessorImpl implements LNEstablishProcessor {
     WalletHelper walletHelper;
     LNEstablishFactory messageFactory;
     Node node;
+
     MessageExecutor messageExecutor;
-    LNEstablishFactory messageFactory;
 
-    P2PContext context;
     Channel channel;
-
     int status = 0;
+
+    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishFactory messageFactory, Node node) {
+        this.walletHelper = walletHelper;
+        this.messageFactory = messageFactory;
+        this.node = node;
+    }
 
     @Override
     public void onInboundMessage (Message message) {
@@ -133,11 +137,11 @@ public class LNEstablishProcessorImpl implements LNEstablishProcessor {
 
     private void prepareNewChannel () {
         channel = new Channel();
-        channel.setInitialAmountServer(context.getAmountForNewChannel());
-        channel.setAmountServer(context.getAmountForNewChannel());
+        channel.setInitialAmountServer(getAmountForNewChannel());
+        channel.setAmountServer(getAmountForNewChannel());
 
-        channel.setInitialAmountClient(context.getAmountForNewChannel());
-        channel.setAmountClient(context.getAmountForNewChannel());
+        channel.setInitialAmountClient(getAmountForNewChannel());
+        channel.setAmountClient(getAmountForNewChannel());
 
         //TODO: Change base key selection method (maybe completely random?)
         channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 2)));
@@ -168,7 +172,7 @@ public class LNEstablishProcessorImpl implements LNEstablishProcessor {
 
     private void sendEstablishMessageB () {
 
-        Transaction anchor = channel.getAnchorTransactionServer(context.wallet, context.lockedOutputs);
+        Transaction anchor = channel.getAnchorTransactionServer(walletHelper);
 
         Message message = messageFactory.getEstablishMessageB(channel, anchor);
         messageExecutor.sendMessageUpwards(message);
@@ -178,7 +182,7 @@ public class LNEstablishProcessorImpl implements LNEstablishProcessor {
 
     private void sendEstablishMessageC () {
 
-        Transaction anchor = channel.getAnchorTransactionServer(context.wallet, context.lockedOutputs);
+        Transaction anchor = channel.getAnchorTransactionServer(walletHelper);
 
         Transaction escape = channel.getEscapeTransactionClient();
         Transaction fastEscape = channel.getFastEscapeTransactionClient();
@@ -206,6 +210,10 @@ public class LNEstablishProcessorImpl implements LNEstablishProcessor {
         messageExecutor.sendMessageUpwards(message);
 
         status = 5;
+    }
+
+    private long getAmountForNewChannel () {
+        return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
     }
 
 }

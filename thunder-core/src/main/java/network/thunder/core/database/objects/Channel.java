@@ -19,6 +19,7 @@
 package network.thunder.core.database.objects;
 
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
+import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
@@ -29,8 +30,6 @@ import org.bitcoinj.script.ScriptBuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Random;
 
 /*
  * TODO: We probably want very flexible rules for channels in the future. Currently, these rules are set as Constants in Constants.class.
@@ -162,7 +161,7 @@ public class Channel {
         return (keyClientA.verify(hashEscape, getEscapeTxSig()) && keyClientA.verify(hashFastEscape, getFastEscapeTxSig()));
     }
 
-    public Transaction getAnchorTransactionServer (Wallet wallet, HashMap<TransactionOutPoint, Integer> lockedOutputs) {
+    public Transaction getAnchorTransactionServer (WalletHelper walletHelper) {
         if (anchorTransactionServer != null) {
             return anchorTransactionServer;
         }
@@ -172,7 +171,10 @@ public class Channel {
         Script anchorScriptServer = getScriptAnchorOutputServer();
         Script anchorScriptServerP2SH = ScriptBuilder.createP2SHOutputScript(anchorScriptServer);
 
-        anchorTransactionServer = Tools.addOutAndInputs(serverAmount, wallet, lockedOutputs, anchorScriptServerP2SH);
+        Transaction transaction = new Transaction(Constants.getNetwork());
+        transaction.addOutput(Coin.valueOf(serverAmount), anchorScriptServerP2SH);
+
+        anchorTransactionServer = walletHelper.completeInputs(transaction);
         setAnchorTxHashServer(anchorTransactionServer.getHash());
         return anchorTransactionServer;
     }
@@ -467,21 +469,51 @@ public class Channel {
         keyServer = new ECKey();
         keyServerA = new ECKey();
 
-        Random random = new Random();
-        masterPrivateKeyClient = new byte[20];
-        masterPrivateKeyServer = new byte[20];
-        random.nextBytes(masterPrivateKeyClient);
-        random.nextBytes(masterPrivateKeyServer);
+        anchorTxHashServer = Sha256Hash.wrap(Tools.getRandomByte(32));
+        anchorTxHashClient = Sha256Hash.wrap(Tools.getRandomByte(32));
 
-        anchorSecretClient = new byte[20];
-        anchorSecretServer = new byte[20];
-        anchorRevocationClient = new byte[20];
-        anchorRevocationServer = new byte[20];
+        masterPrivateKeyClient = Tools.getRandomByte(20);
+        masterPrivateKeyServer = Tools.getRandomByte(20);
+
+        anchorSecretClient = Tools.getRandomByte(20);
+        anchorSecretServer = Tools.getRandomByte(20);
+        anchorRevocationClient = Tools.getRandomByte(20);
+        anchorRevocationServer = Tools.getRandomByte(20);
 
         anchorSecretHashClient = Tools.hashSecret(anchorSecretClient);
         anchorSecretHashServer = Tools.hashSecret(anchorSecretServer);
         anchorRevocationHashClient = Tools.hashSecret(anchorRevocationClient);
         anchorRevocationHashServer = Tools.hashSecret(anchorRevocationServer);
+
+        initialAmountClient = 1000000;
+        initialAmountServer = 1000000;
+        amountClient = 1000000;
+        amountServer = 1000000;
+
+        channelStatus = new ChannelStatus();
+        channelStatus.amountClient = amountClient;
+        channelStatus.amountServer = amountServer;
+        channelStatus.feePerByte = 10;
+        channelStatus.csvDelay = 24 * 60 * 60;
+
+        anchorTransactionServer = new Transaction(Constants.getNetwork());
+        anchorTransactionServer.addInput(Sha256Hash.wrap(Tools.getRandomByte(32)), 0, Tools.getDummyScript());
+        anchorTransactionServer.addOutput(Coin.valueOf(1000000), getScriptAnchorOutputServer());
+
+    }
+
+    public void retrieveDataFromOtherChannel (Channel channel) {
+        keyClient = channel.keyServer;
+        keyClientA = channel.keyServerA;
+
+        masterPrivateKeyClient = channel.masterPrivateKeyServer;
+        anchorSecretClient = channel.anchorSecretServer;
+        anchorSecretHashClient = channel.anchorSecretHashServer;
+        anchorRevocationClient = channel.anchorRevocationServer;
+        anchorRevocationHashClient = channel.anchorRevocationHashServer;
+        anchorTxHashClient = channel.anchorTxHashServer;
+
+        anchorTransactionClient = channel.anchorTransactionServer;
     }
 
     //region Getter Setter
