@@ -3,15 +3,15 @@ package network.thunder.core.communication.objects.messages.impl.message.gossip;
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by matsjerratsch on 30/11/2015.
  */
 public class GossipGetMessage implements Gossip {
-    public ArrayList<byte[]> inventoryList;
+    public List<byte[]> inventoryList;
 
-    public GossipGetMessage (ArrayList<byte[]> inventoryList) {
+    public GossipGetMessage (List<byte[]> inventoryList) {
         this.inventoryList = inventoryList;
     }
 
