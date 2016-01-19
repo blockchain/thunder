@@ -34,9 +34,9 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     final static int TIME_MAX_WAIT = 1000;
 
     LNPaymentMessageFactory messageFactory;
-    Node node;
     LNPaymentLogic paymentLogic;
     DBHandler dbHandler;
+    Node node;
 
     MessageExecutor messageExecutor;
     LNPaymentHelper paymentHelper;
@@ -58,11 +58,11 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     int latestDice = 0;
 
-    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, Node node, LNPaymentLogic paymentLogic, DBHandler dbHandler) {
+    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, LNPaymentLogic paymentLogic, DBHandler dbHandler, Node node) {
         this.messageFactory = messageFactory;
-        this.node = node;
         this.paymentLogic = paymentLogic;
         this.dbHandler = dbHandler;
+        this.node = node;
 
         channel = dbHandler.getChannel(node);
     }
@@ -132,8 +132,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     @Override
     public void makePayment (PaymentData paymentData, OnionObject onionObject) {
-        QueueElementPayment payment = new QueueElementPayment();
-        payment.paymentData = paymentData;
+        QueueElement payment = new QueueElementPayment(paymentData);
         queueList.add(payment);
     }
 
@@ -187,8 +186,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         weStartedExchange = true;
 
         LNPaymentAMessage message = messageFactory.getMessageA(channel, channelStatus);
-        paymentLogic.putCurrentRevocationHashServer(message.newRevocation);
-        paymentLogic.putNewChannelStatus(channelStatus);
+        paymentLogic.readMessageOutbound(message);
         latestDice = message.dice;
         sendMessage(message);
 
@@ -199,7 +197,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         testStatus(RECEIVED_A);
 
         LNPaymentBMessage message = messageFactory.getMessageB(channel);
-        paymentLogic.putCurrentRevocationHashServer(message.newRevocation);
+        paymentLogic.readMessageOutbound(message);
         sendMessage(message);
 
         setStatus(SENT_B);
@@ -214,7 +212,8 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        Message message = messageFactory.getMessageC(channel, paymentLogic.getClientTransaction());
+        LNPayment message = messageFactory.getMessageC(channel, paymentLogic.getClientTransaction());
+        paymentLogic.readMessageOutbound(message);
         sendMessage(message);
 
         setStatus(SENT_C);
@@ -228,7 +227,8 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        Message message = messageFactory.getMessageD(channel);
+        LNPayment message = messageFactory.getMessageD(channel);
+        paymentLogic.readMessageOutbound(message);
         sendMessage(message);
 
         setStatus(SENT_D);
@@ -259,7 +259,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
         weStartedExchange = false;
         currentTaskStarted = System.currentTimeMillis();
 
-        paymentLogic.checkMessage(message);
+        paymentLogic.checkMessageIncoming(message);
 
         setStatus(RECEIVED_A);
         sendMessageB();
@@ -268,7 +268,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     private void readMessageB (LNPaymentBMessage message) {
         testStatus(SENT_A);
 
-        paymentLogic.checkMessage(message);
+        paymentLogic.checkMessageIncoming(message);
         setStatus(RECEIVED_B);
         sendMessageC();
 
@@ -280,7 +280,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
             System.out.println(node.name + " ERROR READ MESSAGE C");
 
         } else {
-            paymentLogic.checkMessage(message);
+            paymentLogic.checkMessageIncoming(message);
             setStatus(RECEIVED_C);
             if (weStartedExchange) {
                 sendMessageD();
@@ -296,7 +296,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
             System.out.println(node.name + " ERROR READ MESSAGE D");
             return;
         } else {
-            paymentLogic.checkMessage(message);
+            paymentLogic.checkMessageIncoming(message);
             setStatus(RECEIVED_D);
         }
         if (weStartedExchange) {

@@ -72,8 +72,8 @@ public class LNPaymentHandlerTest {
         messageFactory1 = new LNPaymentMessageFactoryMock();
         messageFactory2 = new LNPaymentMessageFactoryMock();
 
-        processor1 = new LNPaymentProcessorImpl(messageFactory1, node1, paymentLogic1, dbHandler1);
-        processor2 = new LNPaymentProcessorImpl(messageFactory2, node2, paymentLogic2, dbHandler2);
+        processor1 = new LNPaymentProcessorImpl(messageFactory1, paymentLogic1, dbHandler1, node1);
+        processor2 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic2, dbHandler2, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNPayment1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNPayment2"));

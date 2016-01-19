@@ -35,9 +35,10 @@ public class LNPaymentMessageFactoryImpl extends MesssageFactoryImpl implements 
 
     @Override
     public LNPaymentCMessage getMessageC (Channel channel, Transaction channelTransaction) {
+
         //The channelTransaction is finished, we just need to produce the signatures..
-        TransactionSignature signature1 = Tools.getSignature(channelTransaction, 1, channel.getScriptAnchorOutputServer().getProgram(), channel.getKeyServer());
-        TransactionSignature signature2 = Tools.getSignature(channelTransaction, 2, channel.getScriptAnchorOutputServer().getProgram(), channel.getKeyServer());
+        TransactionSignature signature1 = Tools.getSignature(channelTransaction, 0, channel.getScriptAnchorOutputClient().getProgram(), channel.getKeyServer());
+        TransactionSignature signature2 = Tools.getSignature(channelTransaction, 1, channel.getScriptAnchorOutputServer().getProgram(), channel.getKeyServer());
         return new LNPaymentCMessage(signature1.encodeToBitcoin(), signature2.encodeToBitcoin());
     }
 

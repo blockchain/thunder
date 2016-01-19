@@ -54,7 +54,7 @@ public class DBHandlerMock implements DBHandler {
 
     @Override
     public boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList) {
-        return false;
+        return true;
     }
 
     @Override

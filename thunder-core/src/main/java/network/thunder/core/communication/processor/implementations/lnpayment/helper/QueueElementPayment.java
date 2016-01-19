@@ -8,6 +8,9 @@ import network.thunder.core.communication.objects.lightning.subobjects.PaymentDa
  */
 public class QueueElementPayment extends QueueElement {
 
+    public QueueElementPayment (PaymentData paymentData) {
+        this.paymentData = paymentData;
+    }
 
     public PaymentData paymentData;
 
