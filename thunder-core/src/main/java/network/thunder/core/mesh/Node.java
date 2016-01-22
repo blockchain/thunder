@@ -2,6 +2,7 @@ package network.thunder.core.mesh;
 
 import io.netty.channel.ChannelHandlerContext;
 import network.thunder.core.communication.nio.P2PContext;
+import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
@@ -30,6 +31,8 @@ public class Node {
     public boolean isServer;
 
     public ECDHKeySet ecdhKeySet;
+
+    public ChannelIntent intent = ChannelIntent.MISC;
 
     private String host;
     private int port;
