@@ -1,6 +1,7 @@
 package network.thunder.core.etc;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.lightning.RevocationHash;
@@ -25,6 +26,11 @@ public class DBHandlerMock implements DBHandler {
     @Override
     public void insertIPObjects (List<P2PDataObject> ipList) {
 
+    }
+
+    @Override
+    public List<PubkeyIPObject> getIPObjects () {
+        return null;
     }
 
     @Override
