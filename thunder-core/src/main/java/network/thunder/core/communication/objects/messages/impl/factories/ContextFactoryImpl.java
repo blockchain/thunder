@@ -2,6 +2,7 @@ package network.thunder.core.communication.objects.messages.impl.factories;
 
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
+import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
 import network.thunder.core.communication.objects.messages.interfaces.factories.*;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
@@ -9,8 +10,10 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.Wal
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
+import network.thunder.core.communication.processor.implementations.PeerSeedProcessorImpl;
 import network.thunder.core.communication.processor.implementations.gossip.GossipProcessorImpl;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubject;
+import network.thunder.core.communication.processor.implementations.gossip.GossipSubjectImpl;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentLogicImpl;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
 import network.thunder.core.communication.processor.implementations.sync.SyncProcessorImpl;
@@ -20,6 +23,8 @@ import network.thunder.core.communication.processor.interfaces.lnpayment.LNPayme
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.mesh.Node;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.Wallet;
 
 /**
  * Created by matsjerratsch on 18/01/2016.
@@ -29,6 +34,15 @@ public class ContextFactoryImpl implements ContextFactory {
     SynchronizationHelper syncHelper;
     GossipSubject gossipSubject;
     WalletHelper walletHelper;
+
+    public ContextFactoryImpl () {
+        Wallet wallet = new Wallet(Context.get());
+
+        this.walletHelper = new WalletHelperImpl(wallet);
+
+        this.gossipSubject = new GossipSubjectImpl();
+        this.syncHelper = new SynchronizationHelper(dbHandler);
+    }
 
     @Override
     public MessageSerializer getMessageSerializer () {
@@ -50,6 +64,11 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public AuthenticationProcessor getAuthenticationProcessor (Node node) {
         return new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);
+    }
+
+    @Override
+    public PeerSeedProcessor getPeerSeedProcessor (Node node) {
+        return new PeerSeedProcessorImpl(new PeerSeedMessageFactoryImpl(), dbHandler, node);
     }
 
     @Override

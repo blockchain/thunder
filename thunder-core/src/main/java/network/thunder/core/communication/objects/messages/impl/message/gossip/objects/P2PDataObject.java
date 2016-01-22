@@ -3,6 +3,9 @@ package network.thunder.core.communication.objects.messages.impl.message.gossip.
 import network.thunder.core.communication.Message;
 import network.thunder.core.etc.Tools;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Interface for classes that are stored on the node and later are synced with other nodes.
  * <p>
@@ -28,4 +31,9 @@ public abstract class P2PDataObject implements Message {
     public abstract long getHashAsLong ();
 
     public abstract void verify ();
+
+    public static List<P2PDataObject> generaliseList (List<PubkeyIPObject> list) {
+        List<P2PDataObject> generalList = new ArrayList<>(list);
+        return generalList;
+    }
 }

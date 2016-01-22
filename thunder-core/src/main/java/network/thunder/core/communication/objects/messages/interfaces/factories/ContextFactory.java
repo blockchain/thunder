@@ -18,6 +18,8 @@ public interface ContextFactory {
 
     public AuthenticationProcessor getAuthenticationProcessor (Node node);
 
+    public PeerSeedProcessor getPeerSeedProcessor (Node node);
+
     public SyncProcessor getSyncProcessor (Node node);
 
     public GossipProcessor getGossipProcessor (Node node);

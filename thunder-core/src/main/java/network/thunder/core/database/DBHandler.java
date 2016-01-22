@@ -1,6 +1,7 @@
 package network.thunder.core.database;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.lightning.RevocationHash;
 import network.thunder.core.mesh.Node;
@@ -16,6 +17,8 @@ public interface DBHandler {
     List<P2PDataObject> getSyncDataIPObjects ();
 
     void insertIPObjects (List<P2PDataObject> ipList);
+
+    List<PubkeyIPObject> getIPObjects ();
 
     P2PDataObject getP2PDataObjectByHash (byte[] hash);
 
