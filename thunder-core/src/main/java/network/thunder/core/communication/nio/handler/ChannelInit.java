@@ -12,6 +12,7 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
+import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
 import network.thunder.core.mesh.Node;
 
 /**
@@ -58,6 +59,10 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
 
         AuthenticationProcessor authenticationProcessor = contextFactory.getAuthenticationProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(authenticationProcessor, "Authentication"));
+
+        PeerSeedProcessor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
+
 
 //        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 
