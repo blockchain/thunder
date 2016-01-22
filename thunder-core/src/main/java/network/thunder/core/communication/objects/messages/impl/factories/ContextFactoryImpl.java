@@ -40,7 +40,7 @@ public class ContextFactoryImpl implements ContextFactory {
 
         this.walletHelper = new WalletHelperImpl(wallet);
 
-        this.gossipSubject = new GossipSubjectImpl();
+        this.gossipSubject = new GossipSubjectImpl(dbHandler);
         this.syncHelper = new SynchronizationHelper(dbHandler);
     }
 

@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public class GossipProcessorImpl implements GossipProcessor {
-    final static int OBJECT_AMOUNT_TO_SEND = 50;
 
     GossipMessageFactory messageFactory;
     GossipSubject subject;

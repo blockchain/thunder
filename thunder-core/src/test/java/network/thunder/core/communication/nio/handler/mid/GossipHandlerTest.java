@@ -6,13 +6,15 @@ import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.factories.GossipMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipInvMessage;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
 import network.thunder.core.communication.processor.implementations.gossip.GossipProcessorImpl;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubject;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubjectImpl;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
-import network.thunder.core.database.DBHandler;
-import network.thunder.core.etc.DBHandlerMock;
+import network.thunder.core.etc.SyncDBHandlerMock;
 import network.thunder.core.mesh.Node;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,11 +23,11 @@ import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by matsjerratsch on 27/10/2015.
@@ -37,20 +39,17 @@ public class GossipHandlerTest {
     Node node3;
     Node node4;
 
-    DBHandler dbHandler1;
-    DBHandler dbHandler2;
-    DBHandler dbHandler3;
-    DBHandler dbHandler4;
+    SyncDBHandlerMock dbHandler1;
+    SyncDBHandlerMock dbHandler2;
+    SyncDBHandlerMock dbHandler3;
+    SyncDBHandlerMock dbHandler4;
 
     GossipSubject subject1;
     GossipSubject subject2;
     GossipSubject subject3;
     GossipSubject subject4;
 
-    GossipMessageFactory messageFactory1;
-    GossipMessageFactory messageFactory2;
-    GossipMessageFactory messageFactory3;
-    GossipMessageFactory messageFactory4;
+    GossipMessageFactory messageFactory;
 
     //Weird naming convention here, because we have channels between two nodes
     //TODO Refactor
@@ -85,30 +84,30 @@ public class GossipHandlerTest {
         node2.name = "Gossip3";
         node2.name = "Gossip4";
 
-        subject1 = new GossipSubjectImpl();
-        subject2 = new GossipSubjectImpl();
-        subject3 = new GossipSubjectImpl();
-        subject4 = new GossipSubjectImpl();
+        dbHandler1 = new SyncDBHandlerMock();
+        dbHandler2 = new SyncDBHandlerMock();
+        dbHandler3 = new SyncDBHandlerMock();
+        dbHandler4 = new SyncDBHandlerMock();
 
-        dbHandler1 = new DBHandlerMock();
-        dbHandler2 = new DBHandlerMock();
-        dbHandler3 = new DBHandlerMock();
-        dbHandler4 = new DBHandlerMock();
+        subject1 = new GossipSubjectImpl(dbHandler1);
+        subject2 = new GossipSubjectImpl(dbHandler2);
+        subject3 = new GossipSubjectImpl(dbHandler3);
+        subject4 = new GossipSubjectImpl(dbHandler4);
 
-        messageFactory1 = new GossipMessageFactoryImpl();
-        messageFactory2 = new GossipMessageFactoryImpl();
-        messageFactory3 = new GossipMessageFactoryImpl();
-        messageFactory4 = new GossipMessageFactoryImpl();
+        messageFactory = new GossipMessageFactoryImpl();
+        messageFactory = new GossipMessageFactoryImpl();
+        messageFactory = new GossipMessageFactoryImpl();
+        messageFactory = new GossipMessageFactoryImpl();
 
-        gossipProcessor12 = new GossipProcessorImpl(messageFactory1, subject1, dbHandler1, node1);
+        gossipProcessor12 = new GossipProcessorImpl(messageFactory, subject1, dbHandler1, node1);
 
-        gossipProcessor21 = new GossipProcessorImpl(messageFactory2, subject2, dbHandler2, node2);
-        gossipProcessor23 = new GossipProcessorImpl(messageFactory2, subject2, dbHandler2, node2);
+        gossipProcessor21 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
+        gossipProcessor23 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
 
-        gossipProcessor32 = new GossipProcessorImpl(messageFactory3, subject3, dbHandler3, node3);
-        gossipProcessor34 = new GossipProcessorImpl(messageFactory3, subject3, dbHandler3, node3);
+        gossipProcessor32 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
+        gossipProcessor34 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
 
-        gossipProcessor43 = new GossipProcessorImpl(messageFactory4, subject4, dbHandler4, node4);
+        gossipProcessor43 = new GossipProcessorImpl(messageFactory, subject4, dbHandler4, node4);
 
         channel12 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor12, "Gossip12"));
 
@@ -119,13 +118,20 @@ public class GossipHandlerTest {
         channel34 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor34, "Gossip34"));
 
         channel43 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor43, "Gossip43"));
+
+        channel12.readOutbound();
+
+        channel21.readOutbound();
+        channel23.readOutbound();
+
+        channel32.readOutbound();
+        channel34.readOutbound();
+
+        channel43.readOutbound();
     }
 
     @Test
     public void shouldAskForDataAfterInv () throws Exception {
-        channel12.readOutbound();
-        channel21.readOutbound();
-
         ArrayList<byte[]> invList = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             byte[] b = new byte[20];
@@ -133,7 +139,7 @@ public class GossipHandlerTest {
             invList.add(b);
         }
 
-        GossipInvMessage message = messageFactory1.getGossipInvMessage(invList);
+        GossipInvMessage message = messageFactory.getGossipInvMessage(invList);
 
         channel12.writeInbound(message);
 
@@ -147,6 +153,54 @@ public class GossipHandlerTest {
         }
 
         channel12.checkException();
+    }
+
+    @Test
+    public void shouldOnlySendDataOnceEnoughObjectsArrived () throws Exception {
+        List<P2PDataObject> dataList = new ArrayList<>();
+        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 1; i++) {
+            dataList.add(PubkeyChannelObject.getRandomObject());
+        }
+
+        List<P2PDataObject> dataList1 = dataList.subList(0, GossipProcessor.OBJECT_AMOUNT_TO_SEND - 10);
+
+        channel21.writeInbound(messageFactory.getGossipSendMessage(dataList1));
+        assertNull(channel23.readOutbound());
+
+        channel21.writeInbound(messageFactory.getGossipSendMessage(dataList));
+
+        GossipInvMessage invMessage = (GossipInvMessage) channel23.readOutbound();
+
+        assertNotNull(invMessage);
+        assertTrue(invMessage.inventoryList.size() == dataList.size());
+
+    }
+
+    @Test
+    public void shouldSendDataToNextPeer () throws Exception {
+        List<P2PDataObject> dataList = new ArrayList<>();
+        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 1; i++) {
+            dataList.add(PubkeyChannelObject.getRandomObject());
+        }
+        GossipSendMessage sendDataObject = messageFactory.getGossipSendMessage(dataList);
+
+        channel21.writeInbound(sendDataObject);
+
+        channel32.writeInbound(channel23.readOutbound());
+        channel23.writeInbound(channel32.readOutbound());
+        channel32.writeInbound(channel23.readOutbound());
+
+        channel43.writeInbound(channel34.readOutbound());
+        channel34.writeInbound(channel43.readOutbound());
+        channel43.writeInbound(channel34.readOutbound());
+
+        assertTrue(checkListsEqual(dbHandler2.totalList, dataList));
+        assertTrue(checkListsEqual(dbHandler3.totalList, dataList));
+        assertTrue(checkListsEqual(dbHandler4.totalList, dataList));
+    }
+
+    public boolean checkListsEqual (List list1, List list2) {
+        return list1.containsAll(list2) && list2.containsAll(list1);
     }
 
 }
