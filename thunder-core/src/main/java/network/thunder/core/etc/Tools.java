@@ -475,6 +475,12 @@ public class Tools {
         r.nextBytes(b);
         return b;
     }
+
+    public static byte[] copyRandomByteInByteArray (byte[] dest, int offset, int length) {
+        byte[] error = getRandomByte(length);
+        System.arraycopy(error, 0, dest, offset, length);
+        return dest;
+    }
     //		refundTransaction.addInput(channel.getOpeningTx().getOutput(0));
     //		refundTransaction.getInput(0).setSequenceNumber(0);
 
