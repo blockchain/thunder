@@ -92,7 +92,7 @@ public class GossipProcessorImpl implements GossipProcessor {
         GossipInvMessage invMessage = (GossipInvMessage) message;
         List<byte[]> objectsToGet = new ArrayList<>();
         for (byte[] hash : invMessage.inventoryList) {
-            if (subject.knowsObjectAlready(hash)) {
+            if (!subject.knowsObjectAlready(hash)) {
                 objectsToGet.add(hash);
             }
         }
