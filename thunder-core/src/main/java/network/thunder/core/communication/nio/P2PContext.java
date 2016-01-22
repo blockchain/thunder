@@ -1,7 +1,7 @@
 package network.thunder.core.communication.nio;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.DatabaseHandler;
 import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.ECKey;
@@ -29,11 +29,8 @@ public class P2PContext {
     public ArrayList<PubkeyIPObject> IPList;
     public ArrayList<Node> activeNodes;
 
-    public HashMap<String, PubkeyChannelObject> pubkeyChannelObjectHashMap = new HashMap<>();
     public ECKey nodeKey;
     public boolean fetchFreshIPs = true;
-//    public SynchronizationHelper syncDatastructure = new SynchronizationHelper();
-    public boolean needsInitialSyncing = false;
     public DataSource dataSource;
 
     //Balance available for new channels
@@ -44,6 +41,8 @@ public class P2PContext {
     P2PServer server;
     boolean keepReconnectingToNewNodes = false;
     P2PContext context;
+
+    DBHandler dbHandler;
 
     public P2PContext (int port) {
         IPList = new ArrayList<>();
@@ -69,29 +68,6 @@ public class P2PContext {
         activeNodes = DatabaseHandler.getNodesWithOpenChanels(dataSource.getConnection());
     }
 
-    public ArrayList<PubkeyIPObject> getIPList () {
-        return IPList;
-    }
-
-    public void newIP (PubkeyIPObject newIP) {
-        boolean newPubKey = true;
-        for (PubkeyIPObject oldIP : IPList) {
-            if (Arrays.equals(newIP.pubkey, oldIP.pubkey)) {
-                newPubKey = false;
-                if (newIP.timestamp > oldIP.timestamp) {
-                    //Got a new IP address for an existing pubkey
-                } else {
-                    //Our IP address is newer than his one?
-                    //TODO: Send the more recent IP address back?
-                }
-            }
-        }
-//        if (newPubKey) {
-        //TODO: Got a pubkey we don't know about yet. Should probably do some checking here
-        IPList.add(newIP);
-//        }
-
-    }
 
     public void newIPList (ArrayList<PubkeyIPObject> newList) {
         boolean newPubKey = true;

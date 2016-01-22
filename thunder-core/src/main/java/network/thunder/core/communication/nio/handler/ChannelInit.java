@@ -20,27 +20,22 @@ import network.thunder.core.mesh.Node;
  */
 public class ChannelInit extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
-    boolean isServer;
     Node node;
     P2PContext context;
 
-    public ChannelInit (P2PContext context, boolean isServer) {
-        this.isServer = isServer;
+    public ChannelInit (P2PContext context) {
         this.context = context;
+        this.node = new Node();
+        this.node.isServer = true;
     }
 
-    public ChannelInit (P2PContext context, boolean isServer, Node node) {
-        this.isServer = isServer;
+    public ChannelInit (P2PContext context, Node node) {
         this.node = node;
         this.context = context;
     }
 
     @Override
     protected void initChannel (SocketChannel ch) throws Exception {
-        if (isServer) {
-            node = new Node();
-        }
-        node.isServer = isServer;
 
 //        ch.pipeline().addLast(new DumpHexHandler());
 
@@ -62,7 +57,6 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
 
         PeerSeedProcessor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
-
 
 //        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 

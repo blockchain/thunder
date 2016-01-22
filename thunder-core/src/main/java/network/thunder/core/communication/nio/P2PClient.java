@@ -46,13 +46,11 @@ public final class P2PClient {
 
                 while (!node.isConnected()) {
 
-                    EventLoopGroup bossGroup = new NioEventLoopGroup(1);
-                    EventLoopGroup workerGroup = new NioEventLoopGroup();
 
                     EventLoopGroup group = new NioEventLoopGroup();
                     try {
                         Bootstrap b = new Bootstrap();
-                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, false, node));
+                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, node));
 
                         // Start the connection attempt.
                         Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
@@ -66,9 +64,6 @@ public final class P2PClient {
                             e1.printStackTrace();
                         }
                         e.printStackTrace();
-                    } finally {
-                        bossGroup.shutdownGracefully();
-                        workerGroup.shutdownGracefully();
                     }
                 }
 

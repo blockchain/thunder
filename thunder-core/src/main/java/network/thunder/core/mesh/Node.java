@@ -13,8 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Node {
-
-    public static final int THRESHHOLD_INVENTORY_AMOUNT_TO_SEND = 32;
     //From the gossip handler upwards nodes have their own connection object
     public Connection conn;
     public boolean justFetchNewIpAddresses = false;
