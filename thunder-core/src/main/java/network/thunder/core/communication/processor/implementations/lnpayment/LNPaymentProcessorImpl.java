@@ -27,9 +27,6 @@ import static network.thunder.core.communication.processor.implementations.lnpay
  * Created by matsjerratsch on 04/01/2016.
  */
 public class LNPaymentProcessorImpl implements LNPaymentProcessor {
-    final static int TIMEOUT_NEGOTIATION = 1 * 1000;
-    final static int TIME_MAX_WAIT = 1000;
-
     LNPaymentMessageFactory messageFactory;
     LNPaymentLogic paymentLogic;
     DBHandler dbHandler;

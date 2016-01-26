@@ -108,7 +108,7 @@ public class LNPaymentHandlerTest {
         channel1.writeInbound(channel2.readOutbound());
         Message message = (Message) channel1.readOutbound();
 
-        Thread.sleep(2000);
+        Thread.sleep(LNPaymentProcessor.TIMEOUT_NEGOTIATION + 1000);
 
         channel2.writeInbound(message);
         assertNull(channel2.readOutbound());
