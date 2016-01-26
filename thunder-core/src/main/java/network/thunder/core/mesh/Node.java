@@ -6,19 +6,14 @@ import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Node {
-    //From the gossip handler upwards nodes have their own connection object
-    public Connection conn;
     public boolean justFetchNewIpAddresses = false;
     public P2PContext context;
-    public ECKey pubKeyTempClient;
-    public ECKey pubKeyTempServer;
 
     public ECKey pubKeyClient;
     public ECKey pubKeyServer;
@@ -32,8 +27,9 @@ public class Node {
 
     public ChannelIntent intent = ChannelIntent.MISC;
 
-    private String host;
-    private int port;
+    public String host;
+    public int port;
+
     private boolean connected = false;
     private ChannelHandlerContext nettyContext;
     private byte[] pubkey;
@@ -66,11 +62,9 @@ public class Node {
         init();
     }
 
-    private void init () {
+    public void init () {
         ephemeralKeyServer = new ECKey();
         pubKeyServer = new ECKey();
-        pubKeyTempServer = new ECKey();
-
     }
 
     public void closeConnection () {

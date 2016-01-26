@@ -21,17 +21,17 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import network.thunder.core.communication.nio.handler.ChannelInit;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.mesh.Node;
 
 /**
  */
 public final class P2PClient {
 
-    static final int PORT = Integer.parseInt(System.getProperty("port", "8992"));
-    private P2PContext context;
+    ContextFactory contextFactory;
 
-    public P2PClient (P2PContext context) {
-        this.context = context;
+    public P2PClient (ContextFactory contextFactory) {
+        this.contextFactory = contextFactory;
     }
 
     //We will add a new handler for the different layers
@@ -46,11 +46,10 @@ public final class P2PClient {
 
                 while (!node.isConnected()) {
 
-
                     EventLoopGroup group = new NioEventLoopGroup();
                     try {
                         Bootstrap b = new Bootstrap();
-                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(context, node));
+                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
 
                         // Start the connection attempt.
                         Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();

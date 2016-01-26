@@ -4,15 +4,11 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
-import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
 import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
-import network.thunder.core.communication.nio.handler.low.NodeConnectionHandler;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
-import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
-import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
-import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
+import network.thunder.core.communication.processor.Processor;
 import network.thunder.core.mesh.Node;
 
 /**
@@ -21,17 +17,16 @@ import network.thunder.core.mesh.Node;
 public class ChannelInit extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
     Node node;
-    P2PContext context;
 
-    public ChannelInit (P2PContext context) {
-        this.context = context;
+    public ChannelInit (ContextFactory contextFactory) {
         this.node = new Node();
         this.node.isServer = true;
+        this.contextFactory = contextFactory;
     }
 
-    public ChannelInit (P2PContext context, Node node) {
+    public ChannelInit (ContextFactory contextFactory, Node node) {
+        this.contextFactory = contextFactory;
         this.node = node;
-        this.context = context;
     }
 
     @Override
@@ -40,7 +35,7 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
 //        ch.pipeline().addLast(new DumpHexHandler());
 
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
-        ch.pipeline().addLast(new NodeConnectionHandler(context, node));
+//        ch.pipeline().addLast(new NodeConnectionHandler(context, node));
 
         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
         ch.pipeline().addLast(new LengthFieldPrepender(4));
@@ -49,14 +44,23 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializer));
         ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializer));
 
-        EncryptionProcessor encryptionProcessor = contextFactory.getEncryptionProcessor(node);
+        Processor encryptionProcessor = contextFactory.getEncryptionProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(encryptionProcessor, "Encryption"));
 
-        AuthenticationProcessor authenticationProcessor = contextFactory.getAuthenticationProcessor(node);
+        Processor authenticationProcessor = contextFactory.getAuthenticationProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(authenticationProcessor, "Authentication"));
 
-        PeerSeedProcessor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
+        Processor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
+
+        Processor syncProcessor = contextFactory.getSyncProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(syncProcessor, "Sync"));
+
+        Processor gossipProcessor = contextFactory.getGossipProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(gossipProcessor, "Gossip"));
+
+        Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));
 
 //        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 

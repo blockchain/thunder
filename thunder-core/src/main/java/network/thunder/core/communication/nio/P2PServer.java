@@ -22,32 +22,31 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import network.thunder.core.communication.nio.handler.ChannelInit;
-import network.thunder.core.mesh.Node;
-
-import java.util.ArrayList;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 
 /**
  */
 public final class P2PServer {
 
-    private P2PContext context;
+    ContextFactory contextFactory;
 
-    public P2PServer (P2PContext context) {
-        this.context = context;
+    public P2PServer (ContextFactory contextFactory) {
+        this.contextFactory = contextFactory;
     }
 
     //We will add a new handler for the different layers
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void startServer (int port, ArrayList<Node> connectedNodes) throws Exception {
+    public void startServer (int port) throws Exception {
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
         try {
             ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(context));
+            b.group(bossGroup, workerGroup)
+                    .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(contextFactory));
 
             b.bind(port).sync().channel().closeFuture().sync();
         } finally {
