@@ -15,7 +15,6 @@ import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Random;
 
 /**
  * Created by matsjerratsch on 14/10/2015.
@@ -68,7 +67,6 @@ public class P2PContext {
         activeNodes = DatabaseHandler.getNodesWithOpenChanels(dataSource.getConnection());
     }
 
-
     public void newIPList (ArrayList<PubkeyIPObject> newList) {
         boolean newPubKey = true;
         for (PubkeyIPObject newIP : newList) {
@@ -88,69 +86,6 @@ public class P2PContext {
                 IPList.add(newIP);
             }
         }
-    }
-
-    public void startConnectingToRandomNodes () {
-        keepReconnectingToNewNodes = true;
-        new Thread(new Runnable() {
-            @Override
-            public void run () {
-//                while (!syncDatastructure.fullySynchronized()) {
-
-                    try {
-                        if (connectedNodes.size() < 10) {
-                            if (IPList.size() > 0) {
-                                PubkeyIPObject ipObject = IPList.get(new Random().nextInt(IPList.size()));
-                                Node node = new Node(ipObject.IP, ipObject.port);
-
-                                new P2PClient(context).connectTo(node);
-                                IPList.remove(ipObject); //TODO: Maybe not the best to just delete it here?
-                            }
-                        }
-
-                        Thread.sleep(5000);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-
-//                }
-
-                stopConnectingToRandomNodes();
-            }
-        }).start();
-    }
-
-    public void startConnections () throws Exception {
-        //Open up for incoming connections
-
-        for (Node node : activeNodes) {
-            new P2PClient(this).connectTo(node);
-        }
-
-        server = new P2PServer(this);
-        server.startServer(port, connectedNodes);
-    }
-
-    public void startInitialSyncing () {
-        //TODO: Have some initial bootstrap node hardcoded here..
-        Node initialNode = new Node("127.0.0.1", 8992);
-        initialNode.justFetchNewIpAddresses = true;
-
-        try {
-            new P2PClient(this).connectTo(initialNode);
-
-            initialNode.setOnConnectionCloseListener(new Node.OnConnectionCloseListener() {
-                @Override
-                public void onClose () {
-                    System.out.println("Initial Node IP getting done..");
-                    startConnectingToRandomNodes();
-                }
-            });
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
     }
 
     public void stopConnectingToRandomNodes () {

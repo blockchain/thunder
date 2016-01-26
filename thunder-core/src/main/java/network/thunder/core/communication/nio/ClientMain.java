@@ -21,7 +21,7 @@ public class ClientMain {
         node.setPort(8992);
 
         context.activeNodes.add(node);
-        context.startInitialSyncing();
+//        context.startInitialSyncing();
 //        context.startConnections();
     }
 }

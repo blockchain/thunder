@@ -26,7 +26,7 @@ public class ServerMain {
         ip2.IP = "127.0.0.1";
         ip2.port = 8993;
 //        context.IPList.add(ip2);
-        context.startConnections();
+//        context.startConnections();
 
     }
 }
