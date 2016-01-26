@@ -147,4 +147,8 @@ public class CryptoTools {
             throw new RuntimeException("Signature does not match..");
         }
     }
+
+    public static ECKey getEphemeralKey () {
+        return new ECKey();
+    }
 }

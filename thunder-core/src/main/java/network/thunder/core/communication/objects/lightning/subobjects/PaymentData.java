@@ -17,7 +17,7 @@ package network.thunder.core.communication.objects.lightning.subobjects;/*
  *
  */
 
-import network.thunder.core.communication.objects.OnionObject;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 
 public class PaymentData {

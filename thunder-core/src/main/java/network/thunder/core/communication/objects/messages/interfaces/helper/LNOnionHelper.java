@@ -1,7 +1,9 @@
 package network.thunder.core.communication.objects.messages.interfaces.helper;
 
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentOnionMessageEncrypted;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
 import org.bitcoinj.core.ECKey;
+
+import java.util.List;
 
 /**
  * Created by matsjerratsch on 08/12/2015.
@@ -9,10 +11,12 @@ import org.bitcoinj.core.ECKey;
 public interface LNOnionHelper {
     void init (ECKey keyServer);
 
-    void loadMessage (ECKey receivedHop, LNPaymentOnionMessageEncrypted encryptedOnionObject);
+    void loadMessage (ECKey receivedHop, OnionObject encryptedOnionObject);
 
     ECKey getNextHop ();
 
-    LNPaymentOnionMessageEncrypted getMessageForNextHop ();
+    OnionObject getMessageForNextHop ();
+
+    OnionObject createOnionObject(List<byte[]> keyList);
 
 }
