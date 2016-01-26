@@ -1,15 +1,12 @@
 package network.thunder.core.communication.processor.implementations.lnpayment;
 
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.objects.OnionObject;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.*;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.processor.implementations.lnpayment.helper.*;
@@ -40,6 +37,7 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
 
     MessageExecutor messageExecutor;
     LNPaymentHelper paymentHelper;
+    LNOnionHelper onionHelper;
 
     Channel channel;
 
@@ -131,23 +129,29 @@ public class LNPaymentProcessorImpl implements LNPaymentProcessor {
     }
 
     @Override
-    public void makePayment (PaymentData paymentData, OnionObject onionObject) {
+    public boolean makePayment (PaymentData paymentData, OnionObject onionObject) {
+
+//        onionHelper.
+
         QueueElement payment = new QueueElementPayment(paymentData);
         queueList.add(payment);
+        return true;
     }
 
     @Override
-    public void redeemPayment (PaymentData paymentData) {
+    public boolean redeemPayment (PaymentData paymentData) {
         QueueElementRedeem payment = new QueueElementRedeem();
         //TODO
         queueList.add(payment);
+        return true;
     }
 
     @Override
-    public void refundPayment (PaymentData paymentData) {
+    public boolean refundPayment (PaymentData paymentData) {
         QueueElementRefund payment = new QueueElementRefund();
         //TODO
         queueList.add(payment);
+        return true;
     }
 
     public void abortCurrentExchange () {

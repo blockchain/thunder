@@ -1,7 +1,7 @@
 package network.thunder.core.communication.processor.interfaces.lnpayment;
 
-import network.thunder.core.communication.objects.OnionObject;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
 import network.thunder.core.communication.processor.Processor;
 
 /**
@@ -10,11 +10,11 @@ import network.thunder.core.communication.processor.Processor;
 public interface LNPaymentProcessor extends Processor {
     public boolean connectsToNodeId (byte[] nodeId);
 
-    public void makePayment (PaymentData paymentData, OnionObject onionObject);
+    public boolean makePayment (PaymentData paymentData, OnionObject onionObject);
 
-    public void redeemPayment (PaymentData paymentData);
+    public boolean redeemPayment (PaymentData paymentData);
 
-    public void refundPayment (PaymentData paymentData);
+    public boolean refundPayment (PaymentData paymentData);
 
     public void abortCurrentExchange ();
 }
