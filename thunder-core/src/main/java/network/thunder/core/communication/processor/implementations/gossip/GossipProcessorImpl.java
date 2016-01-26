@@ -5,10 +5,10 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipInvMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -23,18 +23,22 @@ public class GossipProcessorImpl implements GossipProcessor {
     GossipMessageFactory messageFactory;
     GossipSubject subject;
     DBHandler dbHandler;
+    int portServer;
+    String hostnameServer;
     Node node;
 
     MessageExecutor messageExecutor;
 
-
     List<P2PDataObject> objectList = new ArrayList<>();
     List<P2PDataObject> objectListTemp = new ArrayList<>();
 
-    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, Node node) {
+    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, int portServer, String hostnameServer, Node
+            node) {
         this.messageFactory = messageFactory;
         this.subject = subject;
         this.dbHandler = dbHandler;
+        this.portServer = portServer;
+        this.hostnameServer = hostnameServer;
         this.node = node;
     }
 
@@ -122,8 +126,8 @@ public class GossipProcessorImpl implements GossipProcessor {
     private void sendOwnIPAddress () {
         PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
         pubkeyIPObject.pubkey = node.pubKeyServer.getPubKey();
-        pubkeyIPObject.port = 9666; //TODO...
-        pubkeyIPObject.IP = "127.0.0.1"; //TODO...
+        pubkeyIPObject.port = this.portServer;
+        pubkeyIPObject.IP = this.hostnameServer;
         pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(node.pubKeyServer);
 

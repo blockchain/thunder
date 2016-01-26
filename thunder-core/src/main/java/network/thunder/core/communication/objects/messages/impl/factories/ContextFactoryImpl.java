@@ -1,5 +1,6 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
+import network.thunder.core.communication.nio.ConnectionManager;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
@@ -34,6 +35,7 @@ public class ContextFactoryImpl implements ContextFactory {
     SynchronizationHelper syncHelper;
     GossipSubject gossipSubject;
     WalletHelper walletHelper;
+    ConnectionManager connectionManager;
 
     public ContextFactoryImpl () {
         Wallet wallet = new Wallet(Context.get());
@@ -80,7 +82,7 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public GossipProcessor getGossipProcessor (Node node) {
         GossipMessageFactory messageFactory = new GossipMessageFactoryImpl();
-        return new GossipProcessorImpl(messageFactory, gossipSubject, dbHandler, node);
+        return new GossipProcessorImpl(messageFactory, gossipSubject, dbHandler, connectionManager.getPort(), connectionManager.getHostname(), node);
     }
 
     @Override
