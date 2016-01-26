@@ -86,7 +86,7 @@ public class LNPaymentHandlerTest {
     @Test
     public void fullExchangeWithNoDisturbanceWithinTimeframe () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         processor1.makePayment(getMockPaymentData(), null);
-        Thread.sleep(10);
+        Thread.sleep(200);
 
         exchangeMessages(channel1, channel2, LNPaymentAMessage.class);
         exchangeMessages(channel2, channel1, LNPaymentBMessage.class);
@@ -102,7 +102,7 @@ public class LNPaymentHandlerTest {
     @Test
     public void exchangeWithDelayShouldRestart () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         processor1.makePayment(getMockPaymentData(), null);
-        Thread.sleep(10);
+        Thread.sleep(200);
 
         channel2.writeInbound(channel1.readOutbound());
         channel1.writeInbound(channel2.readOutbound());
@@ -120,7 +120,7 @@ public class LNPaymentHandlerTest {
     @Test
     public void exchangeWithOtherPartyStartingOwnExchange () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         processor1.makePayment(getMockPaymentData(), null);
-        Thread.sleep(10);
+        Thread.sleep(200);
 
         exchangeMessages(channel1, channel2, LNPaymentAMessage.class);
         exchangeMessages(channel2, channel1, LNPaymentBMessage.class);
@@ -131,11 +131,11 @@ public class LNPaymentHandlerTest {
         assertThat(message, instanceOf(LNPaymentDMessage.class));
 
         System.out.println("abort..");
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         processor2.makePayment(getMockPaymentData(), null);
         processor2.abortCurrentExchange();
-        Thread.sleep(10);
+        Thread.sleep(200);
 
         exchangeMessages(channel2, channel1, LNPaymentAMessage.class);
         exchangeMessages(channel1, channel2, LNPaymentBMessage.class);
@@ -150,7 +150,7 @@ public class LNPaymentHandlerTest {
 
         processor1.makePayment(getMockPaymentData(), null);
         processor2.makePayment(getMockPaymentData(), null);
-        Thread.sleep(10);
+        Thread.sleep(200);
 
         LNPaymentAMessage message1 = (LNPaymentAMessage) channel1.readOutbound();
         assertThat(message1, instanceOf(LNPaymentAMessage.class));
@@ -176,7 +176,7 @@ public class LNPaymentHandlerTest {
         exchangeMessages(channel1, channel2, LNPaymentDMessage.class);
         exchangeMessages(channel2, channel1, LNPaymentDMessage.class);
 
-        Thread.sleep(100);
+        Thread.sleep(200);
 
         exchangeMessages(channel2, channel1, LNPaymentAMessage.class);
         exchangeMessages(channel1, channel2, LNPaymentBMessage.class);
