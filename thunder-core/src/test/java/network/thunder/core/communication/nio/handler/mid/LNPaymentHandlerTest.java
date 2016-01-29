@@ -135,7 +135,7 @@ public class LNPaymentHandlerTest {
 
         processor2.makePayment(getMockPaymentData(), null);
         processor2.abortCurrentExchange();
-        Thread.sleep(200);
+        Thread.sleep(500);
 
         exchangeMessages(channel2, channel1, LNPaymentAMessage.class);
         exchangeMessages(channel1, channel2, LNPaymentBMessage.class);

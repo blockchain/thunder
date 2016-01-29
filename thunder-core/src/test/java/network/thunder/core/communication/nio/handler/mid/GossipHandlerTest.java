@@ -99,15 +99,15 @@ public class GossipHandlerTest {
         messageFactory = new GossipMessageFactoryImpl();
         messageFactory = new GossipMessageFactoryImpl();
 
-        gossipProcessor12 = new GossipProcessorImpl(messageFactory, subject1, dbHandler1, 0, "", node1);
+        gossipProcessor12 = new GossipProcessorImpl(messageFactory, subject1, dbHandler1, node1);
 
-        gossipProcessor21 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, 0, "", node2);
-        gossipProcessor23 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, 0, "", node2);
+        gossipProcessor21 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
+        gossipProcessor23 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
 
-        gossipProcessor32 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, 0, "", node3);
-        gossipProcessor34 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, 0, "", node3);
+        gossipProcessor32 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
+        gossipProcessor34 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
 
-        gossipProcessor43 = new GossipProcessorImpl(messageFactory, subject4, dbHandler4, 0, "", node4);
+        gossipProcessor43 = new GossipProcessorImpl(messageFactory, subject4, dbHandler4, node4);
 
         channel12 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor12, "Gossip12"));
 
