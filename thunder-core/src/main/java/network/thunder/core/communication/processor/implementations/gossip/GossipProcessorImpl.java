@@ -17,6 +17,7 @@ import network.thunder.core.mesh.Node;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 public class GossipProcessorImpl extends GossipProcessor {
 
@@ -57,6 +58,7 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
+        this.randomNumber = new Random().nextInt();
         this.messageExecutor = messageExecutor;
         subject.registerObserver(this);
 
