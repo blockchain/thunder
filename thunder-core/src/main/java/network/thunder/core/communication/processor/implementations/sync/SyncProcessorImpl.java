@@ -2,11 +2,11 @@ package network.thunder.core.communication.processor.implementations.sync;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncSendMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.sync.Sync;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
 import network.thunder.core.mesh.Node;
 
@@ -55,7 +55,7 @@ public class SyncProcessorImpl extends SyncProcessor {
 
     @Override
     public void onOutboundMessage (Message message) {
-        //TODO: Maybe change the handler to be duplex and handle the passthrough here?
+        messageExecutor.sendMessageUpwards(message);
     }
 
     public boolean shouldSync () {
