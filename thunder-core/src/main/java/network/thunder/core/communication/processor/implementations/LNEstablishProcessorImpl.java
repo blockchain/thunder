@@ -50,7 +50,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     @Override
     public void onOutboundMessage (Message message) {
-
+        messageExecutor.sendMessageDownwards(message);
     }
 
     @Override

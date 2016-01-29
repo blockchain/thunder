@@ -53,7 +53,7 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     @Override
     public void onOutboundMessage (Message message) {
-
+        this.messageExecutor.sendMessageUpwards(message);
     }
 
     @Override

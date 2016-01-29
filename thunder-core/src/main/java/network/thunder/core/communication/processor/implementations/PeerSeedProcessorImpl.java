@@ -43,7 +43,7 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     @Override
     public void onOutboundMessage (Message message) {
-        messageExecutor.sendMessageDownwards(message);
+        messageExecutor.sendMessageUpwards(message);
     }
 
     @Override
