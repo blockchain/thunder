@@ -23,8 +23,6 @@ public class GossipProcessorImpl extends GossipProcessor {
     GossipMessageFactory messageFactory;
     GossipSubject subject;
     DBHandler dbHandler;
-    int portServer;
-    String hostnameServer;
     Node node;
 
     MessageExecutor messageExecutor;
@@ -32,13 +30,13 @@ public class GossipProcessorImpl extends GossipProcessor {
     List<P2PDataObject> objectList = new ArrayList<>();
     List<P2PDataObject> objectListTemp = new ArrayList<>();
 
-    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, int portServer, String hostnameServer, Node
+    int randomNumber;
+
+    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, Node
             node) {
         this.messageFactory = messageFactory;
         this.subject = subject;
         this.dbHandler = dbHandler;
-        this.portServer = portServer;
-        this.hostnameServer = hostnameServer;
         this.node = node;
     }
 
@@ -126,9 +124,9 @@ public class GossipProcessorImpl extends GossipProcessor {
     private void sendOwnIPAddress () {
         PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
         pubkeyIPObject.pubkey = node.pubKeyServer.getPubKey();
-        pubkeyIPObject.port = this.portServer;
-        pubkeyIPObject.IP = this.hostnameServer;
-        pubkeyIPObject.timestamp = Tools.currentTime();
+        pubkeyIPObject.port = node.portServer;
+        pubkeyIPObject.IP = node.hostServer;
+        pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
         pubkeyIPObject.sign(node.pubKeyServer);
 
         List<P2PDataObject> ipAddresses = new ArrayList<>();

@@ -1,6 +1,5 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
-import network.thunder.core.communication.nio.ConnectionManager;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
@@ -25,7 +24,6 @@ import network.thunder.core.communication.processor.interfaces.lnpayment.LNPayme
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.mesh.Node;
-import org.bitcoinj.core.Context;
 import org.bitcoinj.core.Wallet;
 
 /**
@@ -85,7 +83,7 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public GossipProcessor getGossipProcessor (Node node) {
         GossipMessageFactory messageFactory = new GossipMessageFactoryImpl();
-        return new GossipProcessorImpl(messageFactory, gossipSubject, dbHandler, connectionManager.getPort(), connectionManager.getHostname(), node);
+        return new GossipProcessorImpl(messageFactory, gossipSubject, dbHandler, node);
     }
 
     @Override
