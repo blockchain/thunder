@@ -59,7 +59,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         this.messageExecutor = messageExecutor;
-        if (node.isServer) {
+        if (!node.isServer) {
             sendEstablishMessageA();
         }
     }
