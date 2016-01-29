@@ -18,19 +18,15 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
     Node node;
 
-    public ChannelInit (ContextFactory contextFactory) {
-        this.node = new Node();
-        this.node.isServer = true;
-        this.contextFactory = contextFactory;
-    }
-
     public ChannelInit (ContextFactory contextFactory, Node node) {
+        this.node = new Node(node);
         this.contextFactory = contextFactory;
-        this.node = node;
     }
 
     @Override
     protected void initChannel (SocketChannel ch) throws Exception {
+
+        this.node = new Node(node);
 
 //        ch.pipeline().addLast(new DumpHexHandler());
 

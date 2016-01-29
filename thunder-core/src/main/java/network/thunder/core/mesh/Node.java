@@ -1,7 +1,6 @@
 package network.thunder.core.mesh;
 
 import io.netty.channel.ChannelHandlerContext;
-import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
@@ -13,7 +12,6 @@ import java.util.Arrays;
 
 public class Node {
     public boolean justFetchNewIpAddresses = false;
-    public P2PContext context;
 
     public ECKey pubKeyClient;
     public ECKey pubKeyServer;
@@ -29,6 +27,9 @@ public class Node {
 
     public String host;
     public int port;
+
+    public String hostServer;
+    public int portServer;
 
     private boolean connected = false;
     private ChannelHandlerContext nettyContext;
@@ -56,6 +57,19 @@ public class Node {
     public Node (byte[] pubkey) {
         this.pubkey = pubkey;
         init();
+    }
+
+    public Node (Node node) {
+        init();
+        this.port = node.port;
+        this.portServer = node.portServer;
+        this.host = node.host;
+        this.hostServer = node.hostServer;
+        this.pubKeyServer = node.pubKeyServer;
+        this.pubKeyClient = node.pubKeyClient;
+        this.isServer = node.isServer;
+        this.intent = node.intent;
+        this.name = node.name;
     }
 
     public Node () {

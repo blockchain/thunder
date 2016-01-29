@@ -23,6 +23,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import network.thunder.core.communication.nio.handler.ChannelInit;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
+import network.thunder.core.mesh.Node;
 
 /**
  */
@@ -38,20 +39,18 @@ public final class P2PServer {
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void startServer (int port) throws Exception {
+    public void startServer (Node node, int port) throws Exception {
+
+        node.isServer = true;
 
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);
         EventLoopGroup workerGroup = new NioEventLoopGroup();
 
-        try {
-            ServerBootstrap b = new ServerBootstrap();
-            b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(contextFactory));
+        ServerBootstrap b = new ServerBootstrap();
+        b.group(bossGroup, workerGroup)
+                .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(contextFactory, node));
 
-            b.bind(port).sync().channel().closeFuture().sync();
-        } finally {
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
-        }
+        System.out.println(b.bind(port).sync().channel());
+
     }
 }

@@ -70,4 +70,27 @@ public final class P2PClient {
         }).start();
 
     }
+
+    public void connectBlocking(Node node) {
+        System.out.println("Connect to " + node.getHost() + ":" + node.getPort());
+
+        EventLoopGroup group = new NioEventLoopGroup();
+        try {
+            Bootstrap b = new Bootstrap();
+            b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
+
+            // Start the connection attempt.
+            Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
+            node.setConnected(ch.isOpen());
+            ch.closeFuture().sync();
+
+            System.out.println("Connection to "+node.port+" closed..");
+
+        } catch (Exception e) {
+            //Not able to connect?
+
+            e.printStackTrace();
+        }
+
+    }
 }
