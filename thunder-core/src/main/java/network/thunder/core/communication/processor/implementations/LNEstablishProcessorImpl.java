@@ -144,11 +144,11 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.setAmountClient(getAmountForNewChannel());
 
         //TODO: Change base key selection method (maybe completely random?)
-        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 2)));
-        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 4)));
-        channel.setMasterPrivateKeyServer(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 6));
-        byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 8));
-        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.context.nodeKey.getPrivKeyBytes(), 10));
+        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 2)));
+        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 4)));
+        channel.setMasterPrivateKeyServer(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 6));
+        byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 8));
+        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 10));
         channel.setAnchorSecretServer(secretFE);
         channel.setAnchorSecretHashServer(Tools.hashSecret(secretFE));
         channel.setAnchorRevocationServer(revocation);
