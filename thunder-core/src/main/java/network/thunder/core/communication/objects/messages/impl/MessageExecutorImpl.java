@@ -31,13 +31,11 @@ public class MessageExecutorImpl implements MessageExecutor {
 
     @Override
     public void sendMessageUpwards (Message message) {
-        System.out.println(layerName + " O: " + message);
         context.writeAndFlush(message);
     }
 
     @Override
     public void sendMessageDownwards (Message message) {
-//        System.out.println("I: " + message);
         context.fireChannelRead(message);
     }
 

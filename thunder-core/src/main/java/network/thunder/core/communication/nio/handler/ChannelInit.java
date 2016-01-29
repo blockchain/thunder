@@ -52,13 +52,8 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         Processor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
 
-        Processor syncProcessor = contextFactory.getSyncProcessor(node);
-        ch.pipeline().addLast(new ProcessorHandler(syncProcessor, "Sync"));
-
         Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));
-
-//        ch.pipeline().addLast(new SyncHandler(isServer, node, context));
 
     }
 }
