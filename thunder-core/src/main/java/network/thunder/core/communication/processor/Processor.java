@@ -6,11 +6,15 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 /**
  * Created by matsjerratsch on 27/11/2015.
  */
-public interface Processor {
-    public void onInboundMessage (Message message);
+public abstract class Processor {
+    public abstract void onInboundMessage (Message message);
 
-    public void onOutboundMessage (Message message);
+    public abstract void onOutboundMessage (Message message);
 
-    public void onLayerActive (MessageExecutor messageExecutor);
+    public abstract void onLayerActive (MessageExecutor messageExecutor);
+
+    public void onLayerClose () {
+        
+    }
 
 }

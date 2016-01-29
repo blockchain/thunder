@@ -14,7 +14,7 @@ import org.bitcoinj.core.ECKey;
 /**
  * Created by matsjerratsch on 29/11/2015.
  */
-public class EncryptionProcessorImpl implements EncryptionProcessor {
+public class EncryptionProcessorImpl extends EncryptionProcessor {
     EncryptionMessageFactory messageFactory;
     MessageEncrypter messageEncrypter;
     Node node;

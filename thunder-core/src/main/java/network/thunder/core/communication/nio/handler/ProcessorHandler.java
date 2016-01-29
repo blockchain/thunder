@@ -64,6 +64,12 @@ public class ProcessorHandler extends ChannelDuplexHandler {
         }
     }
 
+    @Override
+    public void channelUnregistered (ChannelHandlerContext ctx) throws Exception {
+        processor.onLayerClose();
+        super.channelUnregistered(ctx);
+    }
+
     public void checkIfMessage (Object msg) {
         if (msg instanceof Message) {
             return;

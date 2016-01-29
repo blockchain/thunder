@@ -7,16 +7,16 @@ import network.thunder.core.communication.processor.Processor;
 /**
  * Created by matsjerratsch on 08/12/2015.
  */
-public interface LNPaymentProcessor extends Processor {
+public abstract class LNPaymentProcessor extends Processor {
     public final static int TIMEOUT_NEGOTIATION = 5 * 1000;
 
-    public boolean connectsToNodeId (byte[] nodeId);
+    public abstract boolean connectsToNodeId (byte[] nodeId);
 
-    public boolean makePayment (PaymentData paymentData, OnionObject onionObject);
+    public abstract boolean makePayment (PaymentData paymentData, OnionObject onionObject);
 
-    public boolean redeemPayment (PaymentData paymentData);
+    public abstract boolean redeemPayment (PaymentData paymentData);
 
-    public boolean refundPayment (PaymentData paymentData);
+    public abstract boolean refundPayment (PaymentData paymentData);
 
-    public void abortCurrentExchange ();
+    public abstract void abortCurrentExchange ();
 }

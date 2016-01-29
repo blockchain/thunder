@@ -6,7 +6,7 @@ import network.thunder.core.communication.processor.implementations.gossip.NodeO
 /**
  * Created by matsjerratsch on 01/12/2015.
  */
-public interface GossipProcessor extends Processor, NodeObserver {
-    public final static int OBJECT_AMOUNT_TO_SEND = 50;
+public abstract class GossipProcessor extends Processor implements NodeObserver {
+    public final static int OBJECT_AMOUNT_TO_SEND = 5;
 
 }

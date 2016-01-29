@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Created by matsjerratsch on 22/01/2016.
  */
-public class PeerSeedProcessorImpl implements PeerSeedProcessor {
+public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     PeerSeedMessageFactory messageFactory;
     DBHandler dbHandler;

@@ -13,7 +13,7 @@ import org.bitcoinj.core.ECKey;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-public class AuthenticationProcessorImpl implements AuthenticationProcessor {
+public class AuthenticationProcessorImpl extends AuthenticationProcessor {
     AuthenticationMessageFactory messageFactory;
     Node node;
 

@@ -5,5 +5,5 @@ import network.thunder.core.communication.processor.Processor;
 /**
  * Created by matsjerratsch on 30/11/2015.
  */
-public interface SyncProcessor extends Processor {
+public abstract class SyncProcessor extends Processor {
 }

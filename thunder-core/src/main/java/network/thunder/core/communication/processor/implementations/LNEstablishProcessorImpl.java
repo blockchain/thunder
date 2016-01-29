@@ -21,7 +21,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
-public class LNEstablishProcessorImpl implements LNEstablishProcessor {
+public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
 
     WalletHelper walletHelper;

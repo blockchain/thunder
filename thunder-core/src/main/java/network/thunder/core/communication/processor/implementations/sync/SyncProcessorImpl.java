@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * Created by matsjerratsch on 30/11/2015.
  */
-public class SyncProcessorImpl implements SyncProcessor {
+public class SyncProcessorImpl extends SyncProcessor {
     SyncMessageFactory messageFactory;
     Node node;
     SynchronizationHelper syncStructure;

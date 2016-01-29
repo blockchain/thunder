@@ -26,7 +26,7 @@ import static network.thunder.core.communication.processor.implementations.lnpay
 /**
  * Created by matsjerratsch on 04/01/2016.
  */
-public class LNPaymentProcessorImpl implements LNPaymentProcessor {
+public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LNPaymentMessageFactory messageFactory;
     LNPaymentLogic paymentLogic;
     DBHandler dbHandler;
