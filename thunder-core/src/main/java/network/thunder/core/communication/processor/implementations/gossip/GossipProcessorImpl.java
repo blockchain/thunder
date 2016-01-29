@@ -29,6 +29,7 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     List<P2PDataObject> objectList = new ArrayList<>();
     List<P2PDataObject> objectListTemp = new ArrayList<>();
+    boolean firstMessage = true;
 
     int randomNumber;
 
@@ -105,6 +106,10 @@ public class GossipProcessorImpl extends GossipProcessor {
     private void processGossipSendMessage (Message message) {
         GossipSendMessage sendMessage = (GossipSendMessage) message;
         subject.newDataObjects(this, sendMessage.dataObjects);
+        if (firstMessage) {
+            node.port = sendMessage.pubkeyIPList.get(0).port;
+            firstMessage = false;
+        }
     }
 
     private void processGossipGetMessage (Message message) {
