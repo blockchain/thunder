@@ -10,4 +10,9 @@ public class PeerSeedGetMessage implements PeerSeedMessage {
     public void verify () {
 
     }
+
+    @Override
+    public String toString () {
+        return "PeerSeedGetMessage{}";
+    }
 }

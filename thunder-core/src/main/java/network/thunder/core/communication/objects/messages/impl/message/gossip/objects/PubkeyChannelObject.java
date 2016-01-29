@@ -155,19 +155,7 @@ public class PubkeyChannelObject extends P2PDataObject {
 
     @Override
     public String toString () {
-        return "PubkeyChannelObject{" +
-            "secretAHash=" + Arrays.toString(secretAHash) +
-            ", secretBHash=" + Arrays.toString(secretBHash) +
-            ", pubkeyB=" + Arrays.toString(pubkeyB) +
-            ", pubkeyB1=" + Arrays.toString(pubkeyB1) +
-            ", pubkeyB2=" + Arrays.toString(pubkeyB2) +
-            ", pubkeyA=" + Arrays.toString(pubkeyA) +
-            ", pubkeyA1=" + Arrays.toString(pubkeyA1) +
-            ", pubkeyA2=" + Arrays.toString(pubkeyA2) +
-            ", txidAnchor=" + Arrays.toString(txidAnchor) +
-            ", signatureA=" + Arrays.toString(signatureA) +
-            ", signatureB=" + Arrays.toString(signatureB) +
-            '}';
+        return "PubkeyChannelObject{"+Tools.bytesToHex(getHash())+"}";
     }
 
     @Override

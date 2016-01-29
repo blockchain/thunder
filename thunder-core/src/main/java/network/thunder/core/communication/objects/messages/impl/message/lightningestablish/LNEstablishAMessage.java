@@ -31,4 +31,12 @@ public class LNEstablishAMessage implements LNEstablish {
         Preconditions.checkNotNull(secretHashFastEscape);
         Preconditions.checkNotNull(revocationHash);
     }
+
+    @Override
+    public String toString () {
+        return "LNEstablishAMessage{" +
+                "serverAmount=" + serverAmount +
+                ", clientAmount=" + clientAmount +
+                '}';
+    }
 }

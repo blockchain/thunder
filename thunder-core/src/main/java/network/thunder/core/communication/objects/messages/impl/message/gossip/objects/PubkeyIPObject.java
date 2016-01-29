@@ -10,7 +10,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -134,5 +136,13 @@ public class PubkeyIPObject extends P2PDataObject {
 
     public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
         CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
+    }
+    @Override
+    public String toString () {
+        return "PubkeyIPObject{" +
+                "IP='" + IP + '\'' +
+                ", port=" + port +
+                ", timestamp=" + timestamp +
+                '}';
     }
 }

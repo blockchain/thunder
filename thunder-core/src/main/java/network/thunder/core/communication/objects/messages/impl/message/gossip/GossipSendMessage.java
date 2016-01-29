@@ -51,4 +51,13 @@ public class GossipSendMessage implements Gossip {
         Preconditions.checkNotNull(pubkeyChannelList);
         Preconditions.checkNotNull(channelStatusList);
     }
+
+    @Override
+    public String toString () {
+        return "GossipSendMessage{" +
+                "pubkeyIPList=" + pubkeyIPList +
+                ", pubkeyChannelList=" + pubkeyChannelList +
+                ", channelStatusList=" + channelStatusList +
+                '}';
+    }
 }

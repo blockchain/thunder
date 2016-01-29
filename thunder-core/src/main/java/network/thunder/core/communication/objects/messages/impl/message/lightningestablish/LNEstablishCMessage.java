@@ -3,6 +3,8 @@ package network.thunder.core.communication.objects.messages.impl.message.lightni
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 
+import java.util.Arrays;
+
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
@@ -22,5 +24,12 @@ public class LNEstablishCMessage implements LNEstablish {
         Preconditions.checkNotNull(signatureEscape);
         Preconditions.checkNotNull(signatureFastEscape);
         Preconditions.checkNotNull(anchorHash);
+    }
+
+    @Override
+    public String toString () {
+        return "LNEstablishCMessage{" +
+                "anchorHash=" + Arrays.toString(anchorHash) +
+                '}';
     }
 }

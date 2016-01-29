@@ -20,4 +20,11 @@ public class PeerSeedSendMessage implements PeerSeedMessage {
     public void verify () {
 
     }
+
+    @Override
+    public String toString () {
+        return "PeerSeedSendMessage{" +
+                "ipObjectList=" + ipObjectList +
+                '}';
+    }
 }

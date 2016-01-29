@@ -20,4 +20,9 @@ public class LNEstablishDMessage implements LNEstablish {
         Preconditions.checkNotNull(signatureEscape);
         Preconditions.checkNotNull(signatureFastEscape);
     }
+
+    @Override
+    public String toString () {
+        return "LNEstablishDMessage{}";
+    }
 }
