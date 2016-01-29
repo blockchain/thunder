@@ -2,6 +2,7 @@ package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
@@ -123,6 +124,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         }
 
         sendEstablishMessageD();
+
         PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
         broadcastHelper.broadcastNewObject(channelObject);
     }
@@ -133,11 +135,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
         channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
 
+        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
+        broadcastHelper.broadcastNewObject(channelObject);
+
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
         }
-        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
-        broadcastHelper.broadcastNewObject(channelObject);
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
     }
