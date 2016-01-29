@@ -67,4 +67,9 @@ public class DBHandlerMock implements DBHandler {
     public Channel getChannel (Node node) {
         return null;
     }
+
+    @Override
+    public List<PubkeyIPObject> getIPObjectsWithActiveChannel () {
+        return null;
+    }
 }

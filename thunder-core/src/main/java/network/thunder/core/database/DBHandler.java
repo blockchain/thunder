@@ -33,4 +33,6 @@ public interface DBHandler {
     boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
 
     Channel getChannel (Node node);
+
+    List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
 }
