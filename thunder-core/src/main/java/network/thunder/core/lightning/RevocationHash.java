@@ -42,6 +42,13 @@ public class RevocationHash {
         this.secretHash = secretHash;
     }
 
+    public RevocationHash (int depth, int child, byte[] secret) {
+        this.depth = depth;
+        this.child = child;
+        this.secret = secret;
+        this.secretHash = Tools.hashSecret(secret);
+    }
+
     public RevocationHash (ResultSet set) throws SQLException {
         this.secretHash = set.getBytes("secretHash");
         this.secret = set.getBytes("secret");
