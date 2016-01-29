@@ -46,14 +46,14 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         Processor authenticationProcessor = contextFactory.getAuthenticationProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(authenticationProcessor, "Authentication"));
 
+        Processor gossipProcessor = contextFactory.getGossipProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(gossipProcessor, "Gossip"));
+
         Processor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
 
         Processor syncProcessor = contextFactory.getSyncProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(syncProcessor, "Sync"));
-
-        Processor gossipProcessor = contextFactory.getGossipProcessor(node);
-        ch.pipeline().addLast(new ProcessorHandler(gossipProcessor, "Gossip"));
 
         Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));
