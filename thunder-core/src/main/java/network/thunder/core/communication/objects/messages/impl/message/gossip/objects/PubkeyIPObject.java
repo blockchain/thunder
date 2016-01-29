@@ -137,6 +137,31 @@ public class PubkeyIPObject extends P2PDataObject {
     public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
         CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
     }
+
+    public static List<PubkeyIPObject> removeFromListByPubkey (List<PubkeyIPObject> fullList, List<PubkeyIPObject> toRemove) {
+        List<PubkeyIPObject> temp = new ArrayList<>();
+        for (PubkeyIPObject full : fullList) {
+            for (PubkeyIPObject remove : toRemove) {
+                if (Arrays.equals(full.pubkey, remove.pubkey)) {
+                    temp.add(full);
+                }
+            }
+        }
+        fullList.removeAll(temp);
+        return fullList;
+    }
+
+    public static List<PubkeyIPObject> removeFromListByPubkey (List<PubkeyIPObject> fullList, byte[] pubkey) {
+        List<PubkeyIPObject> temp = new ArrayList<>();
+        for (PubkeyIPObject full : fullList) {
+            if (Arrays.equals(full.pubkey, pubkey)) {
+                temp.add(full);
+            }
+        }
+        fullList.removeAll(temp);
+        return fullList;
+    }
+
     @Override
     public String toString () {
         return "PubkeyIPObject{" +
