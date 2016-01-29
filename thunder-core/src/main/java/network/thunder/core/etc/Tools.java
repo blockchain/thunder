@@ -34,6 +34,7 @@ import org.bitcoinj.script.ScriptBuilder;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.*;
+import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -114,6 +115,24 @@ public class Tools {
             a = 1;
         }
         return a;
+    }
+
+    public static <T extends Object> T getRandomItemFromList (List<T> list) {
+        System.out.println(list.size());
+        int randomNumber = new Random().nextInt(list.size());
+        return list.get(randomNumber);
+    }
+
+    public static <T> List<T> getRandomSubList (List<T> input, int subsetSize) {
+        Random r = new Random();
+        int inputSize = input.size();
+        for (int i = 0; i < subsetSize; i++) {
+            int indexToSwap = i + r.nextInt(inputSize - i);
+            T temp = input.get(i);
+            input.set(i, input.get(indexToSwap));
+            input.set(indexToSwap, temp);
+        }
+        return input.subList(0, subsetSize);
     }
 
     /**
@@ -285,6 +304,12 @@ public class Tools {
      */
     public static int currentTime () {
         return ((int) (System.currentTimeMillis() / 1000));
+    }
+
+    public static int currentTimeFlooredToCurrentDay () {
+        int time = currentTime();
+        int diff = time % 86400;
+        return time - diff;
     }
     //		try {
     //			MimeMessage message = new MimeMessage(session);
@@ -474,6 +499,14 @@ public class Tools {
         Random r = new Random();
         r.nextBytes(b);
         return b;
+    }
+
+    public static List<byte[]> byteBufferListToByteArrayList (List<ByteBuffer> byteBufferList) {
+        List<byte[]> byteArrayList = new ArrayList<>(byteBufferList.size());
+        for (ByteBuffer b : byteBufferList) {
+            byteArrayList.add(b.array());
+        }
+        return byteArrayList;
     }
 
     public static byte[] copyRandomByteInByteArray (byte[] dest, int offset, int length) {
