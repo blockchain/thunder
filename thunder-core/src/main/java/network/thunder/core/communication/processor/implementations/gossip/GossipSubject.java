@@ -12,11 +12,7 @@ public interface GossipSubject {
 
     void removeObserver (NodeObserver observer);
 
-//    void notifyObserver ();
+    void receivedNewObjects (NodeObserver nodeObserver, List<P2PDataObject> dataObjects);
 
-    void newDataObjects (NodeObserver nodeObserver, List<P2PDataObject> dataObjects);
-
-    List<P2PDataObject> getUpdates ();
-
-    boolean knowsObjectAlready (byte[] hash);
+    boolean parseInv (NodeObserver nodeObservers, byte[] hash);
 }

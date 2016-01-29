@@ -1,6 +1,7 @@
 package network.thunder.core.communication.processor.implementations.gossip;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.database.DBHandler;
 
 import java.nio.ByteBuffer;
@@ -15,10 +16,8 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
 
     List<NodeObserver> observerList = new ArrayList<>();
 
-    Map<NodeObserver, List<P2PDataObject>> dataObjectMap = new HashMap<>();
+    Map<NodeObserver, List<ByteBuffer>> dataObjectMap = new HashMap<>();
     Set<ByteBuffer> objectsKnownAlready = new HashSet<>();
-
-    int objectsInsertedSinceLastBroadcast = 0;
 
     public GossipSubjectImpl (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -37,7 +36,7 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     }
 
     @Override
-    public void newDataObjects (NodeObserver nodeObserver, List<P2PDataObject> dataObjects) {
+    public void receivedNewObjects (NodeObserver nodeObserver, List<P2PDataObject> dataObjects) {
         List<P2PDataObject> objectsToInsertIntoDatabase = new ArrayList<>();
         for (P2PDataObject dataObject : dataObjects) {
             boolean newEntry = insertNewDataObject(nodeObserver, dataObject);
@@ -50,8 +49,10 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     }
 
     @Override
-    public List<P2PDataObject> getUpdates () {
-        return null;
+    public boolean parseInv (NodeObserver nodeObserver, byte[] hash) {
+        ByteBuffer b = ByteBuffer.wrap(hash);
+        dataObjectMap.get(nodeObserver).remove(b);
+        return objectsKnownAlready.contains(ByteBuffer.wrap(hash));
     }
 
     //Brand new object that should be broadcasted to all peers..
@@ -68,33 +69,30 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     private boolean insertNewDataObject (NodeObserver nodeObserver, P2PDataObject dataObject) {
         if (objectsKnownAlready.add(ByteBuffer.wrap(dataObject.getHash()))) {
             addNewDataObjectToMap(nodeObserver, dataObject);
-            objectsInsertedSinceLastBroadcast++;
             return true;
         }
         return false;
     }
 
     private void broadcast () {
-        if (shouldBroadcastCurrentData()) {
-            updateObservers();
-        }
-    }
-
-    private void updateObservers () {
         for (NodeObserver observer : observerList) {
-            List<P2PDataObject> objectList = dataObjectMap.get(observer);
-            observer.update(objectList);
-        }
-    }
+            List<ByteBuffer> objectList = dataObjectMap.get(observer);
 
-    private boolean shouldBroadcastCurrentData () {
-        return objectsInsertedSinceLastBroadcast > 10;
+            if (objectList.size() > GossipProcessor.OBJECT_AMOUNT_TO_SEND) {
+                observer.update(new ArrayList<>(objectList));
+                objectList.clear();
+            }
+        }
     }
 
     private void addNewDataObjectToMap (NodeObserver nodeObserver, P2PDataObject dataObject) {
         for (NodeObserver nodeObserver1 : observerList) {
-            if (nodeObserver != nodeObserver1) {
-                dataObjectMap.get(nodeObserver1).add(dataObject);
+            if (nodeObserver == null || nodeObserver != nodeObserver1) {
+                List<ByteBuffer> bufferList = dataObjectMap.get(nodeObserver1);
+                ByteBuffer buffer = ByteBuffer.wrap(dataObject.getHash());
+                if (!bufferList.contains(buffer)) {
+                    bufferList.add(buffer);
+                }
             }
         }
     }

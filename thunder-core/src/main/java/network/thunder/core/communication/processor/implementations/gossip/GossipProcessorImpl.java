@@ -14,8 +14,8 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
@@ -28,8 +28,6 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     MessageExecutor messageExecutor;
 
-    List<P2PDataObject> objectList = new ArrayList<>();
-    List<P2PDataObject> objectListTemp = new ArrayList<>();
     boolean firstMessage = true;
 
     int randomNumber;
@@ -63,6 +61,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         subject.registerObserver(this);
 
         sendOwnIPAddress();
+        messageExecutor.sendNextLayerActive();
     }
 
     @Override
@@ -71,13 +70,8 @@ public class GossipProcessorImpl extends GossipProcessor {
     }
 
     @Override
-    public void update (List<P2PDataObject> newObjectList) {
-        for (P2PDataObject object : newObjectList) {
-            if (!objectList.contains(object)) {
-                objectList.add(object);
-            }
-        }
-        sendInvMessage();
+    public void update (List<ByteBuffer> newObjectList) {
+        sendInvMessage(newObjectList);
     }
 
     private void consumeMessage (Message message) {
@@ -96,7 +90,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         GossipInvMessage invMessage = (GossipInvMessage) message;
         List<byte[]> objectsToGet = new ArrayList<>();
         for (byte[] hash : invMessage.inventoryList) {
-            if (!subject.knowsObjectAlready(hash)) {
+            if (!subject.parseInv(this, hash)) {
                 objectsToGet.add(hash);
             }
         }
@@ -107,7 +101,8 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     private void processGossipSendMessage (Message message) {
         GossipSendMessage sendMessage = (GossipSendMessage) message;
-        subject.newDataObjects(this, sendMessage.dataObjects);
+        subject.receivedNewObjects(this, sendMessage.getDataList());
+
         if (firstMessage) {
             node.port = sendMessage.pubkeyIPList.get(0).port;
             firstMessage = false;
@@ -119,13 +114,9 @@ public class GossipProcessorImpl extends GossipProcessor {
         sendGossipSendMessage(getMessage.inventoryList);
     }
 
-    private void sendInvMessage () {
-        if (objectList.size() > OBJECT_AMOUNT_TO_SEND) {
-            List<byte[]> hashList = translateP2PDataObjectListToHashList(objectList);
-            Message invMessage = messageFactory.getGossipInvMessage(hashList);
-            messageExecutor.sendMessageUpwards(invMessage);
-            swapLists();
-        }
+    private synchronized void sendInvMessage (List<ByteBuffer> invList) {
+        Message invMessage = messageFactory.getGossipInvMessage(Tools.byteBufferListToByteArrayList(invList));
+        messageExecutor.sendMessageUpwards(invMessage);
     }
 
     private void sendOwnIPAddress () {
@@ -140,6 +131,9 @@ public class GossipProcessorImpl extends GossipProcessor {
         ipAddresses.add(pubkeyIPObject);
         Message gossipSendMessage = messageFactory.getGossipSendMessage(ipAddresses);
         messageExecutor.sendMessageUpwards(gossipSendMessage);
+
+        //Hack to register the object we sent out here..
+        subject.receivedNewObjects(this, ipAddresses);
 
     }
 
@@ -163,32 +157,13 @@ public class GossipProcessorImpl extends GossipProcessor {
     }
 
     private void addP2PObjectToList (byte[] hash, List<P2PDataObject> objectListToAdd) {
-        for (P2PDataObject object : objectList) {
-            if (Arrays.equals(object.getHash(), hash)) {
-                objectListToAdd.add(object);
-                return;
-            }
-        }
-
-        for (P2PDataObject object : objectListTemp) {
-            if (Arrays.equals(object.getHash(), hash)) {
-                objectListToAdd.add(object);
-                return;
-            }
-        }
+        //TODO optimize using a Cache somewhere..
 
         P2PDataObject object = dbHandler.getP2PDataObjectByHash(hash);
         if (object != null) {
             objectListToAdd.add(object);
-            return;
         }
 
-    }
-
-    private void swapLists () {
-        objectListTemp.clear();
-        objectListTemp.addAll(objectList);
-        objectList.clear();
     }
 
     private List<byte[]> translateP2PDataObjectListToHashList (List<P2PDataObject> objectList) {
@@ -199,4 +174,23 @@ public class GossipProcessorImpl extends GossipProcessor {
         return hashList;
     }
 
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GossipProcessorImpl that = (GossipProcessorImpl) o;
+
+        return randomNumber == that.randomNumber;
+
+    }
+
+    @Override
+    public int hashCode () {
+        return randomNumber;
+    }
 }
