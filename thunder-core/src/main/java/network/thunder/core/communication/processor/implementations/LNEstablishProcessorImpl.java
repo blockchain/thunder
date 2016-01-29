@@ -9,6 +9,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
@@ -26,6 +27,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     WalletHelper walletHelper;
     LNEstablishFactory messageFactory;
+    BroadcastHelper broadcastHelper;
     Node node;
 
     MessageExecutor messageExecutor;
@@ -33,9 +35,10 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     Channel channel;
     int status = 0;
 
-    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishFactory messageFactory, Node node) {
+    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishFactory messageFactory, BroadcastHelper broadcastHelper, Node node) {
         this.walletHelper = walletHelper;
         this.messageFactory = messageFactory;
+        this.broadcastHelper = broadcastHelper;
         this.node = node;
     }
 
@@ -120,6 +123,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         }
 
         sendEstablishMessageD();
+        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
+        broadcastHelper.broadcastNewObject(channelObject);
     }
 
     private void processMessageD (Message message) {
@@ -131,6 +136,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
         }
+        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
+        broadcastHelper.broadcastNewObject(channelObject);
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
     }

@@ -12,6 +12,7 @@ import network.thunder.core.communication.processor.implementations.Authenticati
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.communication.processor.implementations.PeerSeedProcessorImpl;
+import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.implementations.gossip.GossipProcessorImpl;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubject;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubjectImpl;
@@ -34,15 +35,17 @@ public class ContextFactoryImpl implements ContextFactory {
     DBHandler dbHandler;
     SynchronizationHelper syncHelper;
     GossipSubject gossipSubject;
+    BroadcastHelper broadcastHelper;
     WalletHelper walletHelper;
-    ConnectionManager connectionManager;
 
-    public ContextFactoryImpl () {
-        Wallet wallet = new Wallet(Context.get());
-
+    public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet) {
+        this.dbHandler = dbHandler;
         this.walletHelper = new WalletHelperImpl(wallet);
 
-        this.gossipSubject = new GossipSubjectImpl(dbHandler);
+        GossipSubjectImpl gossipSubject = new GossipSubjectImpl(dbHandler);
+        this.gossipSubject = gossipSubject;
+        this.broadcastHelper = gossipSubject;
+
         this.syncHelper = new SynchronizationHelper(dbHandler);
     }
 
@@ -88,7 +91,7 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public LNEstablishProcessor getLNEstablishProcessor (Node node) {
         LNEstablishFactory messageFactory = new LNEstablishMessageFactoryImpl();
-        return new LNEstablishProcessorImpl(walletHelper, messageFactory, node);
+        return new LNEstablishProcessorImpl(walletHelper, messageFactory, broadcastHelper, node);
     }
 
     @Override

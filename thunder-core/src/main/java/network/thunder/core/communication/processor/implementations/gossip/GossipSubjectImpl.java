@@ -9,7 +9,7 @@ import java.util.*;
 /**
  * Created by matsjerratsch on 01/12/2015.
  */
-public class GossipSubjectImpl implements GossipSubject {
+public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
 
     DBHandler dbHandler;
 
@@ -54,9 +54,15 @@ public class GossipSubjectImpl implements GossipSubject {
         return null;
     }
 
+    //Brand new object that should be broadcasted to all peers..
+    //Part of BroadcastHelper
     @Override
-    public boolean knowsObjectAlready (byte[] hash) {
-        return objectsKnownAlready.contains(ByteBuffer.wrap(hash));
+    public void broadcastNewObject (P2PDataObject dataObject) {
+        List<P2PDataObject> wrapper = new ArrayList<>();
+        wrapper.add(dataObject);
+        dbHandler.syncDatalist(wrapper);
+        insertNewDataObject(null, dataObject);
+        broadcast();
     }
 
     private boolean insertNewDataObject (NodeObserver nodeObserver, P2PDataObject dataObject) {
