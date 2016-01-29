@@ -65,8 +65,8 @@ public class GossipProcessorImpl extends GossipProcessor {
     }
 
     @Override
-    public void update () {
-        update(subject.getUpdates());
+    public void onLayerClose () {
+        subject.removeObserver(this);
     }
 
     @Override
