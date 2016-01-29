@@ -73,10 +73,10 @@ public class SyncProcessorImpl extends SyncProcessor {
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
         if (node.justFetchNewIpAddresses) {
-            syncStructure.newIPList(syncMessage.dataObjects);
+            syncStructure.newIPList(syncMessage.getDataList());
             messageExecutor.closeConnection();
         } else {
-            syncStructure.newFragment(lastIndex, syncMessage.dataObjects);
+            syncStructure.newFragment(lastIndex, syncMessage.getDataList());
 
             if (!syncStructure.fullySynchronized()) {
                 sendGetNextSyncData();

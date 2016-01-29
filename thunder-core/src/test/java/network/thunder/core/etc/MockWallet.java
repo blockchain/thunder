@@ -32,7 +32,6 @@ public class MockWallet extends Wallet {
             random.nextBytes(h);
 
             ECKey k = new ECKey(new BigInteger(h), null, true);
-            System.out.println(k.toAddress(Constants.getNetwork()));
             keyList.add(k);
 
             if (!USE_REAL_TRANSACTION) {
@@ -50,7 +49,6 @@ public class MockWallet extends Wallet {
         if (USE_REAL_TRANSACTION) {
             Transaction t = new Transaction(Constants.getNetwork(), Tools.hexStringToByteArray
                     ("0100000001c82e9ddb4cd1c54507f9c169fa7a989eb769f96cf5418bedc99f873b9b040fc4010000006a47304402206265f65016c51b7f6f51da74570bec59f7e8b1df00a3ccaf07985b29bb3a731102205baa0bea677aad450e708d3f25016f2ef8bba66f7e8664ea53cc5137e868c7270121036ea96c418eae7c6a1af51eb3c5ddd86abe1f810ee3a66fa10733d3d69b6af19dffffffff02102700000000000017a91494fc79ff226c6eee8b9e96abd5beb4cb0d34427087b06e5c00000000001976a914651dba4d544bdf48be9698eee840a6bb3a49092788ac00000000"));
-            System.out.println(t);
             outputs.add(t.getOutput(1));
         }
     }

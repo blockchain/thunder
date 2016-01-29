@@ -11,8 +11,11 @@ import network.thunder.core.communication.objects.messages.interfaces.message.pe
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.Node;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -60,13 +63,20 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
         }
     }
 
-    public void consumeMessage (PeerSeedMessage message) {
+    private void consumeMessage (PeerSeedMessage message) {
         if (message instanceof PeerSeedGetMessage) {
+
             List<PubkeyIPObject> ipObjects = dbHandler.getIPObjects();
+
+            if (ipObjects.size() > PEERS_TO_SEND) {
+                ipObjects = Tools.getRandomSubList(ipObjects, PEERS_TO_SEND);
+            }
+
             Message response = messageFactory.getPeerSeedSendMessage(ipObjects);
             messageExecutor.sendMessageUpwards(response);
         } else if (message instanceof PeerSeedSendMessage) {
             PeerSeedSendMessage sendMessage = (PeerSeedSendMessage) message;
+            List<PubkeyIPObject> list = removeOurIPFromList(sendMessage.ipObjectList);
             dbHandler.insertIPObjects(P2PDataObject.generaliseList(sendMessage.ipObjectList));
 
             //TODO We might always want to close here, given that we only ever get here if intent = GET_IPS
@@ -74,5 +84,16 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
                 messageExecutor.closeConnection();
             }
         }
+    }
+
+    private List<PubkeyIPObject> removeOurIPFromList (List<PubkeyIPObject> list) {
+        List<PubkeyIPObject> toRemove = new ArrayList<>();
+        for (PubkeyIPObject ip : list) {
+            if (Arrays.equals(ip.pubkey, node.pubKeyServer.getPubKey())) {
+                toRemove.add(ip);
+            }
+        }
+        list.removeAll(toRemove);
+        return list;
     }
 }

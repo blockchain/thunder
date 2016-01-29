@@ -40,7 +40,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             } else {
                 System.out.println(layerName + " I: " + msg);
                 Message message = (Message) msg;
-//                message.verify();
+                message.verify();
                 processor.onInboundMessage(message);
             }
         } catch (Exception e) {
@@ -57,7 +57,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
         try {
             checkIfMessage(msg);
             Message message = (Message) msg;
-//            message.verify();
+            message.verify();
             processor.onOutboundMessage(message);
         } catch (Exception e) {
             e.printStackTrace();

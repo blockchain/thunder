@@ -103,7 +103,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         GossipSendMessage sendMessage = (GossipSendMessage) message;
         subject.receivedNewObjects(this, sendMessage.getDataList());
 
-        if (firstMessage) {
+        if (firstMessage && sendMessage.pubkeyIPList.size() > 0) {
             node.port = sendMessage.pubkeyIPList.get(0).port;
             firstMessage = false;
         }

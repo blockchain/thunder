@@ -22,7 +22,8 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
 
     @Override
     public LNPaymentAMessage getMessageA (Channel channel, ChannelStatus statusTemp) {
-        return new LNPaymentAMessage(statusTemp, getMockRevocationHash());
+        ChannelStatus channelStatus = new ChannelStatus();
+        return new LNPaymentAMessage(channelStatus, getMockRevocationHash());
     }
 
     @Override

@@ -14,7 +14,7 @@ import network.thunder.core.communication.processor.implementations.gossip.Gossi
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubject;
 import network.thunder.core.communication.processor.implementations.gossip.GossipSubjectImpl;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
-import network.thunder.core.etc.SyncDBHandlerMock;
+import network.thunder.core.etc.InMemoryDBHandlerMock;
 import network.thunder.core.mesh.Node;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,10 +39,10 @@ public class GossipHandlerTest {
     Node node3;
     Node node4;
 
-    SyncDBHandlerMock dbHandler1;
-    SyncDBHandlerMock dbHandler2;
-    SyncDBHandlerMock dbHandler3;
-    SyncDBHandlerMock dbHandler4;
+    InMemoryDBHandlerMock dbHandler1;
+    InMemoryDBHandlerMock dbHandler2;
+    InMemoryDBHandlerMock dbHandler3;
+    InMemoryDBHandlerMock dbHandler4;
 
     GossipSubject subject1;
     GossipSubject subject2;
@@ -70,10 +70,7 @@ public class GossipHandlerTest {
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
 
-        node1 = new Node();
-        node2 = new Node();
-        node3 = new Node();
-        node4 = new Node();
+        prepareNodes();
 
         node1.isServer = false;
         node2.isServer = true;
@@ -81,13 +78,13 @@ public class GossipHandlerTest {
         node4.isServer = true;
         node1.name = "Gossip1";
         node2.name = "Gossip2";
-        node2.name = "Gossip3";
-        node2.name = "Gossip4";
+        node3.name = "Gossip3";
+        node4.name = "Gossip4";
 
-        dbHandler1 = new SyncDBHandlerMock();
-        dbHandler2 = new SyncDBHandlerMock();
-        dbHandler3 = new SyncDBHandlerMock();
-        dbHandler4 = new SyncDBHandlerMock();
+        dbHandler1 = new InMemoryDBHandlerMock();
+        dbHandler2 = new InMemoryDBHandlerMock();
+        dbHandler3 = new InMemoryDBHandlerMock();
+        dbHandler4 = new InMemoryDBHandlerMock();
 
         subject1 = new GossipSubjectImpl(dbHandler1);
         subject2 = new GossipSubjectImpl(dbHandler2);
@@ -119,15 +116,7 @@ public class GossipHandlerTest {
 
         channel43 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor43, "Gossip43"));
 
-        channel12.readOutbound();
-
-        channel21.readOutbound();
-        channel23.readOutbound();
-
-        channel32.readOutbound();
-        channel34.readOutbound();
-
-        channel43.readOutbound();
+        clearOutput();
     }
 
     @Test
@@ -194,13 +183,40 @@ public class GossipHandlerTest {
         channel34.writeInbound(channel43.readOutbound());
         channel43.writeInbound(channel34.readOutbound());
 
-        assertTrue(checkListsEqual(dbHandler2.totalList, dataList));
-        assertTrue(checkListsEqual(dbHandler3.totalList, dataList));
-        assertTrue(checkListsEqual(dbHandler4.totalList, dataList));
+        assertTrue(dbHandler2.totalList.containsAll(dataList));
+        assertTrue(dbHandler3.totalList.containsAll(dataList));
+        assertTrue(dbHandler4.totalList.containsAll(dataList));
+    }
+
+    private void clearOutput () {
+        channel12.readOutbound();
+        channel21.readOutbound();
+        channel23.readOutbound();
+        channel32.readOutbound();
+        channel34.readOutbound();
+        channel43.readOutbound();
     }
 
     public boolean checkListsEqual (List list1, List list2) {
         return list1.containsAll(list2) && list2.containsAll(list1);
+    }
+
+    private void prepareNodes () {
+        node1 = new Node();
+        node2 = new Node();
+        node3 = new Node();
+        node4 = new Node();
+
+        prepareNode(node1);
+        prepareNode(node2);
+        prepareNode(node3);
+        prepareNode(node4);
+    }
+
+    private void prepareNode (Node node) {
+        node.init();
+        node.portServer = new Random().nextInt(65555);
+        node.hostServer = "localhost";
     }
 
 }

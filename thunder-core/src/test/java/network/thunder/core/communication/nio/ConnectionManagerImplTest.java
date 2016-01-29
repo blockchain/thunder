@@ -39,7 +39,6 @@ public class ConnectionManagerImplTest {
         connectionSeed.connectionManager.startListening();
 
 //        clients.get(0).connectionManager.startUp();
-
 //        for(int i = 1; i<5; ++i) {
 //
 //            System.out.println("------------------------------------------------------------------------------");
@@ -71,7 +70,7 @@ public class ConnectionManagerImplTest {
 //
 //        clients.get(3).connectionManager.startUp();
 
-        Thread.sleep(100000);
+        Thread.sleep(10000);
     }
 
     private void createSeedConnection () {
