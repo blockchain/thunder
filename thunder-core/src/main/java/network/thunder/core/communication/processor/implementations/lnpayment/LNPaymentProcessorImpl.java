@@ -172,8 +172,13 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
-    public void onOutboundMessage (Message message) {
+    public boolean consumesInboundMessage (Object object) {
+        return (object instanceof LNPayment);
+    }
 
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     @Override

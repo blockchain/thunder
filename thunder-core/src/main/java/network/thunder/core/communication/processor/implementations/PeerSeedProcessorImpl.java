@@ -37,16 +37,17 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (message instanceof PeerSeedMessage) {
-            consumeMessage((PeerSeedMessage) message);
-        } else {
-            messageExecutor.sendMessageDownwards(message);
-        }
+        consumeMessage((PeerSeedMessage) message);
     }
 
     @Override
-    public void onOutboundMessage (Message message) {
-        messageExecutor.sendMessageUpwards(message);
+    public boolean consumesInboundMessage (Object object) {
+        return (object instanceof PeerSeedMessage);
+    }
+
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     @Override

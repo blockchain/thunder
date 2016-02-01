@@ -42,16 +42,17 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (message instanceof Gossip) {
-            consumeMessage(message);
-        } else {
-            messageExecutor.sendMessageDownwards(message);
-        }
+        consumeMessage(message);
     }
 
     @Override
-    public void onOutboundMessage (Message message) {
-        this.messageExecutor.sendMessageUpwards(message);
+    public boolean consumesInboundMessage (Object object) {
+        return object instanceof Gossip;
+    }
+
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     @Override

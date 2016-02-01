@@ -42,20 +42,21 @@ public class SyncProcessorImpl extends SyncProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (message instanceof Sync) {
-            if (message instanceof SyncSendMessage) {
-                processSyncSendMessage(message);
-            } else if (message instanceof SyncGetMessage) {
-                processSyncGetMessage(message);
-            }
-        } else {
-            messageExecutor.sendMessageDownwards(message);
+        if (message instanceof SyncSendMessage) {
+            processSyncSendMessage(message);
+        } else if (message instanceof SyncGetMessage) {
+            processSyncGetMessage(message);
         }
     }
 
     @Override
-    public void onOutboundMessage (Message message) {
-        messageExecutor.sendMessageUpwards(message);
+    public boolean consumesInboundMessage (Object object) {
+        return (object instanceof Sync);
+    }
+
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     public boolean shouldSync () {

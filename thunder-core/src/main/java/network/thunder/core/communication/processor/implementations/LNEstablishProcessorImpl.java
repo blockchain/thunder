@@ -45,16 +45,17 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (message instanceof LNEstablish) {
-            consumeMessage(message);
-        } else {
-            messageExecutor.sendMessageDownwards(message);
-        }
+        consumeMessage(message);
     }
 
     @Override
-    public void onOutboundMessage (Message message) {
-        messageExecutor.sendMessageDownwards(message);
+    public boolean consumesInboundMessage (Object object) {
+        return object instanceof LNEstablish;
+    }
+
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     @Override
