@@ -4,6 +4,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import network.thunder.core.communication.Message;
+import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.MessageExecutorImpl;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 import network.thunder.core.communication.processor.Processor;
@@ -15,6 +16,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
     Processor processor;
     String layerName = "";
+    MessageExecutor messageExecutor;
 
     public ProcessorHandler (Processor processor, String layerName) {
         this.processor = processor;
@@ -25,7 +27,8 @@ public class ProcessorHandler extends ChannelDuplexHandler {
     public void channelActive (final ChannelHandlerContext ctx) {
         try {
             System.out.println("CHANNEL ACTIVE " + layerName);
-            processor.onLayerActive(new MessageExecutorImpl(ctx, layerName));
+            messageExecutor = new MessageExecutorImpl(ctx, layerName);
+            processor.onLayerActive(messageExecutor);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -38,10 +41,15 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             if (msg instanceof FailureMessage) {
                 System.out.println("In Failure: " + ((FailureMessage) msg).getFailure());
             } else {
-                System.out.println(layerName + " I: " + msg);
+
                 Message message = (Message) msg;
                 message.verify();
-                processor.onInboundMessage(message);
+
+                if (processor.consumesInboundMessage(message)) {
+                    processor.onInboundMessage(message);
+                } else {
+                    messageExecutor.sendMessageDownwards(message);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,7 +66,13 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             checkIfMessage(msg);
             Message message = (Message) msg;
             message.verify();
-            processor.onOutboundMessage(message);
+
+            if (processor.consumesOutboundMessage(msg)) {
+                processor.onOutboundMessage(message);
+            } else {
+                messageExecutor.sendMessageUpwards(message);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

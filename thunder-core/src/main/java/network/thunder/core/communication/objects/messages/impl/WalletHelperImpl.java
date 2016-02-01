@@ -72,7 +72,7 @@ public class WalletHelperImpl implements WalletHelper {
             /*
              * Not enough outputs in total to pay for the channel..
              */
-            throw new RuntimeException("Wallet Balance not sufficient"); //TODO
+            throw new RuntimeException("Wallet Balance not sufficient. "+totalInput+"<"+neededAmount); //TODO
         } else {
 
             transaction.addOutput(Coin.valueOf(totalInput - value - Tools.getTransactionFees(2, 2)), wallet.freshReceiveAddress());
@@ -88,7 +88,6 @@ public class WalletHelperImpl implements WalletHelper {
             for (int i = 0; i < outputList.size(); i++) {
                 TransactionOutput o = outputList.get(i);
                 ECKey key = wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160());
-                System.out.println(key.toAddress(Constants.getNetwork()));
                 TransactionSignature sig = Tools.getSignature(transaction, i, o, key);
                 byte[] s = sig.encodeToBitcoin();
                 ScriptBuilder builder = new ScriptBuilder();

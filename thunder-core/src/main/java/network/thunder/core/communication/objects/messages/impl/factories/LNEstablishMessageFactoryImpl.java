@@ -4,7 +4,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
+import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
 import network.thunder.core.database.objects.Channel;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -12,7 +12,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
-public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implements LNEstablishFactory {
+public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implements LNEstablishMessageFactory {
 
     @Override
     public LNEstablishAMessage getEstablishMessageA (Channel channel) {

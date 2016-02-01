@@ -11,7 +11,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
-public interface LNEstablishFactory extends MessageFactory {
+public interface LNEstablishMessageFactory extends MessageFactory {
     LNEstablishAMessage getEstablishMessageA (Channel channel);
 
     LNEstablishBMessage getEstablishMessageB (Channel channel, Transaction anchor);

@@ -175,6 +175,7 @@ public class Channel {
         transaction.addOutput(Coin.valueOf(serverAmount), anchorScriptServerP2SH);
 
         anchorTransactionServer = walletHelper.completeInputs(transaction);
+
         setAnchorTxHashServer(anchorTransactionServer.getHash());
         return anchorTransactionServer;
     }
@@ -225,7 +226,7 @@ public class Channel {
         Transaction escape = new Transaction(Constants.getNetwork());
         escape.addInput(getAnchorTxHashServer(), 0, Tools.getDummyScript());
         Coin output = Coin.valueOf(getInitialAmountServer() - Tools.getTransactionFees(5, 5)); //TODO maybe a better choice for fees?
-        escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptFastEscapeOutputClient()));
+        escape.addOutput(output, ScriptBuilder.createP2SHOutputScript(getScriptFastEscapeOutputServer()));
 
         if (getFastEscapeTxSig() != null) {
             //We have everything we need to sign it..
@@ -495,11 +496,6 @@ public class Channel {
         channelStatus.amountServer = amountServer;
         channelStatus.feePerByte = 10;
         channelStatus.csvDelay = 24 * 60 * 60;
-
-        anchorTransactionServer = new Transaction(Constants.getNetwork());
-        anchorTransactionServer.addInput(Sha256Hash.wrap(Tools.getRandomByte(32)), 0, Tools.getDummyScript());
-        anchorTransactionServer.addOutput(Coin.valueOf(1000000), getScriptAnchorOutputServer());
-
     }
 
     public void retrieveDataFromOtherChannel (Channel channel) {

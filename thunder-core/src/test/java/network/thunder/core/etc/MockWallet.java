@@ -25,7 +25,7 @@ public class MockWallet extends Wallet {
         //
         Random random = new Random(1000);
 
-        for (int i = 1; i < 10; i++) {
+        for (int i = 1; i < 30; i++) {
             Transaction transaction = new Transaction(Constants.getNetwork());
 
             byte[] h = new byte[32];
@@ -37,7 +37,7 @@ public class MockWallet extends Wallet {
             if (!USE_REAL_TRANSACTION) {
                 transaction.addInput(Sha256Hash.wrap(h), 0, Tools.getDummyScript());
 
-                TransactionOutput a = new TransactionOutput(Constants.getNetwork(), transaction, Coin.valueOf(10000), k.toAddress(Constants.getNetwork()));
+                TransactionOutput a = new TransactionOutput(Constants.getNetwork(), transaction, Coin.valueOf(1000000), k.toAddress(Constants.getNetwork()));
                 transaction.addOutput(a);
 
                 outputs.add(a);

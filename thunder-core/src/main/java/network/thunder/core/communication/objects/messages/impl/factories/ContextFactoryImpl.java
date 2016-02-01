@@ -88,7 +88,7 @@ public class ContextFactoryImpl implements ContextFactory {
 
     @Override
     public LNEstablishProcessor getLNEstablishProcessor (Node node) {
-        LNEstablishFactory messageFactory = new LNEstablishMessageFactoryImpl();
+        LNEstablishMessageFactory messageFactory = new LNEstablishMessageFactoryImpl();
         return new LNEstablishProcessorImpl(walletHelper, messageFactory, broadcastHelper, node);
     }
 

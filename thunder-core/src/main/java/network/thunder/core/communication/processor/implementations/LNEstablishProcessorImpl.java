@@ -7,7 +7,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishFactory;
+import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
@@ -27,16 +27,16 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
 
     WalletHelper walletHelper;
-    LNEstablishFactory messageFactory;
+    LNEstablishMessageFactory messageFactory;
     BroadcastHelper broadcastHelper;
     Node node;
 
     MessageExecutor messageExecutor;
 
-    Channel channel;
+    public Channel channel;
     int status = 0;
 
-    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishFactory messageFactory, BroadcastHelper broadcastHelper, Node node) {
+    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishMessageFactory messageFactory, BroadcastHelper broadcastHelper, Node node) {
         this.walletHelper = walletHelper;
         this.messageFactory = messageFactory;
         this.broadcastHelper = broadcastHelper;
@@ -114,11 +114,13 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void processMessageC (Message message) {
+
         LNEstablishCMessage m = (LNEstablishCMessage) message;
 
         channel.setAnchorTxHashClient(Sha256Hash.wrap(m.anchorHash));
         channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
         channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
+
 
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
@@ -146,31 +148,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
     }
 
-    private void prepareNewChannel () {
-        channel = new Channel();
-        channel.setInitialAmountServer(getAmountForNewChannel());
-        channel.setAmountServer(getAmountForNewChannel());
-
-        channel.setInitialAmountClient(getAmountForNewChannel());
-        channel.setAmountClient(getAmountForNewChannel());
-
-        //TODO: Change base key selection method (maybe completely random?)
-        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 2)));
-        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 4)));
-        channel.setMasterPrivateKeyServer(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 6));
-        byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 8));
-        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 10));
-        channel.setAnchorSecretServer(secretFE);
-        channel.setAnchorSecretHashServer(Tools.hashSecret(secretFE));
-        channel.setAnchorRevocationServer(revocation);
-        channel.setAnchorRevocationHashServer(Tools.hashSecret(revocation));
-        channel.setServerChainDepth(1000);
-        channel.setServerChainChild(0);
-        channel.setIsReady(false);
-
-        status = 1;
-
-    }
 
     private void sendEstablishMessageA () {
         prepareNewChannel();
@@ -192,7 +169,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void sendEstablishMessageC () {
-
         Transaction anchor = channel.getAnchorTransactionServer(walletHelper);
 
         Transaction escape = channel.getEscapeTransactionClient();
@@ -221,6 +197,32 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         messageExecutor.sendMessageUpwards(message);
 
         status = 5;
+    }
+
+    private void prepareNewChannel () {
+        channel = new Channel();
+        channel.setInitialAmountServer(getAmountForNewChannel());
+        channel.setAmountServer(getAmountForNewChannel());
+
+        channel.setInitialAmountClient(getAmountForNewChannel());
+        channel.setAmountClient(getAmountForNewChannel());
+
+        //TODO: Change base key selection method (maybe completely random?)
+        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 2)));
+        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 4)));
+        channel.setMasterPrivateKeyServer(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 6));
+        byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 8));
+        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 10));
+        channel.setAnchorSecretServer(secretFE);
+        channel.setAnchorSecretHashServer(Tools.hashSecret(secretFE));
+        channel.setAnchorRevocationServer(revocation);
+        channel.setAnchorRevocationHashServer(Tools.hashSecret(revocation));
+        channel.setServerChainDepth(1000);
+        channel.setServerChainChild(0);
+        channel.setIsReady(false);
+
+        status = 1;
+
     }
 
     private long getAmountForNewChannel () {
