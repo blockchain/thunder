@@ -17,9 +17,8 @@ public class QueueElementPayment extends QueueElement {
     @Override
     public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus) {
 
-        ChannelStatus status = null;
+        ChannelStatus status = channelStatus.getClone();
         if (channelStatus.amountServer > paymentData.amount) {
-            status = channelStatus.getClone();
             status.newPayments.add(paymentData);
             status.amountServer -= paymentData.amount;
         } else {
