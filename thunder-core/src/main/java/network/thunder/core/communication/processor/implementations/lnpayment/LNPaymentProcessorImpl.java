@@ -16,7 +16,9 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.mesh.Node;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -30,10 +32,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LNPaymentMessageFactory messageFactory;
     LNPaymentLogic paymentLogic;
     DBHandler dbHandler;
+    LNPaymentHelper paymentHelper;
     Node node;
 
     MessageExecutor messageExecutor;
-    LNPaymentHelper paymentHelper;
     LNOnionHelper onionHelper;
 
     Channel channel;
@@ -41,7 +43,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     Status status = IDLE;
 
     LinkedBlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
-    QueueElement currentQueueElement;
+    List<QueueElement> currentQueueElement = new ArrayList<>();
+
     ChannelStatus channelStatus;
     boolean aborted = false;
     boolean finished = false;
@@ -71,15 +74,15 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                         QueueElement element = queueList.poll(100, TimeUnit.MILLISECONDS);
                         if (element != null) {
                             if (status == IDLE) {
-                                currentQueueElement = element;
-                                channelStatus = currentQueueElement.produceNewChannelStatus(channel.channelStatus);
+                                currentQueueElement.add(element);
+                                buildChannelStatus();
+
                                 sendMessageA();
                                 restartCountDown(TIMEOUT_NEGOTIATION);
 
                                 if (weStartedExchange && status != IDLE) {
                                     //Time is over - we try it again after some random delay?
-                                    queueList.addFirst(currentQueueElement);
-
+                                    putQueueElementsBackInQueue();
                                     setStatus(IDLE);
 //                                    Thread.sleep(new Random().nextInt(TIME_MAX_WAIT));
                                 }
@@ -105,6 +108,20 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 }
             }
         }).start();
+    }
+
+    private void buildChannelStatus () {
+        ChannelStatus temp = channel.channelStatus.getClone();
+        for (QueueElement queueElement : currentQueueElement) {
+            temp = queueElement.produceNewChannelStatus(temp);
+        }
+        this.channelStatus = temp;
+    }
+
+    private void putQueueElementsBackInQueue () {
+        for (int i = currentQueueElement.size() - 1; i >= 0; --i) {
+            queueList.addFirst(currentQueueElement.get(i));
+        }
     }
 
     public void restartCountDown (long sleepTime) throws InterruptedException {
@@ -322,11 +339,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     private void abortCurrentTask () {
         aborted = true;
-        queueList.addFirst(currentQueueElement);
+        putQueueElementsBackInQueue();
 
         //TODO
         weStartedExchange = false;
-        currentQueueElement = new QueueElementUpdate();
+        currentQueueElement.add(new QueueElementUpdate());
 
         System.out.println(node.name + " abortCurrentTask");
 
