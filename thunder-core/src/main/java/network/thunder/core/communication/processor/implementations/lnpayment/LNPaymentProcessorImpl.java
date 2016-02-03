@@ -347,6 +347,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void evaluateUpdates () {
+        channelStatus = paymentLogic.getTemporaryChannelStatus();
+
         for (PaymentData newPayment : channelStatus.newPayments) {
             paymentHelper.relayPayment(this, newPayment);
         }
