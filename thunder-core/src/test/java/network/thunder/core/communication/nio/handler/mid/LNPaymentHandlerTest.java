@@ -13,6 +13,7 @@ import network.thunder.core.communication.processor.implementations.lnpayment.LN
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.etc.LNPaymentDBHandlerMock;
 import network.thunder.core.etc.LNPaymentMessageFactoryMock;
+import network.thunder.core.etc.MockLNPaymentHelper;
 import network.thunder.core.etc.MockLNPaymentLogic;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
@@ -51,6 +52,9 @@ public class LNPaymentHandlerTest {
     LNPaymentDBHandlerMock dbHandler1 = new LNPaymentDBHandlerMock();
     LNPaymentDBHandlerMock dbHandler2 = new LNPaymentDBHandlerMock();
 
+    MockLNPaymentHelper paymentHelper1 = new MockLNPaymentHelper();
+    MockLNPaymentHelper paymentHelper2 = new MockLNPaymentHelper();
+
     //    EncryptionHandler handler;
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
@@ -72,8 +76,8 @@ public class LNPaymentHandlerTest {
         messageFactory1 = new LNPaymentMessageFactoryMock();
         messageFactory2 = new LNPaymentMessageFactoryMock();
 
-        processor1 = new LNPaymentProcessorImpl(messageFactory1, paymentLogic1, dbHandler1, node1);
-        processor2 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic2, dbHandler2, node2);
+        processor1 = new LNPaymentProcessorImpl(messageFactory1, paymentLogic1, dbHandler1, paymentHelper1, node1);
+        processor2 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic2, dbHandler2, paymentHelper2, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNPayment1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNPayment2"));
@@ -85,7 +89,7 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void fullExchangeWithNoDisturbanceWithinTimeframe () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        processor1.makePayment(getMockPaymentData(), null);
+        processor1.makePayment(getMockPaymentData());
         Thread.sleep(200);
 
         exchangeMessages(channel1, channel2, LNPaymentAMessage.class);
@@ -101,8 +105,8 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void exchangeWithDelayShouldRestart () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        processor1.makePayment(getMockPaymentData(), null);
-        Thread.sleep(200);
+        processor1.makePayment(getMockPaymentData());
+        Thread.sleep(2000);
 
         channel2.writeInbound(channel1.readOutbound());
         channel1.writeInbound(channel2.readOutbound());
@@ -119,7 +123,7 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void exchangeWithOtherPartyStartingOwnExchange () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        processor1.makePayment(getMockPaymentData(), null);
+        processor1.makePayment(getMockPaymentData());
         Thread.sleep(200);
 
         exchangeMessages(channel1, channel2, LNPaymentAMessage.class);
@@ -133,7 +137,7 @@ public class LNPaymentHandlerTest {
         System.out.println("abort..");
         Thread.sleep(200);
 
-        processor2.makePayment(getMockPaymentData(), null);
+        processor2.makePayment(getMockPaymentData());
         processor2.abortCurrentExchange();
         Thread.sleep(500);
 
@@ -148,8 +152,8 @@ public class LNPaymentHandlerTest {
     @Test
     public void exchangeConcurrentWithOneThrowingHigherDice () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
 
-        processor1.makePayment(getMockPaymentData(), null);
-        processor2.makePayment(getMockPaymentData(), null);
+        processor1.makePayment(getMockPaymentData());
+        processor2.makePayment(getMockPaymentData());
         Thread.sleep(200);
 
         LNPaymentAMessage message1 = (LNPaymentAMessage) channel1.readOutbound();

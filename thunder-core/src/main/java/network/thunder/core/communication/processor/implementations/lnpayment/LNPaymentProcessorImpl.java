@@ -4,11 +4,15 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.*;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.implementations.lnpayment.helper.*;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
@@ -56,11 +60,13 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     int latestDice = 0;
 
-    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, LNPaymentLogic paymentLogic, DBHandler dbHandler, Node node) {
+    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, LNPaymentLogic paymentLogic, DBHandler dbHandler, LNPaymentHelper paymentHelper,
+                                   Node node) {
         this.messageFactory = messageFactory;
         this.paymentLogic = paymentLogic;
         this.dbHandler = dbHandler;
         this.node = node;
+        this.paymentHelper = paymentHelper;
 
         channel = dbHandler.getChannel(node);
     }
@@ -75,6 +81,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                         if (element != null) {
                             if (status == IDLE) {
                                 currentQueueElement.add(element);
+
                                 buildChannelStatus();
 
                                 sendMessageA();
@@ -143,17 +150,14 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
-    public boolean makePayment (PaymentData paymentData, OnionObject onionObject) {
-
-//        onionHelper.
-
+    public boolean makePayment (PaymentData paymentData) {
         QueueElement payment = new QueueElementPayment(paymentData);
         queueList.add(payment);
         return true;
     }
 
     @Override
-    public boolean redeemPayment (PaymentData paymentData) {
+    public boolean redeemPayment (PaymentSecret paymentData) {
         QueueElementRedeem payment = new QueueElementRedeem();
         //TODO
         queueList.add(payment);
@@ -174,34 +178,15 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
-    public void onInboundMessage (Message message) {
-        if (message instanceof LNPayment) {
-            if (message instanceof LNPaymentAMessage) {
-                readMessageA((LNPaymentAMessage) message);
-            } else if (message instanceof LNPaymentBMessage) {
-                readMessageB((LNPaymentBMessage) message);
-            } else if (message instanceof LNPaymentCMessage) {
-                readMessageC((LNPaymentCMessage) message);
-            } else if (message instanceof LNPaymentDMessage) {
-                readMessageD((LNPaymentDMessage) message);
-            }
-        }
-    }
-
-    @Override
-    public boolean consumesInboundMessage (Object object) {
-        return (object instanceof LNPayment);
-    }
-
-    @Override
-    public boolean consumesOutboundMessage (Object object) {
-        return false;
-    }
-
-    @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         this.messageExecutor = messageExecutor;
+        this.paymentHelper.addProcessor(this);
         startQueueListener();
+    }
+
+    @Override
+    public void onLayerClose () {
+        this.paymentHelper.removeProcessor(this);
     }
 
     private void sendMessageA () {
@@ -352,11 +337,27 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void finishCurrentTask () {
+        evaluateUpdates();
+
         finished = true;
         aborted = false;
         setStatus(IDLE);
         System.out.println(node.name + " finishCurrentTask");
         abortCountDown();
+    }
+
+    private void evaluateUpdates () {
+        for (PaymentData newPayment : channelStatus.newPayments) {
+            paymentHelper.relayPayment(this, newPayment);
+        }
+
+        for (PaymentData redeemedPayment : channelStatus.redeemedPayments) {
+            paymentHelper.paymentRedeemed(redeemedPayment.secret);
+        }
+
+        for (PaymentData refundedPayment : channelStatus.refundedPayments) {
+            paymentHelper.paymentRefunded(refundedPayment);
+        }
     }
 
     private void sendMessage (Message message) {
@@ -366,6 +367,31 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void setStatus (Status status) {
         System.out.println(node.name + " SET STATUS FROM " + this.status + " TO " + status);
         this.status = status;
+    }
+
+    @Override
+    public void onInboundMessage (Message message) {
+        if (message instanceof LNPayment) {
+            if (message instanceof LNPaymentAMessage) {
+                readMessageA((LNPaymentAMessage) message);
+            } else if (message instanceof LNPaymentBMessage) {
+                readMessageB((LNPaymentBMessage) message);
+            } else if (message instanceof LNPaymentCMessage) {
+                readMessageC((LNPaymentCMessage) message);
+            } else if (message instanceof LNPaymentDMessage) {
+                readMessageD((LNPaymentDMessage) message);
+            }
+        }
+    }
+
+    @Override
+    public boolean consumesInboundMessage (Object object) {
+        return (object instanceof LNPayment);
+    }
+
+    @Override
+    public boolean consumesOutboundMessage (Object object) {
+        return false;
     }
 
     public enum Status {

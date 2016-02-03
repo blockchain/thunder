@@ -1,9 +1,11 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
+import network.thunder.core.communication.objects.messages.impl.LNPaymentHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
 import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
 import network.thunder.core.communication.objects.messages.interfaces.factories.*;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
@@ -36,6 +38,8 @@ public class ContextFactoryImpl implements ContextFactory {
     BroadcastHelper broadcastHelper;
     WalletHelper walletHelper;
 
+    LNPaymentHelper paymentHelper;
+
     public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet) {
         this.dbHandler = dbHandler;
         this.walletHelper = new WalletHelperImpl(wallet);
@@ -45,6 +49,8 @@ public class ContextFactoryImpl implements ContextFactory {
         this.broadcastHelper = gossipSubject;
 
         this.syncHelper = new SynchronizationHelper(dbHandler);
+
+        this.paymentHelper = new LNPaymentHelperImpl();
     }
 
     @Override
@@ -96,7 +102,7 @@ public class ContextFactoryImpl implements ContextFactory {
     public LNPaymentProcessor getLNPaymentProcessor (Node node) {
         LNPaymentMessageFactory messageFactory = new LNPaymentMessageFactoryImpl(dbHandler);
         LNPaymentLogic paymentLogic = new LNPaymentLogicImpl(dbHandler);
-        return new LNPaymentProcessorImpl(messageFactory, paymentLogic, dbHandler, node);
+        return new LNPaymentProcessorImpl(messageFactory, paymentLogic, dbHandler, paymentHelper, node);
     }
 
 }
