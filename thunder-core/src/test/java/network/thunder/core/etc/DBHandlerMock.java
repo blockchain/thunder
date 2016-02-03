@@ -2,6 +2,7 @@ package network.thunder.core.etc;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.lightning.RevocationHash;
@@ -71,5 +72,15 @@ public class DBHandlerMock implements DBHandler {
     @Override
     public List<PubkeyIPObject> getIPObjectsWithActiveChannel () {
         return null;
+    }
+
+    @Override
+    public byte[] getSenderOfPayment (PaymentSecret paymentSecret) {
+        return new byte[0];
+    }
+
+    @Override
+    public byte[] getReceiverOfPayment (PaymentSecret paymentSecret) {
+        return new byte[0];
     }
 }

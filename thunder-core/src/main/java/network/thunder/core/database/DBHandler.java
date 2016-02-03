@@ -2,6 +2,7 @@ package network.thunder.core.database;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.lightning.RevocationHash;
 import network.thunder.core.mesh.Node;
@@ -35,4 +36,8 @@ public interface DBHandler {
     Channel getChannel (Node node);
 
     List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
+
+    byte[] getSenderOfPayment (PaymentSecret paymentSecret);
+
+    byte[] getReceiverOfPayment (PaymentSecret paymentSecret);
 }
