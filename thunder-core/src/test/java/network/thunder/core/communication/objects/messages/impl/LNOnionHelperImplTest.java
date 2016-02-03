@@ -39,10 +39,15 @@ public class LNOnionHelperImplTest {
         for (ECKey key : keyList) {
             LNOnionHelper helperTemp = new LNOnionHelperImpl();
             helperTemp.init(key);
-            helperTemp.loadMessage(null, object);
+            helperTemp.loadMessage(object);
 
-            listFromOnion.add(helperTemp.getNextHop().getPubKey());
-            object = helperTemp.getMessageForNextHop();
+            if(helperTemp.isLastHop()) {
+                listFromOnion.add(key.getPubKey());
+            } else {
+                listFromOnion.add(helperTemp.getNextHop().getPubKey());
+                object = helperTemp.getMessageForNextHop();
+            }
+
 
         }
 
@@ -66,10 +71,14 @@ public class LNOnionHelperImplTest {
         for (ECKey key : keyList) {
             LNOnionHelper helperTemp = new LNOnionHelperImpl();
             helperTemp.init(key);
-            helperTemp.loadMessage(null, object);
+            helperTemp.loadMessage(object);
 
-            listFromOnion.add(helperTemp.getNextHop().getPubKey());
-            object = helperTemp.getMessageForNextHop();
+            if(helperTemp.isLastHop()) {
+                listFromOnion.add(key.getPubKey());
+            } else {
+                listFromOnion.add(helperTemp.getNextHop().getPubKey());
+                object = helperTemp.getMessageForNextHop();
+            }
 
         }
 

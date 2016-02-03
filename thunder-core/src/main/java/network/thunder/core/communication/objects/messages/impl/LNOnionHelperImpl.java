@@ -20,7 +20,6 @@ public class LNOnionHelperImpl implements LNOnionHelper {
     ECKey keyServer;
 
     OnionObject encryptedOnionObject;
-    ECKey receivedHop;
 
     ECDHKeySet keySet;
 
@@ -38,9 +37,8 @@ public class LNOnionHelperImpl implements LNOnionHelper {
     }
 
     @Override
-    public void loadMessage (ECKey receivedHop, OnionObject encryptedOnionObject) {
+    public void loadMessage (OnionObject encryptedOnionObject) {
         this.encryptedOnionObject = encryptedOnionObject;
-        this.receivedHop = receivedHop;
         decryptMessage();
         if (!lastHopReached) {
             parseMessage();
@@ -95,7 +93,6 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         byte[] emptyData = new byte[OnionObject.KEY_LENGTH];
         if (Arrays.equals(emptyData, pubkeyOfNextHop)) {
             System.out.println("We are the last hop..");
-            nextHop = keyServer;
             lastHopReached = true;
             return;
         }
@@ -140,5 +137,10 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         }
 
         return new OnionObject(data);
+    }
+
+    @Override
+    public boolean isLastHop () {
+        return lastHopReached;
     }
 }

@@ -11,12 +11,14 @@ import java.util.List;
 public interface LNOnionHelper {
     void init (ECKey keyServer);
 
-    void loadMessage (ECKey receivedHop, OnionObject encryptedOnionObject);
+    void loadMessage (OnionObject encryptedOnionObject);
 
     ECKey getNextHop ();
 
     OnionObject getMessageForNextHop ();
 
-    OnionObject createOnionObject(List<byte[]> keyList);
+    OnionObject createOnionObject (List<byte[]> keyList);
+
+    boolean isLastHop();
 
 }
