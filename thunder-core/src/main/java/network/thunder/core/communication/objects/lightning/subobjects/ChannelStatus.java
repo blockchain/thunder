@@ -27,7 +27,12 @@ public class ChannelStatus implements Cloneable {
 
     public ChannelStatus getClone () {
         try {
-            return (ChannelStatus) this.clone();
+            ChannelStatus status =  (ChannelStatus) this.clone();
+            status.oldPayments = new ArrayList<>(this.oldPayments);
+            status.newPayments = new ArrayList<>(this.newPayments);
+            status.redeemedPayments = new ArrayList<>(this.redeemedPayments);
+            status.refundedPayments = new ArrayList<>(this.refundedPayments);
+            return status;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
         }
@@ -35,6 +40,11 @@ public class ChannelStatus implements Cloneable {
 
     public ChannelStatus getCloneReversed () {
         ChannelStatus status = getClone();
+        long temp = status.amountServer;
+
+        status.amountServer = status.amountClient;
+        status.amountClient = temp;
+
         reverseSending(status.newPayments);
         reverseSending(status.oldPayments);
         reverseSending(status.redeemedPayments);
