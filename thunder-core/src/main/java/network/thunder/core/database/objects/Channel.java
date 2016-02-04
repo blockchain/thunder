@@ -858,7 +858,7 @@ public class Channel {
 
         private String value;
 
-        private Phase (String value) {
+        Phase (String value) {
             this.value = value;
         }
 

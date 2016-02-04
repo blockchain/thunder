@@ -19,11 +19,7 @@ public class MessageObjectToByteHandler extends MessageToByteEncoder {
 
     @Override
     public boolean acceptOutboundMessage (Object msg) {
-        if (msg instanceof Message) {
-            return true;
-        }
-        return false;
-//		return true;
+        return msg instanceof Message;
     }
 
     @Override

@@ -52,7 +52,6 @@ public class PeerSeedHandlerTest {
         handler2 = new SeedDBHandlerMock();
         handler2.fillWithRandomData();
 
-
         seedProcessor1 = new PeerSeedProcessorImpl(messageFactory, handler1, node1);
         seedProcessor2 = new PeerSeedProcessorImpl(messageFactory, handler2, node2);
 

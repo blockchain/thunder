@@ -19,6 +19,6 @@ public interface LNOnionHelper {
 
     OnionObject createOnionObject (List<byte[]> keyList);
 
-    boolean isLastHop();
+    boolean isLastHop ();
 
 }

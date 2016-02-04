@@ -61,7 +61,6 @@ public class HashDerivation {
         return null;
     }
 
-
     /**
      * Calculate a revocation hash for a new channel state.
      *
@@ -76,7 +75,7 @@ public class HashDerivation {
             childseed = Tools.hashSecret(childseed);
         }
 
-        if(childNumber == 0) {
+        if (childNumber == 0) {
             return new RevocationHash(depth, childNumber, childseed, null);
         }
 

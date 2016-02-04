@@ -148,6 +148,6 @@ public class Node {
     }
 
     public interface OnConnectionCloseListener {
-        public void onClose ();
+        void onClose ();
     }
 }

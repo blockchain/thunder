@@ -1,8 +1,8 @@
 package network.thunder.core.communication.objects.messages.interfaces.factories;
 
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncSendMessage;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 
 import java.util.List;
 

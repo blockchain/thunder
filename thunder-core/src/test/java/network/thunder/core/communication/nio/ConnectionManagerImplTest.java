@@ -26,15 +26,14 @@ public class ConnectionManagerImplTest {
     List<ConnectionManagerWrapper> clients = new ArrayList<>();
 
     @Before
-    public void prepare() {
+    public void prepare () {
         createSeedConnection();
         createNodes();
     }
 
     @Test
-    public void test() throws Exception {
+    public void test () throws Exception {
         Logger.getLogger("io.netty").setLevel(Level.OFF);
-
 
         connectionSeed.connectionManager.startListening();
 
@@ -49,11 +48,10 @@ public class ConnectionManagerImplTest {
 //            Thread.sleep(1000);
 //        }
 //
-        for(int i = 6; i<10; ++i) {
+        for (int i = 6; i < 10; ++i) {
 
             System.out.println("------------------------------------------------------------------------------");
             System.out.println(i + " started up...");
-
 
             clients.get(i).connectionManager.startUp();
             Thread.sleep(5000);

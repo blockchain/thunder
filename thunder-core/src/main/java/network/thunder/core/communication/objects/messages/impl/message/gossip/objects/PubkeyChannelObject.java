@@ -155,7 +155,7 @@ public class PubkeyChannelObject extends P2PDataObject {
 
     @Override
     public String toString () {
-        return "PubkeyChannelObject{"+Tools.bytesToHex(getHash())+"}";
+        return "PubkeyChannelObject{" + Tools.bytesToHex(getHash()) + "}";
     }
 
     @Override

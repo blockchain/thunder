@@ -11,7 +11,7 @@ import java.util.List;
  */
 public interface PeerSeedMessageFactory extends MessageFactory {
 
-    public PeerSeedSendMessage getPeerSeedSendMessage (List<PubkeyIPObject> ipObjectList);
+    PeerSeedSendMessage getPeerSeedSendMessage (List<PubkeyIPObject> ipObjectList);
 
-    public PeerSeedGetMessage getPeerSeedGetMessage ();
+    PeerSeedGetMessage getPeerSeedGetMessage ();
 }

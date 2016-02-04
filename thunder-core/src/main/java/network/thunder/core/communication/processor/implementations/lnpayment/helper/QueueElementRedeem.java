@@ -20,12 +20,13 @@ public class QueueElementRedeem extends QueueElement {
         ChannelStatus status = channelStatus.getClone();
 
         PaymentData paymentData = null;
-        for(PaymentData p : channelStatus.oldPayments) {
-            if(p.secret.equals(paymentSecret))
+        for (PaymentData p : channelStatus.oldPayments) {
+            if (p.secret.equals(paymentSecret)) {
                 paymentData = p;
+            }
         }
 
-        if(paymentData == null) {
+        if (paymentData == null) {
             //TODO We want to redeem a payment, but apparently it's no longer within the oldpayments?
             System.out.println("QueueElementRedeem: Can't redeem, not part of old payments..");
             return channelStatus;
@@ -33,7 +34,6 @@ public class QueueElementRedeem extends QueueElement {
 
         status.redeemedPayments.add(paymentData);
         status.oldPayments.remove(paymentData);
-
 
         status.amountServer += paymentData.amount;
 

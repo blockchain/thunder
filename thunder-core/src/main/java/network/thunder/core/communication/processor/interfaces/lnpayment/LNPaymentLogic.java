@@ -10,15 +10,15 @@ import org.bitcoinj.core.Transaction;
  */
 public interface LNPaymentLogic {
 
-    public void initialise (Channel channel);
+    void initialise (Channel channel);
 
-    public Transaction getClientTransaction ();
+    Transaction getClientTransaction ();
 
-    public Transaction getServerTransaction ();
+    Transaction getServerTransaction ();
 
-    public void checkMessageIncoming (LNPayment message);
+    void checkMessageIncoming (LNPayment message);
 
-    public void readMessageOutbound (LNPayment message);
+    void readMessageOutbound (LNPayment message);
 
-    public ChannelStatus getTemporaryChannelStatus ();
+    ChannelStatus getTemporaryChannelStatus ();
 }

@@ -233,7 +233,7 @@ public class LNPaymentHandlerTest {
         exchangeMessages(from, to);
         exchangeMessages(to, from);
     }
-    
+
     public PaymentData getMockPaymentData () {
         PaymentData paymentData = new PaymentData();
         paymentData.sending = true;

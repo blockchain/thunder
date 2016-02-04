@@ -71,7 +71,7 @@ public final class P2PClient {
 
     }
 
-    public void connectBlocking(Node node) {
+    public void connectBlocking (Node node) {
         System.out.println("Connect to " + node.getHost() + ":" + node.getPort());
 
         EventLoopGroup group = new NioEventLoopGroup();
@@ -84,7 +84,7 @@ public final class P2PClient {
             node.setConnected(ch.isOpen());
             ch.closeFuture().sync();
 
-            System.out.println("Connection to "+node.port+" closed..");
+            System.out.println("Connection to " + node.port + " closed..");
 
         } catch (Exception e) {
             //Not able to connect?

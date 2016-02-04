@@ -13,7 +13,7 @@ final class InterfaceAdapter <T> implements JsonSerializer<T>, JsonDeserializer<
 //    }
 
     @Override
-    public JsonElement serialize(T object, Type interfaceType, JsonSerializationContext context) {
+    public JsonElement serialize (T object, Type interfaceType, JsonSerializationContext context) {
         final JsonObject wrapper = new JsonObject();
         wrapper.addProperty("type", object.getClass().getName());
         wrapper.add("data", new Gson().toJsonTree(object));

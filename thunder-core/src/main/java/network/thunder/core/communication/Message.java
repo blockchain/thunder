@@ -19,6 +19,6 @@
 package network.thunder.core.communication;
 
 public interface Message {
-    void verify();
+    void verify ();
 
 }

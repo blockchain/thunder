@@ -27,7 +27,7 @@ public class ChannelStatus implements Cloneable {
 
     public ChannelStatus getClone () {
         try {
-            ChannelStatus status =  (ChannelStatus) this.clone();
+            ChannelStatus status = (ChannelStatus) this.clone();
             status.oldPayments = new ArrayList<>(this.oldPayments);
             status.newPayments = new ArrayList<>(this.newPayments);
             status.redeemedPayments = new ArrayList<>(this.redeemedPayments);

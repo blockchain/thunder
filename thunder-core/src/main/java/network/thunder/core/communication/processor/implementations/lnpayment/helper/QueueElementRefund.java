@@ -19,12 +19,12 @@ public class QueueElementRefund extends QueueElement {
     public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus) {
         ChannelStatus status = channelStatus.getClone();
         PaymentData paymentRefund = null;
-        for(PaymentData payment : status.oldPayments) {
-            if(payment.secret.equals(this.paymentSecret)) {
+        for (PaymentData payment : status.oldPayments) {
+            if (payment.secret.equals(this.paymentSecret)) {
                 paymentRefund = payment;
             }
         }
-        if(paymentRefund == null) {
+        if (paymentRefund == null) {
             //TODO Payment to be refunded is not in old payments..?
             System.out.println("QueueElementRefund could not find old payment..");
             return status;
@@ -36,8 +36,6 @@ public class QueueElementRefund extends QueueElement {
             status.amountClient += paymentRefund.amount;
             return status;
         }
-
-
 
     }
 }

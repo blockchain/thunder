@@ -7,7 +7,7 @@ import java.security.NoSuchProviderException;
 /**
  * Created by matsjerratsch on 14/10/2015.
  */
-public class ECDHKeySet implements Cloneable{
+public class ECDHKeySet implements Cloneable {
 
     public byte[] masterKey;
     public byte[] encryptionKey;

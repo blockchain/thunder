@@ -116,7 +116,8 @@ public class ScriptToolsTest {
 
         TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
 
-        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer.encodeToBitcoin());
+        Script inputScript = ScriptTools.getEscapeInputTimeoutScript(revocationServerHash, keyServer, keyClient, 60 * 60 * 1000, signatureServer
+                .encodeToBitcoin());
 
         transactionInput.getInput(0).setScriptSig(inputScript);
 

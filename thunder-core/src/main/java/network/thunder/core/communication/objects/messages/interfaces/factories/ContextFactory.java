@@ -10,21 +10,21 @@ import network.thunder.core.mesh.Node;
  * Created by matsjerratsch on 18/01/2016.
  */
 public interface ContextFactory {
-    public MessageSerializer getMessageSerializer ();
+    MessageSerializer getMessageSerializer ();
 
-    public MessageEncrypter getMessageEncrypter ();
+    MessageEncrypter getMessageEncrypter ();
 
-    public EncryptionProcessor getEncryptionProcessor (Node node);
+    EncryptionProcessor getEncryptionProcessor (Node node);
 
-    public AuthenticationProcessor getAuthenticationProcessor (Node node);
+    AuthenticationProcessor getAuthenticationProcessor (Node node);
 
-    public PeerSeedProcessor getPeerSeedProcessor (Node node);
+    PeerSeedProcessor getPeerSeedProcessor (Node node);
 
-    public SyncProcessor getSyncProcessor (Node node);
+    SyncProcessor getSyncProcessor (Node node);
 
-    public GossipProcessor getGossipProcessor (Node node);
+    GossipProcessor getGossipProcessor (Node node);
 
-    public LNEstablishProcessor getLNEstablishProcessor (Node node);
+    LNEstablishProcessor getLNEstablishProcessor (Node node);
 
-    public LNPaymentProcessor getLNPaymentProcessor (Node node);
+    LNPaymentProcessor getLNPaymentProcessor (Node node);
 }

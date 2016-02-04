@@ -121,7 +121,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
         channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
 
-
         if (!channel.verifyEscapeSignatures()) {
             throw new RuntimeException("Signature does not match..");
         }
@@ -147,7 +146,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
     }
-
 
     private void sendEstablishMessageA () {
         prepareNewChannel();

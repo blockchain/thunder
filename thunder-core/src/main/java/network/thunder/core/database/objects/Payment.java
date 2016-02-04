@@ -77,7 +77,7 @@ public class Payment {
     boolean includeInSenderChannelTemp;
 
 	/*
-	 * We use the version flags to allow for easier bruteforcing of the P2SH script.
+     * We use the version flags to allow for easier bruteforcing of the P2SH script.
 	 * If we don't know at all which payments might be used together with which revocation hashes,
 	 *  brute forcing it might be an expensive and lengthy task.
 	 */

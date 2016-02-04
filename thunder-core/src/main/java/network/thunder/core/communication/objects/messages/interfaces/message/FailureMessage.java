@@ -6,5 +6,5 @@ import network.thunder.core.communication.Message;
  * Created by matsjerratsch on 27/11/2015.
  */
 public interface FailureMessage extends Message {
-    public String getFailure ();
+    String getFailure ();
 }

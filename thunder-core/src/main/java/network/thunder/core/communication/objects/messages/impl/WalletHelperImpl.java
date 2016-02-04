@@ -72,7 +72,7 @@ public class WalletHelperImpl implements WalletHelper {
             /*
              * Not enough outputs in total to pay for the channel..
              */
-            throw new RuntimeException("Wallet Balance not sufficient. "+totalInput+"<"+neededAmount); //TODO
+            throw new RuntimeException("Wallet Balance not sufficient. " + totalInput + "<" + neededAmount); //TODO
         } else {
 
             transaction.addOutput(Coin.valueOf(totalInput - value - Tools.getTransactionFees(2, 2)), wallet.freshReceiveAddress());

@@ -41,13 +41,12 @@ public class LNOnionHelperImplTest {
             helperTemp.init(key);
             helperTemp.loadMessage(object);
 
-            if(helperTemp.isLastHop()) {
+            if (helperTemp.isLastHop()) {
                 listFromOnion.add(key.getPubKey());
             } else {
                 listFromOnion.add(helperTemp.getNextHop().getPubKey());
                 object = helperTemp.getMessageForNextHop();
             }
-
 
         }
 
@@ -73,7 +72,7 @@ public class LNOnionHelperImplTest {
             helperTemp.init(key);
             helperTemp.loadMessage(object);
 
-            if(helperTemp.isLastHop()) {
+            if (helperTemp.isLastHop()) {
                 listFromOnion.add(key.getPubKey());
             } else {
                 listFromOnion.add(helperTemp.getNextHop().getPubKey());

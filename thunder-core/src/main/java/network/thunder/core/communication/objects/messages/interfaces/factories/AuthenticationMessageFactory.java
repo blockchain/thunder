@@ -7,5 +7,5 @@ import network.thunder.core.communication.objects.messages.impl.message.authenti
  */
 public interface AuthenticationMessageFactory extends MessageFactory {
 
-    public AuthenticationMessage getAuthenticationMessage (byte[] pubkeyServer, byte[] signature);
+    AuthenticationMessage getAuthenticationMessage (byte[] pubkeyServer, byte[] signature);
 }
