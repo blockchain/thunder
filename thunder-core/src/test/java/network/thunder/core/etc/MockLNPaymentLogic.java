@@ -31,7 +31,7 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     @Override
     public void checkMessageIncoming (LNPayment message) {
         if (message instanceof LNPaymentAMessage) {
-            status = ((LNPaymentAMessage) message).channelStatus;
+            status = ((LNPaymentAMessage) message).channelStatus.getCloneReversed();
         }
     }
 

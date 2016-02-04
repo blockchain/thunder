@@ -22,8 +22,10 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
 
     @Override
     public LNPaymentAMessage getMessageA (Channel channel, ChannelStatus statusTemp) {
-        ChannelStatus channelStatus = new ChannelStatus();
-        return new LNPaymentAMessage(channelStatus, getMockRevocationHash());
+        if (statusTemp == null) {
+            statusTemp = new ChannelStatus();
+        }
+        return new LNPaymentAMessage(statusTemp, getMockRevocationHash());
     }
 
     @Override
@@ -41,7 +43,7 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
         return new LNPaymentDMessage(new ArrayList<>());
     }
 
-    private RevocationHash getMockRevocationHash() {
+    private RevocationHash getMockRevocationHash () {
         byte[] secret = new byte[20];
         random.nextBytes(secret);
         byte[] hash = Tools.hashSecret(secret);
@@ -49,7 +51,7 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
         return revocationHash;
     }
 
-    private byte[] getMockSig() {
+    private byte[] getMockSig () {
         byte[] sig = new byte[72];
         random.nextBytes(sig);
         return sig;
