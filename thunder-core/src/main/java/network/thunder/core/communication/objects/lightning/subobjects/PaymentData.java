@@ -37,4 +37,23 @@ public class PaymentData {
      * TODO: We probably need further fields here, can't think of any now..
 	 */
 
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PaymentData that = (PaymentData) o;
+
+        return secret != null ? secret.equals(that.secret) : that.secret == null;
+
+    }
+
+    @Override
+    public int hashCode () {
+        return secret != null ? secret.hashCode() : 0;
+    }
 }

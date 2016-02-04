@@ -7,6 +7,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
+import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.lightning.RevocationHash;
 import network.thunder.core.mesh.Node;
 
@@ -136,6 +137,46 @@ public class InMemoryDBHandlerMock implements DBHandler {
     @Override
     public byte[] getReceiverOfPayment (PaymentSecret paymentSecret) {
         return new byte[0];
+    }
+
+    @Override
+    public void addPayment (PaymentWrapper paymentWrapper) {
+
+    }
+
+    @Override
+    public void updatePayment (PaymentWrapper paymentWrapper) {
+
+    }
+
+    @Override
+    public void updatePaymentSender (PaymentWrapper paymentWrapper) {
+
+    }
+
+    @Override
+    public void updatePaymentReceiver (PaymentWrapper paymentWrapper) {
+
+    }
+
+    @Override
+    public void updatePaymentAddReceiverAddress (PaymentSecret secret, byte[] receiver) {
+
+    }
+
+    @Override
+    public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
+        return null;
+    }
+
+    @Override
+    public void addPaymentSecret (PaymentSecret secret) {
+
+    }
+
+    @Override
+    public PaymentSecret getPaymentSecret (PaymentSecret secret) {
+        return null;
     }
 
     private void pruneLists () {
