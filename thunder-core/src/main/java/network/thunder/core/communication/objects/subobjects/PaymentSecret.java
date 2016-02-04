@@ -21,6 +21,8 @@ package network.thunder.core.communication.objects.subobjects;
 
 import network.thunder.core.etc.Tools;
 
+import java.util.Arrays;
+
 public class PaymentSecret {
 
     public byte[] secret;
@@ -38,5 +40,25 @@ public class PaymentSecret {
 
     public boolean verify () {
         return true;
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PaymentSecret that = (PaymentSecret) o;
+
+        return Arrays.equals(hash, that.hash);
+
+    }
+
+    @Override
+    public int hashCode () {
+        return Arrays.hashCode(hash);
     }
 }
