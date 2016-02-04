@@ -18,6 +18,7 @@ import network.thunder.core.communication.processor.interfaces.lnpayment.LNPayme
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
+import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.mesh.Node;
 
 import java.util.ArrayList;
@@ -28,6 +29,8 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl.Status.*;
+import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
+import static network.thunder.core.database.objects.PaymentStatus.REFUNDED;
 
 /**
  * Created by matsjerratsch on 04/01/2016.
@@ -150,6 +153,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
+    public byte[] connectsTo () {
+        return node.pubKeyClient.getPubKey();
+    }
+
+    @Override
     public boolean makePayment (PaymentData paymentData) {
         QueueElement payment = new QueueElementPayment(paymentData);
         queueList.add(payment);
@@ -157,17 +165,15 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
-    public boolean redeemPayment (PaymentSecret paymentData) {
-        QueueElementRedeem payment = new QueueElementRedeem();
-        //TODO
+    public boolean redeemPayment (PaymentSecret paymentSecret) {
+        QueueElementRedeem payment = new QueueElementRedeem(paymentSecret);
         queueList.add(payment);
         return true;
     }
 
     @Override
     public boolean refundPayment (PaymentData paymentData) {
-        QueueElementRefund payment = new QueueElementRefund();
-        //TODO
+        QueueElementRefund payment = new QueueElementRefund(paymentData.secret);
         queueList.add(payment);
         return true;
     }
@@ -315,8 +321,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     public void testStatus (Status expected) {
-//        System.out.println(node.name + " Expected " + expected + ". Was: " + status);
-
         if (status != expected) {
             throw new RuntimeException("Expected " + expected + ". Was: " + status);
         }
@@ -333,10 +337,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         System.out.println(node.name + " abortCurrentTask");
 
         abortCountDown();
-
     }
 
     private void finishCurrentTask () {
+        updateDatabase();
         evaluateUpdates();
 
         finished = true;
@@ -346,20 +350,67 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         abortCountDown();
     }
 
+    private void updateDatabase () {
+        ChannelStatus status = paymentLogic.getTemporaryChannelStatus();
+        for (PaymentData payment : status.newPayments) {
+            if (weStartedExchange) {
+                PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
+                wrapper.statusReceiver = EMBEDDED;
+                dbHandler.updatePaymentReceiver(wrapper);
+            } else {
+                PaymentWrapper wrapper = new PaymentWrapper(node.pubKeyClient.getPubKey(), payment);
+                System.out.println(node.name + " addPayment: " + payment);
+                dbHandler.addPayment(wrapper);
+            }
+        }
+        for (PaymentData payment : status.refundedPayments) {
+            PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
+            if (weStartedExchange) {
+                wrapper.statusReceiver = REFUNDED;
+                dbHandler.updatePaymentReceiver(wrapper);
+            } else {
+                wrapper.statusSender = REFUNDED;
+                dbHandler.updatePaymentSender(wrapper);
+            }
+        }
+        for (PaymentData payment : status.redeemedPayments) {
+            PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
+            if (weStartedExchange) {
+                wrapper.statusReceiver = REFUNDED;
+                dbHandler.updatePaymentReceiver(wrapper);
+            } else {
+                wrapper.statusSender = REFUNDED;
+                dbHandler.updatePaymentSender(wrapper);
+            }
+        }
+
+    }
+
     private void evaluateUpdates () {
         channelStatus = paymentLogic.getTemporaryChannelStatus();
 
-        for (PaymentData newPayment : channelStatus.newPayments) {
-            paymentHelper.relayPayment(this, newPayment);
+        ChannelStatus statusToBeProcessed = channelStatus.getClone();
+
+        channelStatus.oldPayments.addAll(channelStatus.newPayments);
+        channelStatus.newPayments.clear();
+        channelStatus.refundedPayments.clear();
+        channelStatus.redeemedPayments.clear();
+        channel.channelStatus = channelStatus;
+
+        if (!weStartedExchange) {
+            for (PaymentData newPayment : statusToBeProcessed.newPayments) {
+                paymentHelper.relayPayment(this, newPayment);
+            }
+
+            for (PaymentData redeemedPayment : statusToBeProcessed.redeemedPayments) {
+                paymentHelper.paymentRedeemed(redeemedPayment.secret);
+            }
+
+            for (PaymentData refundedPayment : statusToBeProcessed.refundedPayments) {
+                paymentHelper.paymentRefunded(refundedPayment);
+            }
         }
 
-        for (PaymentData redeemedPayment : channelStatus.redeemedPayments) {
-            paymentHelper.paymentRedeemed(redeemedPayment.secret);
-        }
-
-        for (PaymentData refundedPayment : channelStatus.refundedPayments) {
-            paymentHelper.paymentRefunded(refundedPayment);
-        }
     }
 
     private void sendMessage (Message message) {
@@ -394,6 +445,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     @Override
     public boolean consumesOutboundMessage (Object object) {
         return false;
+    }
+
+    public ChannelStatus getChannelStatus () {
+        return channelStatus;
     }
 
     public enum Status {

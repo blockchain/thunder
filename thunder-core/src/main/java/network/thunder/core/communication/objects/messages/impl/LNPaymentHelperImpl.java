@@ -7,6 +7,7 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.LNP
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;
@@ -17,9 +18,15 @@ import java.util.List;
  */
 public class LNPaymentHelperImpl implements LNPaymentHelper {
 
-    List<LNPaymentProcessor> processorList = new ArrayList<>();
-    DBHandler dbHandler;
     LNOnionHelper onionHelper;
+    DBHandler dbHandler;
+
+    List<LNPaymentProcessor> processorList = new ArrayList<>();
+
+    public LNPaymentHelperImpl (LNOnionHelper onionHelper, DBHandler dbHandler) {
+        this.onionHelper = onionHelper;
+        this.dbHandler = dbHandler;
+    }
 
     @Override
     public void addProcessor (LNPaymentProcessor processor) {
@@ -36,11 +43,22 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
         OnionObject object = paymentData.onionObject;
         onionHelper.loadMessage(object);
 
+        saveReceiverToDatabase(paymentData);
+
         if (onionHelper.isLastHop()) {
-            //TODO WOO WE GOT MONEY - REDEEM IT IF POSSIBLE
+            PaymentSecret secret = dbHandler.getPaymentSecret(paymentData.secret);
+            if (secret == null) {
+                System.out.println("Can't redeem payment - refund!");
+                processorSent.refundPayment(paymentData);
+            } else {
+                System.out.println("Received money!");
+                processorSent.redeemPayment(secret);
+            }
+
         } else {
 
             ECKey nextHop = onionHelper.getNextHop();
+            System.out.println("Next Hop: " + nextHop);
             paymentData.onionObject = onionHelper.getMessageForNextHop();
 
             //TODO Do the FEE stuff somewhere here maybe?
@@ -61,22 +79,37 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
     }
 
+    private void saveReceiverToDatabase (PaymentData payment) {
+        if (onionHelper.isLastHop()) {
+            dbHandler.updatePaymentAddReceiverAddress(payment.secret, new byte[0]);
+        } else {
+            dbHandler.updatePaymentAddReceiverAddress(payment.secret, onionHelper.getNextHop().getPubKey());
+        }
+    }
+
     @Override
     public void paymentRedeemed (PaymentSecret paymentSecret) {
+        System.out.println("Payment redeemed: " + paymentSecret);
         byte[] sender = dbHandler.getSenderOfPayment(paymentSecret);
 
         if (sender == null) {
+            System.out.println("Can't resolve the sender of this payment..");
             //TODO ??? - this should not happen - but can't really resolve it either..
-        }
+        } else {
 
-        for (LNPaymentProcessor processor : processorList) {
-            if (processor.connectsToNodeId(sender)) {
-                processor.redeemPayment(paymentSecret);
-                return;
+            System.out.println("Sender of payment: " + Tools.bytesToHex(sender));
+
+            for (LNPaymentProcessor processor : processorList) {
+                if (processor.connectsToNodeId(sender)) {
+                    processor.redeemPayment(paymentSecret);
+                    return;
+                }
             }
-        }
 
-        //TODO sender of payment is offline right now - have to close channel if he does not come back online in time..
+            System.out.println("Aren't connected to redeem payment..");
+
+            //TODO sender of payment is offline right now - have to close channel if he does not come back online in time..
+        }
 
     }
 

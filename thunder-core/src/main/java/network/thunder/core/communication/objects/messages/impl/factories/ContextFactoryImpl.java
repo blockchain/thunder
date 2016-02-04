@@ -1,14 +1,8 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
-import network.thunder.core.communication.objects.messages.impl.LNPaymentHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
-import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
-import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
+import network.thunder.core.communication.objects.messages.impl.*;
 import network.thunder.core.communication.objects.messages.interfaces.factories.*;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
-import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
-import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.*;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
@@ -40,6 +34,8 @@ public class ContextFactoryImpl implements ContextFactory {
 
     LNPaymentHelper paymentHelper;
 
+    LNOnionHelper onionHelper;
+
     public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet) {
         this.dbHandler = dbHandler;
         this.walletHelper = new WalletHelperImpl(wallet);
@@ -50,7 +46,9 @@ public class ContextFactoryImpl implements ContextFactory {
 
         this.syncHelper = new SynchronizationHelper(dbHandler);
 
-        this.paymentHelper = new LNPaymentHelperImpl();
+        this.onionHelper = new LNOnionHelperImpl();
+
+        this.paymentHelper = new LNPaymentHelperImpl(onionHelper, dbHandler);
     }
 
     @Override

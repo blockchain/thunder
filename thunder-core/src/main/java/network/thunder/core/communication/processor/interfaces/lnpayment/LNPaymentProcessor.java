@@ -12,6 +12,8 @@ public abstract class LNPaymentProcessor extends Processor {
 
     public abstract boolean connectsToNodeId (byte[] nodeId);
 
+    public abstract byte[] connectsTo ();
+
     public abstract boolean makePayment (PaymentData paymentData);
 
     public abstract boolean redeemPayment (PaymentSecret paymentData);
