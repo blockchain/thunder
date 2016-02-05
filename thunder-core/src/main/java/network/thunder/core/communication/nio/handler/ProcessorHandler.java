@@ -26,7 +26,6 @@ public class ProcessorHandler extends ChannelDuplexHandler {
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
         try {
-            System.out.println("CHANNEL ACTIVE " + layerName);
             messageExecutor = new MessageExecutorImpl(ctx, layerName);
             processor.onLayerActive(messageExecutor);
         } catch (Exception e) {
