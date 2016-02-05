@@ -40,8 +40,14 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
     @Override
     public synchronized void relayPayment (LNPaymentProcessor processorSent, PaymentData paymentData) {
-        OnionObject object = paymentData.onionObject;
-        onionHelper.loadMessage(object);
+        try {
+            OnionObject object = paymentData.onionObject;
+            onionHelper.loadMessage(object);
+        } catch(Exception e) {
+            e.printStackTrace();
+            processorSent.refundPayment(paymentData);
+            return;
+        }
 
         saveReceiverToDatabase(paymentData);
 
@@ -74,6 +80,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
             //          the next node, refund the payment back if we don't...
 
             // Will just refund for now...
+            System.out.println("Currently not connected with "+Tools.bytesToHex(nextHop.getPubKey())+". Refund...");
             processorSent.refundPayment(paymentData);
         }
 
@@ -119,11 +126,13 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
         byte[] sender = dbHandler.getSenderOfPayment(paymentData.secret);
 
         if (sender == null) {
+            System.out.println("Can't find sender when trying to refund..?");
             //TODO ??? - this should not happen - but can't really resolve it either..
         }
 
         for (LNPaymentProcessor processor : processorList) {
             if (processor.connectsToNodeId(sender)) {
+                System.out.println("refundPayment...");
                 processor.refundPayment(paymentData);
                 return;
             }
