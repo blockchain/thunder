@@ -12,6 +12,7 @@ import network.thunder.core.communication.processor.interfaces.AuthenticationPro
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -40,7 +41,6 @@ public class AuthenticationHandlerTest {
     AuthenticationProcessor processor1;
     AuthenticationProcessor processor2;
 
-    //    EncryptionHandler handler;
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -68,6 +68,12 @@ public class AuthenticationHandlerTest {
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
 
+    }
+
+    @After
+    public void after () {
+        channel1.checkException();
+        channel2.checkException();
     }
 
     @Test

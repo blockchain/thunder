@@ -16,6 +16,7 @@ import network.thunder.core.communication.processor.implementations.gossip.Gossi
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.etc.InMemoryDBHandlerMock;
 import network.thunder.core.mesh.Node;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -117,6 +118,20 @@ public class GossipHandlerTest {
         channel43 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor43, "Gossip43"));
 
         clearOutput();
+    }
+
+    @After
+    public void after() {
+        channel12.checkException();
+        channel21.checkException();
+
+        channel21.checkException();
+        channel23.checkException();
+
+        channel32.checkException();
+        channel34.checkException();
+
+        channel43.checkException();
     }
 
     @Test

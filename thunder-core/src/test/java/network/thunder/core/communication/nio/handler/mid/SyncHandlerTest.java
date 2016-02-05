@@ -10,6 +10,7 @@ import network.thunder.core.communication.processor.implementations.sync.Synchro
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
 import network.thunder.core.etc.SyncDBHandlerMock;
 import network.thunder.core.mesh.Node;
+import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -69,6 +70,12 @@ public class SyncHandlerTest {
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
+    }
+
+    @After
+    public void after () {
+        channel1.checkException();
+        channel2.checkException();
     }
 
     @Test

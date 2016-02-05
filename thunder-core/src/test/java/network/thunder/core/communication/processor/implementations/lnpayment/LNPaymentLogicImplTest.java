@@ -72,12 +72,13 @@ public class LNPaymentLogicImplTest {
         paymentLogic2.initialise(channel2);
     }
 
+
     @Test
     public void fullExchange () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);
@@ -103,7 +104,7 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);
@@ -118,7 +119,7 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);
@@ -136,7 +137,7 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);
@@ -154,7 +155,7 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);
@@ -175,7 +176,7 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus);
+        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
         LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
         exchangeMessage(messageA, paymentLogic1, paymentLogic2);

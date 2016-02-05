@@ -90,7 +90,7 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
                 return payment;
             }
         }
-        throw new RuntimeException("Payment not found in database..");
+        return null;
     }
 
     @Override

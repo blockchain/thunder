@@ -22,6 +22,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -85,6 +86,12 @@ public class LNEstablishHandlerTest {
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
+    }
+
+    @After
+    public void after () {
+        channel1.checkException();
+        channel2.checkException();
     }
 
     @Test

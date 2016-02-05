@@ -16,6 +16,7 @@ import network.thunder.core.communication.processor.interfaces.EncryptionProcess
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import network.thunder.core.mesh.Node;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -71,6 +72,12 @@ public class EncryptionHandlerTest {
         m = (Message) channel2.readOutbound();
         assertNull(m);
 
+    }
+
+    @After
+    public void after () {
+        channel1.checkException();
+        channel2.checkException();
     }
 
     @Test

@@ -15,8 +15,10 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.LNP
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
 import network.thunder.core.mesh.Node;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -35,11 +37,8 @@ import static org.junit.Assert.assertThat;
 public class LNPaymentHandlerTest {
 
     EmbeddedChannel channel12;
-
     EmbeddedChannel channel21;
-    EmbeddedChannel channel23;
 
-    EmbeddedChannel channel32;
 
     Node node12;
     Node node21;
@@ -53,8 +52,8 @@ public class LNPaymentHandlerTest {
     MockLNPaymentLogic paymentLogic1 = new MockLNPaymentLogic();
     MockLNPaymentLogic paymentLogic2 = new MockLNPaymentLogic();
 
-    LNPaymentDBHandlerMock dbHandler1 = new LNPaymentDBHandlerMock();
-    LNPaymentDBHandlerMock dbHandler2 = new LNPaymentDBHandlerMock();
+    DBHandler dbHandler1 = new LNPaymentDBHandlerMock();
+    DBHandler dbHandler2 = new LNPaymentDBHandlerMock();
 
     LNPaymentHelper paymentHelper1;
     LNPaymentHelper paymentHelper2;
@@ -100,6 +99,12 @@ public class LNPaymentHandlerTest {
         Message m = (Message) channel21.readOutbound();
         assertNull(m);
 
+    }
+
+    @After
+    public void after() {
+        channel12.checkException();
+        channel21.checkException();
     }
 
     @Test
