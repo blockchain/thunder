@@ -2,6 +2,7 @@ package network.thunder.core.communication.processor.implementations.lnpayment.h
 
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 
 /**
@@ -16,7 +17,7 @@ public class QueueElementRedeem extends QueueElement {
     }
 
     @Override
-    public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus) {
+    public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus, LNPaymentHelper paymentHelper) {
         ChannelStatus status = channelStatus.getClone();
 
         PaymentData paymentData = null;
