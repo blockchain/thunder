@@ -24,7 +24,6 @@ import network.thunder.core.mesh.Node;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +109,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                         //Time is over - we try it again after some random delay?
                         putQueueElementsBackInQueue();
                         setStatus(IDLE);
-                        Thread.sleep(new Random().nextInt(TIMEOUT_NEGOTIATION / 10));
                     }
 
                 } else {
