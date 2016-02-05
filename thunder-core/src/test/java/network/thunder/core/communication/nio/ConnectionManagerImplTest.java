@@ -54,7 +54,7 @@ public class ConnectionManagerImplTest {
             System.out.println(i + " started up...");
 
             clients.get(i).connectionManager.startUp();
-            Thread.sleep(5000);
+            Thread.sleep(500);
         }
 //        }
 //        Thread.sleep(5000);
@@ -68,7 +68,7 @@ public class ConnectionManagerImplTest {
 //
 //        clients.get(3).connectionManager.startUp();
 
-        Thread.sleep(10000);
+        Thread.sleep(1000);
     }
 
     private void createSeedConnection () {
