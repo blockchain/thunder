@@ -50,7 +50,7 @@ public class Tools {
     /**
      * The Constant hexArray.
      */
-    final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+    final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
     /**
      * Input stream to string.

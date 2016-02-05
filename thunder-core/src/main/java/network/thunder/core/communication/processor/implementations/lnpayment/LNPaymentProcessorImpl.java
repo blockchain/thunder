@@ -24,6 +24,7 @@ import network.thunder.core.mesh.Node;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -52,7 +53,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LinkedBlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
     List<QueueElement> currentQueueElement = new ArrayList<>();
 
-    ChannelStatus channelStatus;
+    ChannelStatus statusTemp;
     boolean aborted = false;
     boolean finished = false;
 
@@ -72,47 +73,14 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         this.paymentHelper = paymentHelper;
 
         channel = dbHandler.getChannel(node);
+        paymentLogic.initialise(channel);
     }
 
     private void startQueueListener () {
         new Thread(() -> {
             while (true) {
                 try {
-
-                    if (status == IDLE) {
-                        QueueElement element = queueList.poll(100, TimeUnit.MILLISECONDS);
-                        if (element != null) {
-                            if (status == IDLE) {
-                                currentQueueElement.add(element);
-
-                                buildChannelStatus();
-
-                                sendMessageA();
-                                restartCountDown(TIMEOUT_NEGOTIATION);
-
-                                if (weStartedExchange && status != IDLE) {
-                                    //Time is over - we try it again after some random delay?
-                                    putQueueElementsBackInQueue();
-                                    setStatus(IDLE);
-//                                    Thread.sleep(new Random().nextInt(TIME_MAX_WAIT));
-                                }
-
-                            } else {
-                                queueList.addFirst(element);
-                            }
-                        }
-
-                    } else {
-                        //When we get here and Status is not IDLE, the other party started the exchange..
-                        long timeToFinish = TIMEOUT_NEGOTIATION - (System.currentTimeMillis() - currentTaskStarted);
-
-                        restartCountDown(timeToFinish);
-                        if (status != IDLE) {
-                            //Other party started the exchange, but we hit the timeout for negotiation. Just abort it on our side..
-                            setStatus(IDLE);
-                        }
-                    }
-
+                    checkQueue();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -120,18 +88,69 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         }).start();
     }
 
+    private void checkQueue () throws InterruptedException {
+        if (status == IDLE) {
+            QueueElement element = queueList.poll(100, TimeUnit.MILLISECONDS);
+            if (element != null) {
+                if (status == IDLE) {
+                    currentQueueElement.add(element);
+                    while (queueList.size() > 0) {
+                        currentQueueElement.add(queueList.getFirst());
+                    }
+
+                    buildChannelStatus();
+                    if (!checkForUpdates()) {
+                        return;
+                    }
+
+                    sendMessageA();
+                    restartCountDown(TIMEOUT_NEGOTIATION);
+
+                    if (weStartedExchange && status != IDLE) {
+                        //Time is over - we try it again after some random delay?
+                        putQueueElementsBackInQueue();
+                        setStatus(IDLE);
+                        Thread.sleep(new Random().nextInt(TIMEOUT_NEGOTIATION / 10));
+                    }
+
+                } else {
+                    queueList.addFirst(element);
+                }
+            }
+
+        } else {
+            //When we get here and Status is not IDLE, the other party started the exchange..
+            long timeToFinish = TIMEOUT_NEGOTIATION - (System.currentTimeMillis() - currentTaskStarted);
+
+            restartCountDown(timeToFinish);
+            if (status != IDLE) {
+                //Other party started the exchange, but we hit the timeout for negotiation. Just abort it on our side..
+                statusTemp = channel.channelStatus;
+                setStatus(IDLE);
+            }
+        }
+    }
+
     private void buildChannelStatus () {
         ChannelStatus temp = channel.channelStatus.getClone();
+        System.out.println(node.name + " :" + temp);
         for (QueueElement queueElement : currentQueueElement) {
-            temp = queueElement.produceNewChannelStatus(temp);
+            temp = queueElement.produceNewChannelStatus(temp, paymentHelper);
         }
-        this.channelStatus = temp;
+        System.out.println(node.name + " :" + temp);
+        this.statusTemp = temp;
+    }
+
+    private boolean checkForUpdates () {
+        int totalChanges = statusTemp.newPayments.size() + statusTemp.redeemedPayments.size() + statusTemp.refundedPayments.size();
+        return totalChanges > 0;
     }
 
     private void putQueueElementsBackInQueue () {
         for (int i = currentQueueElement.size() - 1; i >= 0; --i) {
             queueList.addFirst(currentQueueElement.get(i));
         }
+        currentQueueElement.clear();
     }
 
     public void restartCountDown (long sleepTime) throws InterruptedException {
@@ -145,16 +164,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     public void abortCountDown () {
         countDownLatch.countDown();
-    }
-
-    @Override
-    public boolean connectsToNodeId (byte[] nodeId) {
-        return Arrays.equals(nodeId, node.pubKeyClient.getPubKey());
-    }
-
-    @Override
-    public byte[] connectsTo () {
-        return node.pubKeyClient.getPubKey();
     }
 
     @Override
@@ -183,23 +192,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         abortCountDown();
     }
 
-    @Override
-    public void onLayerActive (MessageExecutor messageExecutor) {
-        this.messageExecutor = messageExecutor;
-        this.paymentHelper.addProcessor(this);
-        startQueueListener();
-    }
-
-    @Override
-    public void onLayerClose () {
-        this.paymentHelper.removeProcessor(this);
-    }
-
     private void sendMessageA () {
         testStatus(IDLE);
         weStartedExchange = true;
 
-        LNPaymentAMessage message = messageFactory.getMessageA(channel, channelStatus);
+        LNPaymentAMessage message = messageFactory.getMessageA(channel, statusTemp);
         paymentLogic.readMessageOutbound(message);
         latestDice = message.dice;
         sendMessage(message);
@@ -266,7 +263,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             }
         } else if (status != IDLE) {
             System.out.println(node.name + " WE ABORT BECAUSE OTHER PARTY SENT US A NEW REQUEST..");
-
             abortCurrentTask();
         }
 
@@ -355,8 +351,14 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         for (PaymentData payment : status.newPayments) {
             if (weStartedExchange) {
                 PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
-                wrapper.statusReceiver = EMBEDDED;
-                dbHandler.updatePaymentReceiver(wrapper);
+                if (wrapper == null) {
+                    wrapper = new PaymentWrapper(new byte[0], payment);
+                    wrapper.statusReceiver = EMBEDDED;
+                    dbHandler.addPayment(wrapper);
+                } else {
+                    wrapper.statusReceiver = EMBEDDED;
+                    dbHandler.updatePaymentReceiver(wrapper);
+                }
             } else {
                 PaymentWrapper wrapper = new PaymentWrapper(node.pubKeyClient.getPubKey(), payment);
                 System.out.println(node.name + " addPayment: " + payment);
@@ -387,15 +389,17 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void evaluateUpdates () {
-        channelStatus = paymentLogic.getTemporaryChannelStatus();
+        statusTemp = paymentLogic.getTemporaryChannelStatus();
 
-        ChannelStatus statusToBeProcessed = channelStatus.getClone();
+        System.out.println(node.name + " " + statusTemp);
 
-        channelStatus.oldPayments.addAll(channelStatus.newPayments);
-        channelStatus.newPayments.clear();
-        channelStatus.refundedPayments.clear();
-        channelStatus.redeemedPayments.clear();
-        channel.channelStatus = channelStatus;
+        ChannelStatus statusToBeProcessed = statusTemp.getClone();
+
+        statusTemp.oldPayments.addAll(statusTemp.newPayments);
+        statusTemp.newPayments.clear();
+        statusTemp.refundedPayments.clear();
+        statusTemp.redeemedPayments.clear();
+        channel.channelStatus = statusTemp;
 
         if (!weStartedExchange) {
             for (PaymentData newPayment : statusToBeProcessed.newPayments) {
@@ -438,6 +442,18 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     @Override
+    public void onLayerActive (MessageExecutor messageExecutor) {
+        this.messageExecutor = messageExecutor;
+        this.paymentHelper.addProcessor(this);
+        startQueueListener();
+    }
+
+    @Override
+    public void onLayerClose () {
+        this.paymentHelper.removeProcessor(this);
+    }
+
+    @Override
     public boolean consumesInboundMessage (Object object) {
         return (object instanceof LNPayment);
     }
@@ -447,8 +463,25 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         return false;
     }
 
-    public ChannelStatus getChannelStatus () {
-        return channelStatus;
+    public ChannelStatus getStatusTemp () {
+        if (statusTemp == null) {
+            statusTemp = channel.channelStatus;
+        }
+        return statusTemp;
+    }
+
+    public Channel getChannel () {
+        return channel;
+    }
+
+    @Override
+    public boolean connectsToNodeId (byte[] nodeId) {
+        return Arrays.equals(nodeId, node.pubKeyClient.getPubKey());
+    }
+
+    @Override
+    public byte[] connectsTo () {
+        return node.pubKeyClient.getPubKey();
     }
 
     public enum Status {

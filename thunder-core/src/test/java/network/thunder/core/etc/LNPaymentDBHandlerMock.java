@@ -36,7 +36,6 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
             throw new RuntimeException("Double payment added?");
         }
         payments.add(paymentWrapper);
-        System.out.println(payments.size());
     }
 
     @Override

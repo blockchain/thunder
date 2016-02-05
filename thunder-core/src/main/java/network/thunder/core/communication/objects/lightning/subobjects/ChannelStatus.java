@@ -58,4 +58,17 @@ public class ChannelStatus implements Cloneable {
         }
         return paymentDataList;
     }
+
+    @Override
+    public String toString () {
+        return "ChannelStatus{" +
+                ", amountClient=" + amountClient +
+                ", amountServer=" + amountServer +
+                ", newPayments=" + newPayments.size() +
+                ", oldPayments=" + oldPayments.size() +
+                ", refundedPayments=" + refundedPayments.size() +
+                ", redeemedPayments=" + redeemedPayments.size() +
+
+                '}';
+    }
 }
