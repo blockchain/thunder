@@ -8,7 +8,7 @@ import network.thunder.core.communication.processor.Processor;
  * Created by matsjerratsch on 08/12/2015.
  */
 public abstract class LNPaymentProcessor extends Processor {
-    public final static int TIMEOUT_NEGOTIATION = 5 * 1000;
+    public final static int TIMEOUT_NEGOTIATION = 10 * 1000;
 
     public abstract boolean connectsToNodeId (byte[] nodeId);
 

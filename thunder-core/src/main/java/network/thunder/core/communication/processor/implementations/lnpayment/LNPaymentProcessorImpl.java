@@ -94,7 +94,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 if (status == IDLE) {
                     currentQueueElement.add(element);
                     while (queueList.size() > 0) {
-                        currentQueueElement.add(queueList.getFirst());
+                        currentQueueElement.add(queueList.poll());
                     }
 
                     buildChannelStatus();

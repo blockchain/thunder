@@ -39,7 +39,6 @@ public class LNPaymentHandlerTest {
     EmbeddedChannel channel12;
     EmbeddedChannel channel21;
 
-
     Node node12;
     Node node21;
 
@@ -102,7 +101,7 @@ public class LNPaymentHandlerTest {
     }
 
     @After
-    public void after() {
+    public void after () {
         channel12.checkException();
         channel21.checkException();
     }
@@ -128,11 +127,13 @@ public class LNPaymentHandlerTest {
         processor12.makePayment(getMockPaymentData());
         Thread.sleep(2000);
 
-        channel21.writeInbound(channel12.readOutbound());
-        channel12.writeInbound(channel21.readOutbound());
+        exchangeMessages(channel12, channel21);
+        exchangeMessages(channel21, channel12);
         Message message = (Message) channel12.readOutbound();
 
-        Thread.sleep(LNPaymentProcessor.TIMEOUT_NEGOTIATION + 1000);
+        Thread.sleep(LNPaymentProcessor.TIMEOUT_NEGOTIATION + 5000);
+
+        System.out.println(message);
 
         channel21.writeInbound(message);
         assertNull(channel21.readOutbound());
@@ -221,6 +222,7 @@ public class LNPaymentHandlerTest {
 
     public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to) {
         Object message = from.readOutbound();
+        System.out.println(message);
         if (message != null) {
             to.writeInbound(message);
         }
