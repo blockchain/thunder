@@ -8,6 +8,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
@@ -29,6 +30,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     WalletHelper walletHelper;
     LNEstablishMessageFactory messageFactory;
     BroadcastHelper broadcastHelper;
+    LNEventHelper eventHelper;
     Node node;
 
     MessageExecutor messageExecutor;
@@ -36,10 +38,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public Channel channel;
     int status = 0;
 
-    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishMessageFactory messageFactory, BroadcastHelper broadcastHelper, Node node) {
+    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishMessageFactory messageFactory, BroadcastHelper broadcastHelper, LNEventHelper
+            eventHelper, Node node) {
         this.walletHelper = walletHelper;
         this.messageFactory = messageFactory;
         this.broadcastHelper = broadcastHelper;
+        this.eventHelper = eventHelper;
         this.node = node;
     }
 
@@ -129,6 +133,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
         PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
         broadcastHelper.broadcastNewObject(channelObject);
+
+        eventHelper.onChannelOpened(channel);
     }
 
     private void processMessageD (Message message) {
@@ -145,6 +151,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         }
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
+
+        eventHelper.onChannelOpened(channel);
     }
 
     private void sendEstablishMessageA () {

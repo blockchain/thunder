@@ -4,6 +4,7 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.authentication.Authentication;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.etc.crypto.CryptoTools;
@@ -14,7 +15,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
 public class AuthenticationProcessorImpl extends AuthenticationProcessor {
+
     AuthenticationMessageFactory messageFactory;
+    LNEventHelper eventHelper;
     Node node;
 
     MessageExecutor messageExecutor;
@@ -22,8 +25,9 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
     public boolean sentAuth;
     public boolean authFinished;
 
-    public AuthenticationProcessorImpl (AuthenticationMessageFactory messageFactory, Node node) {
+    public AuthenticationProcessorImpl (AuthenticationMessageFactory messageFactory, LNEventHelper eventHelper, Node node) {
         this.messageFactory = messageFactory;
+        this.eventHelper = eventHelper;
         this.node = node;
     }
 
@@ -89,6 +93,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             checkAuthenticationMessage(authObject, node);
             sendAuthentication();
             authFinished = true;
+            eventHelper.onConnectionOpened(node);
             messageExecutor.sendNextLayerActive();
 
         } catch (Exception e) {
@@ -96,6 +101,11 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
         }
 
+    }
+
+    @Override
+    public void onLayerClose () {
+        eventHelper.onConnectionClosed(node);
     }
 
     public AuthenticationMessage getAuthenticationMessage () {

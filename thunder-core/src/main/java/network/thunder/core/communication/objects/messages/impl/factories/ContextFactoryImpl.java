@@ -27,6 +27,8 @@ import org.bitcoinj.core.Wallet;
  */
 public class ContextFactoryImpl implements ContextFactory {
     DBHandler dbHandler;
+    LNEventHelper eventHelper;
+
     SynchronizationHelper syncHelper;
     GossipSubject gossipSubject;
     BroadcastHelper broadcastHelper;
@@ -36,8 +38,9 @@ public class ContextFactoryImpl implements ContextFactory {
 
     LNOnionHelper onionHelper;
 
-    public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet) {
+    public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper) {
         this.dbHandler = dbHandler;
+        this.eventHelper = eventHelper;
         this.walletHelper = new WalletHelperImpl(wallet);
 
         GossipSubjectImpl gossipSubject = new GossipSubjectImpl(dbHandler);
@@ -70,12 +73,12 @@ public class ContextFactoryImpl implements ContextFactory {
 
     @Override
     public AuthenticationProcessor getAuthenticationProcessor (Node node) {
-        return new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), node);
+        return new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), eventHelper, node);
     }
 
     @Override
     public PeerSeedProcessor getPeerSeedProcessor (Node node) {
-        return new PeerSeedProcessorImpl(new PeerSeedMessageFactoryImpl(), dbHandler, node);
+        return new PeerSeedProcessorImpl(new PeerSeedMessageFactoryImpl(), dbHandler, eventHelper, node);
     }
 
     @Override
@@ -93,7 +96,7 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public LNEstablishProcessor getLNEstablishProcessor (Node node) {
         LNEstablishMessageFactory messageFactory = new LNEstablishMessageFactoryImpl();
-        return new LNEstablishProcessorImpl(walletHelper, messageFactory, broadcastHelper, node);
+        return new LNEstablishProcessorImpl(walletHelper, messageFactory, broadcastHelper, eventHelper, node);
     }
 
     @Override

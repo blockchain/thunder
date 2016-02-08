@@ -1,8 +1,10 @@
 package network.thunder.core.communication.nio;
 
+import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -29,12 +31,15 @@ public class ConnectionManagerImpl implements ConnectionManager {
     ContextFactory contextFactory;
     DBHandler dbHandler;
 
+    LNEventHelper eventHelper;
+
     P2PServer server;
 
     public ConnectionManagerImpl (Node node, Wallet wallet, DBHandler dbHandler) {
         this.dbHandler = dbHandler;
         this.node = node;
-        contextFactory = new ContextFactoryImpl(dbHandler, wallet);
+        eventHelper = new LNEventHelperImpl();
+        contextFactory = new ContextFactoryImpl(dbHandler, wallet, eventHelper);
     }
 
     @Override

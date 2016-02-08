@@ -7,6 +7,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedSendMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.PeerSeedMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.peerseed.PeerSeedMessage;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
@@ -25,13 +26,15 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     PeerSeedMessageFactory messageFactory;
     DBHandler dbHandler;
+    LNEventHelper eventHelper;
     Node node;
 
     MessageExecutor messageExecutor;
 
-    public PeerSeedProcessorImpl (PeerSeedMessageFactory messageFactory, DBHandler dbHandler, Node node) {
+    public PeerSeedProcessorImpl (PeerSeedMessageFactory messageFactory, DBHandler dbHandler, LNEventHelper eventHelper, Node node) {
         this.messageFactory = messageFactory;
         this.dbHandler = dbHandler;
+        this.eventHelper = eventHelper;
         this.node = node;
     }
 
@@ -78,12 +81,19 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
         } else if (message instanceof PeerSeedSendMessage) {
             PeerSeedSendMessage sendMessage = (PeerSeedSendMessage) message;
             List<PubkeyIPObject> list = removeOurIPFromList(sendMessage.ipObjectList);
-            dbHandler.insertIPObjects(P2PDataObject.generaliseList(sendMessage.ipObjectList));
+            dbHandler.insertIPObjects(P2PDataObject.generaliseList(list));
+            fireIPEvents(list);
 
             //TODO We might always want to close here, given that we only ever get here if intent = GET_IPS
             if (!node.isServer && node.intent == ChannelIntent.GET_IPS) {
                 messageExecutor.closeConnection();
             }
+        }
+    }
+
+    private void fireIPEvents (List<PubkeyIPObject> list) {
+        for (PubkeyIPObject ip : list) {
+            eventHelper.onReceivedIP(ip);
         }
     }
 

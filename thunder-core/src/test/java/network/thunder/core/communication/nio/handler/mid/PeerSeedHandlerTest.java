@@ -6,9 +6,11 @@ import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.factories.PeerSeedMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedGetMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.PeerSeedMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.implementations.PeerSeedProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
+import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.SeedDBHandlerMock;
 import network.thunder.core.mesh.Node;
 import org.junit.After;
@@ -37,6 +39,8 @@ public class PeerSeedHandlerTest {
     SeedDBHandlerMock handler1;
     SeedDBHandlerMock handler2;
 
+    LNEventHelper eventHelper = new MockLNEventHelper();
+
     @Before
     public void prepare () {
         node1 = new Node();
@@ -53,8 +57,8 @@ public class PeerSeedHandlerTest {
         handler2 = new SeedDBHandlerMock();
         handler2.fillWithRandomData();
 
-        seedProcessor1 = new PeerSeedProcessorImpl(messageFactory, handler1, node1);
-        seedProcessor2 = new PeerSeedProcessorImpl(messageFactory, handler2, node2);
+        seedProcessor1 = new PeerSeedProcessorImpl(messageFactory, handler1, eventHelper, node1);
+        seedProcessor2 = new PeerSeedProcessorImpl(messageFactory, handler2, eventHelper, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(seedProcessor1, "Seed1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(seedProcessor2, "Seed2"));
@@ -64,7 +68,7 @@ public class PeerSeedHandlerTest {
     }
 
     @After
-    public void after() {
+    public void after () {
         channel1.checkException();
         channel2.checkException();
     }

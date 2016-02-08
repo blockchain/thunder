@@ -10,12 +10,14 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.MockBroadcastHelper;
+import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.MockWallet;
 import network.thunder.core.mesh.Node;
 import org.bitcoinj.core.Sha256Hash;
@@ -66,6 +68,8 @@ public class LNEstablishHandlerTest {
     HashMap<TransactionOutPoint, Integer> lockedOutputs1 = new HashMap<>();
     HashMap<TransactionOutPoint, Integer> lockedOutputs2 = new HashMap<>();
 
+    LNEventHelper eventHelper = new MockLNEventHelper();
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
 
@@ -78,8 +82,8 @@ public class LNEstablishHandlerTest {
         walletHelper1 = new WalletHelperImpl(wallet1);
         walletHelper2 = new WalletHelperImpl(wallet2);
 
-        processor1 = new LNEstablishProcessorImpl(walletHelper1, messageFactory, broadcastHelper1, node1);
-        processor2 = new LNEstablishProcessorImpl(walletHelper2, messageFactory, broadcastHelper2, node2);
+        processor1 = new LNEstablishProcessorImpl(walletHelper1, messageFactory, broadcastHelper1, eventHelper, node1);
+        processor2 = new LNEstablishProcessorImpl(walletHelper2, messageFactory, broadcastHelper2, eventHelper, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNEstablish1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNEstablish2"));

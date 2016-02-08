@@ -6,9 +6,11 @@ import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
+import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.Node;
@@ -41,6 +43,8 @@ public class AuthenticationHandlerTest {
     AuthenticationProcessor processor1;
     AuthenticationProcessor processor2;
 
+    LNEventHelper eventHelper = new MockLNEventHelper();
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -59,8 +63,8 @@ public class AuthenticationHandlerTest {
 
         messageFactory = new AuthenticationMessageFactoryImpl();
 
-        processor1 = new AuthenticationProcessorImpl(messageFactory, node1);
-        processor2 = new AuthenticationProcessorImpl(messageFactory, node2);
+        processor1 = new AuthenticationProcessorImpl(messageFactory, eventHelper, node1);
+        processor2 = new AuthenticationProcessorImpl(messageFactory, eventHelper, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "Encryption1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "Encryption2"));
