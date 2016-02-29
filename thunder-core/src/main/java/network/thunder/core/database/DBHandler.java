@@ -1,12 +1,12 @@
 package network.thunder.core.database;
 
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.lightning.RevocationHash;
-import network.thunder.core.mesh.Node;
 
 import java.util.List;
 
@@ -26,6 +26,8 @@ public interface DBHandler {
 
     P2PDataObject getP2PDataObjectByHash (byte[] hash);
 
+    PubkeyIPObject getIPObject (byte[] nodeKey);
+
     void syncDatalist (List<P2PDataObject> dataList);
 
     //Channels
@@ -37,9 +39,17 @@ public interface DBHandler {
 
     boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
 
-    Channel getChannel (Node node);
+    Channel getChannel (byte[] nodeKey);
+
+    void saveChannel (Channel channel);
+
+    void updateChannel (Channel channel);
+
+    List<Channel> getOpenChannel ();
 
     List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
+
+    List<ChannelStatusObject> getTopology ();
 
     //Payments
     byte[] getSenderOfPayment (PaymentSecret paymentSecret);
@@ -61,4 +71,14 @@ public interface DBHandler {
     void addPaymentSecret (PaymentSecret secret);
 
     PaymentSecret getPaymentSecret (PaymentSecret secret);
+
+    //GUI
+    List<PaymentWrapper> getAllPayments ();
+
+    List<PaymentWrapper> getOpenPayments ();
+
+    List<PaymentWrapper> getRefundedPayments ();
+
+    List<PaymentWrapper> getRedeemedPayments ();
+
 }

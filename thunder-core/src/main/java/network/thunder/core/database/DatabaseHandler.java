@@ -7,7 +7,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -430,9 +430,9 @@ public class DatabaseHandler {
      * @return the active channels
      * @throws SQLException the SQL exception
      */
-    public static ArrayList<Node> getNodesWithOpenChanels (Connection conn) throws SQLException {
+    public static ArrayList<NodeClient> getNodesWithOpenChanels (Connection conn) throws SQLException {
         PreparedStatement stmt = null;
-        ArrayList<Node> channelList = new ArrayList<>();
+        ArrayList<NodeClient> channelList = new ArrayList<>();
         try {
             stmt = conn.prepareStatement("SELECT nodes.host, nodes.port FROM nodes, channels WHERE channels.is_ready=1 AND node.id=channels.nodeid");
 
@@ -443,7 +443,7 @@ public class DatabaseHandler {
             }
 
             while (!result.isAfterLast()) {
-                Node node = new Node(result);
+                NodeClient node = new NodeClient(result);
                 channelList.add(node);
                 result.next();
             }
