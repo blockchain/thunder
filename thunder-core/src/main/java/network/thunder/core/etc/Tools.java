@@ -794,6 +794,7 @@ public class Tools {
      */
     public static byte[] stringToByte (String string) {
         try {
+            com.sun.org.apache.xml.internal.security.Init.init();
             return Base64.decode(string);
         } catch (Base64DecodingException e) {
             throw new RuntimeException(e);

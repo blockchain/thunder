@@ -1,6 +1,7 @@
 package network.thunder.core.etc.crypto;
 
 import org.bitcoinj.core.ECKey;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.jce.provider.JCEECPrivateKey;
 import org.bouncycastle.jce.provider.JCEECPublicKey;
 
@@ -20,6 +21,7 @@ public class ECDH {
     public static ECDHKeySet getSharedSecret (ECKey keyServer, ECKey keyClient) {
         try {
 
+            Security.addProvider(new BouncyCastleProvider());
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
             AlgorithmParameters parameters = AlgorithmParameters.getInstance("EC", "SunEC");
@@ -38,7 +40,7 @@ public class ECDH {
 
             new ECKey().getKeyCrypter();
 
-            KeyAgreement aKeyAgree = KeyAgreement.getInstance("ECDH", "BC");
+            KeyAgreement aKeyAgree = KeyAgreement.getInstance("ECDH");
 
             aKeyAgree.init(ecPrivKey);
             aKeyAgree.doPhase(ecPubKey, true);
