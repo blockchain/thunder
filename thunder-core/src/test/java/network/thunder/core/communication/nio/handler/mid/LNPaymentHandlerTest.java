@@ -4,20 +4,20 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.impl.LNOnionHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,58 +39,31 @@ public class LNPaymentHandlerTest {
     EmbeddedChannel channel12;
     EmbeddedChannel channel21;
 
-    Node node12;
-    Node node21;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
 
-    LNPaymentMessageFactory messageFactory1;
-    LNPaymentMessageFactory messageFactory2;
+    NodeClient node1 = new NodeClient(nodeServer2);
+    NodeClient node2 = new NodeClient(nodeServer1);
 
     LNPaymentProcessorImpl processor12;
     LNPaymentProcessorImpl processor21;
 
-    MockLNPaymentLogic paymentLogic1 = new MockLNPaymentLogic();
-    MockLNPaymentLogic paymentLogic2 = new MockLNPaymentLogic();
-
     DBHandler dbHandler1 = new LNPaymentDBHandlerMock();
     DBHandler dbHandler2 = new LNPaymentDBHandlerMock();
 
-    LNPaymentHelper paymentHelper1;
-    LNPaymentHelper paymentHelper2;
-
-    LNOnionHelper onionHelper1;
-    LNOnionHelper onionHelper2;
+    ContextFactory contextFactory12 = new MockLNPaymentContextFactory(nodeServer1, dbHandler1);
+    ContextFactory contextFactory21 = new MockLNPaymentContextFactory(nodeServer2, dbHandler2);
 
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
-        Node node1 = new Node();
-        Node node2 = new Node();
-
         node1.isServer = false;
         node2.isServer = true;
 
-        node12 = new Node(node1);
-        node21 = new Node(node2);
+        this.node1.name = "LNPayment12";
+        this.node2.name = "LNPayment21";
 
-        node12.name = "LNPayment12";
-        node21.name = "LNPayment21";
-
-        node12.pubKeyClient = node2.pubKeyServer;
-        node21.pubKeyClient = node1.pubKeyServer;
-
-        messageFactory1 = new LNPaymentMessageFactoryMock();
-        messageFactory2 = new LNPaymentMessageFactoryMock();
-
-        onionHelper1 = new LNOnionHelperImpl();
-        onionHelper2 = new LNOnionHelperImpl();
-
-        onionHelper1.init(node1.pubKeyServer);
-        onionHelper2.init(node2.pubKeyServer);
-
-        paymentHelper1 = new MockLNPaymentHelper();
-        paymentHelper2 = new MockLNPaymentHelper();
-
-        processor12 = new LNPaymentProcessorImpl(messageFactory1, paymentLogic1, dbHandler1, paymentHelper1, node12);
-        processor21 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic2, dbHandler2, paymentHelper2, node21);
+        processor12 = new LNPaymentProcessorImpl(contextFactory12, dbHandler1, this.node1);
+        processor21 = new LNPaymentProcessorImpl(contextFactory21, dbHandler2, this.node2);
 
         channel12 = new EmbeddedChannel(new ProcessorHandler(processor12, "LNPayment12"));
         channel21 = new EmbeddedChannel(new ProcessorHandler(processor21, "LNPayment21"));
@@ -265,6 +238,23 @@ public class LNPaymentHandlerTest {
                 }
             }
         }).start();
+    }
+
+    class MockLNPaymentContextFactory extends MockContextFactory {
+
+        public MockLNPaymentContextFactory (NodeServer node, DBHandler dbHandler) {
+            super(node, dbHandler);
+        }
+
+        @Override
+        public LNPaymentLogic getLNPaymentLogic () {
+            return new MockLNPaymentLogic();
+        }
+
+        @Override
+        public LNPaymentMessageFactory getLNPaymentMessageFactory () {
+            return new LNPaymentMessageFactoryMock();
+        }
     }
 
 }

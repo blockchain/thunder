@@ -1,5 +1,6 @@
 package network.thunder.core.etc;
 
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
@@ -7,7 +8,6 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.lightning.RevocationHash;
-import network.thunder.core.mesh.Node;
 
 import java.util.List;
 
@@ -41,6 +41,11 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
+    public PubkeyIPObject getIPObject (byte[] nodeKey) {
+        return null;
+    }
+
+    @Override
     public void syncDatalist (List<P2PDataObject> dataList) {
 
     }
@@ -66,12 +71,32 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public Channel getChannel (Node node) {
+    public Channel getChannel (byte[] nodeKey) {
+        return null;
+    }
+
+    @Override
+    public void saveChannel (Channel channel) {
+
+    }
+
+    @Override
+    public void updateChannel (Channel channel) {
+
+    }
+
+    @Override
+    public List<Channel> getOpenChannel () {
         return null;
     }
 
     @Override
     public List<PubkeyIPObject> getIPObjectsWithActiveChannel () {
+        return null;
+    }
+
+    @Override
+    public List<ChannelStatusObject> getTopology () {
         return null;
     }
 
@@ -122,6 +147,26 @@ public class DBHandlerMock implements DBHandler {
 
     @Override
     public PaymentSecret getPaymentSecret (PaymentSecret secret) {
+        return null;
+    }
+
+    @Override
+    public List<PaymentWrapper> getAllPayments () {
+        return null;
+    }
+
+    @Override
+    public List<PaymentWrapper> getOpenPayments () {
+        return null;
+    }
+
+    @Override
+    public List<PaymentWrapper> getRefundedPayments () {
+        return null;
+    }
+
+    @Override
+    public List<PaymentWrapper> getRedeemedPayments () {
         return null;
     }
 }

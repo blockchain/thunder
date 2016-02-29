@@ -3,13 +3,12 @@ package network.thunder.core.communication.nio.handler.mid;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
-import network.thunder.core.communication.objects.messages.impl.factories.SyncMessageFactoryImpl;
-import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
-import network.thunder.core.communication.processor.implementations.sync.SyncProcessorImpl;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.processor.implementations.sync.SynchronizationHelper;
-import network.thunder.core.communication.processor.interfaces.SyncProcessor;
+import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.SyncDBHandlerMock;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Test;
 
@@ -25,48 +24,41 @@ public class SyncHandlerTest {
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
 
-    Node node1;
-    Node node2;
+    NodeClient node1;
+    NodeClient node2;
 
-    SyncMessageFactory messageFactory;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
 
-    SyncProcessor syncProcessor1;
-    SyncProcessor syncProcessor2;
+    ContextFactory contextFactory1;
+    ContextFactory contextFactory2;
 
-    SynchronizationHelper syncStructure1;
-    SynchronizationHelper syncStructure2;
-
-    SyncDBHandlerMock handler1;
-    SyncDBHandlerMock handler2;
+    SyncDBHandlerMock dbHandler1;
+    SyncDBHandlerMock dbHandler2;
 
     public void buildDatabase () {
 
-        handler1 = new SyncDBHandlerMock();
+        dbHandler1 = new SyncDBHandlerMock();
 
-        handler2 = new SyncDBHandlerMock();
-        handler2.fillWithRandomData();
+        dbHandler2 = new SyncDBHandlerMock();
+        dbHandler2.fillWithRandomData();
 
     }
 
     public void prepare (boolean shouldOnlyFetchIPs) {
-        node1 = new Node();
-        node2 = new Node();
+        node1 = new NodeClient();
+        node2 = new NodeClient();
 
         node1.isServer = false;
         node1.justFetchNewIpAddresses = shouldOnlyFetchIPs;
 
         node2.isServer = true;
 
-        messageFactory = new SyncMessageFactoryImpl();
+        contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
+        contextFactory2 = new MockContextFactory(nodeServer2, dbHandler2);
 
-        syncStructure1 = new SynchronizationHelper(handler1);
-        syncStructure2 = new SynchronizationHelper(handler2);
-
-        syncProcessor1 = new SyncProcessorImpl(messageFactory, node1, syncStructure1);
-        syncProcessor2 = new SyncProcessorImpl(messageFactory, node2, syncStructure2);
-
-        channel1 = new EmbeddedChannel(new ProcessorHandler(syncProcessor1, "Sync1"));
-        channel2 = new EmbeddedChannel(new ProcessorHandler(syncProcessor2, "Sync2"));
+        channel1 = new EmbeddedChannel(new ProcessorHandler(contextFactory1.getSyncProcessor(node1), "Sync1"));
+        channel2 = new EmbeddedChannel(new ProcessorHandler(contextFactory2.getSyncProcessor(node2), "Sync2"));
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
@@ -86,13 +78,15 @@ public class SyncHandlerTest {
         channel2.writeInbound(channel1.readOutbound());
         channel1.writeInbound(channel2.readOutbound());
 
-        assertEquals(100, handler1.pubkeyIPObjectArrayList.size());
+        assertEquals(100, dbHandler1.pubkeyIPObjectArrayList.size());
     }
 
     @Test
     public void testSyncingDataObjects () {
         buildDatabase();
         prepare(false);
+
+        SynchronizationHelper syncStructure1 = contextFactory1.getSyncHelper();
 
         while (!syncStructure1.fullySynchronized()) {
             Message m1 = (Message) channel1.readOutbound();
@@ -106,10 +100,10 @@ public class SyncHandlerTest {
 
         syncStructure1.saveFullSyncToDatabase();
 
-        assertTrue(checkListsEqual(handler1.channelStatusObjectArrayList, handler2.channelStatusObjectArrayList));
-        assertTrue(checkListsEqual(handler1.pubkeyChannelObjectArrayList, handler2.pubkeyChannelObjectArrayList));
-        assertTrue(checkListsEqual(handler1.pubkeyIPObjectArrayList, handler2.pubkeyIPObjectArrayList));
-        assertTrue(checkListsEqual(handler1.totalList, handler2.totalList));
+        assertTrue(checkListsEqual(dbHandler1.channelStatusObjectArrayList, dbHandler2.channelStatusObjectArrayList));
+        assertTrue(checkListsEqual(dbHandler1.pubkeyChannelObjectArrayList, dbHandler2.pubkeyChannelObjectArrayList));
+        assertTrue(checkListsEqual(dbHandler1.pubkeyIPObjectArrayList, dbHandler2.pubkeyIPObjectArrayList));
+        assertTrue(checkListsEqual(dbHandler1.totalList, dbHandler2.totalList));
 
     }
 

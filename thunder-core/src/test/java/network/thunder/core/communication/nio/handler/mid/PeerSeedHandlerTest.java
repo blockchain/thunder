@@ -3,16 +3,14 @@ package network.thunder.core.communication.nio.handler.mid;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
-import network.thunder.core.communication.objects.messages.impl.factories.PeerSeedMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedGetMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.PeerSeedMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.processor.ChannelIntent;
-import network.thunder.core.communication.processor.implementations.PeerSeedProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
-import network.thunder.core.etc.MockLNEventHelper;
+import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.SeedDBHandlerMock;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,40 +26,32 @@ public class PeerSeedHandlerTest {
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
 
-    Node node1;
-    Node node2;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
 
-    PeerSeedMessageFactory messageFactory;
+    NodeClient node1 = new NodeClient(nodeServer2);
+    NodeClient node2 = new NodeClient(nodeServer1);
 
-    PeerSeedProcessor seedProcessor1;
-    PeerSeedProcessor seedProcessor2;
+    ContextFactory contextFactory1;
+    ContextFactory contextFactory2;
 
-    SeedDBHandlerMock handler1;
-    SeedDBHandlerMock handler2;
-
-    LNEventHelper eventHelper = new MockLNEventHelper();
+    SeedDBHandlerMock dbHandler1 = new SeedDBHandlerMock();
+    SeedDBHandlerMock dbHandler2 = new SeedDBHandlerMock();
 
     @Before
     public void prepare () {
-        node1 = new Node();
-        node2 = new Node();
-
         node1.isServer = false;
         node1.intent = ChannelIntent.GET_IPS;
 
         node2.isServer = true;
 
-        messageFactory = new PeerSeedMessageFactoryImpl();
+        contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
+        contextFactory2 = new MockContextFactory(nodeServer2, dbHandler2);
 
-        handler1 = new SeedDBHandlerMock();
-        handler2 = new SeedDBHandlerMock();
-        handler2.fillWithRandomData();
+        dbHandler2.fillWithRandomData();
 
-        seedProcessor1 = new PeerSeedProcessorImpl(messageFactory, handler1, eventHelper, node1);
-        seedProcessor2 = new PeerSeedProcessorImpl(messageFactory, handler2, eventHelper, node2);
-
-        channel1 = new EmbeddedChannel(new ProcessorHandler(seedProcessor1, "Seed1"));
-        channel2 = new EmbeddedChannel(new ProcessorHandler(seedProcessor2, "Seed2"));
+        channel1 = new EmbeddedChannel(new ProcessorHandler(contextFactory1.getPeerSeedProcessor(node1), "Seed1"));
+        channel2 = new EmbeddedChannel(new ProcessorHandler(contextFactory2.getPeerSeedProcessor(node2), "Seed2"));
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
@@ -79,8 +69,8 @@ public class PeerSeedHandlerTest {
         channel2.writeInbound(channel1.readOutbound());
         channel1.writeInbound(channel2.readOutbound());
 
-        assertEquals(PeerSeedProcessor.PEERS_TO_SEND, handler1.pubkeyIPObjectArrayList.size());
-        assertTrue(handler2.pubkeyIPObjectArrayList.containsAll(handler1.pubkeyIPObjectArrayList));
+        assertEquals(PeerSeedProcessor.PEERS_TO_SEND, dbHandler1.pubkeyIPObjectArrayList.size());
+        assertTrue(dbHandler2.pubkeyIPObjectArrayList.containsAll(dbHandler1.pubkeyIPObjectArrayList));
     }
 
     @Test

@@ -9,13 +9,16 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.G
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.processor.implementations.gossip.GossipProcessorImpl;
-import network.thunder.core.communication.processor.implementations.gossip.GossipSubject;
-import network.thunder.core.communication.processor.implementations.gossip.GossipSubjectImpl;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
-import network.thunder.core.etc.InMemoryDBHandlerMock;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.etc.InMemoryDBHandler;
+import network.thunder.core.etc.MockContextFactory;
+import network.thunder.core.etc.MockLNEventHelper;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,20 +38,25 @@ import static org.junit.Assert.*;
  */
 public class GossipHandlerTest {
 
-    Node node1;
-    Node node2;
-    Node node3;
-    Node node4;
+    NodeClient node1 = new NodeClient();
+    NodeClient node2 = new NodeClient();
+    NodeClient node3 = new NodeClient();
+    NodeClient node4 = new NodeClient();
 
-    InMemoryDBHandlerMock dbHandler1;
-    InMemoryDBHandlerMock dbHandler2;
-    InMemoryDBHandlerMock dbHandler3;
-    InMemoryDBHandlerMock dbHandler4;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
+    NodeServer nodeServer3 = new NodeServer();
+    NodeServer nodeServer4 = new NodeServer();
 
-    GossipSubject subject1;
-    GossipSubject subject2;
-    GossipSubject subject3;
-    GossipSubject subject4;
+    InMemoryDBHandler dbHandler1 = new InMemoryDBHandler();
+    InMemoryDBHandler dbHandler2 = new InMemoryDBHandler();
+    InMemoryDBHandler dbHandler3 = new InMemoryDBHandler();
+    InMemoryDBHandler dbHandler4 = new InMemoryDBHandler();
+
+    ContextFactory contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
+    ContextFactory contextFactory2 = new MockContextFactory(nodeServer2, dbHandler2);
+    ContextFactory contextFactory3 = new MockContextFactory(nodeServer3, dbHandler3);
+    ContextFactory contextFactory4 = new MockContextFactory(nodeServer4, dbHandler4);
 
     GossipMessageFactory messageFactory;
 
@@ -68,6 +76,8 @@ public class GossipHandlerTest {
     EmbeddedChannel channel34;
     EmbeddedChannel channel43;
 
+    LNEventHelper eventHelper = new MockLNEventHelper();
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
 
@@ -82,30 +92,20 @@ public class GossipHandlerTest {
         node3.name = "Gossip3";
         node4.name = "Gossip4";
 
-        dbHandler1 = new InMemoryDBHandlerMock();
-        dbHandler2 = new InMemoryDBHandlerMock();
-        dbHandler3 = new InMemoryDBHandlerMock();
-        dbHandler4 = new InMemoryDBHandlerMock();
-
-        subject1 = new GossipSubjectImpl(dbHandler1);
-        subject2 = new GossipSubjectImpl(dbHandler2);
-        subject3 = new GossipSubjectImpl(dbHandler3);
-        subject4 = new GossipSubjectImpl(dbHandler4);
-
         messageFactory = new GossipMessageFactoryImpl();
         messageFactory = new GossipMessageFactoryImpl();
         messageFactory = new GossipMessageFactoryImpl();
         messageFactory = new GossipMessageFactoryImpl();
 
-        gossipProcessor12 = new GossipProcessorImpl(messageFactory, subject1, dbHandler1, node1);
+        gossipProcessor12 = new GossipProcessorImpl(contextFactory1, dbHandler1, node1);
 
-        gossipProcessor21 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
-        gossipProcessor23 = new GossipProcessorImpl(messageFactory, subject2, dbHandler2, node2);
+        gossipProcessor21 = new GossipProcessorImpl(contextFactory2, dbHandler2, node2);
+        gossipProcessor23 = new GossipProcessorImpl(contextFactory2, dbHandler2, node2);
 
-        gossipProcessor32 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
-        gossipProcessor34 = new GossipProcessorImpl(messageFactory, subject3, dbHandler3, node3);
+        gossipProcessor32 = new GossipProcessorImpl(contextFactory3, dbHandler3, node3);
+        gossipProcessor34 = new GossipProcessorImpl(contextFactory3, dbHandler3, node3);
 
-        gossipProcessor43 = new GossipProcessorImpl(messageFactory, subject4, dbHandler4, node4);
+        gossipProcessor43 = new GossipProcessorImpl(contextFactory4, dbHandler4, node4);
 
         channel12 = new EmbeddedChannel(new ProcessorHandler(gossipProcessor12, "Gossip12"));
 
@@ -121,7 +121,7 @@ public class GossipHandlerTest {
     }
 
     @After
-    public void after() {
+    public void after () {
         channel12.checkException();
         channel21.checkException();
 
@@ -161,6 +161,10 @@ public class GossipHandlerTest {
 
     @Test
     public void shouldOnlySendDataOnceEnoughObjectsArrived () throws Exception {
+        if (GossipProcessor.OBJECT_AMOUNT_TO_SEND == 0) {
+            //TODO currently we need all gossip objects immediately, will be fixed with RP routing
+            return;
+        }
         List<P2PDataObject> dataList = new ArrayList<>();
         for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 1; i++) {
             dataList.add(PubkeyChannelObject.getRandomObject());
@@ -183,7 +187,7 @@ public class GossipHandlerTest {
     @Test
     public void shouldSendDataToNextPeer () throws Exception {
         List<P2PDataObject> dataList = new ArrayList<>();
-        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 1; i++) {
+        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 100; i++) {
             dataList.add(PubkeyChannelObject.getRandomObject());
         }
         GossipSendMessage sendDataObject = messageFactory.getGossipSendMessage(dataList);
@@ -217,18 +221,13 @@ public class GossipHandlerTest {
     }
 
     private void prepareNodes () {
-        node1 = new Node();
-        node2 = new Node();
-        node3 = new Node();
-        node4 = new Node();
-
-        prepareNode(node1);
-        prepareNode(node2);
-        prepareNode(node3);
-        prepareNode(node4);
+        prepareNode(nodeServer1);
+        prepareNode(nodeServer2);
+        prepareNode(nodeServer3);
+        prepareNode(nodeServer4);
     }
 
-    private void prepareNode (Node node) {
+    private void prepareNode (NodeServer node) {
         node.init();
         node.portServer = new Random().nextInt(65555);
         node.hostServer = "localhost";

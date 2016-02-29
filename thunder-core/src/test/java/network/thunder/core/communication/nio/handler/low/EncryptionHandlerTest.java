@@ -2,20 +2,18 @@ package network.thunder.core.communication.nio.handler.low;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
-import network.thunder.core.communication.nio.P2PContext;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.messages.impl.MessageEncrypterImpl;
 import network.thunder.core.communication.objects.messages.impl.MessageSerializerImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.EncryptionMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
-import network.thunder.core.communication.processor.implementations.EncryptionProcessorImpl;
-import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
+import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDHKeySet;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,42 +34,31 @@ public class EncryptionHandlerTest {
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
     Message m;
-    P2PContext context;
-    Node node1;
-    Node node2;
+    NodeClient node1 = new NodeClient();
+    NodeClient node2 = new NodeClient();
+
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
 
     ProcessorHandler handler1;
     ProcessorHandler handler2;
 
+    ContextFactory contextFactory1 = new MockContextFactory(nodeServer1);
+    ContextFactory contextFactory2 = new MockContextFactory(nodeServer2);
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
-        context = new P2PContext(8992);
-
-        node1 = new Node();
-        node2 = new Node();
-
         node1.isServer = false;
         node2.isServer = true;
 
-        context.connectedNodes.add(node1);
-        context.connectedNodes.add(node2);
-
-        MessageEncrypter messageEncrypter = new MessageEncrypterImpl(new MessageSerializerImpl());
-
-        EncryptionMessageFactory messageFactory = new EncryptionMessageFactoryImpl();
-
-        EncryptionProcessor encryptionProcessor1 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node1);
-        EncryptionProcessor encryptionProcessor2 = new EncryptionProcessorImpl(messageFactory, messageEncrypter, node2);
-
-        handler1 = new ProcessorHandler(encryptionProcessor1, "Encryption1");
-        handler2 = new ProcessorHandler(encryptionProcessor2, "Encryption2");
+        handler1 = new ProcessorHandler(contextFactory1.getEncryptionProcessor(node1), "Encryption1");
+        handler2 = new ProcessorHandler(contextFactory2.getEncryptionProcessor(node2), "Encryption2");
 
         channel1 = new EmbeddedChannel(handler1);
         channel2 = new EmbeddedChannel(handler2);
 
         m = (Message) channel2.readOutbound();
         assertNull(m);
-
     }
 
     @After
@@ -92,11 +79,6 @@ public class EncryptionHandlerTest {
         EncryptionInitialMessage EncryptionInitialMessage2 = (EncryptionInitialMessage) channel2.readOutbound();
         assertTrue(Arrays.equals(EncryptionInitialMessage2.key, node2.ephemeralKeyServer.getPubKey()));
     }
-
-    //        byte[] encrypted = CryptoTools.encryptAES_CTR(testMessage.data, node1.ecdhKeySet.encryptionKey, node1.ecdhKeySet.ivServer, 0);
-//        byte[] hmac = CryptoTools.getHMAC(encrypted, node1.ecdhKeySet.hmacKey);
-//        System.out.println(Tools.bytesToHex(en));
-//        System.out.println(Tools.bytesToHex(message1));
 
     @Test
     public void shouldEncrypt () throws InvalidKeyException, NoSuchAlgorithmException {

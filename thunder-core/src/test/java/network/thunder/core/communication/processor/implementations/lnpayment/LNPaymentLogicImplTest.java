@@ -15,7 +15,7 @@ import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.LNPaymentDBHandlerMock;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 import org.bitcoinj.core.Context;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +31,8 @@ public class LNPaymentLogicImplTest {
     Channel channel1;
     Channel channel2;
 
-    Node node1;
-    Node node2;
+    NodeClient node1;
+    NodeClient node2;
 
     LNPaymentMessageFactory messageFactory1;
     LNPaymentMessageFactory messageFactory2;
@@ -47,8 +47,8 @@ public class LNPaymentLogicImplTest {
     public void prepare () {
         Context.getOrCreate(Constants.getNetwork());
 
-        node1 = new Node();
-        node2 = new Node();
+        node1 = new NodeClient();
+        node2 = new NodeClient();
 
         node1.isServer = false;
         node2.isServer = true;

@@ -2,9 +2,10 @@ package network.thunder.core.communication.nio;
 
 import network.thunder.core.etc.ConnectionManagerWrapper;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.InMemoryDBHandlerMock;
+import network.thunder.core.etc.InMemoryDBHandler;
 import network.thunder.core.etc.MockWallet;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,9 +74,13 @@ public class ConnectionManagerImplTest {
 
     private void createSeedConnection () {
         SeedNodes.setToTestValues();
-        Node node = SeedNodes.nodeList.get(0);
+        NodeClient node = SeedNodes.nodeList.get(0);
+        NodeServer nodeServer = new NodeServer();
+        nodeServer.portServer = node.port;
+        nodeServer.hostServer = node.host;
+        nodeServer.pubKeyServer = node.pubKeyClient;
 
-        connectionSeed = getConnection(node);
+        connectionSeed = getConnection(nodeServer);
     }
 
     private void createNodes () {
@@ -83,7 +88,7 @@ public class ConnectionManagerImplTest {
             int port = PORT_START + i;
             String host = "127.0.0.1";
 
-            Node node = new Node();
+            NodeServer node = new NodeServer();
             node.init();
             node.portServer = port;
             node.hostServer = host;
@@ -94,9 +99,9 @@ public class ConnectionManagerImplTest {
         }
     }
 
-    private ConnectionManagerWrapper getConnection (Node node) {
+    private ConnectionManagerWrapper getConnection (NodeServer node) {
         ConnectionManagerWrapper connection = new ConnectionManagerWrapper();
-        connection.dbHandler = new InMemoryDBHandlerMock();
+        connection.dbHandler = new InMemoryDBHandler();
         connection.wallet = new MockWallet(Constants.getNetwork());
         connection.connectionManager = new ConnectionManagerImpl(node, connection.wallet, connection.dbHandler);
         return connection;

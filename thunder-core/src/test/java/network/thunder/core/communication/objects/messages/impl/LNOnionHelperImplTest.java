@@ -1,6 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl;
 
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.PeeledOnion;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
@@ -31,21 +32,20 @@ public class LNOnionHelperImplTest {
     public void shouldBuildAndDeconstructCorrectFullOnion () {
         buildKeylist(OnionObject.MAX_HOPS);
 
-        OnionObject object = onionHelper.createOnionObject(getByteList(keyList));
+        OnionObject object = onionHelper.createOnionObject(getByteList(keyList), null);
 
         List<byte[]> listFromOnion = new ArrayList<>();
         listFromOnion.add(keyList.get(0).getPubKey());
 
         for (ECKey key : keyList) {
             LNOnionHelper helperTemp = new LNOnionHelperImpl();
-            helperTemp.init(key);
-            helperTemp.loadMessage(object);
+            PeeledOnion peeledOnion = helperTemp.loadMessage(key, object);
 
-            if (helperTemp.isLastHop()) {
+            if (peeledOnion.isLastHop) {
                 listFromOnion.add(key.getPubKey());
             } else {
-                listFromOnion.add(helperTemp.getNextHop().getPubKey());
-                object = helperTemp.getMessageForNextHop();
+                listFromOnion.add(peeledOnion.nextHop.getPubKey());
+                object = peeledOnion.onionObject;
             }
 
         }
@@ -62,21 +62,20 @@ public class LNOnionHelperImplTest {
     public void shouldBuildAndDeconstructCorrectHalfOnion () {
         buildKeylist(OnionObject.MAX_HOPS - 4);
 
-        OnionObject object = onionHelper.createOnionObject(getByteList(keyList));
+        OnionObject object = onionHelper.createOnionObject(getByteList(keyList), null);
 
         List<byte[]> listFromOnion = new ArrayList<>();
         listFromOnion.add(keyList.get(0).getPubKey());
 
         for (ECKey key : keyList) {
             LNOnionHelper helperTemp = new LNOnionHelperImpl();
-            helperTemp.init(key);
-            helperTemp.loadMessage(object);
+            PeeledOnion peeledOnion = helperTemp.loadMessage(key, object);
 
-            if (helperTemp.isLastHop()) {
+            if (peeledOnion.isLastHop) {
                 listFromOnion.add(key.getPubKey());
             } else {
-                listFromOnion.add(helperTemp.getNextHop().getPubKey());
-                object = helperTemp.getMessageForNextHop();
+                listFromOnion.add(peeledOnion.nextHop.getPubKey());
+                object = peeledOnion.onionObject;
             }
 
         }

@@ -25,6 +25,11 @@ public class MockLNPaymentHelper implements LNPaymentHelper {
     }
 
     @Override
+    public void makePayment (PaymentData paymentData) {
+        
+    }
+
+    @Override
     public void paymentRedeemed (PaymentSecret paymentSecret) {
 
     }

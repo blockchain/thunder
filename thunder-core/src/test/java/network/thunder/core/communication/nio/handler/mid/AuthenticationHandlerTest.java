@@ -3,17 +3,16 @@ package network.thunder.core.communication.nio.handler.mid;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
-import network.thunder.core.communication.objects.messages.impl.factories.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
-import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
-import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
+import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDH;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -35,13 +34,14 @@ public class AuthenticationHandlerTest {
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
 
-    Node node1;
-    Node node2;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
 
-    AuthenticationMessageFactory messageFactory;
+    NodeClient node1 = new NodeClient(nodeServer2);
+    NodeClient node2 = new NodeClient(nodeServer1);
 
-    AuthenticationProcessor processor1;
-    AuthenticationProcessor processor2;
+    ContextFactory contextFactory1;
+    ContextFactory contextFactory2;
 
     LNEventHelper eventHelper = new MockLNEventHelper();
 
@@ -49,11 +49,11 @@ public class AuthenticationHandlerTest {
     public void prepare () throws PropertyVetoException, SQLException {
         Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-        node1 = new Node();
-        node2 = new Node();
-
         node1.isServer = false;
         node2.isServer = true;
+
+        contextFactory1 = new MockContextFactory(nodeServer1);
+        contextFactory2 = new MockContextFactory(nodeServer2);
 
         node1.ephemeralKeyClient = node2.ephemeralKeyServer;
         node2.ephemeralKeyClient = node1.ephemeralKeyServer;
@@ -61,13 +61,8 @@ public class AuthenticationHandlerTest {
         node1.ecdhKeySet = ECDH.getSharedSecret(node1.ephemeralKeyServer, node1.ephemeralKeyClient);
         node2.ecdhKeySet = ECDH.getSharedSecret(node2.ephemeralKeyServer, node2.ephemeralKeyClient);
 
-        messageFactory = new AuthenticationMessageFactoryImpl();
-
-        processor1 = new AuthenticationProcessorImpl(messageFactory, eventHelper, node1);
-        processor2 = new AuthenticationProcessorImpl(messageFactory, eventHelper, node2);
-
-        channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "Encryption1"));
-        channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "Encryption2"));
+        channel1 = new EmbeddedChannel(new ProcessorHandler(contextFactory1.getAuthenticationProcessor(node1), "Encryption1"));
+        channel2 = new EmbeddedChannel(new ProcessorHandler(contextFactory2.getAuthenticationProcessor(node2), "Encryption2"));
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);

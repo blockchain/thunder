@@ -5,20 +5,18 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.impl.LNOnionHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.LNPaymentHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
+import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.etc.LNPaymentDBHandlerMock;
-import network.thunder.core.etc.LNPaymentMessageFactoryMock;
-import network.thunder.core.etc.MockLNPaymentLogic;
-import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.etc.*;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
 import org.junit.After;
 import org.junit.Before;
@@ -38,63 +36,36 @@ import static org.junit.Assert.assertNull;
 public class LNPaymentRoutingTest {
 
     EmbeddedChannel channel12;
-
     EmbeddedChannel channel21;
     EmbeddedChannel channel23;
-
     EmbeddedChannel channel32;
 
-    Node node12;
+    NodeServer node1 = new NodeServer();
+    NodeServer node2 = new NodeServer();
+    NodeServer node3 = new NodeServer();
 
-    Node node21;
-    Node node23;
-
-    Node node32;
-
-    LNPaymentMessageFactory messageFactory1;
-    LNPaymentMessageFactory messageFactory2;
-    LNPaymentMessageFactory messageFactory3;
-
-    LNPaymentProcessorImpl processor12;
-
-    LNPaymentProcessorImpl processor21;
-    LNPaymentProcessorImpl processor23;
-
-    LNPaymentProcessorImpl processor32;
-
-    MockLNPaymentLogic paymentLogic12 = new MockLNPaymentLogic();
-    MockLNPaymentLogic paymentLogic21 = new MockLNPaymentLogic();
-    MockLNPaymentLogic paymentLogic23 = new MockLNPaymentLogic();
-    MockLNPaymentLogic paymentLogic32 = new MockLNPaymentLogic();
+    NodeClient node12 = new NodeClient(node1);
+    NodeClient node21 = new NodeClient(node2);
+    NodeClient node23 = new NodeClient(node2);
+    NodeClient node32 = new NodeClient(node3);
 
     LNPaymentDBHandlerMock dbHandler1 = new LNPaymentDBHandlerMock();
     LNPaymentDBHandlerMock dbHandler2 = new LNPaymentDBHandlerMock();
     LNPaymentDBHandlerMock dbHandler3 = new LNPaymentDBHandlerMock();
 
-    LNPaymentHelper paymentHelper1;
-    LNPaymentHelper paymentHelper2;
-    LNPaymentHelper paymentHelper3;
+    ContextFactory contextFactory1 = new MockLNPaymentContextFactory(node1, dbHandler1);
+    ContextFactory contextFactory2 = new MockLNPaymentContextFactory(node2, dbHandler2);
+    ContextFactory contextFactory3 = new MockLNPaymentContextFactory(node3, dbHandler3);
 
-    LNOnionHelper onionHelper1;
-    LNOnionHelper onionHelper2;
-    LNOnionHelper onionHelper3;
+    LNPaymentProcessorImpl processor12;
+    LNPaymentProcessorImpl processor21;
+    LNPaymentProcessorImpl processor23;
+    LNPaymentProcessorImpl processor32;
 
-    //    EncryptionHandler handler;
+
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
-        Node node1 = new Node();
-        Node node2 = new Node();
-        Node node3 = new Node();
-
-        node1.isServer = false;
-        node2.isServer = true;
-        node3.isServer = false;
-
-        node12 = new Node(node1);
-        node21 = new Node(node2);
-        node23 = new Node(node2);
-        node32 = new Node(node3);
-
         node12.name = "LNPayment12";
         node21.name = "LNPayment21";
         node23.name = "LNPayment23";
@@ -105,34 +76,14 @@ public class LNPaymentRoutingTest {
         node23.pubKeyClient = node3.pubKeyServer;
         node32.pubKeyClient = node2.pubKeyServer;
 
-        messageFactory1 = new LNPaymentMessageFactoryMock();
-        messageFactory2 = new LNPaymentMessageFactoryMock();
-        messageFactory3 = new LNPaymentMessageFactoryMock();
-
-        onionHelper1 = new LNOnionHelperImpl();
-        onionHelper2 = new LNOnionHelperImpl();
-        onionHelper3 = new LNOnionHelperImpl();
-
-        onionHelper1.init(node1.pubKeyServer);
-        onionHelper2.init(node2.pubKeyServer);
-        onionHelper3.init(node3.pubKeyServer);
-
-        paymentHelper1 = new LNPaymentHelperImpl(onionHelper1, dbHandler1);
-        paymentHelper2 = new LNPaymentHelperImpl(onionHelper2, dbHandler2);
-        paymentHelper3 = new LNPaymentHelperImpl(onionHelper3, dbHandler3);
-
-        processor12 = new LNPaymentProcessorImpl(messageFactory1, paymentLogic12, dbHandler1, paymentHelper1, node12);
-
-        processor21 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic21, dbHandler2, paymentHelper2, node21);
-        processor23 = new LNPaymentProcessorImpl(messageFactory2, paymentLogic23, dbHandler2, paymentHelper2, node23);
-
-        processor32 = new LNPaymentProcessorImpl(messageFactory3, paymentLogic32, dbHandler3, paymentHelper3, node32);
+        processor12 = new LNPaymentProcessorImpl(contextFactory1, dbHandler1, node12);
+        processor21 = new LNPaymentProcessorImpl(contextFactory2, dbHandler2, node21);
+        processor23 = new LNPaymentProcessorImpl(contextFactory2, dbHandler2, node23);
+        processor32 = new LNPaymentProcessorImpl(contextFactory3, dbHandler3, node32);
 
         channel12 = new EmbeddedChannel(new ProcessorHandler(processor12, "LNPayment12"));
-
         channel21 = new EmbeddedChannel(new ProcessorHandler(processor21, "LNPayment21"));
         channel23 = new EmbeddedChannel(new ProcessorHandler(processor23, "LNPayment23"));
-
         channel32 = new EmbeddedChannel(new ProcessorHandler(processor32, "LNPayment32"));
 
         Message m = (Message) channel21.readOutbound();
@@ -153,7 +104,7 @@ public class LNPaymentRoutingTest {
 
     @Test
     public void exchangePaymentWithRouting () throws InterruptedException {
-        OnionObject onionObject = getOnionObject(onionHelper1);
+        OnionObject onionObject = getOnionObject(contextFactory1.getOnionHelper());
         PaymentData paymentData = getMockPaymentData();
         PaymentWrapper wrapper = new PaymentWrapper(new byte[0], paymentData);
 
@@ -190,7 +141,7 @@ public class LNPaymentRoutingTest {
 
     @Test
     public void exchangePaymentWithRoutingRefund () throws InterruptedException {
-        OnionObject onionObject = getOnionObject(onionHelper1);
+        OnionObject onionObject = getOnionObject(contextFactory1.getOnionHelper());
         PaymentData paymentData = getMockPaymentData();
         PaymentWrapper wrapper = new PaymentWrapper(new byte[0], paymentData);
 
@@ -210,7 +161,7 @@ public class LNPaymentRoutingTest {
 
     @Test
     public void exchangePaymentWithRoutingCorruptedOnionObject () throws InterruptedException {
-        OnionObject onionObject = getOnionObject(onionHelper1);
+        OnionObject onionObject = getOnionObject(contextFactory1.getOnionHelper());
 
         Tools.copyRandomByteInByteArray(onionObject.data, 100, 2);
 
@@ -233,7 +184,7 @@ public class LNPaymentRoutingTest {
 
     @Test
     public void exchangePaymentWithRoutingToUnknownNode () throws InterruptedException {
-        OnionObject onionObject = getOnionObject(onionHelper1, node21.pubKeyServer.getPubKey(), new ECKey().getPubKey());
+        OnionObject onionObject = getOnionObject(contextFactory1.getOnionHelper(), node12.pubKeyClient.getPubKey(), new ECKey().getPubKey());
 
         PaymentData paymentData = getMockPaymentData();
         PaymentWrapper wrapper = new PaymentWrapper(new byte[0], paymentData);
@@ -264,7 +215,7 @@ public class LNPaymentRoutingTest {
         status21.amountClient *= 2;
         status21.amountServer *= 2;
 
-        OnionObject onionObject = getOnionObject(onionHelper1);
+        OnionObject onionObject = getOnionObject(contextFactory1.getOnionHelper());
 
         PaymentData paymentData = getMockPaymentData();
         paymentData.amount = LNPaymentDBHandlerMock.INITIAL_AMOUNT_CHANNEL + 1;
@@ -322,14 +273,14 @@ public class LNPaymentRoutingTest {
     }
 
     public OnionObject getOnionObject (LNOnionHelper onionHelper) {
-        return getOnionObject(onionHelper, node21.pubKeyServer.getPubKey(), node32.pubKeyServer.getPubKey());
+        return getOnionObject(onionHelper, node12.pubKeyClient.getPubKey(), node23.pubKeyClient.getPubKey());
     }
 
     public OnionObject getOnionObject (LNOnionHelper onionHelper, byte[] node2, byte[] node3) {
         List<byte[]> route = new ArrayList<>();
         route.add(node2);
         route.add(node3);
-        return onionHelper.createOnionObject(route);
+        return onionHelper.createOnionObject(route, null);
     }
 
     public PaymentData getMockPaymentData () {
@@ -342,20 +293,34 @@ public class LNPaymentRoutingTest {
     }
 
     public void connectChannel (EmbeddedChannel from, EmbeddedChannel to) {
-        new Thread(new Runnable() {
-            @Override
-            public void run () {
-                while (true) {
-                    exchangeMessagesDuplex(from, to);
-                    try {
-                        Thread.sleep(10);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
+        new Thread(() -> {
+            while (true) {
+                exchangeMessagesDuplex(from, to);
+                try {
+                    Thread.sleep(10);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
             }
         }).start();
+    }
+
+    class MockLNPaymentContextFactory extends MockContextFactory {
+
+        public MockLNPaymentContextFactory (NodeServer node, DBHandler dbHandler) {
+            super(node, dbHandler);
+        }
+
+        @Override
+        public LNPaymentLogic getLNPaymentLogic () {
+            return new MockLNPaymentLogic();
+        }
+
+        @Override
+        public LNPaymentMessageFactory getLNPaymentMessageFactory () {
+            return new LNPaymentMessageFactoryMock();
+        }
     }
 
 }

@@ -3,10 +3,11 @@ package network.thunder.core.etc;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventListener;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.Payment;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 /**
  * Created by matsjerratsch on 08/02/2016.
@@ -23,12 +24,12 @@ public class MockLNEventHelper implements LNEventHelper {
     }
 
     @Override
-    public void onConnectionOpened (Node node) {
+    public void onConnectionOpened (NodeClient node) {
 
     }
 
     @Override
-    public void onConnectionClosed (Node node) {
+    public void onConnectionClosed (NodeClient node) {
 
     }
 
@@ -54,6 +55,21 @@ public class MockLNEventHelper implements LNEventHelper {
 
     @Override
     public void onPaymentRefunded (Payment payment) {
+
+    }
+
+    @Override
+    public void onPaymentExchangeDone () {
+
+    }
+
+    @Override
+    public void onPaymentCompleted (PaymentSecret payment) {
+
+    }
+
+    @Override
+    public void onP2PDataReceived () {
 
     }
 }

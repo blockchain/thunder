@@ -5,7 +5,6 @@ import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.lightning.RevocationHash;
-import network.thunder.core.mesh.Node;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,8 +19,9 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     List<PaymentSecret> secrets = new ArrayList<>();
 
     @Override
-    public Channel getChannel (Node node) {
+    public Channel getChannel (byte[] node) {
         Channel channel = new Channel();
+        channel.nodeId = node;
         channel.channelStatus = new ChannelStatus();
         channel.amountServer = INITIAL_AMOUNT_CHANNEL;
         channel.amountClient = INITIAL_AMOUNT_CHANNEL;

@@ -3,26 +3,20 @@ package network.thunder.core.communication.nio.handler.high;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
-import network.thunder.core.communication.objects.messages.impl.WalletHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.LNEstablishMessageFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
-import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.MockBroadcastHelper;
-import network.thunder.core.etc.MockLNEventHelper;
-import network.thunder.core.etc.MockWallet;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.etc.InMemoryDBHandler;
+import network.thunder.core.etc.MockContextFactory;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +25,6 @@ import org.junit.Test;
 import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 import java.util.Arrays;
-import java.util.HashMap;
 
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -45,45 +38,31 @@ public class LNEstablishHandlerTest {
     EmbeddedChannel channel1;
     EmbeddedChannel channel2;
 
-    Node node1;
-    Node node2;
+    NodeServer nodeServer1 = new NodeServer();
+    NodeServer nodeServer2 = new NodeServer();
+
+    NodeClient node1 = new NodeClient(nodeServer2);
+    NodeClient node2 = new NodeClient(nodeServer1);
+
+    ContextFactory contextFactory1;
+    ContextFactory contextFactory2;
 
     LNEstablishProcessorImpl processor1;
     LNEstablishProcessorImpl processor2;
 
-    DBHandler dbHandler1;
-    DBHandler dbHandler2;
-
-    MockWallet wallet1 = new MockWallet(Constants.getNetwork());
-    MockWallet wallet2 = new MockWallet(Constants.getNetwork());
-
-    WalletHelper walletHelper1;
-    WalletHelper walletHelper2;
-
-    LNEstablishMessageFactory messageFactory = new LNEstablishMessageFactoryImpl();
-
-    MockBroadcastHelper broadcastHelper1 = new MockBroadcastHelper();
-    MockBroadcastHelper broadcastHelper2 = new MockBroadcastHelper();
-
-    HashMap<TransactionOutPoint, Integer> lockedOutputs1 = new HashMap<>();
-    HashMap<TransactionOutPoint, Integer> lockedOutputs2 = new HashMap<>();
-
-    LNEventHelper eventHelper = new MockLNEventHelper();
+    DBHandler dbHandler1 = new InMemoryDBHandler();
+    DBHandler dbHandler2 = new InMemoryDBHandler();
 
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
-
-        node1 = new Node();
-        node2 = new Node();
-
         node1.isServer = false;
         node2.isServer = true;
 
-        walletHelper1 = new WalletHelperImpl(wallet1);
-        walletHelper2 = new WalletHelperImpl(wallet2);
+        contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
+        contextFactory2 = new MockContextFactory(nodeServer2, dbHandler2);
 
-        processor1 = new LNEstablishProcessorImpl(walletHelper1, messageFactory, broadcastHelper1, eventHelper, node1);
-        processor2 = new LNEstablishProcessorImpl(walletHelper2, messageFactory, broadcastHelper2, eventHelper, node2);
+        processor1 = new LNEstablishProcessorImpl(contextFactory1, dbHandler1, node1);
+        processor2 = new LNEstablishProcessorImpl(contextFactory2, dbHandler2, node2);
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNEstablish1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNEstablish2"));
@@ -127,7 +106,7 @@ public class LNEstablishHandlerTest {
         assertTrue(Arrays.equals(message.pubKeyEscape, channel.getKeyServer().getPubKey()));
         assertTrue(Arrays.equals(message.pubKeyFastEscape, channel.getKeyServerA().getPubKey()));
         assertTrue(Arrays.equals(message.secretHashFastEscape, channel.getAnchorSecretHashServer()));
-        assertTrue(Arrays.equals(message.anchorHash, channel.getAnchorTransactionServer(walletHelper1).getHash().getBytes()));
+        assertTrue(Arrays.equals(message.anchorHash, channel.getAnchorTransactionServer(contextFactory1.getWalletHelper()).getHash().getBytes()));
         assertEquals(message.serverAmount, channel.getAmountServer());
 
     }
@@ -143,7 +122,7 @@ public class LNEstablishHandlerTest {
         Channel channel2 = processor2.channel;
 
         //Should send keys, secretHash and amounts
-        assertTrue(Arrays.equals(message.anchorHash, channel1.getAnchorTransactionServer(walletHelper2).getHash().getBytes()));
+        assertTrue(Arrays.equals(message.anchorHash, channel1.getAnchorTransactionServer(contextFactory2.getWalletHelper()).getHash().getBytes()));
 
         Transaction escape = channel2.getEscapeTransactionServer();
         Transaction fastEscape = channel2.getFastEscapeTransactionServer();
