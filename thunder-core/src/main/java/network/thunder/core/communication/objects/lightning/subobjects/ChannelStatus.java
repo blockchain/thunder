@@ -10,7 +10,7 @@ public class ChannelStatus implements Cloneable {
     public long amountClient;
     public long amountServer;
 
-    public List<PaymentData> oldPayments = new ArrayList<>();
+    public List<PaymentData> remainingPayments = new ArrayList<>();
 
     public List<PaymentData> newPayments = new ArrayList<>();
 
@@ -28,10 +28,11 @@ public class ChannelStatus implements Cloneable {
     public ChannelStatus getClone () {
         try {
             ChannelStatus status = (ChannelStatus) this.clone();
-            status.oldPayments = new ArrayList<>(this.oldPayments);
-            status.newPayments = new ArrayList<>(this.newPayments);
-            status.redeemedPayments = new ArrayList<>(this.redeemedPayments);
-            status.refundedPayments = new ArrayList<>(this.refundedPayments);
+            status.remainingPayments = clonePaymentList(this.remainingPayments);
+            status.newPayments = clonePaymentList(this.newPayments);
+            status.redeemedPayments = clonePaymentList(this.redeemedPayments);
+            status.refundedPayments = clonePaymentList(this.refundedPayments);
+
             return status;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
@@ -40,13 +41,13 @@ public class ChannelStatus implements Cloneable {
 
     public ChannelStatus getCloneReversed () {
         ChannelStatus status = getClone();
-        long temp = status.amountServer;
 
+        long temp = status.amountServer;
         status.amountServer = status.amountClient;
         status.amountClient = temp;
 
         reverseSending(status.newPayments);
-        reverseSending(status.oldPayments);
+        reverseSending(status.remainingPayments);
         reverseSending(status.redeemedPayments);
         reverseSending(status.refundedPayments);
         return status;
@@ -59,16 +60,39 @@ public class ChannelStatus implements Cloneable {
         return paymentDataList;
     }
 
+    private List<PaymentData> clonePaymentList (List<PaymentData> paymentList) {
+        List<PaymentData> list = new ArrayList<>(this.remainingPayments.size());
+        for (PaymentData data : paymentList) {
+            try {
+                list.add((PaymentData) data.clone());
+            } catch (CloneNotSupportedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return list;
+
+    }
+
     @Override
     public String toString () {
         return "ChannelStatus{" +
                 ", amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
-                ", newPayments=" + newPayments.size() +
-                ", oldPayments=" + oldPayments.size() +
-                ", refundedPayments=" + refundedPayments.size() +
-                ", redeemedPayments=" + redeemedPayments.size() +
+                ", newPayments=" + listToString(newPayments) +
+                ", remainingPayments=" + listToString(remainingPayments) +
+                ", refundedPayments=" + listToString(refundedPayments) +
+                ", redeemedPayments=" + listToString(redeemedPayments) +
 
                 '}';
+    }
+
+    private static String listToString (List list) {
+        String s = list.size() + "";
+        if (list.size() > 0) {
+            for (Object o : list) {
+                s += o.toString() + " - ";
+            }
+        }
+        return s;
     }
 }

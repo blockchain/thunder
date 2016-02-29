@@ -20,7 +20,7 @@ package network.thunder.core.communication.objects.lightning.subobjects;/*
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 
-public class PaymentData {
+public class PaymentData implements Cloneable {
 
     public boolean sending;
     public long amount;
@@ -55,5 +55,36 @@ public class PaymentData {
     @Override
     public int hashCode () {
         return secret != null ? secret.hashCode() : 0;
+    }
+
+    @Override
+    public String toString () {
+        return "PaymentData{" +
+                "sending=" + sending +
+                ", amount=" + amount +
+                '}';
+    }
+
+    @Override
+    protected Object clone () throws CloneNotSupportedException {
+        PaymentData p = new PaymentData();
+        p.onionObject = onionObject;
+        p.sending = sending;
+        p.amount = amount;
+        p.csvDelay = csvDelay;
+        p.timestampOpen = timestampOpen;
+        p.timestampRefund = timestampRefund;
+        p.secret = secret;
+        p.fee = fee;
+        return p;
+    }
+
+    public PaymentData cloneObject () {
+        try {
+            PaymentData paymentData = (PaymentData) this.clone();
+            return paymentData;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
