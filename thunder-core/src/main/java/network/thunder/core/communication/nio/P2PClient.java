@@ -22,7 +22,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import network.thunder.core.communication.nio.handler.ChannelInit;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 /**
  */
@@ -38,23 +38,16 @@ public final class P2PClient {
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void connectTo (Node node) throws Exception {
-        System.out.println("Connect to " + node.getHost() + ":" + node.getPort());
+    public void connectTo (NodeClient node) throws Exception {
         new Thread(new Runnable() {
             @Override
             public void run () {
 
-                while (!node.isConnected()) {
+                while (!node.isConnected) {
 
-                    EventLoopGroup group = new NioEventLoopGroup();
+                    //TODO Refactor
                     try {
-                        Bootstrap b = new Bootstrap();
-                        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
-
-                        // Start the connection attempt.
-                        Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
-                        node.setConnected(ch.isOpen());
-
+                        connect(node);
                     } catch (Exception e) {
                         //Not able to connect?
                         try {
@@ -71,26 +64,28 @@ public final class P2PClient {
 
     }
 
-    public void connectBlocking (Node node) {
-        System.out.println("Connect to " + node.getHost() + ":" + node.getPort());
-
-        EventLoopGroup group = new NioEventLoopGroup();
+    public void connectBlocking (NodeClient node) {
         try {
-            Bootstrap b = new Bootstrap();
-            b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
-
-            // Start the connection attempt.
-            Channel ch = b.connect(node.getHost(), node.getPort()).sync().channel();
-            node.setConnected(ch.isOpen());
-            ch.closeFuture().sync();
-
-            System.out.println("Connection to " + node.port + " closed..");
-
+            connect(node);
         } catch (Exception e) {
             //Not able to connect?
-
             e.printStackTrace();
         }
 
+    }
+
+    private void connect (NodeClient node) throws InterruptedException {
+        System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
+
+        EventLoopGroup group = new NioEventLoopGroup();
+        Bootstrap b = new Bootstrap();
+        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
+
+        // Start the connection attempt.
+        Channel ch = b.connect(node.host, node.port).sync().channel();
+        node.isConnected = ch.isOpen();
+        ch.closeFuture().sync();
+
+        System.out.println("Connection to " + node.host + " closed..");
     }
 }
