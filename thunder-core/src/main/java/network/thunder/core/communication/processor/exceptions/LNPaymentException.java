@@ -7,4 +7,8 @@ public class LNPaymentException extends RuntimeException {
     public LNPaymentException (String s) {
         super(s);
     }
+
+    public LNPaymentException (Throwable cause) {
+        super(cause);
+    }
 }
