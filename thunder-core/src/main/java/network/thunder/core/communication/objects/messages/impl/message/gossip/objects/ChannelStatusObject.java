@@ -15,6 +15,11 @@ public class ChannelStatusObject extends P2PDataObject {
     public byte[] infoA;
     public byte[] infoB;
 
+    public int latency;
+
+    public int feeA;
+    public int feeB;
+
     public byte[] signatureA;
     public byte[] signatureB;
 
@@ -86,17 +91,31 @@ public class ChannelStatusObject extends P2PDataObject {
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + infoA.length + infoB.length + signatureA.length + signatureB.length + 4);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + 4 + 4 + 4);
 
         byteBuffer.put(pubkeyA);
         byteBuffer.put(pubkeyB);
-        byteBuffer.put(infoA);
-        byteBuffer.put(infoB);
-        byteBuffer.put(signatureA);
-        byteBuffer.put(signatureB);
-        byteBuffer.putInt(timestamp);
+        byteBuffer.putInt(latency);
+        byteBuffer.putInt(feeA);
+        byteBuffer.putInt(feeB);
 
         return byteBuffer.array();
+    }
+
+    public int getFee (byte[] array) {
+        if (Arrays.equals(array, pubkeyA)) {
+            return feeA;
+        } else {
+            return feeB;
+        }
+    }
+
+    public byte[] getOtherNode (byte[] node) {
+        if (Arrays.equals(node, pubkeyA)) {
+            return pubkeyB;
+        } else {
+            return pubkeyA;
+        }
     }
 
     @Override
@@ -105,6 +124,10 @@ public class ChannelStatusObject extends P2PDataObject {
         byteBuffer.put(Tools.hashSecret(this.getData()), 0, 8);
         byteBuffer.flip();
         return Math.abs(byteBuffer.getLong());
+    }
+
+    public double getWeight (byte[] array, float weightPrivacy, float weightLatency, float weightCost) {
+        return 1;
     }
 
     @Override
