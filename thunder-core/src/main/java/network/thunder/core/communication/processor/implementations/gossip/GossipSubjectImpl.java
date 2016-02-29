@@ -1,6 +1,7 @@
 package network.thunder.core.communication.processor.implementations.gossip;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.database.DBHandler;
 
@@ -13,14 +14,16 @@ import java.util.*;
 public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
 
     DBHandler dbHandler;
+    LNEventHelper eventHelper;
 
     List<NodeObserver> observerList = new ArrayList<>();
 
     Map<NodeObserver, List<ByteBuffer>> dataObjectMap = new HashMap<>();
     Set<ByteBuffer> objectsKnownAlready = new HashSet<>();
 
-    public GossipSubjectImpl (DBHandler dbHandler) {
+    public GossipSubjectImpl (DBHandler dbHandler, LNEventHelper eventHelper) {
         this.dbHandler = dbHandler;
+        this.eventHelper = eventHelper;
     }
 
     @Override
@@ -45,6 +48,7 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
             }
         }
         dbHandler.syncDatalist(objectsToInsertIntoDatabase);
+        eventHelper.onP2PDataReceived();
         broadcast();
     }
 
