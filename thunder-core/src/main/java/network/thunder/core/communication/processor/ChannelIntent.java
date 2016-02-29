@@ -14,5 +14,12 @@ public enum ChannelIntent {
         this.state = i;
     }
 
+    @Override
+    public String toString () {
+        return "ChannelIntent{" +
+                "state=" + state +
+                '}';
+    }
+
     int state = 0;
 }

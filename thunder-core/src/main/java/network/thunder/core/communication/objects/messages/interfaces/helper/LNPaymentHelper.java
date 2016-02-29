@@ -11,6 +11,8 @@ public interface LNPaymentHelper {
 
     void relayPayment (LNPaymentProcessor paymentProcessor, PaymentData paymentData);
 
+    void makePayment(PaymentData paymentData);
+
     void paymentRedeemed (PaymentSecret paymentSecret);
 
     void paymentRefunded (PaymentData paymentSecret);

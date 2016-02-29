@@ -39,7 +39,7 @@ import java.sql.SQLException;
 public class Channel {
 
     public int id;
-    public int nodeId;
+    public byte[] nodeId;
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
@@ -141,6 +141,10 @@ public class Channel {
     public boolean isReady;
 
     public ChannelStatus channelStatus;
+
+    public void setNodeId (byte[] nodeId) {
+        this.nodeId = nodeId;
+    }
 
     //region Transaction Getter
     /*
@@ -412,7 +416,7 @@ public class Channel {
      */
     public Channel (ResultSet result) throws SQLException {
         this.setId(result.getInt("id"));
-        this.setNodeId(result.getInt("node_id"));
+        this.setNodeId(result.getBytes("node_id"));
 
         this.setKeyClient(ECKey.fromPublicOnly(result.getBytes("key_client")));
         this.setKeyServer(ECKey.fromPrivate(result.getBytes("key_server")));
@@ -510,6 +514,13 @@ public class Channel {
         anchorTxHashClient = channel.anchorTxHashServer;
 
         anchorTransactionClient = channel.anchorTransactionServer;
+    }
+
+    @Override
+    public String toString () {
+        return "Channel{" +
+                "channelStatus=" + channelStatus +
+                '}';
     }
 
     //region Getter Setter
@@ -698,14 +709,6 @@ public class Channel {
 
     public void setMasterPrivateKeyServer (byte[] masterPrivateKeyServer) {
         this.masterPrivateKeyServer = masterPrivateKeyServer;
-    }
-
-    public int getNodeId () {
-        return nodeId;
-    }
-
-    public void setNodeId (int nodeId) {
-        this.nodeId = nodeId;
     }
 
     public byte[] getAnchorSecretClient () {

@@ -56,6 +56,7 @@ public class SynchronizationHelper {
             verifyDataObject(index, object);
             insertDataObjectInLists(object);
         }
+        dbHandler.syncDatalist(newFragment);
         fragmentIsSyncedList.put(index, true);
     }
 
