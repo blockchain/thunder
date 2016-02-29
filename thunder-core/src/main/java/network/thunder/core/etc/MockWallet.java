@@ -25,7 +25,7 @@ public class MockWallet extends Wallet {
         //
         Random random = new Random(1000);
 
-        for (int i = 1; i < 30; i++) {
+        for (int i = 1; i < 101; i++) {
             Transaction transaction = new Transaction(Constants.getNetwork());
 
             byte[] h = new byte[32];

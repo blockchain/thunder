@@ -9,14 +9,15 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.lightning.RevocationHash;
-import network.thunder.core.mesh.Node;
 
 import java.util.*;
 
 /**
  * Created by matsjerratsch on 04/12/2015.
  */
-public class InMemoryDBHandlerMock implements DBHandler {
+public class InMemoryDBHandler implements DBHandler {
+
+    public List<Channel> channelList = new ArrayList<>();
 
     public List<PubkeyIPObject> pubkeyIPList = new ArrayList<>();
     public List<PubkeyChannelObject> pubkeyChannelList = new ArrayList<>();
@@ -31,7 +32,10 @@ public class InMemoryDBHandlerMock implements DBHandler {
     public List<RevocationHash> revocationHashListTheir = new ArrayList<>();
     public List<RevocationHash> revocationHashListOurs = new ArrayList<>();
 
-    public InMemoryDBHandlerMock () {
+    List<PaymentWrapper> payments = new ArrayList<>();
+    List<PaymentSecret> secrets = new ArrayList<>();
+
+    public InMemoryDBHandler () {
         for (int i = 0; i < 1001; i++) {
             fragmentToListMap.put(i, new ArrayList<>());
         }
@@ -58,6 +62,16 @@ public class InMemoryDBHandlerMock implements DBHandler {
     }
 
     @Override
+    public PubkeyIPObject getIPObject (byte[] nodeKey) {
+        for (PubkeyIPObject p : pubkeyIPList) {
+            if (Arrays.equals(p.pubkey, nodeKey)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    @Override
     public void syncDatalist (List<P2PDataObject> dataList) {
         for (P2PDataObject obj : dataList) {
             if (obj instanceof PubkeyIPObject) {
@@ -69,6 +83,24 @@ public class InMemoryDBHandlerMock implements DBHandler {
                     pubkeyChannelList.add((PubkeyChannelObject) obj);
                 }
             } else if (obj instanceof ChannelStatusObject) {
+
+                ChannelStatusObject temp = (ChannelStatusObject) obj;
+                boolean found = false;
+                for (ChannelStatusObject object : channelStatusList) {
+                    if (Arrays.equals(object.pubkeyA, temp.pubkeyA) && Arrays.equals(object.pubkeyB, temp.pubkeyB)) {
+                        found = true;
+                        break;
+                    }
+
+                    if (Arrays.equals(object.pubkeyB, temp.pubkeyA) && Arrays.equals(object.pubkeyA, temp.pubkeyB)) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (found) {
+                    continue;
+                }
+
                 if (!channelStatusList.contains(obj)) {
                     channelStatusList.add((ChannelStatusObject) obj);
                 }
@@ -109,9 +141,33 @@ public class InMemoryDBHandlerMock implements DBHandler {
     }
 
     @Override
-    public Channel getChannel (Node node) {
-        //TODO
-        return null;
+    public Channel getChannel (byte[] nodeKey) {
+        for (Channel channel : channelList) {
+            if (Arrays.equals(channel.nodeId, nodeKey)) {
+                return channel;
+            }
+        }
+        throw new RuntimeException("getChannel did not returned channel..");
+    }
+
+    @Override
+    public void saveChannel (Channel channel) {
+        this.channelList.add(channel);
+    }
+
+    @Override
+    public void updateChannel (Channel channel) {
+        for (Channel c : channelList) {
+            if (Arrays.equals(c.nodeId, channel.nodeId)) {
+                c.channelStatus = channel.channelStatus;
+                return;
+            }
+        }
+    }
+
+    @Override
+    public List<Channel> getOpenChannel () {
+        return channelList;
     }
 
     @Override
@@ -130,52 +186,134 @@ public class InMemoryDBHandlerMock implements DBHandler {
     }
 
     @Override
-    public byte[] getSenderOfPayment (PaymentSecret paymentSecret) {
-        return new byte[0];
+    public List<ChannelStatusObject> getTopology () {
+        List<ChannelStatusObject> list = new ArrayList<>();
+        for (P2PDataObject object : totalList) {
+            if (object instanceof ChannelStatusObject) {
+                list.add((ChannelStatusObject) object);
+            }
+        }
+        return list;
     }
 
     @Override
-    public byte[] getReceiverOfPayment (PaymentSecret paymentSecret) {
-        return new byte[0];
+    public List<PaymentWrapper> getAllPayments () {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<PaymentWrapper> getOpenPayments () {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<PaymentWrapper> getRefundedPayments () {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<PaymentWrapper> getRedeemedPayments () {
+        return new ArrayList<>();
     }
 
     @Override
     public void addPayment (PaymentWrapper paymentWrapper) {
-
+        if (payments.contains(paymentWrapper)) {
+            return;
+//            throw new RuntimeException("Double payment added?");
+        }
+        payments.add(paymentWrapper);
     }
 
     @Override
     public void updatePayment (PaymentWrapper paymentWrapper) {
-
+        for (PaymentWrapper p : payments) {
+            if (p.equals(paymentWrapper)) {
+                p.paymentData = paymentWrapper.paymentData;
+                p.receiver = paymentWrapper.receiver;
+                p.sender = paymentWrapper.sender;
+                p.statusReceiver = paymentWrapper.statusReceiver;
+                p.statusSender = paymentWrapper.statusSender;
+            }
+        }
     }
 
     @Override
     public void updatePaymentSender (PaymentWrapper paymentWrapper) {
-
+        for (PaymentWrapper p : payments) {
+            if (p.equals(paymentWrapper)) {
+                p.paymentData = paymentWrapper.paymentData;
+                p.statusSender = paymentWrapper.statusSender;
+            }
+        }
     }
 
     @Override
     public void updatePaymentReceiver (PaymentWrapper paymentWrapper) {
-
+        for (PaymentWrapper p : payments) {
+            if (p.equals(paymentWrapper)) {
+                p.paymentData = paymentWrapper.paymentData;
+                p.statusReceiver = paymentWrapper.statusReceiver;
+            }
+        }
     }
 
     @Override
     public void updatePaymentAddReceiverAddress (PaymentSecret secret, byte[] receiver) {
-
+        for (PaymentWrapper p : payments) {
+            if (p.paymentData.secret.equals(secret)) {
+                p.receiver = receiver;
+            }
+        }
     }
 
     @Override
     public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
+        System.out.println(payments.size());
+
+        for (PaymentWrapper payment : payments) {
+            if (payment.paymentData.secret.equals(paymentSecret)) {
+                return payment;
+            }
+        }
         return null;
     }
 
     @Override
     public void addPaymentSecret (PaymentSecret secret) {
-
+        if (secrets.contains(secret)) {
+            PaymentSecret oldSecret = secrets.get(secrets.indexOf(secret));
+            oldSecret.secret = secret.secret;
+        } else {
+            secrets.add(secret);
+        }
     }
 
     @Override
     public PaymentSecret getPaymentSecret (PaymentSecret secret) {
+        if (!secrets.contains(secret)) {
+            return null;
+        }
+        return secrets.get(secrets.indexOf(secret));
+    }
+
+    @Override
+    public byte[] getSenderOfPayment (PaymentSecret paymentSecret) {
+        for (PaymentWrapper payment : payments) {
+            if (payment.paymentData.secret.equals(paymentSecret)) {
+                return payment.sender;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public byte[] getReceiverOfPayment (PaymentSecret paymentSecret) {
+        for (PaymentWrapper payment : payments) {
+            if (payment.paymentData.secret.equals(paymentSecret)) {
+                return payment.receiver;
+            }
+        }
         return null;
     }
 
