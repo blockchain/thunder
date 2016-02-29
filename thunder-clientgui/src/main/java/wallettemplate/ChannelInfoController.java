@@ -75,8 +75,8 @@ public class ChannelInfoController {
 
         Channel channel = Main.dbHandler.getChannel(null);
 
-        balanceClient.setText(Coin.valueOf(channel.getAmountClient()).toFriendlyString());
-        balanceServer.setText(Coin.valueOf(channel.getAmountServer()).toFriendlyString());
+        balanceClient.setText(Coin.valueOf(channel.channelStatus.amountClient).toFriendlyString());
+        balanceServer.setText(Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString());
 
         labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
 

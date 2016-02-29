@@ -18,9 +18,11 @@ public class QueueElementRefund extends QueueElement {
 
     @Override
     public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus, LNPaymentHelper paymentHelper) {
+        //TODO Also test yet-to-be-included payments for refund..
+
         ChannelStatus status = channelStatus.getClone();
         PaymentData paymentRefund = null;
-        for (PaymentData payment : status.oldPayments) {
+        for (PaymentData payment : status.remainingPayments) {
             if (payment.secret.equals(this.paymentSecret)) {
                 paymentRefund = payment;
             }
@@ -31,7 +33,7 @@ public class QueueElementRefund extends QueueElement {
             return status;
         } else {
             status.refundedPayments.add(paymentRefund);
-            status.oldPayments.remove(paymentRefund);
+            status.remainingPayments.remove(paymentRefund);
             //TODO add some disincentives into refunding
 
             status.amountClient += paymentRefund.amount;

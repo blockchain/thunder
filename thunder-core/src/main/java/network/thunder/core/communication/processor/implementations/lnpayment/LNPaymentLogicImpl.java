@@ -81,8 +81,8 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private Transaction addPayments (Transaction transaction, ChannelStatus channelStatus, RevocationHash revocationHash,
                                      ECKey keyServer, ECKey keyClient) {
-        List<PaymentData> allPayments = new ArrayList<>(statusTemp.oldPayments);
-        allPayments.addAll(statusTemp.newPayments);
+        List<PaymentData> allPayments = new ArrayList<>(channelStatus.remainingPayments);
+        allPayments.addAll(channelStatus.newPayments);
 
         for (PaymentData payment : allPayments) {
             Coin value = Coin.valueOf(payment.amount);
@@ -136,13 +136,16 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private void parseAMessage (LNPaymentAMessage message) {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
-        long amountServer = channel.amountServer;
-        long amountClient = channel.amountClient;
+        long amountServer = channel.channelStatus.amountServer;
+        long amountClient = channel.channelStatus.amountClient;
 
         revocationHashClient = null;
         revocationHashServer = null;
 
         statusTemp = message.channelStatus.getCloneReversed();
+
+        System.out.println("Check received new status: " + statusTemp);
+        System.out.println("Old status: " + channel.channelStatus);
 
         checkPaymentsInNewStatus(channel.channelStatus, statusTemp);
         checkRefundedPayments(statusTemp);
@@ -161,11 +164,11 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         }
 
         if (amountClient != statusTemp.amountClient || amountClient < 0) {
-            throw new LNPaymentException("amountClient not correct..");
+            throw new LNPaymentException("amountClient not correct.. Is " + statusTemp.amountClient + " Should be: " + amountClient);
         }
 
-        if (amountServer != statusTemp.amountClient || amountServer < 0) {
-            throw new LNPaymentException("amountServer not correct..");
+        if (amountServer != statusTemp.amountServer || amountServer < 0) {
+            throw new LNPaymentException("amountServer not correct..Is " + statusTemp.amountServer + " Should be: " + amountServer);
         }
 
         dbHandler.insertRevocationHash(message.newRevocation);
@@ -215,9 +218,9 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         oldStatus = oldStatus.getClone();
         newStatus = newStatus.getClone();
 
-        for (PaymentData paymentData : oldStatus.oldPayments) {
+        for (PaymentData paymentData : oldStatus.remainingPayments) {
             //All of these should be in either refund/settled/old
-            if (newStatus.oldPayments.remove(paymentData)) {
+            if (newStatus.remainingPayments.remove(paymentData)) {
                 continue;
             }
             if (newStatus.redeemedPayments.remove(paymentData)) {
@@ -229,7 +232,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             throw new LNPaymentException("Old payment that is in neither refund/settle/old");
         }
 
-        if (newStatus.oldPayments.size() + newStatus.refundedPayments.size() + newStatus.redeemedPayments.size() > 0) {
+        if (newStatus.remainingPayments.size() + newStatus.refundedPayments.size() + newStatus.redeemedPayments.size() > 0) {
             throw new LNPaymentException("New payments that are not in newPayments");
         }
     }
@@ -245,7 +248,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private void checkRedeemedPayments (ChannelStatus newStatus) {
         for (PaymentData paymentData : newStatus.redeemedPayments) {
-            if (paymentData.sending) {
+            if (!paymentData.sending) {
                 throw new LNPaymentException("Trying to redeem a sent payment?");
             }
             if (!paymentData.secret.verify()) {

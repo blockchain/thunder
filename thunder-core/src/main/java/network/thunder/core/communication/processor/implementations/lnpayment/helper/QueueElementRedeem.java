@@ -18,10 +18,12 @@ public class QueueElementRedeem extends QueueElement {
 
     @Override
     public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus, LNPaymentHelper paymentHelper) {
+        //TODO Also test yet-to-be-included payments for refund..
+
         ChannelStatus status = channelStatus.getClone();
 
         PaymentData paymentData = null;
-        for (PaymentData p : channelStatus.oldPayments) {
+        for (PaymentData p : channelStatus.remainingPayments) {
             if (p.secret.equals(paymentSecret)) {
                 paymentData = p;
             }
@@ -34,7 +36,7 @@ public class QueueElementRedeem extends QueueElement {
         }
 
         status.redeemedPayments.add(paymentData);
-        status.oldPayments.remove(paymentData);
+        status.remainingPayments.remove(paymentData);
 
         status.amountServer += paymentData.amount;
 
