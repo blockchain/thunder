@@ -6,5 +6,11 @@ package network.thunder.core.communication.nio;
 public interface ConnectionManager {
     void startUp () throws Exception;
 
-    void startListening () throws Exception;
+    void startListening ();
+
+    void fetchNetworkIPs ();
+
+    void startBuildingRandomChannel ();
+
+    void buildChannel (byte[] nodeKey);
 }
