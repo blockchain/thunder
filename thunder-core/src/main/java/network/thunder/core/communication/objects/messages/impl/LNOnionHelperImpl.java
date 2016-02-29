@@ -1,6 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl;
 
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.PeeledOnion;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.etc.crypto.CryptoTools;
@@ -8,50 +9,27 @@ import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
  * Created by matsjerratsch on 08/12/2015.
  */
 public class LNOnionHelperImpl implements LNOnionHelper {
-    private final static int BYTES_OFFSET_PER_ENCRYPTION = 150;
-
-    ECKey keyServer;
-
-    OnionObject encryptedOnionObject;
-
-    ECDHKeySet keySet;
-
-    byte[] decryptedData;
-    ECKey ephemeralKey;
-    ECKey nextHop;
-
-    byte[] encryptedDataForNextHop;
-
-    boolean lastHopReached = false;
 
     @Override
-    public void init (ECKey keyServer) {
-        this.keyServer = keyServer;
+    public PeeledOnion loadMessage (ECKey key, OnionObject encryptedOnionObject) {
+        ECDHKeySet keySet = getKeySet(key, encryptedOnionObject);
+
+        byte[] unencrypted = decryptMessage(keySet, encryptedOnionObject);
+        byte[] payload = new byte[OnionObject.DATA_LENGTH];
+        System.arraycopy(unencrypted, 0, payload, 0, OnionObject.DATA_LENGTH);
+
+        OnionObject nextObject = getMessageForNextHop(keySet, unencrypted);
+
+        return new PeeledOnion(nextObject, payload);
     }
 
-    @Override
-    public void loadMessage (OnionObject encryptedOnionObject) {
-        this.encryptedOnionObject = encryptedOnionObject;
-        decryptMessage();
-        if (!lastHopReached) {
-            parseMessage();
-        }
-    }
-
-    @Override
-    public ECKey getNextHop () {
-        return nextHop;
-    }
-
-    @Override
-    public OnionObject getMessageForNextHop () {
+    private static OnionObject getMessageForNextHop (ECDHKeySet keySet, byte[] decryptedData) {
         byte[] padding = new byte[OnionObject.TOTAL_LENGTH];
 
         byte[] paddingEnc = CryptoTools.encryptAES_CTR(padding, keySet.encryptionKey, keySet.ivClient, 0);
@@ -67,40 +45,39 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         return (OnionObject.TOTAL_LENGTH * (OnionObject.MAX_HOPS - 1));
     }
 
-    void decryptMessage () {
-        byte[] key = new byte[OnionObject.KEY_LENGTH];
+    private static byte[] decryptMessage (ECDHKeySet keySet, OnionObject encryptedOnionObject) {
         byte[] hmac = new byte[OnionObject.HMAC_LENGTH];
         byte[] data = new byte[OnionObject.TOTAL_LENGTH * OnionObject.MAX_HOPS - (OnionObject.KEY_LENGTH + OnionObject.HMAC_LENGTH)];
 
-        System.arraycopy(encryptedOnionObject.data, 0, key, 0, key.length);
-        System.arraycopy(encryptedOnionObject.data, key.length, hmac, 0, hmac.length);
-        System.arraycopy(encryptedOnionObject.data, key.length + hmac.length, data, 0, data.length);
+        System.arraycopy(encryptedOnionObject.data, OnionObject.KEY_LENGTH, hmac, 0, hmac.length);
+        System.arraycopy(encryptedOnionObject.data, OnionObject.KEY_LENGTH + hmac.length, data, 0, data.length);
 
-        ephemeralKey = ECKey.fromPublicOnly(key);
-        keySet = ECDH.getSharedSecret(keyServer, ephemeralKey);
-        decryptedData = CryptoTools.decryptAES_CTR(data, keySet.encryptionKey, keySet.ivServer, 0);
+        byte[] decryptedData = CryptoTools.decryptAES_CTR(data, keySet.encryptionKey, keySet.ivServer, 0);
 
         byte[] dataToSign = new byte[OnionObject.DATA_LENGTH];
         System.arraycopy(decryptedData, 0, dataToSign, 0, OnionObject.DATA_LENGTH);
 
         CryptoTools.checkHMAC(hmac, dataToSign, keySet.hmacKey);
+
+        return decryptedData;
     }
 
-    void parseMessage () {
-        byte[] pubkeyOfNextHop = new byte[33];
-        System.arraycopy(decryptedData, 0, pubkeyOfNextHop, 0, 33);
+    private static ECDHKeySet getKeySet (ECKey keyServer, OnionObject encryptedOnionObject) {
+        byte[] key = new byte[OnionObject.KEY_LENGTH];
 
-        byte[] emptyData = new byte[OnionObject.KEY_LENGTH];
-        if (Arrays.equals(emptyData, pubkeyOfNextHop)) {
-            System.out.println("We are the last hop..");
-            lastHopReached = true;
-            return;
+        System.arraycopy(encryptedOnionObject.data, 0, key, 0, key.length);
+
+        ECKey ephemeralKey = ECKey.fromPublicOnly(key);
+        ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, ephemeralKey);
+        return keySet;
+    }
+
+    @Override
+    public OnionObject createOnionObject (List<byte[]> nodeList, byte[] payload) {
+        System.out.println("createOnionObject");
+        for (byte[] b : nodeList) {
+            System.out.println(Tools.bytesToHex(b));
         }
-
-        nextHop = ECKey.fromPublicOnly(pubkeyOfNextHop);
-    }
-
-    public OnionObject createOnionObject (List<byte[]> nodeList) {
         if (nodeList.size() > OnionObject.MAX_HOPS) {
             throw new RuntimeException("Too many nodes in nodeList");
         }
@@ -137,10 +114,5 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         }
 
         return new OnionObject(data);
-    }
-
-    @Override
-    public boolean isLastHop () {
-        return lastHopReached;
     }
 }
