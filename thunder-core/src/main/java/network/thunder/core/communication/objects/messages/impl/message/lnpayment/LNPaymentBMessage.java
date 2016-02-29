@@ -21,6 +21,10 @@ public class LNPaymentBMessage implements LNPayment {
     @Override
     public void verify () {
         Preconditions.checkNotNull(newRevocation);
+    }
 
+    public LNPaymentBMessage (boolean success, String error) {
+        this.success = success;
+        this.error = error;
     }
 }

@@ -18,4 +18,12 @@ public class SyncGetMessage implements Sync {
     public void verify () {
 
     }
+
+    @Override
+    public String toString () {
+        return "SyncGetMessage{" +
+                "fragmentIndex=" + fragmentIndex +
+                ", getIPs=" + getIPs +
+                '}';
+    }
 }

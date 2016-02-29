@@ -29,4 +29,11 @@ public class LNPaymentAMessage implements LNPayment {
         Preconditions.checkNotNull(channelStatus);
         Preconditions.checkNotNull(newRevocation);
     }
+
+    @Override
+    public String toString () {
+        return "LNPaymentAMessage{" +
+                "channelStatus=" + channelStatus +
+                '}';
+    }
 }

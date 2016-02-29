@@ -20,4 +20,9 @@ public class EncryptedMessage implements Encryption {
         Preconditions.checkNotNull(hmac);
         Preconditions.checkNotNull(payload);
     }
+
+    @Override
+    public String toString () {
+        return "EncryptedMessage{Size=" + payload.length / 1024 + "kB}";
+    }
 }

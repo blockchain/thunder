@@ -122,4 +122,9 @@ public class ChannelStatusObject extends P2PDataObject {
     @Override
     public void verify () {
     }
+
+    @Override
+    public String toString () {
+        return "ChannelStatusObject{nodeA: " + Tools.bytesToHex(pubkeyA) + ", nodeB: " + Tools.bytesToHex(pubkeyB) + "}";
+    }
 }

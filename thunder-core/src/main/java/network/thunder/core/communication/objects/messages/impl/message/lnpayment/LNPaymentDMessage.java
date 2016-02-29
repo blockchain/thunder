@@ -21,4 +21,9 @@ public class LNPaymentDMessage implements LNPayment {
     public void verify () {
         Preconditions.checkNotNull(oldRevocationHashes);
     }
+
+    @Override
+    public String toString () {
+        return "LNPaymentDMessage{}";
+    }
 }

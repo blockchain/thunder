@@ -20,4 +20,9 @@ public class LNPaymentCMessage implements LNPayment {
         Preconditions.checkNotNull(newCommitSignature1);
         Preconditions.checkNotNull(newCommitSignature2);
     }
+
+    @Override
+    public String toString () {
+        return "LNPaymentCMessage{}";
+    }
 }

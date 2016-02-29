@@ -51,4 +51,13 @@ public class SyncSendMessage implements Sync {
         Preconditions.checkNotNull(pubkeyChannelList);
         Preconditions.checkNotNull(channelStatusList);
     }
+
+    @Override
+    public String toString () {
+        return "SyncSendMessage{" +
+                "pubkeyIPList=" + pubkeyIPList.size() +
+                ", pubkeyChannelList=" + pubkeyChannelList.size() +
+                ", channelStatusList=" + channelStatusList.size() +
+                '}';
+    }
 }
