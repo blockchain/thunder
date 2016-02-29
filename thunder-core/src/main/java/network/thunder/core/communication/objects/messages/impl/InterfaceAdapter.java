@@ -5,12 +5,6 @@ import com.google.gson.*;
 import java.lang.reflect.Type;
 
 final class InterfaceAdapter <T> implements JsonSerializer<T>, JsonDeserializer<T> {
-//    public JsonElement serialize (T object, Type interfaceType, JsonSerializationContext context) {
-//        final JsonObject wrapper = new JsonObject();
-//        wrapper.addProperty("type", object.getClass().getName());
-//        wrapper.add("data", context.serialize(object));
-//        return wrapper;
-//    }
 
     @Override
     public JsonElement serialize (T object, Type interfaceType, JsonSerializationContext context) {

@@ -30,14 +30,9 @@ public class MessageEncrypterImpl implements MessageEncrypter {
 
     @Override
     public Message decrypt (EncryptedMessage message, ECDHKeySet ecdhKeySet) {
-        byte[] bytes = message.payload;
-
         CryptoTools.checkHMAC(message.hmac, message.payload, ecdhKeySet.hmacKey);
+        byte[] bytes = CryptoTools.decryptAES_CTR(message.payload, ecdhKeySet.encryptionKey, ecdhKeySet.ivClient, ecdhKeySet.counterIn);
 
-        bytes = CryptoTools.decryptAES_CTR(message.payload, ecdhKeySet.encryptionKey, ecdhKeySet.ivClient, ecdhKeySet.counterIn);
-
-        Message decryptedMessage = serializater.deserializeMessage(bytes);
-
-        return decryptedMessage;
+        return serializater.deserializeMessage(bytes);
     }
 }
