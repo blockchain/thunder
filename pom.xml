@@ -18,6 +18,7 @@
 
     <modules>
         <module>thunder-core</module>
+        <module>thunder-clientgui</module>
     </modules>
 
     <url>https://github.com/matsjj/thundernetwork</url>
