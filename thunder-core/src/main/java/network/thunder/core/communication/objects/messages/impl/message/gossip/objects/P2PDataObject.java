@@ -12,7 +12,7 @@ import java.util.List;
  * We use the getHashAsLong() to determine the fragment block this object should be sent with.
  */
 public abstract class P2PDataObject implements Message {
-    public final static int NUMBER_OF_FRAGMENTS = 1000;
+    public final static int NUMBER_OF_FRAGMENTS = 2;
     public final static long FRAGMENT_SIZE = Long.MAX_VALUE / NUMBER_OF_FRAGMENTS;
 
     public abstract byte[] getData ();
