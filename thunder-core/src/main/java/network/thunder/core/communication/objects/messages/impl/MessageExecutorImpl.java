@@ -12,16 +12,12 @@ public class MessageExecutorImpl implements MessageExecutor {
     String layerName;
 
     public MessageExecutorImpl (ChannelHandlerContext context) {
-        this.context = context;
+        this(context, "");
     }
 
     public MessageExecutorImpl (ChannelHandlerContext context, String layerName) {
         this.context = context;
         this.layerName = layerName;
-    }
-
-    public void setContext (ChannelHandlerContext context) {
-        this.context = context;
     }
 
     @Override
