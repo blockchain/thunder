@@ -5,10 +5,12 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncSendMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.sync.Sync;
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 import java.util.List;
 
@@ -17,8 +19,9 @@ import java.util.List;
  */
 public class SyncProcessorImpl extends SyncProcessor {
     SyncMessageFactory messageFactory;
-    Node node;
     SynchronizationHelper syncStructure;
+    LNEventHelper eventHelper;
+    NodeClient node;
 
     MessageExecutor messageExecutor;
 
@@ -29,7 +32,6 @@ public class SyncProcessorImpl extends SyncProcessor {
         this.syncStructure = contextFactory.getSyncHelper();
         this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
-        this.syncStructure = syncStructure;
     }
 
     @Override
@@ -80,9 +82,12 @@ public class SyncProcessorImpl extends SyncProcessor {
             messageExecutor.closeConnection();
         } else {
             syncStructure.newFragment(lastIndex, syncMessage.getDataList());
+            eventHelper.onP2PDataReceived();
 
             if (!syncStructure.fullySynchronized()) {
                 sendGetNextSyncData();
+            } else {
+                messageExecutor.sendNextLayerActive();
             }
         }
     }

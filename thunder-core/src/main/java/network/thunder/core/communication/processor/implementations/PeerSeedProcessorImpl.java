@@ -6,6 +6,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.peerseed.PeerSeedSendMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.PeerSeedMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.peerseed.PeerSeedMessage;
@@ -13,7 +14,8 @@ import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,10 +26,12 @@ import java.util.List;
  */
 public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
-    PeerSeedMessageFactory messageFactory;
     DBHandler dbHandler;
+    NodeClient node;
+    NodeServer nodeServer;
+
+    PeerSeedMessageFactory messageFactory;
     LNEventHelper eventHelper;
-    Node node;
 
     MessageExecutor messageExecutor;
 
@@ -36,6 +40,7 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
         this.dbHandler = dbHandler;
         this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
+        this.nodeServer = contextFactory.getServerSettings();
     }
 
     @Override
@@ -100,7 +105,7 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
     private List<PubkeyIPObject> removeOurIPFromList (List<PubkeyIPObject> list) {
         List<PubkeyIPObject> toRemove = new ArrayList<>();
         for (PubkeyIPObject ip : list) {
-            if (Arrays.equals(ip.pubkey, node.pubKeyServer.getPubKey())) {
+            if (Arrays.equals(ip.pubkey, nodeServer.pubKeyServer.getPubKey())) {
                 toRemove.add(ip);
             }
         }

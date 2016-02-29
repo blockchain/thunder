@@ -7,12 +7,14 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.G
 import network.thunder.core.communication.objects.messages.impl.message.gossip.GossipSendMessage;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.GossipMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.gossip.Gossip;
 import network.thunder.core.communication.processor.interfaces.GossipProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -24,7 +26,8 @@ public class GossipProcessorImpl extends GossipProcessor {
     GossipMessageFactory messageFactory;
     GossipSubject subject;
     DBHandler dbHandler;
-    Node node;
+    NodeClient node;
+    NodeServer nodeServer;
 
     MessageExecutor messageExecutor;
 
@@ -38,6 +41,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         this.subject = contextFactory.getGossipSubject();
         this.dbHandler = dbHandler;
         this.node = node;
+        this.nodeServer = contextFactory.getServerSettings();
     }
 
     @Override
@@ -121,12 +125,15 @@ public class GossipProcessorImpl extends GossipProcessor {
     }
 
     private void sendOwnIPAddress () {
+        if (nodeServer.hostServer == null || nodeServer.hostServer.equals("")) {
+            return;
+        }
         PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
-        pubkeyIPObject.pubkey = node.pubKeyServer.getPubKey();
-        pubkeyIPObject.port = node.portServer;
-        pubkeyIPObject.IP = node.hostServer;
+        pubkeyIPObject.pubkey = nodeServer.pubKeyServer.getPubKey();
+        pubkeyIPObject.port = nodeServer.portServer;
+        pubkeyIPObject.IP = nodeServer.hostServer;
         pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
-        pubkeyIPObject.sign(node.pubKeyServer);
+        pubkeyIPObject.sign(nodeServer.pubKeyServer);
 
         List<P2PDataObject> ipAddresses = new ArrayList<>();
         ipAddresses.add(pubkeyIPObject);

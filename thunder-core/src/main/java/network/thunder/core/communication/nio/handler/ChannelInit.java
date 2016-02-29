@@ -9,25 +9,33 @@ import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHan
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.processor.Processor;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 /**
  * Created by matsjerratsch on 19/10/2015.
  */
 public class ChannelInit extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
-    Node node;
+    NodeClient node;
+    boolean serverMode = false;
 
-    public ChannelInit (ContextFactory contextFactory, Node node) {
-        this.node = new Node(node);
+    public ChannelInit (ContextFactory contextFactory) {
         this.contextFactory = contextFactory;
+        serverMode = true;
+    }
+
+    public ChannelInit (ContextFactory contextFactory, NodeClient node) {
+        this.contextFactory = contextFactory;
+        this.node = node;
     }
 
     @Override
     protected void initChannel (SocketChannel ch) throws Exception {
 
-        this.node = new Node(node);
-
+        if (serverMode) {
+            node = new NodeClient();
+            node.isServer = true;
+        }
 //        ch.pipeline().addLast(new DumpHexHandler());
 
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
@@ -52,8 +60,14 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         Processor peerSeedProcessor = contextFactory.getPeerSeedProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(peerSeedProcessor, "PeerSeed"));
 
+        Processor syncProcessor = contextFactory.getSyncProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(syncProcessor, "Sync"));
+
         Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));
+
+        Processor lnPaymentProcessor = contextFactory.getLNPaymentProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(lnPaymentProcessor, "LNPayment"));
 
     }
 }

@@ -4,11 +4,13 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.authentication.AuthenticationMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.AuthenticationMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.authentication.Authentication;
 import network.thunder.core.communication.processor.interfaces.AuthenticationProcessor;
 import network.thunder.core.etc.crypto.CryptoTools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
 
 import java.security.NoSuchAlgorithmException;
@@ -18,7 +20,8 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
     AuthenticationMessageFactory messageFactory;
     LNEventHelper eventHelper;
-    Node node;
+    NodeClient node;
+    NodeServer nodeServer;
 
     MessageExecutor messageExecutor;
 
@@ -29,6 +32,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         this.messageFactory = contextFactory.getAuthenticationMessageFactory();
         this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
+        this.nodeServer = contextFactory.getServerSettings();
     }
 
     @Override
@@ -110,7 +114,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
     public AuthenticationMessage getAuthenticationMessage () {
         try {
-            ECKey keyServer = node.pubKeyServer;
+            ECKey keyServer = nodeServer.pubKeyServer;
             ECKey keyClient = node.ephemeralKeyClient;
 
             byte[] data = new byte[keyServer.getPubKey().length + keyClient.getPubKey().length];
@@ -127,7 +131,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         }
     }
 
-    public void checkAuthenticationMessage (AuthenticationMessage authentication, Node node) throws NoSuchProviderException,
+    public void checkAuthenticationMessage (AuthenticationMessage authentication, NodeClient node) throws NoSuchProviderException,
             NoSuchAlgorithmException {
 
         //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting

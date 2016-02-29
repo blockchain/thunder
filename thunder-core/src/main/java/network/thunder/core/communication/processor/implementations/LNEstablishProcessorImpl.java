@@ -1,21 +1,26 @@
 package network.thunder.core.communication.processor.implementations;
 
 import network.thunder.core.communication.Message;
+import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
+import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
@@ -31,7 +36,9 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     LNEstablishMessageFactory messageFactory;
     BroadcastHelper broadcastHelper;
     LNEventHelper eventHelper;
-    Node node;
+    DBHandler dbHandler;
+    NodeClient node;
+    NodeServer nodeServer;
 
     MessageExecutor messageExecutor;
 
@@ -45,6 +52,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         this.eventHelper = contextFactory.getEventHelper();
         this.dbHandler = dbHandler;
         this.node = node;
+        this.nodeServer = contextFactory.getServerSettings();
     }
 
     @Override
@@ -130,11 +138,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         }
 
         sendEstablishMessageD();
+        onChannelEstablished();
 
-        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
-        broadcastHelper.broadcastNewObject(channelObject);
-
-        eventHelper.onChannelOpened(channel);
     }
 
     private void processMessageD (Message message) {
@@ -151,8 +156,26 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         }
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
+        onChannelEstablished();
+    }
+
+    private void onChannelEstablished () {
+        channel.channelStatus = new ChannelStatus();
+        channel.channelStatus.amountClient = channel.amountClient;
+        channel.channelStatus.amountServer = channel.amountServer;
+        dbHandler.saveChannel(channel);
+
+        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
+
+        ChannelStatusObject statusObject = new ChannelStatusObject();
+        statusObject.pubkeyA = nodeServer.pubKeyServer.getPubKey();
+        statusObject.pubkeyB = node.pubKeyClient.getPubKey();
+
+        broadcastHelper.broadcastNewObject(channelObject);
+        broadcastHelper.broadcastNewObject(statusObject);
 
         eventHelper.onChannelOpened(channel);
+        messageExecutor.sendNextLayerActive();
     }
 
     private void sendEstablishMessageA () {
@@ -207,6 +230,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private void prepareNewChannel () {
         channel = new Channel();
+        channel.nodeId = node.pubKeyClient.getPubKey();
+
         channel.setInitialAmountServer(getAmountForNewChannel());
         channel.setAmountServer(getAmountForNewChannel());
 
@@ -214,11 +239,11 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.setAmountClient(getAmountForNewChannel());
 
         //TODO: Change base key selection method (maybe completely random?)
-        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 2)));
-        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 4)));
-        channel.setMasterPrivateKeyServer(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 6));
-        byte[] secretFE = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 8));
-        byte[] revocation = Tools.hashSecret(Tools.hashSha(node.pubKeyServer.getPrivKeyBytes(), 10));
+        channel.setKeyServer(ECKey.fromPrivate(Tools.hashSha(nodeServer.pubKeyServer.getPrivKeyBytes(), 2)));
+        channel.setKeyServerA(ECKey.fromPrivate(Tools.hashSha(nodeServer.pubKeyServer.getPrivKeyBytes(), 4)));
+        channel.setMasterPrivateKeyServer(Tools.hashSha(nodeServer.pubKeyServer.getPrivKeyBytes(), 6));
+        byte[] secretFE = Tools.hashSecret(Tools.hashSha(nodeServer.pubKeyServer.getPrivKeyBytes(), 8));
+        byte[] revocation = Tools.hashSecret(Tools.hashSha(nodeServer.pubKeyServer.getPrivKeyBytes(), 10));
         channel.setAnchorSecretServer(secretFE);
         channel.setAnchorSecretHashServer(Tools.hashSecret(secretFE));
         channel.setAnchorRevocationServer(revocation);

@@ -4,11 +4,12 @@ import network.thunder.core.communication.Message;
 import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptedMessage;
 import network.thunder.core.communication.objects.messages.impl.message.encryption.EncryptionInitialMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.EncryptionMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageEncrypter;
 import network.thunder.core.communication.processor.interfaces.EncryptionProcessor;
 import network.thunder.core.etc.crypto.ECDH;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 import org.bitcoinj.core.ECKey;
 
 /**
@@ -17,7 +18,7 @@ import org.bitcoinj.core.ECKey;
 public class EncryptionProcessorImpl extends EncryptionProcessor {
     EncryptionMessageFactory messageFactory;
     MessageEncrypter messageEncrypter;
-    Node node;
+    NodeClient node;
 
     MessageExecutor executor;
 
@@ -82,6 +83,7 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
 
     private void processMessageToBeDecrypted (EncryptedMessage message) {
         Message decryptedMessage = messageEncrypter.decrypt(message, node.ecdhKeySet);
+        System.out.println("I: " + node.host + " " + decryptedMessage);
         executor.sendMessageDownwards(decryptedMessage);
     }
 
@@ -105,6 +107,8 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     }
 
     private void processMessageToBeEncrypted (Message message) {
+        System.out.println("O: " + node.host + " " + message);
+
         Message encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         executor.sendMessageUpwards(encryptedMessage);
     }

@@ -8,8 +8,9 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
+import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
@@ -19,7 +20,7 @@ import network.thunder.core.communication.processor.interfaces.lnpayment.LNPayme
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,10 +41,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LNPaymentLogic paymentLogic;
     DBHandler dbHandler;
     LNPaymentHelper paymentHelper;
-    Node node;
+    LNEventHelper eventHelper;
+    NodeClient node;
 
     MessageExecutor messageExecutor;
-    LNOnionHelper onionHelper;
 
     Channel channel;
 
@@ -89,6 +90,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             QueueElement element = queueList.poll(100, TimeUnit.MILLISECONDS);
             if (element != null) {
                 if (status == IDLE) {
+
                     currentQueueElement.add(element);
                     while (queueList.size() > 0) {
                         currentQueueElement.add(queueList.poll());
@@ -128,11 +130,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     private void buildChannelStatus () {
         ChannelStatus temp = channel.channelStatus.getClone();
-        System.out.println(node.name + " :" + temp);
+        System.out.println(node.name + " Old: " + temp);
         for (QueueElement queueElement : currentQueueElement) {
             temp = queueElement.produceNewChannelStatus(temp, paymentHelper);
         }
-        System.out.println(node.name + " :" + temp);
+        System.out.println(node.name + " New: " + temp);
         this.statusTemp = temp;
     }
 
@@ -331,8 +333,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void finishCurrentTask () {
+        currentQueueElement.clear();
         updateDatabase();
         evaluateUpdates();
+        dbHandler.updateChannel(channel);
+        eventHelper.onPaymentExchangeDone();
 
         finished = true;
         aborted = false;
@@ -390,7 +395,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
         ChannelStatus statusToBeProcessed = statusTemp.getClone();
 
-        statusTemp.oldPayments.addAll(statusTemp.newPayments);
+        statusTemp.remainingPayments.addAll(statusTemp.newPayments);
         statusTemp.newPayments.clear();
         statusTemp.refundedPayments.clear();
         statusTemp.redeemedPayments.clear();
@@ -417,7 +422,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void setStatus (Status status) {
-        System.out.println(node.name + " SET STATUS FROM " + this.status + " TO " + status);
         this.status = status;
     }
 
@@ -438,6 +442,9 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
+        channel = dbHandler.getChannel(node.pubKeyClient.getPubKey());
+        paymentLogic.initialise(channel);
+
         this.messageExecutor = messageExecutor;
         this.paymentHelper.addProcessor(this);
         startQueueListener();

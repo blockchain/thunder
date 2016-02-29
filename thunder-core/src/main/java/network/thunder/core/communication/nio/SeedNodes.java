@@ -1,7 +1,8 @@
 package network.thunder.core.communication.nio;
 
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.NodeClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +12,7 @@ import java.util.List;
  */
 public class SeedNodes {
     static List<PubkeyIPObject> ipList = new ArrayList<>();
-    static List<Node> nodeList = new ArrayList<>();
+    static List<NodeClient> nodeList = new ArrayList<>();
 
     static {
         PubkeyIPObject seed1 = new PubkeyIPObject();
@@ -25,15 +26,15 @@ public class SeedNodes {
     }
 
     public static void setToTestValues () {
-        Node node = new Node();
+        NodeClient node = new NodeClient();
         node.init();
-        node.hostServer = "localhost";
-        node.portServer = 10001;
+        node.host = "localhost";
+        node.port = 10001;
 
         PubkeyIPObject seed1 = new PubkeyIPObject();
         seed1.IP = "localhost";
         seed1.port = 10001;
-        seed1.pubkey = node.pubKeyServer.getPubKey();
+        seed1.pubkey = node.pubKeyClient.getPubKey();
 
         ipList.clear();
 
