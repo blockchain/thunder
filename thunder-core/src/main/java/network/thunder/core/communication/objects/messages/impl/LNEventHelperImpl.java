@@ -3,10 +3,11 @@ package network.thunder.core.communication.objects.messages.impl;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventListener;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.Payment;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +29,14 @@ public class LNEventHelperImpl implements LNEventHelper {
     }
 
     @Override
-    public void onConnectionOpened (Node node) {
+    public void onConnectionOpened (NodeClient node) {
         for (LNEventListener listener : listeners) {
             listener.onConnectionOpened(node);
         }
     }
 
     @Override
-    public void onConnectionClosed (Node node) {
+    public void onConnectionClosed (NodeClient node) {
         for (LNEventListener listener : listeners) {
             listener.onConnectionClosed(node);
         }
@@ -73,6 +74,25 @@ public class LNEventHelperImpl implements LNEventHelper {
     public void onPaymentRefunded (Payment payment) {
         for (LNEventListener listener : listeners) {
             listener.onPaymentRefunded(payment);
+        }
+    }
+
+    @Override
+    public void onPaymentExchangeDone () {
+
+    }
+
+    @Override
+    public void onPaymentCompleted (PaymentSecret payment) {
+        for (LNEventListener listener : listeners) {
+            listener.onPaymentCompleted(payment);
+        }
+    }
+
+    @Override
+    public void onP2PDataReceived () {
+        for (LNEventListener listener : listeners) {
+            listener.onP2PDataReceived();
         }
     }
 }
