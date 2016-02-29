@@ -29,9 +29,11 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
     List<LNPaymentProcessor> processorList = new ArrayList<>();
 
-    public LNPaymentHelperImpl (LNOnionHelper onionHelper, DBHandler dbHandler) {
-        this.onionHelper = onionHelper;
+    public LNPaymentHelperImpl (ContextFactory contextFactory, DBHandler dbHandler) {
+        this.onionHelper = contextFactory.getOnionHelper();
         this.dbHandler = dbHandler;
+        this.eventHelper = contextFactory.getEventHelper();
+        this.nodeServer = contextFactory.getServerSettings();
     }
 
     @Override

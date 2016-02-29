@@ -24,8 +24,10 @@ public class SyncProcessorImpl extends SyncProcessor {
 
     int lastIndex;
 
-    public SyncProcessorImpl (SyncMessageFactory messageFactory, Node node, SynchronizationHelper syncStructure) {
-        this.messageFactory = messageFactory;
+    public SyncProcessorImpl (ContextFactory contextFactory, NodeClient node) {
+        this.messageFactory = contextFactory.getSyncMessageFactory();
+        this.syncStructure = contextFactory.getSyncHelper();
+        this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
         this.syncStructure = syncStructure;
     }

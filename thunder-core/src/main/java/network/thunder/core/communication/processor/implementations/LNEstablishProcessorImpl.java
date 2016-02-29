@@ -38,12 +38,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public Channel channel;
     int status = 0;
 
-    public LNEstablishProcessorImpl (WalletHelper walletHelper, LNEstablishMessageFactory messageFactory, BroadcastHelper broadcastHelper, LNEventHelper
-            eventHelper, Node node) {
-        this.walletHelper = walletHelper;
-        this.messageFactory = messageFactory;
-        this.broadcastHelper = broadcastHelper;
-        this.eventHelper = eventHelper;
+    public LNEstablishProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, NodeClient node) {
+        this.walletHelper = contextFactory.getWalletHelper();
+        this.messageFactory = contextFactory.getLNEstablishMessageFactory();
+        this.broadcastHelper = contextFactory.getBroadcastHelper();
+        this.eventHelper = contextFactory.getEventHelper();
+        this.dbHandler = dbHandler;
         this.node = node;
     }
 

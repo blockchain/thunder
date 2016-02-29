@@ -63,16 +63,13 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     int latestDice = 0;
 
-    public LNPaymentProcessorImpl (LNPaymentMessageFactory messageFactory, LNPaymentLogic paymentLogic, DBHandler dbHandler, LNPaymentHelper paymentHelper,
-                                   Node node) {
-        this.messageFactory = messageFactory;
-        this.paymentLogic = paymentLogic;
+    public LNPaymentProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, NodeClient node) {
+        this.messageFactory = contextFactory.getLNPaymentMessageFactory();
+        this.paymentLogic = contextFactory.getLNPaymentLogic();
         this.dbHandler = dbHandler;
+        this.paymentHelper = contextFactory.getPaymentHelper();
+        this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
-        this.paymentHelper = paymentHelper;
-
-        channel = dbHandler.getChannel(node);
-        paymentLogic.initialise(channel);
     }
 
     private void startQueueListener () {

@@ -1,6 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
 import network.thunder.core.communication.objects.messages.impl.*;
+import network.thunder.core.communication.objects.messages.impl.routing.LNRoutingHelperImpl;
 import network.thunder.core.communication.objects.messages.interfaces.factories.*;
 import network.thunder.core.communication.objects.messages.interfaces.helper.*;
 import network.thunder.core.communication.processor.implementations.AuthenticationProcessorImpl;
@@ -19,7 +20,8 @@ import network.thunder.core.communication.processor.interfaces.*;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.mesh.Node;
+import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Wallet;
 
 /**
@@ -36,22 +38,23 @@ public class ContextFactoryImpl implements ContextFactory {
 
     LNPaymentHelper paymentHelper;
 
-    LNOnionHelper onionHelper;
+    LNOnionHelper onionHelper = new LNOnionHelperImpl();
 
-    public ContextFactoryImpl (DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper) {
+    NodeServer nodeServer;
+
+    public ContextFactoryImpl (NodeServer node, DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper) {
+        this.nodeServer = node;
         this.dbHandler = dbHandler;
         this.eventHelper = eventHelper;
         this.walletHelper = new WalletHelperImpl(wallet);
 
-        GossipSubjectImpl gossipSubject = new GossipSubjectImpl(dbHandler);
+        GossipSubjectImpl gossipSubject = new GossipSubjectImpl(dbHandler, eventHelper);
         this.gossipSubject = gossipSubject;
         this.broadcastHelper = gossipSubject;
 
         this.syncHelper = new SynchronizationHelper(dbHandler);
 
-        this.onionHelper = new LNOnionHelperImpl();
-
-        this.paymentHelper = new LNPaymentHelperImpl(onionHelper, dbHandler);
+        this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
     }
 
     @Override
@@ -65,45 +68,123 @@ public class ContextFactoryImpl implements ContextFactory {
     }
 
     @Override
-    public EncryptionProcessor getEncryptionProcessor (Node node) {
-        MessageEncrypter messageEncrypter = getMessageEncrypter();
-        EncryptionMessageFactory encryptionMessageFactory = new EncryptionMessageFactoryImpl();
-        return new EncryptionProcessorImpl(encryptionMessageFactory, messageEncrypter, node);
+    public EncryptionProcessor getEncryptionProcessor (NodeClient node) {
+        return new EncryptionProcessorImpl(this, node);
     }
 
     @Override
-    public AuthenticationProcessor getAuthenticationProcessor (Node node) {
-        return new AuthenticationProcessorImpl(new AuthenticationMessageFactoryImpl(), eventHelper, node);
+    public AuthenticationProcessor getAuthenticationProcessor (NodeClient node) {
+        return new AuthenticationProcessorImpl(this, node);
     }
 
     @Override
-    public PeerSeedProcessor getPeerSeedProcessor (Node node) {
-        return new PeerSeedProcessorImpl(new PeerSeedMessageFactoryImpl(), dbHandler, eventHelper, node);
+    public PeerSeedProcessor getPeerSeedProcessor (NodeClient node) {
+        return new PeerSeedProcessorImpl(this, dbHandler, node);
     }
 
     @Override
-    public SyncProcessor getSyncProcessor (Node node) {
-        SyncMessageFactory messageFactory = new SyncMessageFactoryImpl();
-        return new SyncProcessorImpl(messageFactory, node, syncHelper);
+    public SyncProcessor getSyncProcessor (NodeClient node) {
+        return new SyncProcessorImpl(this, node);
     }
 
     @Override
-    public GossipProcessor getGossipProcessor (Node node) {
-        GossipMessageFactory messageFactory = new GossipMessageFactoryImpl();
-        return new GossipProcessorImpl(messageFactory, gossipSubject, dbHandler, node);
+    public GossipProcessor getGossipProcessor (NodeClient node) {
+        return new GossipProcessorImpl(this, dbHandler, node);
     }
 
     @Override
-    public LNEstablishProcessor getLNEstablishProcessor (Node node) {
-        LNEstablishMessageFactory messageFactory = new LNEstablishMessageFactoryImpl();
-        return new LNEstablishProcessorImpl(walletHelper, messageFactory, broadcastHelper, eventHelper, node);
+    public LNEstablishProcessor getLNEstablishProcessor (NodeClient node) {
+        return new LNEstablishProcessorImpl(this, dbHandler, node);
     }
 
     @Override
-    public LNPaymentProcessor getLNPaymentProcessor (Node node) {
-        LNPaymentMessageFactory messageFactory = new LNPaymentMessageFactoryImpl(dbHandler);
-        LNPaymentLogic paymentLogic = new LNPaymentLogicImpl(dbHandler);
-        return new LNPaymentProcessorImpl(messageFactory, paymentLogic, dbHandler, paymentHelper, node);
+    public LNPaymentProcessor getLNPaymentProcessor (NodeClient node) {
+        return new LNPaymentProcessorImpl(this, dbHandler, node);
+    }
+
+    @Override
+    public LNPaymentHelper getPaymentHelper () {
+        return paymentHelper;
+    }
+
+    @Override
+    public LNOnionHelper getOnionHelper () {
+        return onionHelper;
+    }
+
+    @Override
+    public LNEventHelper getEventHelper () {
+        return eventHelper;
+    }
+
+    @Override
+    public BroadcastHelper getBroadcastHelper () {
+        return broadcastHelper;
+    }
+
+    @Override
+    public SynchronizationHelper getSyncHelper () {
+        return syncHelper;
+    }
+
+    @Override
+    public WalletHelper getWalletHelper () {
+        return walletHelper;
+    }
+
+    @Override
+    public GossipSubject getGossipSubject () {
+        return gossipSubject;
+    }
+
+    @Override
+    public LNPaymentLogic getLNPaymentLogic () {
+        return new LNPaymentLogicImpl(dbHandler);
+    }
+
+    @Override
+    public NodeServer getServerSettings () {
+        return nodeServer;
+    }
+
+    @Override
+    public EncryptionMessageFactory getEncryptionMessageFactory () {
+        return new EncryptionMessageFactoryImpl();
+    }
+
+    @Override
+    public AuthenticationMessageFactory getAuthenticationMessageFactory () {
+        return new AuthenticationMessageFactoryImpl();
+    }
+
+    @Override
+    public PeerSeedMessageFactory getPeerSeedMessageFactory () {
+        return new PeerSeedMessageFactoryImpl();
+    }
+
+    @Override
+    public SyncMessageFactory getSyncMessageFactory () {
+        return new SyncMessageFactoryImpl();
+    }
+
+    @Override
+    public GossipMessageFactory getGossipMessageFactory () {
+        return new GossipMessageFactoryImpl();
+    }
+
+    @Override
+    public LNEstablishMessageFactory getLNEstablishMessageFactory () {
+        return new LNEstablishMessageFactoryImpl();
+    }
+
+    @Override
+    public LNPaymentMessageFactory getLNPaymentMessageFactory () {
+        return new LNPaymentMessageFactoryImpl(dbHandler);
+    }
+
+    @Override
+    public LNRoutingHelper getLNRoutingHelper () {
+        return new LNRoutingHelperImpl(dbHandler);
     }
 
 }

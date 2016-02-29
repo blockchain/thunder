@@ -32,10 +32,10 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     int randomNumber;
 
-    public GossipProcessorImpl (GossipMessageFactory messageFactory, GossipSubject subject, DBHandler dbHandler, Node
+    public GossipProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, NodeClient
             node) {
-        this.messageFactory = messageFactory;
-        this.subject = subject;
+        this.messageFactory = contextFactory.getGossipMessageFactory();
+        this.subject = contextFactory.getGossipSubject();
         this.dbHandler = dbHandler;
         this.node = node;
     }

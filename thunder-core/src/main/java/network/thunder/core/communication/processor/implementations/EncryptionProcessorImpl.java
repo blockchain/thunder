@@ -24,9 +24,9 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     boolean encSent;
     boolean encFinished;
 
-    public EncryptionProcessorImpl (EncryptionMessageFactory messageFactory, MessageEncrypter messageEncrypter, Node node) {
-        this.messageFactory = messageFactory;
-        this.messageEncrypter = messageEncrypter;
+    public EncryptionProcessorImpl (ContextFactory contextFactory, NodeClient node) {
+        this.messageFactory = contextFactory.getEncryptionMessageFactory();
+        this.messageEncrypter = contextFactory.getMessageEncrypter();
         this.node = node;
     }
 

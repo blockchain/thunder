@@ -31,10 +31,10 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     MessageExecutor messageExecutor;
 
-    public PeerSeedProcessorImpl (PeerSeedMessageFactory messageFactory, DBHandler dbHandler, LNEventHelper eventHelper, Node node) {
-        this.messageFactory = messageFactory;
+    public PeerSeedProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, NodeClient node) {
+        this.messageFactory = contextFactory.getPeerSeedMessageFactory();
         this.dbHandler = dbHandler;
-        this.eventHelper = eventHelper;
+        this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
     }
 

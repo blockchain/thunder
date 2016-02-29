@@ -25,9 +25,9 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
     public boolean sentAuth;
     public boolean authFinished;
 
-    public AuthenticationProcessorImpl (AuthenticationMessageFactory messageFactory, LNEventHelper eventHelper, Node node) {
-        this.messageFactory = messageFactory;
-        this.eventHelper = eventHelper;
+    public AuthenticationProcessorImpl (ContextFactory contextFactory, NodeClient node) {
+        this.messageFactory = contextFactory.getAuthenticationMessageFactory();
+        this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
     }
 
