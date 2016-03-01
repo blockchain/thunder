@@ -19,6 +19,7 @@
 package network.thunder.core.etc;
 
 import com.google.gson.Gson;
+import com.google.gson.internal.LinkedTreeMap;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
@@ -47,17 +48,46 @@ import java.util.concurrent.TimeoutException;
  */
 public class Tools {
 
-    /**
-     * The Constant hexArray.
-     */
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
-    /**
-     * Input stream to string.
-     *
-     * @param in the in
-     * @return the string
-     */
+    final static Map<String, String> scriptMap = new LinkedTreeMap<>();
+    
+    static {
+        scriptMap.put("HASH160", "A9");
+        scriptMap.put("DUP", "76");
+        scriptMap.put("EQUAL", "87");
+        scriptMap.put("EQUALVERIFY", "88");
+        scriptMap.put("SWAP", "7C");
+        scriptMap.put("ADD", "93");
+        scriptMap.put("NOTIF", "64");
+        scriptMap.put("ELSE", "67");
+        scriptMap.put("ENDIF", "68");
+        scriptMap.put("IF", "63");
+        scriptMap.put("CLTV", "B1");
+        scriptMap.put("CSV", "B3");
+        scriptMap.put("2DROP", "6D");
+        scriptMap.put("DROP", "75");
+        scriptMap.put("VERIFY", "69");
+        scriptMap.put("CHECKSIGVERIFY", "AD");
+        scriptMap.put("CHECKMULTISIGVERIFY", "AF");
+        scriptMap.put("CHECKSIG", "AC");
+        scriptMap.put("CHECKMULTISIG", "AE");
+        scriptMap.put("OP_0", "00");
+        scriptMap.put("OP_1", "51");
+        scriptMap.put("OP_2", "52");
+    }
+
+    public static byte[] scriptStringToByte (String script) {
+        String b = script;
+        for (Map.Entry<String, String> a : scriptMap.entrySet()) {
+            script = script.replaceAll(a.getKey(), a.getValue());
+        }
+
+        System.out.println(b + " " + script);
+        return Tools.hexStringToByteArray(script);
+
+    }
+
     public static String InputStreamToString (InputStream in) {
         String qry = "";
         try {
