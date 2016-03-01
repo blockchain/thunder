@@ -220,7 +220,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        LNPayment message = messageFactory.getMessageC(channel, paymentLogic.getClientTransaction());
+        LNPayment message = messageFactory.getMessageC(channel, paymentLogic.getChannelSignatures(), paymentLogic.getPaymentSignatures());
         paymentLogic.readMessageOutbound(message);
         sendMessage(message);
 

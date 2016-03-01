@@ -86,10 +86,10 @@ public class LNPaymentLogicImplTest {
         LNPayment messageB = messageFactory2.getMessageB(channel2);
         exchangeMessage(messageB, paymentLogic2, paymentLogic1);
 
-        LNPayment messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getClientTransaction());
+        LNPayment messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
         exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
 
-        LNPayment messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getClientTransaction());
+        LNPayment messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
         exchangeMessage(messageC2, paymentLogic2, paymentLogic1);
 
         LNPayment messageD1 = messageFactory1.getMessageD(channel1);
@@ -127,7 +127,7 @@ public class LNPaymentLogicImplTest {
         LNPayment messageB = messageFactory2.getMessageB(channel2);
         exchangeMessage(messageB, paymentLogic2, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getClientTransaction());
+        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
         messageC1.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature1, 60, 2);
         exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
     }
@@ -145,7 +145,7 @@ public class LNPaymentLogicImplTest {
         LNPayment messageB = messageFactory2.getMessageB(channel2);
         exchangeMessage(messageB, paymentLogic2, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getClientTransaction());
+        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
         messageC1.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature2, 60, 2);
         exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
     }
@@ -163,10 +163,10 @@ public class LNPaymentLogicImplTest {
         LNPayment messageB = messageFactory2.getMessageB(channel2);
         exchangeMessage(messageB, paymentLogic2, paymentLogic1);
 
-        LNPayment messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getClientTransaction());
+        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
         exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
 
-        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getClientTransaction());
+        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
         messageC2.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature1, 60, 2);
         exchangeMessage(messageC1, paymentLogic2, paymentLogic1);
     }
@@ -184,10 +184,10 @@ public class LNPaymentLogicImplTest {
         LNPayment messageB = messageFactory2.getMessageB(channel2);
         exchangeMessage(messageB, paymentLogic2, paymentLogic1);
 
-        LNPayment messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getClientTransaction());
+        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
         exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
 
-        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getClientTransaction());
+        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
         messageC2.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature2, 60, 2);
         exchangeMessage(messageC1, paymentLogic2, paymentLogic1);
     }

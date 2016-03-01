@@ -8,9 +8,10 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
-import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by matsjerratsch on 08/01/2016.
@@ -34,12 +35,13 @@ public class LNPaymentMessageFactoryImpl extends MesssageFactoryImpl implements 
     }
 
     @Override
-    public LNPaymentCMessage getMessageC (Channel channel, Transaction channelTransaction) {
-
-        //The channelTransaction is finished, we just need to produce the signatures..
-        TransactionSignature signature1 = Tools.getSignature(channelTransaction, 0, channel.getScriptAnchorOutputClient().getProgram(), channel.getKeyServer());
-        TransactionSignature signature2 = Tools.getSignature(channelTransaction, 1, channel.getScriptAnchorOutputServer().getProgram(), channel.getKeyServer());
-        return new LNPaymentCMessage(signature1.encodeToBitcoin(), signature2.encodeToBitcoin());
+    public LNPaymentCMessage getMessageC (Channel channel, List<TransactionSignature> channelSignatures, List<TransactionSignature> paymentSignatures) {
+        List<byte[]> sigList = new ArrayList<>();
+        for (TransactionSignature p : paymentSignatures) {
+            sigList.add(p.encodeToBitcoin());
+        }
+        return new LNPaymentCMessage(channelSignatures.get(0).encodeToBitcoin(),
+                channelSignatures.get(1).encodeToBitcoin(), sigList);
     }
 
     @Override

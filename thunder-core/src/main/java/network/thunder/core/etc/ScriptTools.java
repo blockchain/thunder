@@ -1,6 +1,7 @@
 package network.thunder.core.etc;
 
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
+import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.lightning.RevocationHash;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
@@ -53,6 +54,66 @@ public class ScriptTools {
 
     public static final byte[] CHANNEL_TX_OUTPUT_REVOCATION = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B3 75  FF 68 AC");
     public static final byte[] CHANNEL_TX_OUTPUT_PLAIN = Tools.hexStringToByteArray("FF AC");
+
+    public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE =
+            Tools.scriptStringToByte(
+                    "HASH160 DUP FF EQUAL SWAP FF EQUAL ADD " +
+                            "IF " + //If revocation or payment hash is supplied, allow taking directly
+                            "FF CHECKSIG " +
+                            "ELSE " + //Else pay to refund tx after timeout
+                            "FF CLTV DROP OP_2 FF FF OP_2 CHECKMULTISIG " +
+                            "ENDIF");
+
+    public static Script getChannelTxOutputPaymentSending (ECKey keyServer, ECKey keyClient,
+                                                           RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE, revocationHash.getSecretHash(), secret.hash,
+                keyClient.getPubKey(),integerToByteArray(refundTimeout), keyServer.getPubKey(), keyClient.getPubKey());
+    }
+
+    //TODO not very efficient yet with 3 times client pubkey...
+    public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE =
+            Tools.scriptStringToByte(
+                    "HASH160 FF EQUAL " +
+                            "IF " + //If revocation or payment hash is supplied, allow taking directly
+                            "FF CHECKSIG " +
+                            "ELSE " +
+                            "HASH160 FF EQUAL" +
+                            "IF " + //Pay to redeem tx if payment hash is supplied
+                            "OP_2 FF FF OP_2 CHECKMULTISIG " +
+                            "ELSE " + //Pay to sender directly after timeout
+                            "FF CLTV DROP FF CHECKSIG " +
+                            "ENDIF " +
+                            "ENDIF ");
+
+    public static Script getChannelTxOutputPaymentReceiving (ECKey keyServer, ECKey keyClient,
+                                                             RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE, revocationHash.getSecretHash(), keyClient.getPubKey(),
+                secret.hash, keyServer.getPubKey(), keyClient.getPubKey(), integerToByteArray(refundTimeout), keyClient.getPubKey());
+    }
+
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_TIMEOUT = Tools.scriptStringToByte("00 FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_REDEEM = Tools.scriptStringToByte("FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_STEAL = Tools.scriptStringToByte("FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_TIMEOUT = Tools.scriptStringToByte("00 00 FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_REDEEM = Tools.scriptStringToByte("00 FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_STEAL = Tools.scriptStringToByte("FF FF");
+
+    public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_TWO =
+            Tools.scriptStringToByte(
+                    "HASH160 FF EQUAL " +
+                            "IF " +
+                            "FF CHECKSIG " +
+                            "ELSE " +
+                            "FF CSV DROP FF CHECKSIG " +
+                            "ENDIF");
+
+    public static Script getPaymentTxOutput (ECKey keyReceiver, ECKey keyRevocation, RevocationHash revocationHash, int revocationTimeout) {
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_TWO, revocationHash.getSecretHash(), keyRevocation.getPubKey(),
+                integerToByteArray(revocationTimeout), keyReceiver.getPubKey());
+    }
+
+    public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONEa = Tools.hexStringToByteArray("A9 FF 87 63 FF AC 67 B1 FF 75 52 FF FF 52 AE 68");
+    public static final byte[] CHANNEL_TX_OUTPUT_MULTISIG1 = Tools.hexStringToByteArray("A9 FF 87 63 FF AC 67 52 FF FF 52 AE 68");
 
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_SENDING = Tools.hexStringToByteArray("A9 76 FF 87 7C FF 87 93 63 FF 67 FF B1 FF B3 6D FF 68 AC");
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING = Tools.hexStringToByteArray("A9 76 FF 87 63 FF B3 6D FF 67 FF 87 64 FF B1 75 68 FF 68 AC");

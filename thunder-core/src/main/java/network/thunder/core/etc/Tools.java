@@ -51,7 +51,7 @@ public class Tools {
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
     final static Map<String, String> scriptMap = new LinkedTreeMap<>();
-    
+
     static {
         scriptMap.put("HASH160", "A9");
         scriptMap.put("DUP", "76");

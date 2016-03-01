@@ -6,6 +6,9 @@ import network.thunder.core.communication.objects.messages.interfaces.message.ln
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.database.objects.Channel;
 import org.bitcoinj.core.Transaction;
+import org.bitcoinj.crypto.TransactionSignature;
+
+import java.util.List;
 
 /**
  * Created by matsjerratsch on 13/01/2016.
@@ -25,6 +28,26 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
 
     @Override
     public Transaction getServerTransaction () {
+        return null;
+    }
+
+    @Override
+    public List<Transaction> getClientPaymentTransactions () {
+        return null;
+    }
+
+    @Override
+    public List<Transaction> getServerPaymentTransactions () {
+        return null;
+    }
+
+    @Override
+    public List<TransactionSignature> getChannelSignatures () {
+        return null;
+    }
+
+    @Override
+    public List<TransactionSignature> getPaymentSignatures () {
         return null;
     }
 

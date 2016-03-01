@@ -26,9 +26,6 @@ import org.bitcoinj.script.Script;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 11/01/2016.
- */
 public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     DBHandler dbHandler;
@@ -59,10 +56,13 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashClient,
                 channel.keyClient, channel.keyServer, Constants.ESCAPE_REVOCATION_TIME));
-        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputPlain(channel.keyServer));
+        transaction.addOutput(Coin.valueOf(statusTemp.amountServer), ScriptTools.getChannelTxOutputPlain(channel.keyServer));
+        transaction = addPayments(transaction, statusTemp.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
 
-        return addPayments(transaction, statusTemp.getCloneReversed(), revocationHashClient,
-                channel.keyClient, channel.keyServer);
+        long amountEncumbered = statusTemp.amountClient - transaction.getMessageSize() * statusTemp.feePerByte;
+        transaction.getOutput(0).setValue(Coin.valueOf(amountEncumbered));
+
+        return transaction;
     }
 
     @Override
@@ -74,27 +74,99 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         transaction.addInput(channel.anchorTxHashClient, 0, Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashServer,
                 channel.keyServer, channel.keyClient, Constants.ESCAPE_REVOCATION_TIME));
-        transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputPlain(channel.keyClient));
+        transaction.addOutput(Coin.valueOf(statusTemp.amountClient), ScriptTools.getChannelTxOutputPlain(channel.keyClient));
+        transaction = addPayments(transaction, statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
 
-        return addPayments(transaction, statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
+        long amountEncumbered = statusTemp.amountServer - transaction.getMessageSize() * statusTemp.feePerByte;
+        transaction.getOutput(0).setValue(Coin.valueOf(amountEncumbered));
+
+        return transaction;
     }
 
-    private Transaction addPayments (Transaction transaction, ChannelStatus channelStatus, RevocationHash revocationHash,
-                                     ECKey keyServer, ECKey keyClient) {
+    @Override
+    public List<Transaction> getClientPaymentTransactions () {
+        Transaction t = getClientTransaction();
+        return getPaymentTransactions(t.getHash(), statusTemp.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
+    }
+
+    @Override
+    public List<Transaction> getServerPaymentTransactions () {
+        Transaction t = getServerTransaction();
+        return getPaymentTransactions(t.getHash(), statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
+    }
+
+    @Override
+    public List<TransactionSignature> getChannelSignatures () {
+        //The channelTransaction is finished, we just need to produce the signatures..
+        TransactionSignature signature1 = Tools.getSignature(getClientTransaction(), 0, channel.getScriptAnchorOutputClient().getProgram(), channel
+                .getKeyServer());
+        TransactionSignature signature2 = Tools.getSignature(getClientTransaction(), 1, channel.getScriptAnchorOutputServer().getProgram(), channel
+                .getKeyServer());
+
+        List<TransactionSignature> channelSignatures = new ArrayList<>();
+
+        channelSignatures.add(signature1);
+        channelSignatures.add(signature2);
+        return channelSignatures;
+    }
+
+    @Override
+    public List<TransactionSignature> getPaymentSignatures () {
+        List<Transaction> paymentTransactions = getClientPaymentTransactions();
+        List<TransactionSignature> signatureList = new ArrayList<>();
+
+        int index = 2;
+        for (Transaction t : paymentTransactions) {
+            TransactionSignature sig = Tools.getSignature(t, 0, getClientTransaction().getOutput(index).getScriptBytes(), channel.getKeyServer());
+            signatureList.add(sig);
+            index++;
+        }
+        return signatureList;
+    }
+
+    private Transaction addPayments (Transaction transaction, ChannelStatus channelStatus, RevocationHash revocationHash, ECKey keyServer, ECKey keyClient) {
         List<PaymentData> allPayments = new ArrayList<>(channelStatus.remainingPayments);
         allPayments.addAll(channelStatus.newPayments);
 
         for (PaymentData payment : allPayments) {
+            //TODO value here should include fees for the next transaction you need to spend it..pa
             Coin value = Coin.valueOf(payment.amount);
             Script script;
             if (payment.sending) {
-                script = ScriptTools.getChannelTxOutputSending(revocationHash, payment, keyServer, keyClient);
+                script = ScriptTools.getChannelTxOutputPaymentSending(keyServer, keyClient, revocationHash, payment.secret, payment.timestampRefund);
             } else {
-                script = ScriptTools.getChannelTxOutputReceiving(revocationHash, payment, keyServer, keyClient);
+                script = ScriptTools.getChannelTxOutputPaymentReceiving(keyServer, keyClient, revocationHash, payment.secret, payment.timestampRefund);
             }
             transaction.addOutput(value, script);
         }
         return transaction;
+    }
+
+    private List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, ChannelStatus channelStatus, RevocationHash
+            revocationHash, ECKey keyServer, ECKey keyClient) {
+
+        List<PaymentData> allPayments = new ArrayList<>(channelStatus.remainingPayments);
+        allPayments.addAll(channelStatus.newPayments);
+
+        List<Transaction> transactions = new ArrayList<>(allPayments.size());
+
+        int index = 2;
+
+        for (PaymentData payment : allPayments) {
+
+            Transaction transaction = new Transaction(Constants.getNetwork());
+            transaction.addInput(parentTransactionHash, index, Tools.getDummyScript());
+
+            Coin value = Coin.valueOf(payment.amount);
+            Script script = ScriptTools.getPaymentTxOutput(keyServer, keyClient, revocationHash, payment.csvDelay);
+            transaction.addOutput(value, script);
+
+            transactions.add(transaction);
+
+            index++;
+        }
+
+        return transactions;
     }
 
     @Override
@@ -184,7 +256,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     private void parseCMessage (LNPaymentCMessage message) {
-        //TODO Check the signatures we got from the other party
         signature1 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature1, true);
         signature2 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature2, true);
 
@@ -194,12 +265,33 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         Sha256Hash hash2 = channelTransaction.hashForSignature(1, channel.getScriptAnchorOutputClient(), Transaction.SigHash.ALL, false);
 
         if (!channel.keyClient.verify(hash1, signature1)) {
-            throw new LNPaymentException("Signature is not correct..");
+            throw new LNPaymentException("Signature1 is not correct..");
         }
 
         if (!channel.keyClient.verify(hash2, signature2)) {
-            throw new LNPaymentException("Signature is not correct..");
+            throw new LNPaymentException("Signature2 is not correct..");
         }
+
+        List<PaymentData> allPayments = new ArrayList<>(statusTemp.remainingPayments);
+        allPayments.addAll(statusTemp.newPayments);
+        List<Transaction> paymentTransactions = getServerPaymentTransactions();
+
+        if (allPayments.size() != message.newPaymentSignatures.size()) {
+            throw new LNPaymentException("Size of payment signature list is incorrect");
+        }
+
+        for (int i = 0; i < allPayments.size(); ++i) {
+            Transaction transaction = paymentTransactions.get(i);
+            PaymentData payment = allPayments.get(i);
+            TransactionSignature signature = TransactionSignature.decodeFromBitcoin(message.newPaymentSignatures.get(i), true);
+            Script scriptPubKey = channelTransaction.getOutput(i + 2).getScriptPubKey();
+
+            Sha256Hash hash = transaction.hashForSignature(0, scriptPubKey, Transaction.SigHash.ALL, false);
+            if (!channel.keyClient.verify(hash, signature)) {
+                throw new LNPaymentException("Payment Signature " + i + "  is not correct..");
+            }
+        }
+
     }
 
     private void parseDMessage (LNPaymentDMessage message) {

@@ -9,9 +9,10 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.lightning.RevocationHash;
-import org.bitcoinj.core.Transaction;
+import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -34,8 +35,11 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
     }
 
     @Override
-    public LNPaymentCMessage getMessageC (Channel channel, Transaction transaction) {
-        return new LNPaymentCMessage(getMockSig(), getMockSig());
+    public LNPaymentCMessage getMessageC (Channel channel, List<TransactionSignature> channelSignatures, List<TransactionSignature> paymentSignatures) {
+        List<byte[]> list = new ArrayList<>();
+        list.add(getMockSig());
+        list.add(getMockSig());
+        return new LNPaymentCMessage(getMockSig(), getMockSig(), list);
     }
 
     @Override
