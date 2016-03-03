@@ -14,6 +14,7 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.LNE
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.communication.processor.implementations.lnpayment.helper.*;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
@@ -242,7 +243,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         setStatus(SENT_D);
 
         if (!weStartedExchange) {
-            finishCurrentTask();
+            successCurrentTask();
         }
 
     }
@@ -307,7 +308,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             setStatus(RECEIVED_D);
         }
         if (weStartedExchange) {
-            finishCurrentTask();
+            successCurrentTask();
         } else {
             sendMessageD();
         }
@@ -332,21 +333,22 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         abortCountDown();
     }
 
-    private void finishCurrentTask () {
+    private void successCurrentTask () {
         currentQueueElement.clear();
-        updateDatabase();
+        updatePaymentsDatabase();
         evaluateUpdates();
+        channel = paymentLogic.updateChannel(channel);
         dbHandler.updateChannel(channel);
         eventHelper.onPaymentExchangeDone();
 
         finished = true;
         aborted = false;
         setStatus(IDLE);
-        System.out.println(node.name + " finishCurrentTask");
+        System.out.println(node.name + " successCurrentTask");
         abortCountDown();
     }
 
-    private void updateDatabase () {
+    private void updatePaymentsDatabase () {
         ChannelStatus status = paymentLogic.getTemporaryChannelStatus();
         for (PaymentData payment : status.newPayments) {
             if (weStartedExchange) {
@@ -427,16 +429,20 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (message instanceof LNPayment) {
-            if (message instanceof LNPaymentAMessage) {
-                readMessageA((LNPaymentAMessage) message);
-            } else if (message instanceof LNPaymentBMessage) {
-                readMessageB((LNPaymentBMessage) message);
-            } else if (message instanceof LNPaymentCMessage) {
-                readMessageC((LNPaymentCMessage) message);
-            } else if (message instanceof LNPaymentDMessage) {
-                readMessageD((LNPaymentDMessage) message);
+        try {
+            if (message instanceof LNPayment) {
+                if (message instanceof LNPaymentAMessage) {
+                    readMessageA((LNPaymentAMessage) message);
+                } else if (message instanceof LNPaymentBMessage) {
+                    readMessageB((LNPaymentBMessage) message);
+                } else if (message instanceof LNPaymentCMessage) {
+                    readMessageC((LNPaymentCMessage) message);
+                } else if (message instanceof LNPaymentDMessage) {
+                    readMessageD((LNPaymentDMessage) message);
+                }
             }
+        } catch(LNPaymentException e) {
+            sendMessage(messageFactory.getFailureMessage(e.getMessage()));
         }
     }
 

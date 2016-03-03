@@ -15,6 +15,7 @@ import network.thunder.core.communication.processor.interfaces.lnpayment.LNPayme
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.*;
+import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
@@ -61,6 +62,8 @@ public class LNPaymentRoutingTest {
     LNPaymentProcessorImpl processor21;
     LNPaymentProcessorImpl processor23;
     LNPaymentProcessorImpl processor32;
+
+    LNConfiguration configuration = new LNConfiguration();
 
 
 
@@ -288,6 +291,11 @@ public class LNPaymentRoutingTest {
         paymentData.sending = true;
         paymentData.amount = 10000;
         paymentData.secret = new PaymentSecret(Tools.getRandomByte(20));
+
+        paymentData.timestampOpen = Tools.currentTime();
+        paymentData.timestampRefund = Tools.currentTime() + 3
+                * configuration.MAX_REFUND_DELAY * configuration.MAX_OVERLAY_REFUND;
+        paymentData.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
 
         return paymentData;
     }

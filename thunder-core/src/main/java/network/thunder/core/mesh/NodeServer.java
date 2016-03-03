@@ -10,6 +10,8 @@ public class NodeServer {
 
     public String name;
 
+    public LNConfiguration configuration = new LNConfiguration();
+
     public NodeServer (NodeServer node) {
         init();
         this.portServer = node.portServer;

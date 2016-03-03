@@ -3,10 +3,7 @@ package network.thunder.core.communication.processor.implementations.lnpayment;
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
+import network.thunder.core.communication.objects.messages.impl.message.lnpayment.*;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
@@ -16,6 +13,7 @@ import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.lightning.RevocationHash;
+import network.thunder.core.mesh.LNConfiguration;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -32,11 +30,16 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     Channel channel;
     ChannelStatus statusTemp;
+
     TransactionSignature signature1;
     TransactionSignature signature2;
 
+    List<TransactionSignature> paymentSignatures = new ArrayList<>();
+
     RevocationHash revocationHashClient;
     RevocationHash revocationHashServer;
+
+    LNConfiguration configuration = new LNConfiguration();
 
     public LNPaymentLogicImpl (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -163,6 +166,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
             transactions.add(transaction);
 
+
             index++;
         }
 
@@ -197,6 +201,14 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         } else if (message instanceof LNPaymentDMessage) {
             readOutgoingDMessage((LNPaymentDMessage) message);
         }
+    }
+
+    @Override
+    public Channel updateChannel (Channel channel) {
+        channel.channelSignature1 = this.signature1;
+        channel.channelSignature2 = this.signature2;
+        channel.paymentSignatures = this.paymentSignatures;
+        return channel;
     }
 
     @Override
@@ -243,6 +255,31 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             throw new LNPaymentException("amountServer not correct..Is " + statusTemp.amountServer + " Should be: " + amountServer);
         }
 
+        //Sufficient to test new payments
+        for (PaymentData payment : statusTemp.newPayments) {
+            int diff = Math.abs(Tools.currentTime() - payment.timestampOpen);
+            if (diff > configuration.MAX_DIFF_TIMESTAMPS) {
+                throw new LNPaymentException("timestampOpen is too far off. Calibrate your system clock. Diff: " + diff);
+            }
+            if (payment.csvDelay < configuration.MIN_REVOCATION_DELAY || payment.csvDelay > configuration.MAX_REVOCATION_DELAY) {
+                throw new LNPaymentException("Payment-Revocation delay not within allowed boundaries. Is: " + payment.csvDelay);
+            }
+            diff = payment.timestampRefund - payment.timestampOpen;
+            if (diff > configuration.MAX_OVERLAY_REFUND * configuration.MAX_REFUND_DELAY * OnionObject.MAX_HOPS) {
+                throw new LNPaymentException("Refund timeout is too large. Is: " + diff);
+            }
+            //TODO Think about how we can solve guessing here, about us being the final receiver..
+            if (diff < configuration.MIN_OVERLAY_REFUND * configuration.MIN_REFUND_DELAY) {
+                throw new LNPaymentException("Refund timeout is too short. Is: " + diff);
+            }
+        }
+        if (statusTemp.csvDelay < configuration.MIN_REVOCATION_DELAY || statusTemp.csvDelay > configuration.MAX_REVOCATION_DELAY) {
+            throw new LNPaymentException("Change-Revocation delay not within allowed boundaries. Is: " + statusTemp.csvDelay);
+        }
+        if (statusTemp.feePerByte > configuration.MAX_FEE_PER_BYTE || statusTemp.feePerByte < configuration.MIN_FEE_PER_BYTE) {
+            throw new LNPaymentException("feePerByte not within allowed boundaries. Is: " + statusTemp.feePerByte);
+        }
+
         dbHandler.insertRevocationHash(message.newRevocation);
         revocationHashClient = message.newRevocation;
     }
@@ -256,6 +293,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     private void parseCMessage (LNPaymentCMessage message) {
+        paymentSignatures.clear();
         signature1 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature1, true);
         signature2 = TransactionSignature.decodeFromBitcoin(message.newCommitSignature2, true);
 
@@ -290,6 +328,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             if (!channel.keyClient.verify(hash, signature)) {
                 throw new LNPaymentException("Payment Signature " + i + "  is not correct..");
             }
+            paymentSignatures.add(signature);
         }
 
     }
@@ -303,6 +342,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         if (!dbHandler.checkOldRevocationHashes(message.oldRevocationHashes)) {
             throw new LNPaymentException("Could not verify all old revocation hashes..");
         }
+    }
+
+    private void saveSignatures() {
+
     }
 
     private void checkPaymentsInNewStatus (ChannelStatus oldStatus, ChannelStatus newStatus) {

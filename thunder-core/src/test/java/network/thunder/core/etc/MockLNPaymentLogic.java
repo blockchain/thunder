@@ -66,6 +66,11 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     }
 
     @Override
+    public Channel updateChannel (Channel channel) {
+        return channel;
+    }
+
+    @Override
     public ChannelStatus getTemporaryChannelStatus () {
         return status;
     }

@@ -4,7 +4,6 @@ import com.sun.javafx.geom.Edge;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNRoutingHelper;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -34,7 +33,6 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     public LNRoutingHelperImpl (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
     }
-
 
     int cost;
 
@@ -94,7 +92,6 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 
     private void execute () {
         for (ByteBuffer node : nodes) {
-            System.out.println("execute(): "+Tools.bytesToHex(node.array()));
 
             distancesTo.put(node, Double.MAX_VALUE);
             latencyTo.put(node, 0.0);
@@ -131,8 +128,6 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 //            double distanceC = distancesTo.get(node) + channel.getWeight(node, otherNode, (long) balance, weightPrivacy, weightLatency, weightCost);
             double distanceC = distancesTo.get(node) + channel.getWeight(otherNode.array(), weightPrivacy, weightLatency, weightCost);
 
-            System.out.println(distanceC + " - " + distanceT);
-
             if (distanceT > distanceC) {
                 distancesTo.put(otherNode, distanceC);
                 costTo.put(otherNode, costTo.get(node) + channel.getFee(otherNode.array()));
@@ -166,7 +161,6 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     }
 
     public boolean hasPathTo (ByteBuffer v) {
-        System.out.println("pathTo: "+Tools.bytesToHex(v.array()));
 
         return distancesTo.get(v) < Double.POSITIVE_INFINITY;
     }
@@ -186,9 +180,9 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
             return null;
         }
 
-        for(ByteBuffer b : nodes) {
-            System.out.println(Tools.bytesToHex(b.array()) + routeList.get(b));
-        }
+//        for(ByteBuffer b : nodes) {
+//            System.out.println(Tools.bytesToHex(b.array()) + routeList.get(b));
+//        }
 
         List<byte[]> path = new ArrayList<>();
         path.add(source.array());

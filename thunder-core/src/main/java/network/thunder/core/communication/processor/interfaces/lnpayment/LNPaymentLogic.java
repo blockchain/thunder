@@ -31,5 +31,7 @@ public interface LNPaymentLogic {
 
     void readMessageOutbound (LNPayment message);
 
+    Channel updateChannel(Channel channel);
+
     ChannelStatus getTemporaryChannelStatus ();
 }

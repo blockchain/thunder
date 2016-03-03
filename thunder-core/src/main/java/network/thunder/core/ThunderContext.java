@@ -10,6 +10,8 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.*;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Wallet;
 
@@ -28,6 +30,8 @@ public class ThunderContext {
     ContextFactory contextFactory;
 
     ConnectionManager connectionManager;
+
+    LNConfiguration configuration = new LNConfiguration();
 
     public ThunderContext (Wallet wallet, DBHandler dbHandler, NodeServer node) {
         this.wallet = wallet;
@@ -73,6 +77,10 @@ public class ThunderContext {
         paymentData.onionObject = object;
         paymentData.sending = true;
         paymentData.secret = secret;
+        paymentData.timestampOpen = Tools.currentTime();
+        paymentData.timestampRefund = Tools.currentTime() + route.size()
+                * configuration.MAX_REFUND_DELAY * configuration.MAX_OVERLAY_REFUND;
+        paymentData.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
 
         paymentHelper.makePayment(paymentData);
     }

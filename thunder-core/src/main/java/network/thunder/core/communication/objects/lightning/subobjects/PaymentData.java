@@ -28,8 +28,8 @@ public class PaymentData implements Cloneable {
 
     public PaymentSecret secret;
     public int timestampOpen;
-    public int timestampRefund;
-    public int csvDelay;
+    public int timestampRefund; //timestamp at which the other party will consider this payment refunded
+    public int csvDelay; //revocation delay for dual-tx
 
     public OnionObject onionObject;
 

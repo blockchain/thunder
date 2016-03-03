@@ -30,6 +30,7 @@ import org.bitcoinj.script.ScriptBuilder;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 /*
  * TODO: We probably want very flexible rules for channels in the future. Currently, these rules are set as Constants in Constants.class.
@@ -141,6 +142,13 @@ public class Channel {
     public boolean isReady;
 
     public ChannelStatus channelStatus;
+
+    /*
+     * Save the signatures we got for the most recent channelstatus
+     */
+    public TransactionSignature channelSignature1;
+    public TransactionSignature channelSignature2;
+    public List<TransactionSignature> paymentSignatures;
 
     public void setNodeId (byte[] nodeId) {
         this.nodeId = nodeId;

@@ -163,6 +163,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.channelStatus = new ChannelStatus();
         channel.channelStatus.amountClient = channel.amountClient;
         channel.channelStatus.amountServer = channel.amountServer;
+        channel.channelStatus.applyConfiguration(nodeServer.configuration);
         dbHandler.saveChannel(channel);
 
         PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
@@ -251,6 +252,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         channel.setServerChainDepth(1000);
         channel.setServerChainChild(0);
         channel.setIsReady(false);
+
+        channel.channelStatus.applyConfiguration(nodeServer.configuration);
 
         status = 1;
 

@@ -78,14 +78,15 @@ public class Tools {
     }
 
     public static byte[] scriptStringToByte (String script) {
-        String b = script;
         for (Map.Entry<String, String> a : scriptMap.entrySet()) {
             script = script.replaceAll(a.getKey(), a.getValue());
         }
-
-        System.out.println(b + " " + script);
         return Tools.hexStringToByteArray(script);
 
+    }
+
+    public static int getRandom(int min, int max) {
+        return new Random().nextInt(max+1-min)+min;
     }
 
     public static String InputStreamToString (InputStream in) {

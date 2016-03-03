@@ -11,6 +11,7 @@ import network.thunder.core.communication.processor.exceptions.LNPaymentExceptio
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
 
@@ -26,6 +27,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
     DBHandler dbHandler;
     LNEventHelper eventHelper;
     NodeServer nodeServer;
+    LNConfiguration configuration;
 
     List<LNPaymentProcessor> processorList = new ArrayList<>();
 
@@ -34,6 +36,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
         this.dbHandler = dbHandler;
         this.eventHelper = contextFactory.getEventHelper();
         this.nodeServer = contextFactory.getServerSettings();
+        configuration = nodeServer.configuration;
     }
 
     @Override
@@ -109,6 +112,13 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
             if (processor.connectsToNodeId(nextHop.getPubKey())) {
                 PaymentData copy = paymentData.cloneObject();
                 copy.sending = true;
+                copy.timestampOpen = Tools.currentTime();
+                copy.timestampRefund -= configuration.getTimeToReduceWhenRelayingPayment();
+                //Last check to see if there is sufficient refund time left..
+                if ((copy.timestampRefund - Tools.currentTime()) < (configuration.MIN_OVERLAY_REFUND * configuration.MIN_REFUND_DELAY)) {
+                    System.out.println("Not sufficient refund time left - refund!");
+                    return false;
+                }
                 processor.makePayment(copy);
                 return true;
             }

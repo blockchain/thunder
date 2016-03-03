@@ -15,6 +15,7 @@ import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.LNPaymentDBHandlerMock;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeClient;
 import org.bitcoinj.core.Context;
 import org.junit.Before;
@@ -43,6 +44,8 @@ public class LNPaymentLogicImplTest {
     LNPaymentDBHandlerMock dbHandler1 = new LNPaymentDBHandlerMock();
     LNPaymentDBHandlerMock dbHandler2 = new LNPaymentDBHandlerMock();
 
+    LNConfiguration configuration = new LNConfiguration();
+
     @Before
     public void prepare () {
         Context.getOrCreate(Constants.getNetwork());
@@ -61,6 +64,9 @@ public class LNPaymentLogicImplTest {
 
         channel1 = new Channel();
         channel2 = new Channel();
+
+        channel1.channelStatus.applyConfiguration(configuration);
+        channel2.channelStatus.applyConfiguration(configuration);
 
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
@@ -200,6 +206,9 @@ public class LNPaymentLogicImplTest {
     private PaymentData getMockPaymentData () {
         PaymentData paymentData = new PaymentData();
         paymentData.secret = new PaymentSecret(Tools.getRandomByte(20));
+        paymentData.timestampOpen = Tools.currentTime();
+        paymentData.timestampRefund = Tools.currentTime() + 10 * configuration.DEFAULT_REFUND_DELAY * configuration.DEFAULT_OVERLAY_REFUND;
+        paymentData.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
         return paymentData;
     }
 }

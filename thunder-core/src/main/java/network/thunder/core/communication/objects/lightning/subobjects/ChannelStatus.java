@@ -1,5 +1,7 @@
 package network.thunder.core.communication.objects.lightning.subobjects;
 
+import network.thunder.core.mesh.LNConfiguration;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +22,11 @@ public class ChannelStatus implements Cloneable {
     public int feePerByte;
     public long csvDelay;
 
+    public void applyConfiguration (LNConfiguration configuration) {
+        this.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
+        this.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
+    }
+
     @Override
     protected Object clone () throws CloneNotSupportedException {
         return super.clone();
@@ -32,6 +39,9 @@ public class ChannelStatus implements Cloneable {
             status.newPayments = clonePaymentList(this.newPayments);
             status.redeemedPayments = clonePaymentList(this.redeemedPayments);
             status.refundedPayments = clonePaymentList(this.refundedPayments);
+
+            status.csvDelay = this.csvDelay;
+            status.feePerByte = this.feePerByte;
 
             return status;
         } catch (CloneNotSupportedException e) {
@@ -50,6 +60,7 @@ public class ChannelStatus implements Cloneable {
         reverseSending(status.remainingPayments);
         reverseSending(status.redeemedPayments);
         reverseSending(status.refundedPayments);
+
         return status;
     }
 
@@ -82,17 +93,19 @@ public class ChannelStatus implements Cloneable {
                 ", remainingPayments=" + listToString(remainingPayments) +
                 ", refundedPayments=" + listToString(refundedPayments) +
                 ", redeemedPayments=" + listToString(redeemedPayments) +
+                ", csvDelay=" + csvDelay +
 
                 '}';
     }
 
     private static String listToString (List list) {
-        String s = list.size() + "";
+        String s = list.size() + " ";
         if (list.size() > 0) {
             for (Object o : list) {
                 s += o.toString() + " - ";
             }
         }
+        s = s.substring(0, s.length() - 2);
         return s;
     }
 }
