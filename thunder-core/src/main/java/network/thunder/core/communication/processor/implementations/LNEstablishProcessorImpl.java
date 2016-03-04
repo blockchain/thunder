@@ -13,6 +13,7 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
 import network.thunder.core.database.DBHandler;
@@ -20,8 +21,6 @@ import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
@@ -92,51 +91,33 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void processMessageA (Message message) {
+        checkStatus(0);
         LNEstablishAMessage m = (LNEstablishAMessage) message;
         prepareNewChannel();
-
-        channel.setInitialAmountServer(m.clientAmount);
-        channel.setAmountServer(m.clientAmount);
-        channel.setInitialAmountClient(m.serverAmount);
-        channel.setAmountClient(m.serverAmount);
-        channel.setKeyClient(ECKey.fromPublicOnly(m.pubKeyEscape));
-        channel.setKeyClientA(ECKey.fromPublicOnly(m.pubKeyFastEscape));
-        channel.setAnchorSecretHashClient(m.secretHashFastEscape);
-        channel.setAnchorRevocationHashClient(m.revocationHash);
-
+        m.saveToChannel(channel);
         sendEstablishMessageB();
     }
 
     private void processMessageB (Message message) {
+        checkStatus(2);
         LNEstablishBMessage m = (LNEstablishBMessage) message;
-        channel.setKeyClient(ECKey.fromPublicOnly(m.pubKeyEscape));
-        channel.setKeyClientA(ECKey.fromPublicOnly(m.pubKeyFastEscape));
-        channel.setAnchorSecretHashClient(m.secretHashFastEscape);
-        channel.setAnchorRevocationHashClient(m.revocationHash);
-        channel.setAmountClient(m.serverAmount);
-        channel.setInitialAmountClient(m.serverAmount);
-        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.anchorHash));
-
+        m.saveToChannel(channel);
         sendEstablishMessageC();
     }
 
     private void processMessageC (Message message) {
+        checkStatus(3);
         LNEstablishCMessage m = (LNEstablishCMessage) message;
-        channel.setAnchorTxHashClient(Sha256Hash.wrap(m.anchorHash));
-        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
-        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
+        m.saveToChannel(channel);
         channel.verifyEscapeSignatures();
-
         sendEstablishMessageD();
         onChannelEstablished();
     }
 
     private void processMessageD (Message message) {
+        checkStatus(4);
         LNEstablishDMessage m = (LNEstablishDMessage) message;
-        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureEscape, true));
-        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(m.signatureFastEscape, true));
         channel.verifyEscapeSignatures();
-
         onChannelEstablished();
     }
 
@@ -207,6 +188,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private long getAmountForNewChannel () {
         return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
+    }
+
+    private void checkStatus (int expected) {
+        if (status != expected) {
+            throw new LNEstablishException("Status not correct.. Is: " + status + " Expected: " + expected);
+        }
     }
 
 }

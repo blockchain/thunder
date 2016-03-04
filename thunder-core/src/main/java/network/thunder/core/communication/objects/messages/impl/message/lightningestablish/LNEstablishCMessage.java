@@ -2,6 +2,9 @@ package network.thunder.core.communication.objects.messages.impl.message.lightni
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.database.objects.Channel;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.Arrays;
 
@@ -17,6 +20,13 @@ public class LNEstablishCMessage implements LNEstablish {
         this.signatureEscape = signatureEscape;
         this.signatureFastEscape = signatureFastEscape;
         this.anchorHash = anchorHash;
+    }
+
+    @Override
+    public void saveToChannel (Channel channel) {
+        channel.setAnchorTxHashClient(Sha256Hash.wrap(this.anchorHash));
+        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(this.signatureEscape, true));
+        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(this.signatureFastEscape, true));
     }
 
     @Override

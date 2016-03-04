@@ -2,6 +2,8 @@ package network.thunder.core.communication.objects.messages.impl.message.lightni
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.database.objects.Channel;
+import org.bitcoinj.core.ECKey;
 
 /**
  * Created by matsjerratsch on 03/12/2015.
@@ -22,6 +24,18 @@ public class LNEstablishAMessage implements LNEstablish {
         this.revocationHash = revocationHash;
         this.clientAmount = clientAmount;
         this.serverAmount = serverAmount;
+    }
+
+    @Override
+    public void saveToChannel (Channel channel) {
+        channel.setInitialAmountServer(this.clientAmount);
+        channel.setAmountServer(this.clientAmount);
+        channel.setInitialAmountClient(this.serverAmount);
+        channel.setAmountClient(this.serverAmount);
+        channel.setKeyClient(ECKey.fromPublicOnly(this.pubKeyEscape));
+        channel.setKeyClientA(ECKey.fromPublicOnly(this.pubKeyFastEscape));
+        channel.setAnchorSecretHashClient(this.secretHashFastEscape);
+        channel.setAnchorRevocationHashClient(this.revocationHash);
     }
 
     @Override
