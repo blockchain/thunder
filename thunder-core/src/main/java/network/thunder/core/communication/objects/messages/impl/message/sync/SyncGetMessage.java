@@ -7,10 +7,8 @@ import network.thunder.core.communication.objects.messages.interfaces.message.sy
  */
 public class SyncGetMessage implements Sync {
     public int fragmentIndex;
-    public boolean getIPs;
 
-    public SyncGetMessage (boolean getIPs, int fragmentIndex) {
-        this.getIPs = getIPs;
+    public SyncGetMessage (int fragmentIndex) {
         this.fragmentIndex = fragmentIndex;
     }
 
@@ -23,7 +21,6 @@ public class SyncGetMessage implements Sync {
     public String toString () {
         return "SyncGetMessage{" +
                 "fragmentIndex=" + fragmentIndex +
-                ", getIPs=" + getIPs +
                 '}';
     }
 }

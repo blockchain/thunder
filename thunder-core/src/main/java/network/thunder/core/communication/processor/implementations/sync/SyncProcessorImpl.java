@@ -68,42 +68,24 @@ public class SyncProcessorImpl extends SyncProcessor {
     }
 
     private void startSyncing () {
-        if (node.justFetchNewIpAddresses) {
-            sendGetIPs();
-        } else {
-            sendGetNextSyncData();
-        }
+        sendGetNextSyncData();
     }
 
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
-        if (node.justFetchNewIpAddresses) {
-            syncStructure.newIPList(syncMessage.getDataList());
-            messageExecutor.closeConnection();
-        } else {
-            syncStructure.newFragment(lastIndex, syncMessage.getDataList());
-            eventHelper.onP2PDataReceived();
+        syncStructure.newFragment(lastIndex, syncMessage.getDataList());
+        eventHelper.onP2PDataReceived();
 
-            if (!syncStructure.fullySynchronized()) {
-                sendGetNextSyncData();
-            } else {
-                messageExecutor.sendNextLayerActive();
-            }
+        if (!syncStructure.fullySynchronized()) {
+            sendGetNextSyncData();
+        } else {
+            messageExecutor.sendNextLayerActive();
         }
     }
 
     private void processSyncGetMessage (Message message) {
         SyncGetMessage syncMessage = (SyncGetMessage) message;
-        if (syncMessage.getIPs) {
-            sendSyncIPs();
-        } else {
-            sendSyncData(syncMessage.fragmentIndex);
-        }
-    }
-
-    private void sendGetIPs () {
-        Message syncGetIPs = messageFactory.getSyncSendIPMessage();
-        messageExecutor.sendMessageUpwards(syncGetIPs);
+        sendSyncData(syncMessage.fragmentIndex);
     }
 
     private void sendGetNextSyncData () {
@@ -116,12 +98,6 @@ public class SyncProcessorImpl extends SyncProcessor {
         List<P2PDataObject> dataObjects = syncStructure.getFragment(fragmentIndex);
         Message syncSendMessage = messageFactory.getSyncSendMessage(dataObjects);
         messageExecutor.sendMessageUpwards(syncSendMessage);
-    }
-
-    private void sendSyncIPs () {
-        List<P2PDataObject> ipList = syncStructure.getIPAddresses();
-        Message syncIpMessage = messageFactory.getSyncSendMessage(ipList);
-        messageExecutor.sendMessageUpwards(syncIpMessage);
     }
 
     private boolean synchronizationComplete () {

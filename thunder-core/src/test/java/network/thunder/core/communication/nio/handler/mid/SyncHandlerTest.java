@@ -14,7 +14,8 @@ import org.junit.Test;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Created by matsjerratsch on 02/11/2015.
@@ -45,13 +46,11 @@ public class SyncHandlerTest {
 
     }
 
-    public void prepare (boolean shouldOnlyFetchIPs) {
+    public void prepare () {
         node1 = new NodeClient();
         node2 = new NodeClient();
 
         node1.isServer = false;
-        node1.justFetchNewIpAddresses = shouldOnlyFetchIPs;
-
         node2.isServer = true;
 
         contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
@@ -71,20 +70,9 @@ public class SyncHandlerTest {
     }
 
     @Test
-    public void testSyncingIPObjects () {
-        buildDatabase();
-        prepare(true);
-
-        channel2.writeInbound(channel1.readOutbound());
-        channel1.writeInbound(channel2.readOutbound());
-
-        assertEquals(100, dbHandler1.pubkeyIPObjectArrayList.size());
-    }
-
-    @Test
     public void testSyncingDataObjects () {
         buildDatabase();
-        prepare(false);
+        prepare();
 
         SynchronizationHelper syncStructure1 = contextFactory1.getSyncHelper();
 

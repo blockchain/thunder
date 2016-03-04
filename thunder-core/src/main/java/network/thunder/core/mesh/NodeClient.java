@@ -8,7 +8,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class NodeClient {
-    public boolean justFetchNewIpAddresses = false;
 
     public ECKey pubKeyClient;
 
