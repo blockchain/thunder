@@ -162,6 +162,8 @@ public class ConnectionManagerImpl implements ConnectionManager {
         }
     }
 
+    //TODO be able to tear down a channel completely again
+    //TODO reset sleepIntervall if
     @Override
     public void buildChannel (byte[] nodeKey) {
         new Thread(new Runnable() {
@@ -175,13 +177,14 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
                         try {
                             connectBlocking(ipObject, OPEN_CHANNEL);
-                            sleepIntervall = 1000;
                         } catch (Exception e) {
-                            sleepIntervall += 1000;
                             e.printStackTrace();
                         }
                     }
+                    sleepIntervall *= 1.2;
+                    System.out.println(sleepIntervall);
                     try {
+                        sleepIntervall = Math.min(sleepIntervall, 5 * 60 * 1000);
                         Thread.sleep(sleepIntervall);
                     } catch (InterruptedException e) {
                         e.printStackTrace();
