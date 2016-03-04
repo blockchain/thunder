@@ -1,6 +1,7 @@
 package network.thunder.core.mesh;
 
 import network.thunder.core.communication.processor.ChannelIntent;
+import network.thunder.core.communication.processor.ConnectionResult;
 import network.thunder.core.etc.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
@@ -19,6 +20,7 @@ public class NodeClient {
     public ECDHKeySet ecdhKeySet;
 
     public ChannelIntent intent = ChannelIntent.MISC;
+    public ConnectionResult result = ConnectionResult.UNKNOWN;
 
     public String host;
     public int port;

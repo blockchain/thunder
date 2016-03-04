@@ -11,6 +11,7 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.peerseed.PeerSeedMessage;
 import network.thunder.core.communication.processor.ChannelIntent;
+import network.thunder.core.communication.processor.ConnectionResult;
 import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -91,6 +92,7 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
             //TODO We might always want to close here, given that we only ever get here if intent = GET_IPS
             if (!node.isServer && node.intent == ChannelIntent.GET_IPS) {
+                node.result = ConnectionResult.SUCCESS;
                 messageExecutor.closeConnection();
             }
         }
