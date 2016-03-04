@@ -8,6 +8,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
+import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
@@ -165,7 +166,17 @@ public class LNEstablishHandlerTest {
         LNEstablishCMessage messageSwappedSign = new LNEstablishCMessage(message.signatureFastEscape, message.signatureEscape, message.anchorHash);
 
         channel2.writeInbound(messageSwappedSign);
-        System.out.println(channel2.readOutbound());
+        assertTrue(channel2.readOutbound() instanceof FailureMessage);
+    }
+
+    @Test
+    public void shouldNotMessageInWrongOrder () {
+        Message c1 = (Message) channel1.readOutbound();
+        channel2.writeInbound(c1);
+        Message c2 = (Message) channel2.readOutbound();
+        channel1.writeInbound(c2);
+        channel2.writeInbound(c1);
+        assertTrue(channel2.readOutbound() instanceof FailureMessage);
     }
 
 }

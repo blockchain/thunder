@@ -13,6 +13,7 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.communication.processor.ConnectionResult;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
@@ -55,7 +56,13 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        consumeMessage(message);
+        try {
+            consumeMessage(message);
+        } catch (Exception e) {
+            messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
+            node.result = ConnectionResult.ERROR;
+            throw e;
+        }
     }
 
     @Override

@@ -12,8 +12,6 @@ import java.util.List;
 public interface SyncMessageFactory extends MessageFactory {
     SyncGetMessage getSyncGetMessage (int fragment);
 
-    SyncGetMessage getSyncSendIPMessage ();
-
     SyncSendMessage getSyncSendMessage (List<P2PDataObject> dataObjects);
 
 }

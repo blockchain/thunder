@@ -20,6 +20,7 @@ package network.thunder.core.database.objects;
 
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
+import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
@@ -172,7 +173,7 @@ public class Channel {
                 return;
             }
         }
-        throw new RuntimeException("Signature does not match..");
+        throw new LNEstablishException("Signature does not match..");
 
     }
 

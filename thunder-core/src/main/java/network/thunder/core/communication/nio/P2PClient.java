@@ -65,27 +65,25 @@ public final class P2PClient {
     }
 
     public void connectBlocking (NodeClient node) {
-        try {
-            connect(node);
-        } catch (Exception e) {
-            //Not able to connect?
-            e.printStackTrace();
-        }
-
+        connect(node);
     }
 
-    private void connect (NodeClient node) throws InterruptedException {
-        System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
+    private void connect (NodeClient node) {
+        try {
+            System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
 
-        EventLoopGroup group = new NioEventLoopGroup();
-        Bootstrap b = new Bootstrap();
-        b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
+            EventLoopGroup group = new NioEventLoopGroup();
+            Bootstrap b = new Bootstrap();
+            b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
 
-        // Start the connection attempt.
-        Channel ch = b.connect(node.host, node.port).sync().channel();
-        node.isConnected = ch.isOpen();
-        ch.closeFuture().sync();
+            // Start the connection attempt.
+            Channel ch = b.connect(node.host, node.port).sync().channel();
+            node.isConnected = ch.isOpen();
+            ch.closeFuture().sync();
 
-        System.out.println("Connection to " + node.host + " closed..");
+            System.out.println("Connection to " + node.host + " closed..");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

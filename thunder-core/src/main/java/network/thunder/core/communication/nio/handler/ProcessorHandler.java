@@ -8,6 +8,7 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.MessageExecutorImpl;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 import network.thunder.core.communication.processor.Processor;
+import network.thunder.core.communication.processor.exceptions.LNException;
 
 /**
  * Created by matsjerratsch on 07/12/2015.
@@ -49,6 +50,10 @@ public class ProcessorHandler extends ChannelDuplexHandler {
                 } else {
                     messageExecutor.sendMessageDownwards(message);
                 }
+            }
+        } catch (LNException e1) {
+            if (e1.shouldDisconnect()) {
+                ctx.close();
             }
         } catch (Exception e) {
             e.printStackTrace();

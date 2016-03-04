@@ -9,13 +9,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class NodeClient {
+    public boolean isServer;
 
     public ECKey pubKeyClient;
-
     public ECKey ephemeralKeyServer;
     public ECKey ephemeralKeyClient;
-
-    public boolean isServer;
 
     public ECDHKeySet ecdhKeySet;
 
