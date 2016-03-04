@@ -23,6 +23,7 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.Wal
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.ScriptTools;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.mesh.LNConfiguration;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -159,18 +160,20 @@ public class Channel {
      * Various convenience methods for obtaining the different transactions
      */
 
-    public boolean verifyEscapeSignatures () {
-        if (getFastEscapeTxSig() == null || getEscapeTxSig() == null) {
-            return false;
+    public void verifyEscapeSignatures () {
+        if (!(getFastEscapeTxSig() == null || getEscapeTxSig() == null)) {
+            Transaction escape = getEscapeTransactionServer();
+            Transaction fastEscape = getFastEscapeTransactionServer();
+
+            Sha256Hash hashEscape = escape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
+            Sha256Hash hashFastEscape = fastEscape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
+
+            if (keyClientA.verify(hashEscape, getEscapeTxSig()) && keyClientA.verify(hashFastEscape, getFastEscapeTxSig())) {
+                return;
+            }
         }
+        throw new RuntimeException("Signature does not match..");
 
-        Transaction escape = getEscapeTransactionServer();
-        Transaction fastEscape = getFastEscapeTransactionServer();
-
-        Sha256Hash hashEscape = escape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
-        Sha256Hash hashFastEscape = fastEscape.hashForSignature(0, getScriptAnchorOutputServer(), Transaction.SigHash.ALL, false);
-
-        return (keyClientA.verify(hashEscape, getEscapeTxSig()) && keyClientA.verify(hashFastEscape, getFastEscapeTxSig()));
     }
 
     public Transaction getAnchorTransactionServer (WalletHelper walletHelper) {
@@ -510,6 +513,29 @@ public class Channel {
         channelStatus.csvDelay = 24 * 60 * 60;
     }
 
+    public Channel (byte[] nodeId, ECKey keyServer, long amount) {
+        this();
+        this.nodeId = nodeId;
+        setInitialAmountServer(amount);
+        setAmountServer(amount);
+        setInitialAmountClient(amount);
+        setAmountClient(amount);
+
+        //TODO: Change base key selection method (maybe completely random?)
+        setKeyServer(ECKey.fromPrivate(Tools.hashSha(keyServer.getPrivKeyBytes(), 2)));
+        setKeyServerA(ECKey.fromPrivate(Tools.hashSha(keyServer.getPrivKeyBytes(), 4)));
+        setMasterPrivateKeyServer(Tools.hashSha(keyServer.getPrivKeyBytes(), 6));
+        byte[] secretFE = Tools.hashSecret(Tools.hashSha(keyServer.getPrivKeyBytes(), 8));
+        byte[] revocation = Tools.hashSecret(Tools.hashSha(keyServer.getPrivKeyBytes(), 10));
+        setAnchorSecretServer(secretFE);
+        setAnchorSecretHashServer(Tools.hashSecret(secretFE));
+        setAnchorRevocationServer(revocation);
+        setAnchorRevocationHashServer(Tools.hashSecret(revocation));
+        setServerChainDepth(1000);
+        setServerChainChild(0);
+        setIsReady(false);
+    }
+
     public void retrieveDataFromOtherChannel (Channel channel) {
         keyClient = channel.keyServer;
         keyClientA = channel.keyServerA;
@@ -522,6 +548,13 @@ public class Channel {
         anchorTxHashClient = channel.anchorTxHashServer;
 
         anchorTransactionClient = channel.anchorTransactionServer;
+    }
+
+    public void initiateChannelStatus (LNConfiguration configuration) {
+        channelStatus = new ChannelStatus();
+        channelStatus.amountClient = amountClient;
+        channelStatus.amountServer = amountServer;
+        channelStatus.applyConfiguration(configuration);
     }
 
     @Override
