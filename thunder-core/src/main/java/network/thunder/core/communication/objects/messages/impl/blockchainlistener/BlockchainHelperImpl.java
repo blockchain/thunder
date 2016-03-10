@@ -85,6 +85,11 @@ public class BlockchainHelperImpl implements BlockchainHelper {
             if (!initialized) {
                 try {
                     blockStore = new SPVBlockStore(Constants.getNetwork(), new File("blockheaders"));
+                } catch (Exception e) {
+                    blockStore = new MemoryBlockStore(Constants.getNetwork());
+                }
+
+                try {
                     blockChain = new BlockChain(Constants.getNetwork(), blockStore);
                     peerGroup = new PeerGroup(Constants.getNetwork(), blockChain);
                     peerGroup.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
