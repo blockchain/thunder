@@ -65,4 +65,6 @@ public interface ContextFactory {
     LNPaymentMessageFactory getLNPaymentMessageFactory ();
 
     LNRoutingHelper getLNRoutingHelper ();
+
+    BlockchainHelper getBlockchainHelper ();
 }
