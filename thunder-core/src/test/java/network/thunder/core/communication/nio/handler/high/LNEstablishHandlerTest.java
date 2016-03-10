@@ -3,18 +3,20 @@ package network.thunder.core.communication.nio.handler.high;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
+import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
+import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
-import network.thunder.core.etc.InMemoryDBHandler;
-import network.thunder.core.etc.MockContextFactory;
+import network.thunder.core.etc.*;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Sha256Hash;
@@ -54,13 +56,16 @@ public class LNEstablishHandlerTest {
     DBHandler dbHandler1 = new InMemoryDBHandler();
     DBHandler dbHandler2 = new InMemoryDBHandler();
 
+    MockBlockchainHelper blockchainHelper = new MockBlockchainHelper();
+    MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();
+
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         node1.isServer = false;
         node2.isServer = true;
 
-        contextFactory1 = new MockContextFactory(nodeServer1, dbHandler1);
-        contextFactory2 = new MockContextFactory(nodeServer2, dbHandler2);
+        contextFactory1 = new EstablishMockContextFactory(nodeServer1, dbHandler1);
+        contextFactory2 = new EstablishMockContextFactory(nodeServer2, dbHandler2);
 
         processor1 = new LNEstablishProcessorImpl(contextFactory1, dbHandler1, node1);
         processor2 = new LNEstablishProcessorImpl(contextFactory2, dbHandler2, node2);
@@ -160,6 +165,29 @@ public class LNEstablishHandlerTest {
         after();
     }
 
+    @Test
+    public void fullExchangeShouldBroadcast () {
+        LNEstablishAMessage aMessage = (LNEstablishAMessage) channel1.readOutbound();
+        channel2.writeInbound(aMessage);
+
+        LNEstablishBMessage bMessage = (LNEstablishBMessage) channel2.readOutbound();
+        channel1.writeInbound(bMessage);
+
+        LNEstablishCMessage cMessage = (LNEstablishCMessage) channel1.readOutbound();
+        channel2.writeInbound(cMessage);
+
+        channel1.writeInbound(channel2.readOutbound());
+
+        //TODO somehow test inclusion in block as well...
+        assertTrue(blockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(bMessage.anchorHash)));
+        assertTrue(blockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(cMessage.anchorHash)));
+
+        //TODO check all properties of the broadcasted objects..
+        assertTrue(broadcastHelper.broadcastedObjects.size() == 2);
+
+        after();
+    }
+
     @Test(expected = LNEstablishException.class)
     public void shouldNotAcceptSignature () {
         channel2.writeInbound(channel1.readOutbound());
@@ -182,6 +210,23 @@ public class LNEstablishHandlerTest {
         channel2.writeInbound(c1);
         assertTrue(channel2.readOutbound() instanceof FailureMessage);
         after();
+    }
+
+    class EstablishMockContextFactory extends ContextFactoryImpl {
+
+        public EstablishMockContextFactory (NodeServer node, DBHandler dbHandler) {
+            super(node, dbHandler, new MockWallet(Constants.getNetwork()), new MockLNEventHelper());
+        }
+
+        @Override
+        public BlockchainHelper getBlockchainHelper () {
+            return blockchainHelper;
+        }
+
+        @Override
+        public BroadcastHelper getBroadcastHelper () {
+            return broadcastHelper;
+        }
     }
 
 }
