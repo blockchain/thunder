@@ -8,9 +8,11 @@ import network.thunder.core.etc.Constants;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
-import org.bitcoinj.store.MemoryBlockStore;
+import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.SPVBlockStore;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -38,7 +40,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
     BlockExplorer blockExplorer = new BlockExplorer();
 
-    Boolean initialized;
+    Boolean initialized = new Boolean(false);
 
     @Override
     public boolean broadcastTransaction (Transaction tx) {
@@ -82,7 +84,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
         synchronized (initialized) {
             if (!initialized) {
                 try {
-                    blockStore = new MemoryBlockStore(Constants.getNetwork());
+                    blockStore = new SPVBlockStore(Constants.getNetwork(), new File("blockheaders"));
                     blockChain = new BlockChain(Constants.getNetwork(), blockStore);
                     peerGroup = new PeerGroup(Constants.getNetwork(), blockChain);
                     peerGroup.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
@@ -90,6 +92,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     peerGroup.setBloomFilteringEnabled(false);
                     peerGroup.setFastCatchupTimeSecs(System.currentTimeMillis());
                     peerGroup.start();
+                    registerShutdownHook();
 
                     System.out.println("Download BlockHeaders..");
                     final DownloadProgressTracker listener = new DownloadProgressTracker();
@@ -104,6 +107,21 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                 initialized = true;
             }
         }
+    }
+
+    private void registerShutdownHook () {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                shutdown();
+            } catch (BlockStoreException e) {
+                e.printStackTrace();
+            }
+        }));
+    }
+
+    public void shutdown () throws BlockStoreException {
+        peerGroup.stop();
+        blockStore.close();
     }
 
     class EventListener implements PeerEventListener {
