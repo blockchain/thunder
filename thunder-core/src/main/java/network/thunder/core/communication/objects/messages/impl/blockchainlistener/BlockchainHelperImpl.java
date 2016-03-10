@@ -66,6 +66,10 @@ public class BlockchainHelperImpl implements BlockchainHelper {
     public Transaction getTransaction (Sha256Hash hash) {
         try {
             Transaction transaction = blockExplorer.getBitcoinJTransaction(hash.toString());
+            double height = blockExplorer.getTransaction(hash.toString()).getBlockHeight();
+            if (height > 0) {
+                transaction.getConfidence().setDepthInBlocks((int) (blockChain.getChainHead().getHeight() - height));
+            }
             //TODO maybe get the number of confirmations in here somehow
             return transaction;
         } catch (Exception e) {
