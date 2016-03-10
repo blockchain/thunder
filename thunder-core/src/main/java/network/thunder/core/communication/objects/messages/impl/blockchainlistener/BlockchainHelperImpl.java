@@ -9,7 +9,9 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
+import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
+import org.bitcoinj.utils.Threading;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -95,17 +97,19 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     peerGroup.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
                     peerGroup.setDownloadTxDependencies(false);
                     peerGroup.setBloomFilteringEnabled(false);
+
                     peerGroup.setFastCatchupTimeSecs(System.currentTimeMillis());
                     peerGroup.start();
+                    peerGroup.addEventListener(new EventListener(), Threading.SAME_THREAD);
+
                     registerShutdownHook();
 
                     System.out.println("Download BlockHeaders..");
                     final DownloadProgressTracker listener = new DownloadProgressTracker();
                     peerGroup.startBlockChainDownload(listener);
                     listener.await();
-
-                    peerGroup.addEventListener(new EventListener());
-
+                    System.out.println("Download BlockHeaders done..");
+                    
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -148,7 +152,6 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
         @Override
         public void onPeerConnected (Peer peer, int peerCount) {
-
         }
 
         @Override
@@ -159,35 +162,35 @@ public class BlockchainHelperImpl implements BlockchainHelper {
         @Override
         public Message onPreMessageReceived (Peer peer, Message m) {
             if (m instanceof Block || m instanceof Transaction) {
-                processedMessages.add(m.getHash());
-                poolExecutor.submit((Runnable) () -> {
-                    if (m instanceof Block) {
-                        Iterator<OnBlockCommand> iterator = blockListener.iterator();
-                        while (iterator.hasNext()) {
-                            OnBlockCommand onBlockCommand = iterator.next();
-                            if (onBlockCommand.execute((Block) m)) {
-                                iterator.remove();
+                if (processedMessages.add(m.getHash())) {
+                    poolExecutor.submit((Runnable) () -> {
+                        if (m instanceof Block) {
+                            Iterator<OnBlockCommand> iterator = blockListener.iterator();
+                            while (iterator.hasNext()) {
+                                OnBlockCommand onBlockCommand = iterator.next();
+                                if (onBlockCommand.execute((Block) m)) {
+                                    iterator.remove();
+                                }
+                            }
+                        } else {
+                            Transaction transaction = (Transaction) m;
+                            Iterator<OnTxCommand> iterator = txListener.iterator();
+                            while (iterator.hasNext()) {
+                                OnTxCommand onTxCommand = iterator.next();
+                                if (onTxCommand.compare(transaction)) {
+                                    onTxCommand.execute(transaction);
+                                    iterator.remove();
+                                }
                             }
                         }
-                    } else {
-                        Transaction transaction = (Transaction) m;
-                        Iterator<OnTxCommand> iterator = txListener.iterator();
-                        while (iterator.hasNext()) {
-                            OnTxCommand onTxCommand = iterator.next();
-                            if (onTxCommand.compare(transaction)) {
-                                onTxCommand.execute(transaction);
-                                iterator.remove();
-                            }
-                        }
-                    }
-                });
+                    });
+                }
             }
             return m;
         }
 
         @Override
         public void onTransaction (Peer peer, Transaction t) {
-
         }
 
         @Nullable
