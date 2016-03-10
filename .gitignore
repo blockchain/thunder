@@ -49,3 +49,7 @@ out/
 config.json
 
 *.sh
+
+blockheaders
+
+thunder-core/blockheaders
