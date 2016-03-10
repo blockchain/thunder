@@ -19,7 +19,6 @@ import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -120,7 +119,6 @@ public class GossipHandlerTest {
         clearOutput();
     }
 
-    @After
     public void after () {
         channel12.checkException();
         channel21.checkException();
@@ -156,7 +154,7 @@ public class GossipHandlerTest {
             assertTrue(Arrays.equals(getMessage.inventoryList.get(i), invList.get(i)));
         }
 
-        channel12.checkException();
+        after();
     }
 
     @Test
@@ -182,6 +180,7 @@ public class GossipHandlerTest {
         assertNotNull(invMessage);
         assertTrue(invMessage.inventoryList.size() == dataList.size());
 
+        after();
     }
 
     @Test
@@ -205,6 +204,7 @@ public class GossipHandlerTest {
         assertTrue(dbHandler2.totalList.containsAll(dataList));
         assertTrue(dbHandler3.totalList.containsAll(dataList));
         assertTrue(dbHandler4.totalList.containsAll(dataList));
+        after();
     }
 
     private void clearOutput () {

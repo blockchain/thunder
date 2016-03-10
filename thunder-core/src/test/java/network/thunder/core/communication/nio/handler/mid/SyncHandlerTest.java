@@ -9,7 +9,6 @@ import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.SyncDBHandlerMock;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.junit.After;
 import org.junit.Test;
 
 import java.util.List;
@@ -63,7 +62,6 @@ public class SyncHandlerTest {
         assertNull(m);
     }
 
-    @After
     public void after () {
         channel1.checkException();
         channel2.checkException();
@@ -92,7 +90,7 @@ public class SyncHandlerTest {
         assertTrue(checkListsEqual(dbHandler1.pubkeyChannelObjectArrayList, dbHandler2.pubkeyChannelObjectArrayList));
         assertTrue(checkListsEqual(dbHandler1.pubkeyIPObjectArrayList, dbHandler2.pubkeyIPObjectArrayList));
         assertTrue(checkListsEqual(dbHandler1.totalList, dbHandler2.totalList));
-
+        after();
     }
 
     public boolean checkListsEqual (List list1, List list2) {

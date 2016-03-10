@@ -59,6 +59,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         try {
             consumeMessage(message);
         } catch (Exception e) {
+            e.printStackTrace();
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
             node.result = ConnectionResult.ERROR;
             throw e;
@@ -124,6 +125,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     private void processMessageD (Message message) {
         checkStatus(4);
         LNEstablishDMessage m = (LNEstablishDMessage) message;
+        m.saveToChannel(channel);
         channel.verifyEscapeSignatures();
         onChannelEstablished();
     }

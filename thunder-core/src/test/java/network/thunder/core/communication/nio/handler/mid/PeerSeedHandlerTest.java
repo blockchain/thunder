@@ -11,7 +11,6 @@ import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.SeedDBHandlerMock;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -57,7 +56,6 @@ public class PeerSeedHandlerTest {
         assertNull(m);
     }
 
-    @After
     public void after () {
         channel1.checkException();
         channel2.checkException();
@@ -71,6 +69,7 @@ public class PeerSeedHandlerTest {
 
         assertEquals(PeerSeedProcessor.PEERS_TO_SEND, dbHandler1.pubkeyIPObjectArrayList.size());
         assertTrue(dbHandler2.pubkeyIPObjectArrayList.containsAll(dbHandler1.pubkeyIPObjectArrayList));
+        after();
     }
 
     @Test

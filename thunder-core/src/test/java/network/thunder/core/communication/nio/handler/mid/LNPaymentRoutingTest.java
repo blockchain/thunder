@@ -19,7 +19,6 @@ import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,8 +64,6 @@ public class LNPaymentRoutingTest {
 
     LNConfiguration configuration = new LNConfiguration();
 
-
-
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         node12.name = "LNPayment12";
@@ -94,7 +91,6 @@ public class LNPaymentRoutingTest {
 
     }
 
-    @After
     public void after () {
         channel12.checkException();
         channel21.checkException();
@@ -140,6 +136,7 @@ public class LNPaymentRoutingTest {
 
         assertEquals(status32.amountClient, LNPaymentDBHandlerMock.INITIAL_AMOUNT_CHANNEL - paymentData.amount);
         assertEquals(status32.amountServer, LNPaymentDBHandlerMock.INITIAL_AMOUNT_CHANNEL + paymentData.amount);
+        after();
     }
 
     @Test
@@ -160,6 +157,7 @@ public class LNPaymentRoutingTest {
 
         Thread.sleep(3000);
         testUnchangedChannelAmounts();
+        after();
     }
 
     @Test
@@ -183,6 +181,7 @@ public class LNPaymentRoutingTest {
 
         Thread.sleep(3000);
         testUnchangedChannelAmounts();
+        after();
     }
 
     @Test
@@ -204,6 +203,7 @@ public class LNPaymentRoutingTest {
 
         Thread.sleep(3000);
         testUnchangedChannelAmounts();
+        after();
     }
 
     @Test
@@ -237,6 +237,7 @@ public class LNPaymentRoutingTest {
         Thread.sleep(3000);
 
         testUnchangedChannelAmounts(doubleAmount, doubleAmount, normalAmount, normalAmount);
+        after();
     }
 
     public void testUnchangedChannelAmounts () {

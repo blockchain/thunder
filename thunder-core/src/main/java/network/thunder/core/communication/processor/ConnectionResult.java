@@ -14,6 +14,14 @@ public enum ConnectionResult {
         this.state = i;
     }
 
+    public boolean shouldTryToReconnect () {
+        if (state == 4 || state == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public String toString () {
         return "ConnectionResult{" +

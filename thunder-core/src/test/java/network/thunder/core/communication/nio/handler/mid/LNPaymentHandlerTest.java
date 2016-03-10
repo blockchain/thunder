@@ -10,6 +10,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lnpaymen
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
+import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.communication.processor.implementations.lnpayment.LNPaymentProcessorImpl;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
@@ -18,7 +19,6 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -73,7 +73,6 @@ public class LNPaymentHandlerTest {
 
     }
 
-    @After
     public void after () {
         channel12.checkException();
         channel21.checkException();
@@ -93,6 +92,8 @@ public class LNPaymentHandlerTest {
 
         assertNull(channel12.readOutbound());
         assertNull(channel21.readOutbound());
+
+        after();
     }
 
     @Test
@@ -113,6 +114,8 @@ public class LNPaymentHandlerTest {
 
         exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+
+        after();
     }
 
     @Test
@@ -141,6 +144,8 @@ public class LNPaymentHandlerTest {
         exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
         exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
         exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+
+        after();
     }
 
     @Test
@@ -182,6 +187,8 @@ public class LNPaymentHandlerTest {
         exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
         exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
         exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+
+        after();
     }
 
     public void exchangePayment (EmbeddedChannel from, EmbeddedChannel to) {
@@ -254,6 +261,11 @@ public class LNPaymentHandlerTest {
         @Override
         public LNPaymentMessageFactory getLNPaymentMessageFactory () {
             return new LNPaymentMessageFactoryMock();
+        }
+
+        @Override
+        public LNPaymentHelper getPaymentHelper () {
+            return new MockLNPaymentHelper();
         }
     }
 

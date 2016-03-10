@@ -9,6 +9,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
+import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
@@ -19,7 +20,6 @@ import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,7 +72,6 @@ public class LNEstablishHandlerTest {
         assertNull(m);
     }
 
-    @After
     public void after () {
         channel1.checkException();
         channel2.checkException();
@@ -92,6 +91,7 @@ public class LNEstablishHandlerTest {
         assertEquals(message.clientAmount, channel.getAmountClient());
         assertEquals(message.serverAmount, channel.getAmountServer());
 
+        after();
     }
 
     @Test
@@ -109,7 +109,7 @@ public class LNEstablishHandlerTest {
         assertTrue(Arrays.equals(message.secretHashFastEscape, channel.getAnchorSecretHashServer()));
         assertTrue(Arrays.equals(message.anchorHash, channel.getAnchorTransactionServer(contextFactory1.getWalletHelper()).getHash().getBytes()));
         assertEquals(message.serverAmount, channel.getAmountServer());
-
+        after();
     }
 
     @Test
@@ -133,7 +133,7 @@ public class LNEstablishHandlerTest {
 
         assertTrue(channel2.getKeyClientA().verify(hashEscape, TransactionSignature.decodeFromBitcoin(message.signatureEscape, true)));
         assertTrue(channel2.getKeyClientA().verify(hashFastEscape, TransactionSignature.decodeFromBitcoin(message.signatureFastEscape, true)));
-
+        after();
     }
 
     @Test
@@ -155,9 +155,12 @@ public class LNEstablishHandlerTest {
 
         assertTrue(channel.getKeyClientA().verify(hashEscape, TransactionSignature.decodeFromBitcoin(message.signatureEscape, true)));
         assertTrue(channel.getKeyClientA().verify(hashFastEscape, TransactionSignature.decodeFromBitcoin(message.signatureFastEscape, true)));
+
+        channel1.writeInbound(message);
+        after();
     }
 
-    @Test
+    @Test(expected = LNEstablishException.class)
     public void shouldNotAcceptSignature () {
         channel2.writeInbound(channel1.readOutbound());
         channel1.writeInbound(channel2.readOutbound());
@@ -167,16 +170,18 @@ public class LNEstablishHandlerTest {
 
         channel2.writeInbound(messageSwappedSign);
         assertTrue(channel2.readOutbound() instanceof FailureMessage);
+        after();
     }
 
-    @Test
-    public void shouldNotMessageInWrongOrder () {
+    @Test(expected = LNEstablishException.class)
+    public void shouldNotAcceptMessageInWrongOrder () {
         Message c1 = (Message) channel1.readOutbound();
         channel2.writeInbound(c1);
         Message c2 = (Message) channel2.readOutbound();
         channel1.writeInbound(c2);
         channel2.writeInbound(c1);
         assertTrue(channel2.readOutbound() instanceof FailureMessage);
+        after();
     }
 
 }

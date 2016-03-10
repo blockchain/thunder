@@ -13,7 +13,6 @@ import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.etc.crypto.ECDH;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -69,7 +68,6 @@ public class AuthenticationHandlerTest {
 
     }
 
-    @After
     public void after () {
         channel1.checkException();
         channel2.checkException();
@@ -92,6 +90,8 @@ public class AuthenticationHandlerTest {
         Message failureMessage = (Message) channel2.readOutbound();
         assertTrue(failureMessage instanceof FailureMessage);
         assertEquals(((FailureMessage) failureMessage).getFailure(), "Signature does not match..");
+
+        after();
     }
 
     @Test
@@ -117,6 +117,8 @@ public class AuthenticationHandlerTest {
 
         assertEquals(channel1.readOutbound(), randomDataMessage1);
         assertEquals(channel2.readOutbound(), randomDataMessage2);
+
+        after();
     }
 
     @Test
@@ -141,6 +143,8 @@ public class AuthenticationHandlerTest {
 
         assertTrue(channel1.readOutbound() instanceof FailureMessage);
         assertTrue(channel2.readOutbound() instanceof FailureMessage);
+
+        after();
     }
 
 }
