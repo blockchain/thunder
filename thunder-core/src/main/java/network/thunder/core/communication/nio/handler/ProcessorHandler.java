@@ -31,6 +31,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             processor.onLayerActive(messageExecutor);
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
@@ -55,8 +56,10 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             if (e1.shouldDisconnect()) {
                 ctx.close();
             }
+            throw e1;
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
@@ -79,6 +82,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
         } catch (Exception e) {
             e.printStackTrace();
+            throw e;
         }
     }
 
