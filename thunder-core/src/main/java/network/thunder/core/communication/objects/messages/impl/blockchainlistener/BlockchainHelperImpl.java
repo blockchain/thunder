@@ -44,6 +44,10 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
     Boolean initialized = new Boolean(false);
 
+    public BlockchainHelperImpl () {
+        init();
+    }
+
     @Override
     public boolean broadcastTransaction (Transaction tx) {
         try {
@@ -81,7 +85,6 @@ public class BlockchainHelperImpl implements BlockchainHelper {
         }
     }
 
-    @Override
     public void init () {
         synchronized (initialized) {
             if (!initialized) {
@@ -109,7 +112,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     peerGroup.startBlockChainDownload(listener);
                     listener.await();
                     System.out.println("Download BlockHeaders done..");
-                    
+
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }

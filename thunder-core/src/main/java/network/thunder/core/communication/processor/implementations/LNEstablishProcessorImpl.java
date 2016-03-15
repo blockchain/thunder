@@ -8,15 +8,14 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishCMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishDMessage;
+import network.thunder.core.communication.objects.messages.impl.results.ChannelCreatedResult;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.LNEstablishMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.ChannelManager;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.OnBlockCommand;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.OnTxCommand;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
-import network.thunder.core.communication.processor.ConnectionResult;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
@@ -25,7 +24,6 @@ import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.NodeClient;
 import network.thunder.core.mesh.NodeServer;
-import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
@@ -34,7 +32,6 @@ import org.bitcoinj.crypto.TransactionSignature;
  */
 public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
-    public static final int MIN_CONFIRMATIONS = 0;
 
     WalletHelper walletHelper;
     LNEstablishMessageFactory messageFactory;
@@ -44,6 +41,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     NodeClient node;
     NodeServer nodeServer;
     BlockchainHelper blockchainHelper;
+    ChannelManager channelManager;
 
     MessageExecutor messageExecutor;
 
@@ -59,6 +57,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         this.node = node;
         this.nodeServer = contextFactory.getServerSettings();
         this.blockchainHelper = contextFactory.getBlockchainHelper();
+        this.channelManager = contextFactory.getChannelManager();
     }
 
     @Override
@@ -68,7 +67,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         } catch (Exception e) {
             e.printStackTrace();
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
-            node.result = ConnectionResult.ERROR;
+            node.resultCallback.execute(new ChannelCreatedResult(channel));
             throw e;
         }
     }
@@ -108,7 +107,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private void processMessageA (Message message) {
         checkStatus(0);
-        LNEstablishAMessage m = (LNEstablishAMessage) message;
+        LNEstablish m = (LNEstablish) message;
         prepareNewChannel();
         m.saveToChannel(channel);
         sendEstablishMessageB();
@@ -116,14 +115,14 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private void processMessageB (Message message) {
         checkStatus(2);
-        LNEstablishBMessage m = (LNEstablishBMessage) message;
+        LNEstablish m = (LNEstablish) message;
         m.saveToChannel(channel);
         sendEstablishMessageC();
     }
 
     private void processMessageC (Message message) {
         checkStatus(3);
-        LNEstablishCMessage m = (LNEstablishCMessage) message;
+        LNEstablish m = (LNEstablish) message;
         m.saveToChannel(channel);
         channel.verifyEscapeSignatures();
         sendEstablishMessageD();
@@ -132,7 +131,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private void processMessageD (Message message) {
         checkStatus(4);
-        LNEstablishDMessage m = (LNEstablishDMessage) message;
+        LNEstablish m = (LNEstablish) message;
         m.saveToChannel(channel);
         channel.verifyEscapeSignatures();
         onChannelEstablished();
@@ -141,50 +140,13 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     private void onChannelEstablished () {
         //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
         //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
+        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
         blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
 
-        blockchainHelper.addTxListener(new OnTxCommand() {
-            @Override
-            public boolean compare (Transaction tx) {
-                return channel.getAnchorTxHashClient().equals(tx.getHash());
-            }
-
-            @Override
-            public void execute (Transaction tx) {
-                if (MIN_CONFIRMATIONS > 0) {
-                    blockchainHelper.addBlockListener(new OnBlockCommand() {
-                        boolean found = false;
-                        int confirmations = 0;
-
-                        @Override
-                        public boolean execute (Block block) {
-                            if (!found) {
-                                if (block.getTransactions().contains(tx)) {
-                                    found = true;
-                                }
-                            }
-
-                            if (found) {
-                                confirmations++;
-                            }
-
-                            if (confirmations >= MIN_CONFIRMATIONS) {
-                                onEnoughConfirmations();
-                                return true;
-                            }
-
-                            return false;
-                        }
-                    });
-                } else {
-                    onEnoughConfirmations();
-                }
-            }
-        });
+        dbHandler.saveChannel(channel);
     }
 
     private void onEnoughConfirmations () {
-        System.out.println("AAA");
         channel.initiateChannelStatus(nodeServer.configuration);
         dbHandler.saveChannel(channel);
         broadcastChannelObject();

@@ -16,6 +16,7 @@ import org.bitcoinj.core.ECKey;
  * Created by matsjerratsch on 29/11/2015.
  */
 public class EncryptionProcessorImpl extends EncryptionProcessor {
+    public static final boolean OUTPUT_MESSAGE = false;
     EncryptionMessageFactory messageFactory;
     MessageEncrypter messageEncrypter;
     NodeClient node;
@@ -83,7 +84,9 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
 
     private void processMessageToBeDecrypted (EncryptedMessage message) {
         Message decryptedMessage = messageEncrypter.decrypt(message, node.ecdhKeySet);
-        System.out.println("I: " + node.host + " " + decryptedMessage);
+        if (OUTPUT_MESSAGE) {
+            System.out.println("I: " + node.host + " " + decryptedMessage);
+        }
         executor.sendMessageDownwards(decryptedMessage);
     }
 
@@ -107,7 +110,9 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     }
 
     private void processMessageToBeEncrypted (Message message) {
-        System.out.println("O: " + node.host + " " + message);
+        if (OUTPUT_MESSAGE) {
+            System.out.println("O: " + node.host + " " + message);
+        }
 
         Message encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         executor.sendMessageUpwards(encryptedMessage);

@@ -1,4 +1,4 @@
-package network.thunder.core.etc;
+package network.thunder.core.communication.objects.messages.impl.blockchainlistener;
 
 import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.OnBlockCommand;
@@ -41,10 +41,5 @@ public class MockBlockchainHelper implements BlockchainHelper {
     @Override
     public Transaction getTransaction (Sha256Hash hash) {
         return null;
-    }
-
-    @Override
-    public void init () {
-
     }
 }

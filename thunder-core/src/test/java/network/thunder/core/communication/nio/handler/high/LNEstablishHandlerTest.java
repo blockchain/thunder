@@ -3,6 +3,7 @@ package network.thunder.core.communication.nio.handler.high;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.Message;
 import network.thunder.core.communication.nio.handler.ProcessorHandler;
+import network.thunder.core.communication.objects.messages.impl.blockchainlistener.MockBlockchainHelper;
 import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishAMessage;
 import network.thunder.core.communication.objects.messages.impl.message.lightningestablish.LNEstablishBMessage;
@@ -56,7 +57,7 @@ public class LNEstablishHandlerTest {
     DBHandler dbHandler1 = new InMemoryDBHandler();
     DBHandler dbHandler2 = new InMemoryDBHandler();
 
-    MockBlockchainHelper blockchainHelper = new MockBlockchainHelper();
+    MockBlockchainHelper mockBlockchainHelper = new MockBlockchainHelper();
     MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();
 
     @Before
@@ -179,8 +180,8 @@ public class LNEstablishHandlerTest {
         channel1.writeInbound(channel2.readOutbound());
 
         //TODO somehow test inclusion in block as well...
-        assertTrue(blockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(bMessage.anchorHash)));
-        assertTrue(blockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(cMessage.anchorHash)));
+        assertTrue(mockBlockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(bMessage.anchorHash)));
+        assertTrue(mockBlockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(cMessage.anchorHash)));
 
         //TODO check all properties of the broadcasted objects..
         assertTrue(broadcastHelper.broadcastedObjects.size() == 2);
@@ -220,7 +221,7 @@ public class LNEstablishHandlerTest {
 
         @Override
         public BlockchainHelper getBlockchainHelper () {
-            return blockchainHelper;
+            return mockBlockchainHelper;
         }
 
         @Override

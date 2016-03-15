@@ -13,6 +13,4 @@ public interface BlockchainHelper {
     public void addBlockListener (OnBlockCommand executor);
 
     public Transaction getTransaction (Sha256Hash hash);
-
-    public void init ();
 }

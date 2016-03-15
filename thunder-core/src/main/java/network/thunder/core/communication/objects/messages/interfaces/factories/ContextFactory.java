@@ -67,4 +67,6 @@ public interface ContextFactory {
     LNRoutingHelper getLNRoutingHelper ();
 
     BlockchainHelper getBlockchainHelper ();
+
+    ChannelManager getChannelManager ();
 }

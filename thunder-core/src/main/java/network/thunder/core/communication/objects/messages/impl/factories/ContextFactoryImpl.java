@@ -1,7 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl.factories;
 
 import network.thunder.core.communication.objects.messages.impl.*;
-import network.thunder.core.communication.objects.messages.impl.blockchainlistener.BlockchainHelperImpl;
+import network.thunder.core.communication.objects.messages.impl.blockchainlistener.MockBlockchainHelper;
 import network.thunder.core.communication.objects.messages.impl.routing.LNRoutingHelperImpl;
 import network.thunder.core.communication.objects.messages.interfaces.factories.*;
 import network.thunder.core.communication.objects.messages.interfaces.helper.*;
@@ -44,6 +44,7 @@ public class ContextFactoryImpl implements ContextFactory {
     NodeServer nodeServer;
 
     BlockchainHelper blockchainHelper;
+    ChannelManager channelManager;
 
     public ContextFactoryImpl (NodeServer node, DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper) {
         this.nodeServer = node;
@@ -58,7 +59,8 @@ public class ContextFactoryImpl implements ContextFactory {
         this.syncHelper = new SynchronizationHelper(dbHandler);
 
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
-        this.blockchainHelper = new BlockchainHelperImpl();
+        this.blockchainHelper = new MockBlockchainHelper();
+        this.channelManager = new ChannelManagerImpl(getBlockchainHelper());
     }
 
     @Override
@@ -193,8 +195,12 @@ public class ContextFactoryImpl implements ContextFactory {
 
     @Override
     public BlockchainHelper getBlockchainHelper () {
-        blockchainHelper.init();
         return blockchainHelper;
+    }
+
+    @Override
+    public ChannelManager getChannelManager () {
+        return channelManager;
     }
 
 }
