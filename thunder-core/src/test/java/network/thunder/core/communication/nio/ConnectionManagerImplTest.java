@@ -1,5 +1,6 @@
 package network.thunder.core.communication.nio;
 
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import network.thunder.core.etc.ConnectionManagerWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.InMemoryDBHandler;
@@ -36,7 +37,7 @@ public class ConnectionManagerImplTest {
     public void test () throws Exception {
         Logger.getLogger("io.netty").setLevel(Level.OFF);
 
-        connectionSeed.connectionManager.startListening();
+        connectionSeed.connectionManager.startListening(new NullResultCommand());
 
 //        clients.get(0).connectionManager.startUp();
 //        for(int i = 1; i<5; ++i) {
@@ -54,7 +55,7 @@ public class ConnectionManagerImplTest {
             System.out.println("------------------------------------------------------------------------------");
             System.out.println(i + " started up...");
 
-            clients.get(i).connectionManager.startUp();
+            clients.get(i).connectionManager.startUp(new NullResultCommand());
             Thread.sleep(500);
         }
 //        }

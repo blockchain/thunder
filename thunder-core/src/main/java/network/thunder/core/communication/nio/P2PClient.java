@@ -38,7 +38,7 @@ public final class P2PClient {
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void connectTo (NodeClient node) throws Exception {
+    public void connectTo (NodeClient node) {
         new Thread(new Runnable() {
             @Override
             public void run () {

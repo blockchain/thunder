@@ -7,11 +7,14 @@ import network.thunder.core.communication.objects.lightning.subobjects.PaymentDa
 import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
 import network.thunder.core.mesh.NodeServer;
@@ -58,15 +61,21 @@ public class MainClient {
 
         ConnectionManager connectionManager = new ConnectionManagerImpl(server, contextFactory, dbHandler, eventHelper);
 
-        connectionManager.startListening();
+        connectionManager.startListening(new ResultCommand() {
+            @Override
+            public void execute (ConnectionResult result) {
+
+                System.out.println("Listening successful!");
+            }
+        });
 
         Thread.sleep(1000);
 
-        connectionManager.fetchNetworkIPs();
+        connectionManager.fetchNetworkIPs(new NullResultCommand());
 
         for (String s : configuration.nodesToBuildChannelWith) {
             byte[] nodeKey = Tools.hexStringToByteArray(s);
-            connectionManager.buildChannel(nodeKey);
+            connectionManager.buildChannel(nodeKey, new NullResultCommand());
             Thread.sleep(1000);
         }
 

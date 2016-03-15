@@ -11,6 +11,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import network.thunder.core.ThunderContext;
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.InMemoryDBHandler;
@@ -128,7 +129,7 @@ public class Main extends Application {
         node.init();
         wallet = new MockWallet(Constants.getNetwork());
         thunderContext = new ThunderContext(wallet, dbHandler, node);
-        thunderContext.startListening();
+        thunderContext.startListening(new NullResultCommand());
 
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }

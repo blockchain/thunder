@@ -8,6 +8,7 @@ import network.thunder.core.communication.objects.messages.impl.factories.Contex
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.*;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -55,12 +56,12 @@ public class ThunderContext {
         eventHelper.removeListener(eventListener);
     }
 
-    public void startListening () {
-        connectionManager.startListening();
+    public void startListening (ResultCommand resultCallback) {
+        connectionManager.startListening(resultCallback);
     }
 
-    public void openChannel (byte[] node) {
-        connectionManager.buildChannel(node);
+    public void openChannel (byte[] node, ResultCommand resultCallback) {
+        connectionManager.buildChannel(node, resultCallback);
     }
 
     public void makePayment (byte[] receiver, long amount, PaymentSecret secret) {
@@ -85,16 +86,16 @@ public class ThunderContext {
         paymentHelper.makePayment(paymentData);
     }
 
-    public void fetchNetworkIPs () {
-        connectionManager.fetchNetworkIPs();
+    public void fetchNetworkIPs (ResultCommand resultCallback) {
+        connectionManager.fetchNetworkIPs(resultCallback);
     }
 
-    public void createRandomChannels () {
+    public void createRandomChannels (ResultCommand resultCallback) {
         new Thread(new Runnable() {
             @Override
             public void run () {
                 try {
-                    connectionManager.startBuildingRandomChannel();
+                    connectionManager.startBuildingRandomChannel(resultCallback);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

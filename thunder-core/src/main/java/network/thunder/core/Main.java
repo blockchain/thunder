@@ -5,6 +5,7 @@ import network.thunder.core.communication.nio.ConnectionManager;
 import network.thunder.core.communication.nio.ConnectionManagerImpl;
 import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.database.DBHandler;
@@ -48,17 +49,17 @@ public class Main {
 
         ConnectionManager connectionManager = new ConnectionManagerImpl(server, contextFactory, dbHandler, eventHelper);
 
-        connectionManager.startListening();
+        connectionManager.startListening(new NullResultCommand());
 
         Thread.sleep(1000);
 
-        connectionManager.fetchNetworkIPs();
+        connectionManager.fetchNetworkIPs(new NullResultCommand());
 
         Thread.sleep(2000);
 
         for (String s : configuration.nodesToBuildChannelWith) {
             byte[] nodeKey = Tools.hexStringToByteArray(s);
-            connectionManager.buildChannel(nodeKey);
+            connectionManager.buildChannel(nodeKey, new NullResultCommand());
             Thread.sleep(1000);
         }
 

@@ -21,6 +21,7 @@ import javafx.scene.text.Font;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.DownloadProgressTracker;
@@ -125,19 +126,18 @@ public class MainController {
 
     @FXML
     void fetchIPs (ActionEvent event) {
-        Main.thunderContext.fetchNetworkIPs();
+        Main.thunderContext.fetchNetworkIPs(new NullResultCommand());
     }
 
     @FXML
     void startListen (ActionEvent event) {
-        System.out.println("AHHHH");
-        Main.thunderContext.startListening();
+        Main.thunderContext.startListening(new NullResultCommand());
     }
 
     @FXML
     void syncThunder (ActionEvent event) {
         if (selectedNode != null) {
-            Main.thunderContext.openChannel(selectedNode.pubkey);
+            Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
         }
     }
 
@@ -305,7 +305,7 @@ public class MainController {
     @FXML
     void openChannel (ActionEvent event) {
         if (selectedNode != null) {
-            Main.thunderContext.openChannel(selectedNode.pubkey);
+            Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
         }
     }
 

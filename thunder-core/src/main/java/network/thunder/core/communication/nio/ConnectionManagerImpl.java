@@ -5,6 +5,7 @@ import network.thunder.core.communication.objects.messages.impl.factories.Contex
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -51,12 +52,12 @@ public class ConnectionManagerImpl implements ConnectionManager {
     }
 
     @Override
-    public void startUp () {
+    public void startUp (ResultCommand callback) {
         new Thread(new Runnable() {
             @Override
             public void run () {
                 try {
-                    startUpBlocking();
+                    startUpBlocking(callback);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -64,14 +65,14 @@ public class ConnectionManagerImpl implements ConnectionManager {
         }).start();
     }
 
-    public void startUpBlocking () throws Exception {
-        startListening();
+    public void startUpBlocking (ResultCommand callback) throws Exception {
+        startListening(callback);
         connectOpenChannels();
-        fetchNetworkIPs();
-        startBuildingRandomChannel();
+        fetchNetworkIPs(callback);
+        startBuildingRandomChannel(callback);
     }
 
-    public void startListening () {
+    public void startListening (ResultCommand callback) {
         System.out.println("startListening " + this.node.portServer);
         server = new P2PServer(contextFactory);
         server.startServer(this.node.portServer);
@@ -82,7 +83,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
     }
 
     @Override
-    public void fetchNetworkIPs () {
+    public void fetchNetworkIPs (ResultCommand callback) {
         new Thread(new Runnable() {
             @Override
             public void run () {
@@ -106,7 +107,9 @@ public class ConnectionManagerImpl implements ConnectionManager {
                         }
 
                         PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
-                        connectBlocking(randomNode, GET_IPS);
+                        NodeClient client = ipObjectToNode(randomNode, GET_IPS);
+                        client.resultCallback = callback;
+                        connectBlocking(client, GET_IPS);
                         alreadyFetched.add(randomNode);
 
                         ipList = dbHandler.getIPObjects();
@@ -123,7 +126,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
     }
 
     @Override
-    public void startBuildingRandomChannel () {
+    public void startBuildingRandomChannel (ResultCommand callback) {
         try {
             List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
             List<PubkeyIPObject> alreadyConnected = dbHandler.getIPObjectsWithActiveChannel();
@@ -145,11 +148,8 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
                 PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
 
-                try {
-                    connect(randomNode, OPEN_CHANNEL);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                NodeClient node = ipObjectToNode(randomNode, OPEN_CHANNEL);
+                buildChannel(node.pubKeyClient.getPubKey(), callback);
 
                 alreadyTried.add(randomNode);
 
@@ -165,45 +165,50 @@ public class ConnectionManagerImpl implements ConnectionManager {
     //TODO be able to tear down a channel completely again
     //TODO reset sleepIntervall if
     @Override
-    public void buildChannel (byte[] nodeKey) {
-        new Thread(new Runnable() {
-            @Override
-            public void run () {
-                long sleepIntervall = 1000;
-                while (true) {
+    public void buildChannel (byte[] nodeKey, ResultCommand callback) {
+        new Thread(() -> {
+            final long[] sleepIntervall = {1000};
+            final boolean[] reconnectAutomatically = {true};
+            while (reconnectAutomatically[0]) {
 
-                    PubkeyIPObject ipObject = dbHandler.getIPObject(nodeKey);
-                    if (ipObject != null) {
-
-                        try {
-                            connectBlocking(ipObject, OPEN_CHANNEL);
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                PubkeyIPObject ipObject = dbHandler.getIPObject(nodeKey);
+                if (ipObject != null) {
+                    NodeClient node1 = ipObjectToNode(ipObject, OPEN_CHANNEL);
+                    node1.resultCallback = result -> {
+                        if (result.shouldTryToReconnect()) {
+                            reconnectAutomatically[0] = true;
                         }
-                    }
-                    sleepIntervall *= 1.2;
-                    System.out.println(sleepIntervall);
-                    try {
-                        sleepIntervall = Math.min(sleepIntervall, 5 * 60 * 1000);
-                        Thread.sleep(sleepIntervall);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+                        if (result.wasSuccessful()) {
+                            sleepIntervall[0] = 1000;
+                        }
+                        callback.execute(result);
+                    };
+
+                    connectBlocking(node1, OPEN_CHANNEL);
+                }
+                sleepIntervall[0] *= 1.2;
+                try {
+                    sleepIntervall[0] = Math.min(sleepIntervall[0], 5 * 60 * 1000);
+                    Thread.sleep(sleepIntervall[0]);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
         }).start();
     }
 
-    private void connect (PubkeyIPObject ipObject, ChannelIntent intent) throws Exception {
+    private void connect (NodeClient node, ChannelIntent intent) {
         P2PClient client = new P2PClient(contextFactory);
-        NodeClient node = ipObjectToNode(ipObject, intent);
         client.connectTo(node);
     }
 
-    private void connectBlocking (PubkeyIPObject ipObject, ChannelIntent intent) throws Exception {
-        P2PClient client = new P2PClient(contextFactory);
-        NodeClient node = ipObjectToNode(ipObject, intent);
-        client.connectBlocking(node);
+    private void connectBlocking (NodeClient node, ChannelIntent intent) {
+        try {
+            P2PClient client = new P2PClient(contextFactory);
+            client.connectBlocking(node);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private NodeClient ipObjectToNode (PubkeyIPObject ipObject, ChannelIntent intent) {
