@@ -108,8 +108,10 @@ public class GossipProcessorImpl extends GossipProcessor {
         GossipSendMessage sendMessage = (GossipSendMessage) message;
         subject.receivedNewObjects(this, sendMessage.getDataList());
 
+        //TODO: Hack to show the other hostname in debugs
         if (firstMessage && sendMessage.pubkeyIPList.size() > 0) {
             node.port = sendMessage.pubkeyIPList.get(0).port;
+            node.host = sendMessage.pubkeyIPList.get(0).IP;
             firstMessage = false;
         }
     }
