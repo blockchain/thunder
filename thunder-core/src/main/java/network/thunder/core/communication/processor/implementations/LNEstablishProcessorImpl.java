@@ -16,6 +16,7 @@ import network.thunder.core.communication.objects.messages.interfaces.helper.Cha
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.WalletHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.lightningestablish.LNEstablish;
+import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
@@ -86,9 +87,16 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public void onLayerActive (MessageExecutor messageExecutor) {
         //TODO check for existing channels, check if we are still waiting for them to gather enough confirmations, ...
         this.messageExecutor = messageExecutor;
-        if (!node.isServer) {
-            sendEstablishMessageA();
+        if(dbHandler.getChannel(node.pubKeyClient.getPubKey()) != null) {
+            messageExecutor.sendNextLayerActive();
+        } else {
+            if (!node.isServer) {
+                if (node.intent == ChannelIntent.OPEN_CHANNEL) {
+                    sendEstablishMessageA();
+                }
+            }
         }
+
     }
 
     private void consumeMessage (Message message) {
@@ -138,9 +146,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void onChannelEstablished () {
-        //TODO: Everything needed has been exchanged. We can now open the channel / wait to see the other channel on the blockchain.
-        //          We need a WatcherClass on the BlockChain for that, to wait till the anchors are sufficiently deep in the blockchain.
-        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
+//        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
+        this.onEnoughConfirmations();
         blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
 
         dbHandler.saveChannel(channel);
