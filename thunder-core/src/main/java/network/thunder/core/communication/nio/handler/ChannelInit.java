@@ -1,11 +1,13 @@
 package network.thunder.core.communication.nio.handler;
 
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import network.thunder.core.communication.nio.handler.low.ByteToMessageObjectHandler;
 import network.thunder.core.communication.nio.handler.low.MessageObjectToByteHandler;
+import network.thunder.core.communication.nio.handler.low.PingHandler;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.MessageSerializer;
 import network.thunder.core.communication.processor.Processor;
@@ -47,6 +49,9 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
         MessageSerializer messageSerializer = contextFactory.getMessageSerializer();
         ch.pipeline().addLast(new ByteToMessageObjectHandler(messageSerializer));
         ch.pipeline().addLast(new MessageObjectToByteHandler(messageSerializer));
+
+        ChannelHandler pingHandler = new PingHandler();
+        ch.pipeline().addLast(pingHandler);
 
         Processor encryptionProcessor = contextFactory.getEncryptionProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(encryptionProcessor, "Encryption"));
