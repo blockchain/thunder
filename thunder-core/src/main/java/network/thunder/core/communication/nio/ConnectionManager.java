@@ -15,4 +15,6 @@ public interface ConnectionManager {
     void startBuildingRandomChannel (ResultCommand callback);
 
     void buildChannel (byte[] nodeKey, ResultCommand callback);
+
+    void startSyncing (ResultCommand callback);
 }

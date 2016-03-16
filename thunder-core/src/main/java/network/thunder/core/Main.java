@@ -1,12 +1,8 @@
 package network.thunder.core;
 
 import com.google.gson.Gson;
-import network.thunder.core.communication.nio.ConnectionManager;
-import network.thunder.core.communication.nio.ConnectionManagerImpl;
 import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
-import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
@@ -45,21 +41,23 @@ public class Main {
         Wallet wallet = new MockWallet(Constants.getNetwork());
 
         LNEventHelper eventHelper = new LNEventHelperImpl();
-        ContextFactory contextFactory = new ContextFactoryImpl(server, dbHandler, wallet, eventHelper);
 
-        ConnectionManager connectionManager = new ConnectionManagerImpl(server, contextFactory, dbHandler, eventHelper);
+        ThunderContext context = new ThunderContext(wallet, dbHandler, server);
 
-        connectionManager.startListening(new NullResultCommand());
+        context.startListening(new NullResultCommand());
 
         Thread.sleep(1000);
 
-        connectionManager.fetchNetworkIPs(new NullResultCommand());
-
+        final boolean[] successful = {false};
+        while (!successful[0]) {
+            context.fetchNetworkIPs(result -> successful[0] = result.wasSuccessful());
+            Thread.sleep(30000);
+        }
         Thread.sleep(2000);
 
         for (String s : configuration.nodesToBuildChannelWith) {
             byte[] nodeKey = Tools.hexStringToByteArray(s);
-            connectionManager.buildChannel(nodeKey, new NullResultCommand());
+            context.openChannel(nodeKey, new NullResultCommand());
             Thread.sleep(1000);
         }
 

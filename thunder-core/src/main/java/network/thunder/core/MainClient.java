@@ -12,9 +12,7 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.*;
 import network.thunder.core.mesh.NodeServer;
@@ -61,13 +59,7 @@ public class MainClient {
 
         ConnectionManager connectionManager = new ConnectionManagerImpl(server, contextFactory, dbHandler, eventHelper);
 
-        connectionManager.startListening(new ResultCommand() {
-            @Override
-            public void execute (ConnectionResult result) {
-
-                System.out.println("Listening successful!");
-            }
-        });
+        connectionManager.startListening(new NullResultCommand());
 
         Thread.sleep(1000);
 
@@ -84,15 +76,12 @@ public class MainClient {
 
         List<byte[]> route = new ArrayList<>();
         route.add(server.pubKeyServer.getPubKey());
-//        route.add(Tools.hexStringToByteArray("037b8778812241fcd4833ea45c36251171e091a7ea61d31ec3ac2447100e7eb5e4"));
 
         route.add(Tools.hexStringToByteArray("0392af24ee17b39bf50a61fd679d1c50585d5751d1ca221e91c1535e34d85c50ea"));
         route.add(Tools.hexStringToByteArray("02b247ef9a0e23da6f5db858a48a839242a596ff972f55ecc7fa42e3003e7b713b"));
-//        route.add(Tools.hexStringToByteArray("038caf2dcacdd04708942d491d563cf24cff926ba686f0e491a2cddc046b91d972"));
         route.add(Tools.hexStringToByteArray("021d381f233a902f1572a8c62b58d2b7108cb6292d065861fed1c6eb54e8483b23"));
 
         route.add(server.pubKeyServer.getPubKey());
-//        route.add(Tools.hexStringToByteArray("037b8778812241fcd4833ea45c36251171e091a7ea61d31ec3ac2447100e7eb5e4"));
 
         OnionObject onionObject = onionHelper.createOnionObject(route, null);
         PaymentData paymentData = new PaymentData();
@@ -108,8 +97,6 @@ public class MainClient {
         LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
         paymentHelper.relayPayment(null, paymentData);
 
-        Thread.sleep(5000);
-//        }
         while (true) {
             Thread.sleep(100000);
         }

@@ -45,7 +45,7 @@
                         <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="305.0" AnchorPane.leftAnchor="143.0" AnchorPane.rightAnchor="152.0" AnchorPane.topAnchor="14.0" />
                         <HBox spacing="5.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
                            <children>
-                              <Button fx:id="fetchIPButton" onAction="#fetchIPs" style="-fx-base: white;" styleClass="fat-button" text="Fetch IPs" />
+                              <Button fx:id="reloadButton" onAction="#onReloadButton" style="-fx-base: white;" styleClass="fat-button" text="Reload" />
                               <Button fx:id="openChannel" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
                               <Button id="sendMoneyOut" fx:id="thunderReceiveMoneyBtn" alignment="CENTER" mnemonicParsing="false" onAction="#thunderReceiveMoney" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Receive" textOverrun="CLIP">
                                  <HBox.margin>
@@ -57,6 +57,7 @@
                                     <Insets />
                                  </HBox.margin>
                               </Button>
+                              <Button fx:id="refreshButton" onAction="#refresh" style="-fx-base: white;" styleClass="fat-button" text="R" />
                            </children>
                         </HBox>
                         <TabPane layoutY="70.0" prefHeight="359.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE">

@@ -141,6 +141,18 @@ public class MainController {
         }
     }
 
+    @FXML
+    void onReloadButton (ActionEvent event) {
+        Main.thunderContext.getSyncData(result -> {
+            System.out.println("Sync finished: " + result.getMessage());
+        });
+    }
+
+    @FXML
+    void refresh (ActionEvent event) {
+        model.update();
+    }
+
     private PubkeyIPObject selectedNode = null;
 
     private BitcoinUIModel model = new BitcoinUIModel();

@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Wallet;
@@ -60,7 +61,7 @@ public class SendMoneyController {
             ByteBuffer byteBuffer = ByteBuffer.wrap(Tools.hexStringToByteArray(address.getText()));
             amount = byteBuffer.getLong();
             amountEdit.setText(String.valueOf(amount));
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -77,8 +78,7 @@ public class SendMoneyController {
         byteBuffer.get(hash);
         byteBuffer.get(destination);
 
-
-        Main.thunderContext.makePayment(destination, amount, new PaymentSecret(null, hash));
+        Main.thunderContext.makePayment(destination, amount, new PaymentSecret(null, hash), new NullResultCommand());
 
         overlayUI.done();
 

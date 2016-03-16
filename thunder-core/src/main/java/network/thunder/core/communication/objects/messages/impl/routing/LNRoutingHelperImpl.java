@@ -3,6 +3,7 @@ package network.thunder.core.communication.objects.messages.impl.routing;
 import com.sun.javafx.geom.Edge;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNRoutingHelper;
+import network.thunder.core.communication.processor.exceptions.LNRoutingException;
 import network.thunder.core.database.DBHandler;
 
 import java.nio.ByteBuffer;
@@ -161,6 +162,9 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     }
 
     public boolean hasPathTo (ByteBuffer v) {
+        if (!distancesTo.containsKey(v)) {
+            throw new LNRoutingException("No route found..");
+        }
 
         return distancesTo.get(v) < Double.POSITIVE_INFINITY;
     }

@@ -147,7 +147,7 @@ public class InMemoryDBHandler implements DBHandler {
                 return channel;
             }
         }
-        throw new RuntimeException("getChannel did not returned channel..");
+        return null;
     }
 
     @Override

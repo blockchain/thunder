@@ -12,6 +12,7 @@ import network.thunder.core.communication.objects.messages.impl.message.lightnin
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
+import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
 import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
@@ -63,6 +64,7 @@ public class LNEstablishHandlerTest {
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         node1.isServer = false;
+        node1.intent = ChannelIntent.OPEN_CHANNEL;
         node2.isServer = true;
 
         contextFactory1 = new EstablishMockContextFactory(nodeServer1, dbHandler1);
@@ -184,7 +186,7 @@ public class LNEstablishHandlerTest {
         assertTrue(mockBlockchainHelper.broadcastedTransaction.contains(Sha256Hash.wrap(cMessage.anchorHash)));
 
         //TODO check all properties of the broadcasted objects..
-        assertTrue(broadcastHelper.broadcastedObjects.size() == 2);
+        assertTrue(broadcastHelper.broadcastedObjects.size() == 4);
 
         after();
     }

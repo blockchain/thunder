@@ -3,10 +3,12 @@ package network.thunder.core.communication.nio;
 import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
 import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.objects.messages.impl.results.*;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.processor.ChannelIntent;
+import network.thunder.core.communication.processor.implementations.sync.SynchronizationHelper;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.NodeClient;
@@ -17,8 +19,7 @@ import org.bitcoinj.core.Wallet;
 import java.util.ArrayList;
 import java.util.List;
 
-import static network.thunder.core.communication.processor.ChannelIntent.GET_IPS;
-import static network.thunder.core.communication.processor.ChannelIntent.OPEN_CHANNEL;
+import static network.thunder.core.communication.processor.ChannelIntent.*;
 
 /**
  * Created by matsjerratsch on 22/01/2016.
@@ -76,6 +77,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
         System.out.println("startListening " + this.node.portServer);
         server = new P2PServer(contextFactory);
         server.startServer(this.node.portServer);
+        callback.execute(new SuccessResult());
     }
 
     private void connectOpenChannels () {
@@ -84,45 +86,43 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
     @Override
     public void fetchNetworkIPs (ResultCommand callback) {
-        new Thread(new Runnable() {
-            @Override
-            public void run () {
+        new Thread(() -> {
+            fetchNetworkIPsBlocking(callback);
+        }).start();
+    }
 
-                List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
-                List<PubkeyIPObject> alreadyFetched = new ArrayList<>();
-                List<PubkeyIPObject> seedNodes = SeedNodes.getSeedNodes();
-                ipList.addAll(seedNodes);
+    private void fetchNetworkIPsBlocking (ResultCommand callback) {
+        List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
+        List<PubkeyIPObject> alreadyFetched = new ArrayList<>();
+        List<PubkeyIPObject> seedNodes = SeedNodes.getSeedNodes();
+        ipList.addAll(seedNodes);
 
-                while (ipList.size() < MINIMUM_AMOUNT_OF_IPS) {
-                    try {
-                        ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
-                        ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
+        while (ipList.size() < MINIMUM_AMOUNT_OF_IPS) {
+            try {
+                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
+                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
 
-                        if (ipList.size() == 0) {
-                            System.out.println("Through with all nodes - wait to collect more nodes..");
-                            Thread.sleep(60 * 10 * 1000);
-                            alreadyFetched.clear();
-                            ipList = dbHandler.getIPObjects();
-                            continue;
-                        }
-
-                        PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
-                        NodeClient client = ipObjectToNode(randomNode, GET_IPS);
-                        client.resultCallback = callback;
-                        connectBlocking(client, GET_IPS);
-                        alreadyFetched.add(randomNode);
-
-                        ipList = dbHandler.getIPObjects();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                if (ipList.size() == 0) {
+                    break;
                 }
 
-                ipList = dbHandler.getIPObjects();
-                System.out.println("fetchNetworkIPs done. Total IPs: " + ipList.size());
+                PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
+                NodeClient client = ipObjectToNode(randomNode, GET_IPS);
+                client.resultCallback = new NullResultCommand();
+                connectBlocking(client);
+                alreadyFetched.add(randomNode);
 
+                ipList = dbHandler.getIPObjects();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        }).start();
+        }
+        ipList = dbHandler.getIPObjects();
+        if (ipList.size() > 0) {
+            callback.execute(new SuccessResult());
+        } else {
+            callback.execute(new FailureResult());
+        }
     }
 
     @Override
@@ -184,7 +184,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
                         callback.execute(result);
                     };
 
-                    connectBlocking(node1, OPEN_CHANNEL);
+                    connectBlocking(node1);
                 }
                 sleepIntervall[0] *= 1.2;
                 try {
@@ -197,12 +197,49 @@ public class ConnectionManagerImpl implements ConnectionManager {
         }).start();
     }
 
-    private void connect (NodeClient node, ChannelIntent intent) {
+    @Override
+    public void startSyncing (ResultCommand callback) {
+        new Thread(() -> {
+            startSyncingBlocking(callback);
+        }).start();
+    }
+
+    private void startSyncingBlocking (ResultCommand callback) {
+        SynchronizationHelper synchronizationHelper = contextFactory.getSyncHelper();
+        List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
+        List<PubkeyIPObject> alreadyFetched = new ArrayList<>();
+        List<PubkeyIPObject> seedNodes = SeedNodes.getSeedNodes();
+        ipList.addAll(seedNodes);
+        while (!synchronizationHelper.fullySynchronized()) {
+
+            try {
+                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
+                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
+
+                if (ipList.size() == 0) {
+                    callback.execute(new NoSyncResult());
+                    return;
+                }
+
+                PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
+                NodeClient client = ipObjectToNode(randomNode, GET_SYNC_DATA);
+                connectBlocking(client);
+                alreadyFetched.add(randomNode);
+
+                ipList = dbHandler.getIPObjects();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        callback.execute(new SyncSuccessResult());
+    }
+
+    private void connect (NodeClient node) {
         P2PClient client = new P2PClient(contextFactory);
         client.connectTo(node);
     }
 
-    private void connectBlocking (NodeClient node, ChannelIntent intent) {
+    private void connectBlocking (NodeClient node) {
         try {
             P2PClient client = new P2PClient(contextFactory);
             client.connectBlocking(node);

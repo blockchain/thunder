@@ -129,7 +129,7 @@ public class Main extends Application {
         node.init();
         wallet = new MockWallet(Constants.getNetwork());
         thunderContext = new ThunderContext(wallet, dbHandler, node);
-        thunderContext.startListening(new NullResultCommand());
+        thunderContext.startUp(new NullResultCommand());
 
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
