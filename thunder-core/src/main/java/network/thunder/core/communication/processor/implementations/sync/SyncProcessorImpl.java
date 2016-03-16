@@ -5,10 +5,12 @@ import network.thunder.core.communication.objects.messages.MessageExecutor;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncGetMessage;
 import network.thunder.core.communication.objects.messages.impl.message.sync.SyncSendMessage;
+import network.thunder.core.communication.objects.messages.impl.results.SyncSuccessResult;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.factories.SyncMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
 import network.thunder.core.communication.objects.messages.interfaces.message.sync.Sync;
+import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.interfaces.SyncProcessor;
 import network.thunder.core.mesh.NodeClient;
 
@@ -40,7 +42,7 @@ public class SyncProcessorImpl extends SyncProcessor {
         if (shouldSync()) {
             startSyncing();
         } else {
-            messageExecutor.sendNextLayerActive();
+            syncComplete();
         }
     }
 
@@ -71,15 +73,25 @@ public class SyncProcessorImpl extends SyncProcessor {
         sendGetNextSyncData();
     }
 
+    private void syncComplete () {
+        if (node.intent == ChannelIntent.GET_SYNC_DATA) {
+            node.resultCallback.execute(new SyncSuccessResult());
+            messageExecutor.closeConnection();
+        } else {
+            messageExecutor.sendNextLayerActive();
+        }
+    }
+
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
         syncStructure.newFragment(lastIndex, syncMessage.getDataList());
         eventHelper.onP2PDataReceived();
 
+        //TODO cancel the connection with some other condition as well..
         if (!syncStructure.fullySynchronized()) {
             sendGetNextSyncData();
         } else {
-            messageExecutor.sendNextLayerActive();
+            syncComplete();
         }
     }
 

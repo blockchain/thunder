@@ -18,7 +18,7 @@ public class SynchronizationHelper {
 
     private DBHandler dbHandler;
 
-    private Map<Integer, ArrayList<P2PDataObject>> fragmentList = new HashMap<>();
+    private Map<Integer, List<P2PDataObject>> fragmentList = new HashMap<>();
     private List<P2PDataObject> fullDataList = new ArrayList<>();
     private Set<P2PDataObject> fullDataListSet = new HashSet<>();
 
@@ -31,12 +31,7 @@ public class SynchronizationHelper {
 
     public SynchronizationHelper (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
-        for (int i = 1; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
-            ArrayList<P2PDataObject> objList = new ArrayList<>();
-            fragmentList.put(i, objList);
-            fragmentIsSyncedList.put(i, false);
-            fragmentJobList.put(i, 0);
-        }
+        resync();
     }
 
     public synchronized int getNextFragmentIndexToSynchronize () {
@@ -49,6 +44,16 @@ public class SynchronizationHelper {
             }
         }
         return 0;
+    }
+
+    public void resync () {
+        for (int i = 1; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
+            List<P2PDataObject> objList = new ArrayList<>();
+            fragmentList.put(i, objList);
+            fragmentIsSyncedList.put(i, false);
+            fragmentJobList.put(i, 0);
+        }
+        fullySynchronized = false;
     }
 
     public void newFragment (int index, List<P2PDataObject> newFragment) {
@@ -84,7 +89,7 @@ public class SynchronizationHelper {
     }
 
     private void insertDataObjectInLists (P2PDataObject object) {
-        ArrayList<P2PDataObject> objectArrayList = fragmentList.get(object.getFragmentIndex());
+        List<P2PDataObject> objectArrayList = fragmentList.get(object.getFragmentIndex());
         if (!objectArrayList.contains(object)) {
             objectArrayList.add(object);
         }
