@@ -4,6 +4,7 @@ import com.google.common.base.Preconditions;
 import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
 import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
 import network.thunder.core.communication.objects.messages.impl.message.lnpayment.*;
+import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
 import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
@@ -41,7 +42,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     LNConfiguration configuration = new LNConfiguration();
 
-    public LNPaymentLogicImpl (DBHandler dbHandler) {
+    LNPaymentMessageFactory messageFactory;
+
+    public LNPaymentLogicImpl (LNPaymentMessageFactory messageFactory, DBHandler dbHandler) {
+        this.messageFactory = messageFactory;
         this.dbHandler = dbHandler;
     }
 
@@ -50,7 +54,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         this.channel = channel;
     }
 
-    @Override
     public Transaction getClientTransaction () {
         Preconditions.checkNotNull(channel);
 
@@ -68,7 +71,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         return transaction;
     }
 
-    @Override
     public Transaction getServerTransaction () {
         Preconditions.checkNotNull(channel);
 
@@ -86,19 +88,16 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         return transaction;
     }
 
-    @Override
     public List<Transaction> getClientPaymentTransactions () {
         Transaction t = getClientTransaction();
         return getPaymentTransactions(t.getHash(), statusTemp.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
     }
 
-    @Override
     public List<Transaction> getServerPaymentTransactions () {
         Transaction t = getServerTransaction();
         return getPaymentTransactions(t.getHash(), statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
     }
 
-    @Override
     public List<TransactionSignature> getChannelSignatures () {
         //The channelTransaction is finished, we just need to produce the signatures..
         TransactionSignature signature1 = Tools.getSignature(getClientTransaction(), 0, channel.getScriptAnchorOutputClient().getProgram(), channel
@@ -113,7 +112,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         return channelSignatures;
     }
 
-    @Override
     public List<TransactionSignature> getPaymentSignatures () {
         List<Transaction> paymentTransactions = getClientPaymentTransactions();
         List<TransactionSignature> signatureList = new ArrayList<>();
@@ -166,7 +164,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
             transactions.add(transaction);
 
-
             index++;
         }
 
@@ -189,21 +186,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     @Override
-    public void readMessageOutbound (LNPayment message) {
-        Preconditions.checkNotNull(channel);
-
-        if (message instanceof LNPaymentAMessage) {
-            readOutgoingAMessage((LNPaymentAMessage) message);
-        } else if (message instanceof LNPaymentBMessage) {
-            readOutgoingBMessage((LNPaymentBMessage) message);
-        } else if (message instanceof LNPaymentCMessage) {
-            readOutgoingCMessage((LNPaymentCMessage) message);
-        } else if (message instanceof LNPaymentDMessage) {
-            readOutgoingDMessage((LNPaymentDMessage) message);
-        }
-    }
-
-    @Override
     public Channel updateChannel (Channel channel) {
         channel.channelSignature1 = this.signature1;
         channel.channelSignature2 = this.signature2;
@@ -216,6 +198,33 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         Preconditions.checkNotNull(channel);
 
         return statusTemp.getClone();
+    }
+
+    @Override
+    public LNPaymentAMessage getAMessage (ChannelStatus newStatus) {
+        this.statusTemp = newStatus;
+        LNPaymentAMessage message = messageFactory.getMessageA(channel, statusTemp);
+        this.revocationHashServer = message.newRevocation;
+        return message;
+    }
+
+    @Override
+    public LNPaymentBMessage getBMessage () {
+        LNPaymentBMessage message = messageFactory.getMessageB(channel);
+        this.revocationHashServer = message.newRevocation;
+        return message;
+    }
+
+    @Override
+    public LNPaymentCMessage getCMessage () {
+        LNPaymentCMessage message = messageFactory.getMessageC(channel, getChannelSignatures(), getPaymentSignatures());
+        return message;
+    }
+
+    @Override
+    public LNPaymentDMessage getDMessage () {
+        LNPaymentDMessage message = messageFactory.getMessageD(channel);
+        return message;
     }
 
     private void parseAMessage (LNPaymentAMessage message) {
@@ -344,7 +353,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         }
     }
 
-    private void saveSignatures() {
+    private void saveSignatures () {
 
     }
 
@@ -392,20 +401,4 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         }
     }
 
-    private void readOutgoingAMessage (LNPaymentAMessage message) {
-        this.statusTemp = message.channelStatus;
-        this.revocationHashServer = message.newRevocation;
-    }
-
-    private void readOutgoingBMessage (LNPaymentBMessage message) {
-        this.revocationHashServer = message.newRevocation;
-    }
-
-    private void readOutgoingCMessage (LNPaymentCMessage message) {
-
-    }
-
-    private void readOutgoingDMessage (LNPaymentDMessage message) {
-
-    }
 }

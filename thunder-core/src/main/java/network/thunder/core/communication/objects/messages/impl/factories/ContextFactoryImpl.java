@@ -145,7 +145,7 @@ public class ContextFactoryImpl implements ContextFactory {
 
     @Override
     public LNPaymentLogic getLNPaymentLogic () {
-        return new LNPaymentLogicImpl(dbHandler);
+        return new LNPaymentLogicImpl(getLNPaymentMessageFactory(), dbHandler);
     }
 
     @Override

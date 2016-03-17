@@ -255,7 +255,7 @@ public class LNPaymentHandlerTest {
 
         @Override
         public LNPaymentLogic getLNPaymentLogic () {
-            return new MockLNPaymentLogic();
+            return new MockLNPaymentLogic(getLNPaymentMessageFactory());
         }
 
         @Override

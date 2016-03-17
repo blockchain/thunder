@@ -194,8 +194,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         testStatus(IDLE);
         weStartedExchange = true;
 
-        LNPaymentAMessage message = messageFactory.getMessageA(channel, statusTemp);
-        paymentLogic.readMessageOutbound(message);
+        LNPaymentAMessage message = paymentLogic.getAMessage(statusTemp);
         latestDice = message.dice;
         sendMessage(message);
 
@@ -205,8 +204,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void sendMessageB () {
         testStatus(RECEIVED_A);
 
-        LNPaymentBMessage message = messageFactory.getMessageB(channel);
-        paymentLogic.readMessageOutbound(message);
+        LNPaymentBMessage message = paymentLogic.getBMessage();
         sendMessage(message);
 
         setStatus(SENT_B);
@@ -220,9 +218,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             testStatus(RECEIVED_C);
         }
 
-        //TODO sending and constructing message..
-        LNPayment message = messageFactory.getMessageC(channel, paymentLogic.getChannelSignatures(), paymentLogic.getPaymentSignatures());
-        paymentLogic.readMessageOutbound(message);
+        LNPayment message = paymentLogic.getCMessage();
         sendMessage(message);
 
         setStatus(SENT_C);
@@ -236,8 +232,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         }
 
         //TODO sending and constructing message..
-        LNPayment message = messageFactory.getMessageD(channel);
-        paymentLogic.readMessageOutbound(message);
+        LNPayment message = paymentLogic.getDMessage();
         sendMessage(message);
 
         setStatus(SENT_D);
@@ -441,7 +436,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                     readMessageD((LNPaymentDMessage) message);
                 }
             }
-        } catch(LNPaymentException e) {
+        } catch (LNPaymentException e) {
             sendMessage(messageFactory.getFailureMessage(e.getMessage()));
         }
     }

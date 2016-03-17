@@ -323,7 +323,7 @@ public class LNPaymentRoutingTest {
 
         @Override
         public LNPaymentLogic getLNPaymentLogic () {
-            return new MockLNPaymentLogic();
+            return new MockLNPaymentLogic(getLNPaymentMessageFactory());
         }
 
         @Override

@@ -71,8 +71,8 @@ public class LNPaymentLogicImplTest {
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
 
-        paymentLogic1 = new LNPaymentLogicImpl(dbHandler1);
-        paymentLogic2 = new LNPaymentLogicImpl(dbHandler2);
+        paymentLogic1 = new LNPaymentLogicImpl(messageFactory1, dbHandler1);
+        paymentLogic2 = new LNPaymentLogicImpl(messageFactory2, dbHandler2);
 
         paymentLogic1.initialise(channel1);
         paymentLogic2.initialise(channel2);
@@ -86,23 +86,23 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPayment messageB = messageFactory2.getMessageB(channel2);
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        LNPayment messageB = paymentLogic2.getBMessage();
+        exchangeMessage(messageB, paymentLogic1);
 
-        LNPayment messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
-        exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
+        LNPayment messageC1 = paymentLogic1.getCMessage();
+        exchangeMessage(messageC1, paymentLogic2);
 
-        LNPayment messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
-        exchangeMessage(messageC2, paymentLogic2, paymentLogic1);
+        LNPayment messageC2 = paymentLogic2.getCMessage();
+        exchangeMessage(messageC2, paymentLogic1);
 
-        LNPayment messageD1 = messageFactory1.getMessageD(channel1);
-        exchangeMessage(messageD1, paymentLogic1, paymentLogic2);
+        LNPayment messageD1 = paymentLogic1.getDMessage();
+        exchangeMessage(messageD1, paymentLogic2);
 
-        LNPayment messageD2 = messageFactory2.getMessageD(channel2);
-        exchangeMessage(messageD2, paymentLogic2, paymentLogic1);
+        LNPayment messageD2 = paymentLogic2.getDMessage();
+        exchangeMessage(messageD2, paymentLogic1);
     }
 
     @Test(expected = LNPaymentException.class)
@@ -112,12 +112,12 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPaymentBMessage messageB = messageFactory2.getMessageB(channel2);
+        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
         messageB.success = false;
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        exchangeMessage(messageB, paymentLogic1);
     }
 
     @Test(expected = LNPaymentException.class)
@@ -127,15 +127,15 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPayment messageB = messageFactory2.getMessageB(channel2);
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
+        exchangeMessage(messageB, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
+        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
         messageC1.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature1, 60, 2);
-        exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
+        exchangeMessage(messageC1, paymentLogic2);
     }
 
     @Test(expected = LNPaymentException.class)
@@ -145,15 +145,15 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPayment messageB = messageFactory2.getMessageB(channel2);
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
+        exchangeMessage(messageB, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
+        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
         messageC1.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature2, 60, 2);
-        exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
+        exchangeMessage(messageC1, paymentLogic2);
     }
 
     @Test(expected = LNPaymentException.class)
@@ -163,18 +163,18 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPayment messageB = messageFactory2.getMessageB(channel2);
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
+        exchangeMessage(messageB, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
-        exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
+        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
+        exchangeMessage(messageC1, paymentLogic2);
 
-        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
+        LNPaymentCMessage messageC2 = paymentLogic2.getCMessage();
         messageC2.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature1, 60, 2);
-        exchangeMessage(messageC1, paymentLogic2, paymentLogic1);
+        exchangeMessage(messageC1, paymentLogic1);
     }
 
     @Test(expected = LNPaymentException.class)
@@ -184,22 +184,21 @@ public class LNPaymentLogicImplTest {
 
         ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
 
-        LNPayment messageA = messageFactory1.getMessageA(channel1, status1);
-        exchangeMessage(messageA, paymentLogic1, paymentLogic2);
+        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        exchangeMessage(messageA, paymentLogic2);
 
-        LNPayment messageB = messageFactory2.getMessageB(channel2);
-        exchangeMessage(messageB, paymentLogic2, paymentLogic1);
+        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
+        exchangeMessage(messageB, paymentLogic1);
 
-        LNPaymentCMessage messageC1 = messageFactory1.getMessageC(channel1, paymentLogic1.getChannelSignatures(), paymentLogic1.getPaymentSignatures());
-        exchangeMessage(messageC1, paymentLogic1, paymentLogic2);
+        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
+        exchangeMessage(messageC1, paymentLogic2);
 
-        LNPaymentCMessage messageC2 = messageFactory2.getMessageC(channel2, paymentLogic2.getChannelSignatures(), paymentLogic2.getPaymentSignatures());
+        LNPaymentCMessage messageC2 = paymentLogic2.getCMessage();
         messageC2.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature2, 60, 2);
-        exchangeMessage(messageC1, paymentLogic2, paymentLogic1);
+        exchangeMessage(messageC1, paymentLogic1);
     }
 
-    private void exchangeMessage (LNPayment message, LNPaymentLogic sender, LNPaymentLogic receiver) {
-        sender.readMessageOutbound(message);
+    private void exchangeMessage (LNPayment message, LNPaymentLogic receiver) {
         receiver.checkMessageIncoming(message);
     }
 
