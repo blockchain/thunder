@@ -146,16 +146,16 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void onChannelEstablished () {
+        dbHandler.saveChannel(channel);
 //        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
         this.onEnoughConfirmations();
         blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
 
-        dbHandler.saveChannel(channel);
     }
 
     private void onEnoughConfirmations () {
         channel.initiateChannelStatus(nodeServer.configuration);
-        dbHandler.saveChannel(channel);
+        dbHandler.updateChannel(channel);
         broadcastChannelObject();
         eventHelper.onChannelOpened(channel);
         messageExecutor.sendNextLayerActive();

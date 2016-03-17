@@ -158,12 +158,16 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void updateChannel (Channel channel) {
-        for (Channel c : channelList) {
+        Iterator<Channel> iterator = channelList.iterator();
+        while (iterator.hasNext()) {
+            Channel c = iterator.next();
             if (Arrays.equals(c.nodeId, channel.nodeId)) {
-                c.channelStatus = channel.channelStatus;
+                iterator.remove();
+                channelList.add(channel);
                 return;
             }
         }
+        throw new RuntimeException("Not able to find channel in list, not updated..");
     }
 
     @Override
