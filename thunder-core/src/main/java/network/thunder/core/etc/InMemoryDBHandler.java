@@ -74,6 +74,7 @@ public class InMemoryDBHandler implements DBHandler {
     @Override
     public void syncDatalist (List<P2PDataObject> dataList) {
         for (P2PDataObject obj : dataList) {
+            fragmentToListMap.get(obj.getFragmentIndex()).add(obj);
             if (obj instanceof PubkeyIPObject) {
                 if (!pubkeyIPList.contains(obj)) {
                     pubkeyIPList.add((PubkeyIPObject) obj);
