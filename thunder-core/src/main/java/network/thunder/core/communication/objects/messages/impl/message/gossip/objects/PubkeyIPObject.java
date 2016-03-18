@@ -92,6 +92,11 @@ public class PubkeyIPObject extends P2PDataObject {
         return byteBuffer.array();
     }
 
+    @Override
+    public int getTimestamp () {
+        return timestamp;
+    }
+
     public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
         ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length + 2 + pubkey.length + 4);
         buffer.put(IP.getBytes("UTF-8"));
@@ -131,6 +136,15 @@ public class PubkeyIPObject extends P2PDataObject {
         //TODO: Implement signature verification..
     }
 
+    @Override
+    public boolean isSimilarObject (P2PDataObject object) {
+        if (object instanceof PubkeyIPObject) {
+            PubkeyIPObject channel = (PubkeyIPObject) object;
+            return channel.IP.equals(this.IP);
+        }
+        return false;
+    }
+
     public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
         CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature);
     }
@@ -150,7 +164,7 @@ public class PubkeyIPObject extends P2PDataObject {
 
     public static List<PubkeyIPObject> removeFromListByPubkey (List<PubkeyIPObject> fullList, byte[] pubkey) {
         Iterator<PubkeyIPObject> iterator = fullList.iterator();
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             PubkeyIPObject object = iterator.next();
             if (Arrays.equals(object.pubkey, pubkey)) {
                 iterator.remove();

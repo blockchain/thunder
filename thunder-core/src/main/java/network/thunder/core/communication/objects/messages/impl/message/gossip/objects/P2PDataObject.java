@@ -34,6 +34,8 @@ public abstract class P2PDataObject implements Message {
 
     public abstract void verify ();
 
+    public abstract boolean isSimilarObject (P2PDataObject object);
+
     public static List<P2PDataObject> generaliseList (List<PubkeyIPObject> list) {
         List<P2PDataObject> generalList = new ArrayList<>(list);
         return generalList;

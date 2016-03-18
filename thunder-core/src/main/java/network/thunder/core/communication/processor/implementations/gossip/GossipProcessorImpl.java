@@ -20,6 +20,9 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class GossipProcessorImpl extends GossipProcessor {
 
@@ -34,6 +37,8 @@ public class GossipProcessorImpl extends GossipProcessor {
     boolean firstMessage = true;
 
     int randomNumber;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public GossipProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, NodeClient
             node) {
@@ -65,13 +70,14 @@ public class GossipProcessorImpl extends GossipProcessor {
         this.messageExecutor = messageExecutor;
         subject.registerObserver(this);
 
-        sendOwnIPAddress();
+        startScheduledBroadcasting();
         messageExecutor.sendNextLayerActive();
     }
 
     @Override
     public void onLayerClose () {
         subject.removeObserver(this);
+        scheduler.shutdown();
     }
 
     @Override
@@ -135,6 +141,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         pubkeyIPObject.port = nodeServer.portServer;
         pubkeyIPObject.IP = nodeServer.hostServer;
         pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
+        pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(nodeServer.pubKeyServer);
 
         List<P2PDataObject> ipAddresses = new ArrayList<>();
@@ -182,6 +189,15 @@ public class GossipProcessorImpl extends GossipProcessor {
             hashList.add(object.getHash());
         }
         return hashList;
+    }
+
+    private void startScheduledBroadcasting () {
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run () {
+                sendOwnIPAddress();
+            }
+        }, 0, 1, TimeUnit.HOURS);
     }
 
     @Override

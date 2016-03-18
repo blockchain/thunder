@@ -5,6 +5,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
 import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.processor.implementations.sync.SynchronizationHelper;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
@@ -16,7 +17,7 @@ import java.util.*;
  * Created by matsjerratsch on 04/12/2015.
  */
 public class InMemoryDBHandler implements DBHandler {
-    final static int MAXIMUM_AGE_SYNC_DATA = 24 * 60 * 60;
+    final static int MAXIMUM_AGE_SYNC_DATA = 36 * 60 * 60;
 
     public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
@@ -37,7 +38,7 @@ public class InMemoryDBHandler implements DBHandler {
     List<PaymentSecret> secrets = new ArrayList<>();
 
     public InMemoryDBHandler () {
-        for (int i = 0; i < 1001; i++) {
+        for (int i = 0; i < SynchronizationHelper.NUMBER_OF_NODE_TO_SYNC_FROM + 1; i++) {
             fragmentToListMap.put(i, Collections.synchronizedList(new ArrayList<>()));
         }
     }
@@ -115,6 +116,26 @@ public class InMemoryDBHandler implements DBHandler {
                 totalList.add(obj);
             }
         }
+        cleanFragmentMap();
+    }
+
+    private void cleanFragmentMap () {
+        List<P2PDataObject> oldObjects = new ArrayList<>();
+        for (P2PDataObject object1 : totalList) {
+            for (P2PDataObject object2 : totalList) {
+                if (object1.isSimilarObject(object2) && object1.getTimestamp() < object2.getTimestamp()) {
+                    oldObjects.add(object1);
+                    break;
+                }
+            }
+        }
+        for (int i = 0; i < SynchronizationHelper.NUMBER_OF_NODE_TO_SYNC_FROM + 1; i++) {
+            fragmentToListMap.get(i).removeAll(oldObjects);
+        }
+        totalList.removeAll(oldObjects);
+        pubkeyIPList.removeAll(oldObjects);
+        pubkeyChannelList.removeAll(oldObjects);
+        channelStatusList.removeAll(oldObjects);
     }
 
     @Override

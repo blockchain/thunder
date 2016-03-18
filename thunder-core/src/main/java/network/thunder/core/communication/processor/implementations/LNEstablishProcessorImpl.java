@@ -28,6 +28,10 @@ import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
@@ -45,6 +49,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     ChannelManager channelManager;
 
     MessageExecutor messageExecutor;
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public Channel channel;
     int status = 0;
@@ -156,7 +162,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     private void onEnoughConfirmations () {
         channel.initiateChannelStatus(nodeServer.configuration);
         dbHandler.updateChannel(channel);
-        broadcastChannelObject();
+        startScheduledBroadcasting();
         eventHelper.onChannelOpened(channel);
         messageExecutor.sendNextLayerActive();
     }
@@ -208,10 +214,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void broadcastChannelObject () {
+        //TODO only broadcast the channel object here and the status object in some other processor
         PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
         ChannelStatusObject statusObject = new ChannelStatusObject();
         statusObject.pubkeyA = nodeServer.pubKeyServer.getPubKey();
         statusObject.pubkeyB = node.pubKeyClient.getPubKey();
+        statusObject.timestamp = Tools.currentTime();
         broadcastHelper.broadcastNewObject(channelObject);
         broadcastHelper.broadcastNewObject(statusObject);
     }
@@ -224,6 +232,20 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         if (status != expected) {
             throw new LNEstablishException("Status not correct.. Is: " + status + " Expected: " + expected);
         }
+    }
+
+    @Override
+    public void onLayerClose () {
+        scheduler.shutdown();
+    }
+
+    private void startScheduledBroadcasting() {
+        scheduler.scheduleAtFixedRate(new Runnable() {
+            @Override
+            public void run () {
+                broadcastChannelObject();
+            }
+        } ,0 , 1, TimeUnit.HOURS);
     }
 
 }

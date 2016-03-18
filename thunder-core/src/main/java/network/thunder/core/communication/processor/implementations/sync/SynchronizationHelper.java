@@ -14,7 +14,7 @@ import java.util.*;
  * If the topography after the complete sync is not good enough, we can always add further queries to it.
  */
 public class SynchronizationHelper {
-    private final static int NUMBER_OF_NODE_TO_SYNC_FROM = 10;
+    public final static int NUMBER_OF_NODE_TO_SYNC_FROM = 10;
 
     private DBHandler dbHandler;
 

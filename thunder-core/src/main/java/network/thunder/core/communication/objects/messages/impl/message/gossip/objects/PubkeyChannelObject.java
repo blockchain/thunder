@@ -24,6 +24,8 @@ public class PubkeyChannelObject extends P2PDataObject {
     public byte[] signatureA;
     public byte[] signatureB;
 
+    public int timestamp;
+
     public PubkeyChannelObject () {
     }
 
@@ -60,6 +62,8 @@ public class PubkeyChannelObject extends P2PDataObject {
 
         obj.signatureA = Tools.getRandomByte(65);
         obj.signatureB = Tools.getRandomByte(65);
+
+        obj.timestamp = Tools.currentTime();
 
         return obj;
     }
@@ -112,7 +116,8 @@ public class PubkeyChannelObject extends P2PDataObject {
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA.length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA
+                .length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
 
         byteBuffer.put(secretAHash);
         byteBuffer.put(secretBHash);
@@ -127,6 +132,11 @@ public class PubkeyChannelObject extends P2PDataObject {
         byteBuffer.put(signatureB);
 
         return byteBuffer.array();
+    }
+
+    @Override
+    public int getTimestamp () {
+        return timestamp;
     }
 
     @Override
@@ -160,5 +170,16 @@ public class PubkeyChannelObject extends P2PDataObject {
 
     @Override
     public void verify () {
+    }
+
+    @Override
+    public boolean isSimilarObject (P2PDataObject object) {
+        if(object instanceof  PubkeyChannelObject) {
+            PubkeyChannelObject channel = (PubkeyChannelObject) object;
+            return Arrays.equals(channel.pubkeyA, this.pubkeyA) &&
+                    Arrays.equals(channel.pubkeyB, this.pubkeyB);
+
+        }
+        return false;
     }
 }

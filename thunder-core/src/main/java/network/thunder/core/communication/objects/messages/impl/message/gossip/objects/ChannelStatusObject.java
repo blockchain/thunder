@@ -102,6 +102,11 @@ public class ChannelStatusObject extends P2PDataObject {
         return byteBuffer.array();
     }
 
+    @Override
+    public int getTimestamp () {
+        return timestamp;
+    }
+
     public int getFee (byte[] array) {
         if (Arrays.equals(array, pubkeyA)) {
             return feeA;
@@ -144,6 +149,17 @@ public class ChannelStatusObject extends P2PDataObject {
 
     @Override
     public void verify () {
+    }
+
+    @Override
+    public boolean isSimilarObject (P2PDataObject object) {
+        if (object instanceof ChannelStatusObject) {
+            ChannelStatusObject channel = (ChannelStatusObject) object;
+            return Arrays.equals(channel.pubkeyA, this.pubkeyA) &&
+                    Arrays.equals(channel.pubkeyB, this.pubkeyB);
+
+        }
+        return false;
     }
 
     @Override
