@@ -5,7 +5,7 @@
 
     <groupId>network.thunder</groupId>
     <artifactId>thunder-parent</artifactId>
-    <version>develop-SNAPSHOT</version>
+    <version>0.1</version>
     <packaging>pom</packaging>
 
     <name>ThunderNetwork</name>
@@ -115,11 +115,11 @@
     </build>
 
     <dependencies>
-    <dependency>
-        <groupId>com.squareup.okhttp</groupId>
-        <artifactId>okhttp</artifactId>
-        <version>2.6.0</version>
-    </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>2.6.0</version>
+        </dependency>
     </dependencies>
 
 </project>
