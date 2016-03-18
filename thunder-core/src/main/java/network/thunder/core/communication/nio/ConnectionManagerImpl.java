@@ -6,6 +6,7 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.impl.results.*;
 import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.processor.ChannelIntent;
 import network.thunder.core.communication.processor.implementations.sync.SynchronizationHelper;
@@ -175,13 +176,16 @@ public class ConnectionManagerImpl implements ConnectionManager {
                 if (ipObject != null) {
                     NodeClient node1 = ipObjectToNode(ipObject, OPEN_CHANNEL);
                     node1.resultCallback = result -> {
-                        if (result.shouldTryToReconnect()) {
-                            reconnectAutomatically[0] = true;
+                        if(result instanceof ConnectionResult) {
+                            ConnectionResult result1 = (ConnectionResult) result;
+                            if (result1.shouldTryToReconnect()) {
+                                reconnectAutomatically[0] = true;
+                            }
+                            if (result.wasSuccessful()) {
+                                sleepIntervall[0] = 1000;
+                            }
+                            callback.execute(result);
                         }
-                        if (result.wasSuccessful()) {
-                            sleepIntervall[0] = 1000;
-                        }
-                        callback.execute(result);
                     };
 
                     connectBlocking(node1);

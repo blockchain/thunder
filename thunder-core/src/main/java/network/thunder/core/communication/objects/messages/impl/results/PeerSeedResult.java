@@ -2,7 +2,7 @@ package network.thunder.core.communication.objects.messages.impl.results;
 
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 
-public class PeerSeedResult implements ConnectionResult {
+public class PeerSeedResult extends ConnectionResult {
 
     @Override
     public boolean shouldTryToReconnect () {

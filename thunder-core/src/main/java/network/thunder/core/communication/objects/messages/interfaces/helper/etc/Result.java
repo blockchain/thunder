@@ -3,7 +3,9 @@ package network.thunder.core.communication.objects.messages.interfaces.helper.et
 /**
  * Created by matsjerratsch on 22/01/2016.
  */
-public abstract class ConnectionResult implements Result {
+public interface Result {
 
-    public abstract boolean shouldTryToReconnect ();
+    public abstract boolean wasSuccessful ();
+
+    public abstract String getMessage ();
 }

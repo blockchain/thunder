@@ -3,7 +3,7 @@ package network.thunder.core.communication.objects.messages.impl.results;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 import network.thunder.core.database.objects.Channel;
 
-public class ChannelCreatedResult implements ConnectionResult {
+public class ChannelCreatedResult extends ConnectionResult {
 
     Channel channel;
 

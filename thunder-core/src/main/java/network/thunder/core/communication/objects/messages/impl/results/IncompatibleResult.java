@@ -3,7 +3,7 @@ package network.thunder.core.communication.objects.messages.impl.results;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
 import network.thunder.core.communication.objects.messages.interfaces.message.FailureMessage;
 
-public class IncompatibleResult implements ConnectionResult {
+public class IncompatibleResult extends ConnectionResult {
     FailureMessage failureMessage;
 
     @Override

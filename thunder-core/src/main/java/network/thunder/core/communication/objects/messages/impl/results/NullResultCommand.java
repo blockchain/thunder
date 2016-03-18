@@ -1,11 +1,7 @@
 package network.thunder.core.communication.objects.messages.impl.results;
 
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ConnectionResult;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommandExt;
 
-public class NullResultCommand implements ResultCommand {
-    @Override
-    public void execute (ConnectionResult result) {
+public class NullResultCommand extends ResultCommandExt {
 
-    }
 }
