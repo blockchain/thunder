@@ -17,27 +17,27 @@ import java.util.*;
  */
 public class InMemoryDBHandler implements DBHandler {
 
-    public List<Channel> channelList = new ArrayList<>();
+    public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
-    public List<PubkeyIPObject> pubkeyIPList = new ArrayList<>();
-    public List<PubkeyChannelObject> pubkeyChannelList = new ArrayList<>();
-    public List<ChannelStatusObject> channelStatusList = new ArrayList<>();
+    public List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
+    public List<PubkeyChannelObject> pubkeyChannelList = Collections.synchronizedList(new ArrayList<>());
+    public List<ChannelStatusObject> channelStatusList = Collections.synchronizedList(new ArrayList<>());
 
     public Map<Integer, List<P2PDataObject>> fragmentToListMap = new HashMap<>();
 
-    public List<P2PDataObject> totalList = new ArrayList<>();
+    public List<P2PDataObject> totalList = Collections.synchronizedList(new ArrayList<>());
 
-    public List<PubkeyIPObject> pubkeyIPObjectOpenChannel = new ArrayList<>();
+    public List<PubkeyIPObject> pubkeyIPObjectOpenChannel = Collections.synchronizedList(new ArrayList<>());
 
-    public List<RevocationHash> revocationHashListTheir = new ArrayList<>();
-    public List<RevocationHash> revocationHashListOurs = new ArrayList<>();
+    public List<RevocationHash> revocationHashListTheir = Collections.synchronizedList(new ArrayList<>());
+    public List<RevocationHash> revocationHashListOurs = Collections.synchronizedList(new ArrayList<>());
 
     List<PaymentWrapper> payments = new ArrayList<>();
     List<PaymentSecret> secrets = new ArrayList<>();
 
     public InMemoryDBHandler () {
         for (int i = 0; i < 1001; i++) {
-            fragmentToListMap.put(i, new ArrayList<>());
+            fragmentToListMap.put(i, Collections.synchronizedList(new ArrayList<>()));
         }
     }
 
