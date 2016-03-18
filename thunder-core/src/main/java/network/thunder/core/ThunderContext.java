@@ -98,7 +98,7 @@ public class ThunderContext {
 
             paymentHelper.makePayment(paymentData);
         } catch (Exception e) {
-            resultCallback.execute(new FailureResult());
+            resultCallback.execute(new FailureResult(e.getMessage()));
         }
     }
 
