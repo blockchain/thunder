@@ -10,10 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Created by matsjerratsch on 19/10/2015.
@@ -152,13 +149,13 @@ public class PubkeyIPObject extends P2PDataObject {
     }
 
     public static List<PubkeyIPObject> removeFromListByPubkey (List<PubkeyIPObject> fullList, byte[] pubkey) {
-        List<PubkeyIPObject> temp = new ArrayList<>();
-        for (PubkeyIPObject full : fullList) {
-            if (Arrays.equals(full.pubkey, pubkey)) {
-                temp.add(full);
+        Iterator<PubkeyIPObject> iterator = fullList.iterator();
+        while(iterator.hasNext()) {
+            PubkeyIPObject object = iterator.next();
+            if (Arrays.equals(object.pubkey, pubkey)) {
+                iterator.remove();
             }
         }
-        fullList.removeAll(temp);
         return fullList;
     }
 

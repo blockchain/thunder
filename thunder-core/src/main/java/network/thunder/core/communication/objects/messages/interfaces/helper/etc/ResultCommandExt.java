@@ -29,7 +29,6 @@ public class ResultCommandExt implements ResultCommand {
         try {
             return future.get(timeout, timeUnit);
         } catch (Exception e) {
-            e.printStackTrace();
             return null;
         }
     }

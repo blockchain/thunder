@@ -16,6 +16,7 @@ import java.util.*;
  * Created by matsjerratsch on 04/12/2015.
  */
 public class InMemoryDBHandler implements DBHandler {
+    final static int MAXIMUM_AGE_SYNC_DATA = 24 * 60 * 60;
 
     public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
@@ -177,6 +178,8 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
+        fragmentToListMap.get(fragmentIndex).removeIf(
+                p -> (Tools.currentTime() - p.getTimestamp() > MAXIMUM_AGE_SYNC_DATA));
         return fragmentToListMap.get(fragmentIndex);
     }
 

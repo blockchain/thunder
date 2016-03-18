@@ -28,6 +28,8 @@ public abstract class P2PDataObject implements Message {
         return (int) (getHashAsLong() / FRAGMENT_SIZE + 1);
     }
 
+    public abstract int getTimestamp ();
+
     public abstract long getHashAsLong ();
 
     public abstract void verify ();

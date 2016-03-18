@@ -143,11 +143,13 @@ public class ConnectionManagerImpl implements ConnectionManager {
                 ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyTried);
 
                 if (ipList.size() == 0) {
-                    Thread.sleep(5000);
-                    continue;
+                    callback.execute(new FailureResult());
+                    return;
                 }
 
                 PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
+
+                System.out.println("BUILD CHANNEL WITH: " + randomNode);
 
                 NodeClient node = ipObjectToNode(randomNode, OPEN_CHANNEL);
                 buildChannel(node.pubKeyClient.getPubKey(), callback);
@@ -158,6 +160,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
                 Thread.sleep(5000);
             }
+            callback.execute(new SuccessResult());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -165,6 +168,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
 
     //TODO be able to tear down a channel completely again
     //TODO reset sleepIntervall if
+    //TODO build random channels tries to reconnect here even if non-existent
     @Override
     public void buildChannel (byte[] nodeKey, ResultCommand callback) {
         new Thread(() -> {
@@ -176,7 +180,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
                 if (ipObject != null) {
                     NodeClient node1 = ipObjectToNode(ipObject, OPEN_CHANNEL);
                     node1.resultCallback = result -> {
-                        if(result instanceof ConnectionResult) {
+                        if (result instanceof ConnectionResult) {
                             ConnectionResult result1 = (ConnectionResult) result;
                             if (result1.shouldTryToReconnect()) {
                                 reconnectAutomatically[0] = true;
