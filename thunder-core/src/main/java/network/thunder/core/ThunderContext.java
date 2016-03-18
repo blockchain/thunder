@@ -12,12 +12,14 @@ import network.thunder.core.communication.objects.messages.interfaces.factories.
 import network.thunder.core.communication.objects.messages.interfaces.helper.*;
 import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
 import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.mesh.LNConfiguration;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.Wallet;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -78,6 +80,9 @@ public class ThunderContext {
 
     public void makePayment (byte[] receiver, long amount, PaymentSecret secret, ResultCommand resultCallback) {
         try {
+            if (Arrays.equals(receiver, node.pubKeyServer.getPubKey())) {
+                throw new LNPaymentException("Can't send to yourself!");
+            }
             LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
             LNOnionHelper onionHelper = contextFactory.getOnionHelper();
             LNRoutingHelper routingHelper = contextFactory.getLNRoutingHelper();

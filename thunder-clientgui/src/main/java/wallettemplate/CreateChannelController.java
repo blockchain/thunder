@@ -70,9 +70,9 @@ public class CreateChannelController {
                 Coin c1 = Coin.parseCoin(amountEdit.getText());
                 Coin c2 = Coin.parseCoin(amountEdit1.getText());
                 int days = Integer.parseInt(amountEdit2.getText());
-//                Main.thunderContext.createRandomChannels().instance.openChannel(c1.getValue(), c2.getValue(), days);
+//                Main.thunderContext.createRandomChannels().instance.openChannelButtonEnabled(c1.getValue(), c2.getValue(), days);
             } catch (NumberFormatException e) {
-//                ThunderContext.instance.openChannel(10000, 10000, 100);
+//                ThunderContext.instance.openChannelButtonEnabled(10000, 10000, 100);
             }
         } catch (Exception e) {
             e.printStackTrace();

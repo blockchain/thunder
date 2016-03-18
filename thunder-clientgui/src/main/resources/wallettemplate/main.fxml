@@ -46,13 +46,13 @@
                         <HBox spacing="5.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
                            <children>
                               <Button fx:id="reloadButton" onAction="#onReloadButton" style="-fx-base: white;" styleClass="fat-button" text="Reload" />
-                              <Button fx:id="openChannel" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
-                              <Button id="sendMoneyOut" fx:id="thunderReceiveMoneyBtn" alignment="CENTER" mnemonicParsing="false" onAction="#thunderReceiveMoney" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Receive" textOverrun="CLIP">
+                              <Button fx:id="openChannel" disable="true" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
+                              <Button id="sendMoneyOut" fx:id="thunderReceiveMoneyBtn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#thunderReceiveMoney" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Receive" textOverrun="CLIP">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>
                               </Button>
-                              <Button id="sendMoneyOut" fx:id="thunderSendMoneyOutBtn" alignment="CENTER" layoutX="89.0" layoutY="10.0" mnemonicParsing="false" onAction="#thunderSendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold;" styleClass="fat-button" text="Send">
+                              <Button id="sendMoneyOut" fx:id="thunderSendMoneyOutBtn" alignment="CENTER" disable="true" layoutX="89.0" layoutY="10.0" mnemonicParsing="false" onAction="#thunderSendMoneyOut" style="-fx-base: lightgreen; -fx-font-weight: bold;" styleClass="fat-button" text="Send">
                                  <HBox.margin>
                                     <Insets />
                                  </HBox.margin>

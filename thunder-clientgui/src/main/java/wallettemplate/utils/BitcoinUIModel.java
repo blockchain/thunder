@@ -1,10 +1,7 @@
 package wallettemplate.utils;
 
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -14,7 +11,9 @@ import network.thunder.core.communication.objects.messages.impl.message.gossip.o
 import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventListener;
 import network.thunder.core.database.objects.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.DownloadProgressTracker;
 import wallettemplate.Main;
 
 import java.util.Date;
@@ -32,6 +31,9 @@ public class BitcoinUIModel {
     public ObservableList<Node> transactionsThunderSettled = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderRefunded = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderOpen = FXCollections.observableArrayList();
+
+    public BooleanProperty openChannelButtonEnabled = new SimpleBooleanProperty(true);
+    public BooleanProperty sendReceiveButtonEnabled = new SimpleBooleanProperty(true);
 
     private SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     public SimpleObjectProperty<Coin> balance = new SimpleObjectProperty<>(Coin.ZERO);
@@ -52,7 +54,7 @@ public class BitcoinUIModel {
                     @Override
                     public void run () {
                         try {
-                            Thread.sleep(100);
+                            Thread.sleep(300);
                             update();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -61,12 +63,13 @@ public class BitcoinUIModel {
                 }).start();
             }
         });
-
-        update();
     }
 
     public void update () {
         Platform.runLater(() -> {
+            openChannelButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() > 0 || Main.dbHandler.getIPObjects().size() == 0);
+            sendReceiveButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() == 0);
+
             ObservableList<Node> items1 = FXCollections.observableArrayList();
             for (PaymentWrapper p : Main.dbHandler.getAllPayments()) {
                 Label label = new Label(p.toString());

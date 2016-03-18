@@ -173,6 +173,10 @@ public class MainController {
 
         thunderBalance.textProperty().bind(EasyBind.map(model.balanceThunder, Coin::toFriendlyString));
 
+        openChannel.disableProperty().bind(model.openChannelButtonEnabled);
+        thunderReceiveMoneyBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
+        thunderSendMoneyOutBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
+
         nodesList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<PubkeyIPObject>() {
             @Override
             public void changed (ObservableValue<? extends PubkeyIPObject> observable, PubkeyIPObject oldValue, PubkeyIPObject newValue) {
