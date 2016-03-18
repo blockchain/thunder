@@ -45,14 +45,6 @@ public class BitcoinUIModel {
     }
 
     public void init () {
-        Main.bitcoin.wallet().addEventListener(new AbstractWalletEventListener() {
-            @Override
-            public void onWalletChanged (Wallet wallet) {
-                super.onWalletChanged(wallet);
-                update();
-            }
-        }, Platform::runLater);
-
         Main.thunderContext.addEventListener(new LNEventListener() {
             @Override
             public void onEvent () {
@@ -75,16 +67,6 @@ public class BitcoinUIModel {
 
     public void update () {
         Platform.runLater(() -> {
-            balance.set(Main.bitcoin.wallet().getBalance(Wallet.BalanceType.AVAILABLE_SPENDABLE));
-            address.set(Main.bitcoin.wallet().currentReceiveAddress());
-
-            ObservableList<Node> items0 = FXCollections.observableArrayList();
-            for (Transaction p : Main.bitcoin.wallet().getTransactionsByTime()) {
-                Label label = new Label(p.toString());
-                items0.add(label);
-            }
-            transactionsThunderIncluded.setAll(items0);
-
             ObservableList<Node> items1 = FXCollections.observableArrayList();
             for (PaymentWrapper p : Main.dbHandler.getAllPayments()) {
                 Label label = new Label(p.toString());

@@ -1,11 +1,7 @@
 package wallettemplate;
 
-import com.subgraph.orchid.TorClient;
-import com.subgraph.orchid.TorInitializationListener;
 import javafx.animation.TranslateTransition;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
@@ -169,46 +165,6 @@ public class MainController {
         balance.textProperty().bind(EasyBind.map(model.balanceProperty(), Coin::toFriendlyString));
         // Don't let the user click send money when the wallet is empty.
         sendMoneyOutBtn.disableProperty().bind(model.balanceProperty().isEqualTo(Coin.ZERO));
-
-        TorClient torClient = Main.bitcoin.peerGroup().getTorClient();
-        if (torClient != null) {
-            SimpleDoubleProperty torProgress = new SimpleDoubleProperty(-1);
-            String torMsg = "Initialising Tor";
-            syncItem = Main.instance.notificationBar.pushItem(torMsg, torProgress);
-            torClient.addInitializationListener(new TorInitializationListener() {
-                @Override
-                public void initializationProgress (String message, int percent) {
-                    Platform.runLater(() -> {
-                        syncItem.label.set(torMsg + ": " + message);
-                        torProgress.set(percent / 100.0);
-                    });
-                }
-
-                @Override
-                public void initializationCompleted () {
-                    Platform.runLater(() -> {
-                        syncItem.cancel();
-                        showBitcoinSyncMessage();
-
-                    });
-                }
-            });
-        } else {
-
-            showBitcoinSyncMessage();
-        }
-        model.syncProgressProperty().addListener(x -> {
-            if (model.syncProgressProperty().get() >= 1.0) {
-                readyToGoAnimation();
-
-                if (syncItem != null) {
-                    syncItem.cancel();
-                    syncItem = null;
-                }
-            } else if (syncItem == null) {
-                showBitcoinSyncMessage();
-            }
-        });
 
         Bindings.bindContent(blockchainTxList.getItems(), model.transactions);
         Bindings.bindContent(nodesList.getItems(), model.ipList);

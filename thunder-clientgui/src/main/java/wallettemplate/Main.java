@@ -1,8 +1,6 @@
 package wallettemplate;
 
-import com.google.common.util.concurrent.Service;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -21,9 +19,6 @@ import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.params.TestNet3Params;
-import org.bitcoinj.utils.BriefLogFormatter;
-import org.bitcoinj.utils.Threading;
-import org.bitcoinj.wallet.DeterministicSeed;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
@@ -91,69 +86,17 @@ public class Main extends Application {
         uiStack.getChildren().add(notificationBar);
         mainWindow.setScene(scene);
 
-        // Make log output concise.
-        BriefLogFormatter.init();
-        // Tell bitcoinj to run event handlers on the JavaFX UI thread. This keeps things simple and means
-        // we cannot forget to switch threads when adding event handlers. Unfortunately, the DownloadListener
-        // we give to the app kit is currently an exception and runs on a library thread. It'll get fixed in
-        // a future version.
-        Threading.USER_THREAD = Platform::runLater;
-        // Create the app kit. It won't do any heavyweight initialization until after we start it.
-        setupWalletKit(null);
-
-        if (bitcoin.isChainFileLocked()) {
-            if (REQUEST != null) {
-                PaymentProtocolClientSocket.sendPaymentRequest(REQUEST);
-                Platform.exit();
-                return;
-            }
-            informationalAlert("Already running", "This application is already running and cannot be started twice.");
-            Platform.exit();
-            return;
-        }
-        PaymentProtocolServerSocket.init();
-
-        mainWindow.show();
-
-        WalletSetPasswordController.estimateKeyDerivationTimeMsec();
-
-        bitcoin.addListener(new Service.Listener() {
-            @Override
-            public void failed (Service.State from, Throwable failure) {
-                GuiUtils.crashAlert(failure);
-            }
-        }, Platform::runLater);
-        bitcoin.startAsync();
-
-        System.out.println("init");
         node.init();
         wallet = new MockWallet(Constants.getNetwork());
         thunderContext = new ThunderContext(wallet, dbHandler, node);
+
+        mainWindow.show();
+        controller.onBitcoinSetup();
+
+
         thunderContext.startUp(new NullResultCommand());
 
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
-    }
-
-    public void setupWalletKit (@Nullable DeterministicSeed seed) {
-        // If seed is non-null it means we are restoring from backup.
-        bitcoin = new WalletAppKit(params, new File("."), APP_NAME + "-" + params.getPaymentProtocolId() + CLIENTID) {
-            @Override
-            protected void onSetupCompleted () {
-                // Don't make the user wait for confirmations for now, as the intention is they're sending it
-                // their own money!
-                bitcoin.wallet().allowSpendingUnconfirmedTransactions();
-                Platform.runLater(controller::onBitcoinSetup);
-
-            }
-        };
-
-        bitcoin.setDownloadListener(controller.progressBarUpdater())
-                .setBlockingStartup(false)
-                .setUserAgent(APP_NAME, "1.0");
-        if (seed != null) {
-            bitcoin.restoreWalletFromSeed(seed);
-        }
-
     }
 
     private Node stopClickPane = new Pane();
@@ -269,8 +212,6 @@ public class Main extends Application {
 
     @Override
     public void stop () throws Exception {
-        bitcoin.stopAsync();
-        bitcoin.awaitTerminated();
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
     }

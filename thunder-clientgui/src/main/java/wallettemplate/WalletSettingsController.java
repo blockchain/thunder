@@ -1,10 +1,6 @@
 package wallettemplate;
 
-import org.bitcoinj.core.Utils;
-import org.bitcoinj.crypto.MnemonicCode;
-import org.bitcoinj.wallet.DeterministicSeed;
 import com.google.common.base.Splitter;
-import com.google.common.util.concurrent.Service;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
@@ -12,6 +8,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.TextArea;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.MnemonicCode;
+import org.bitcoinj.wallet.DeterministicSeed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -155,13 +154,6 @@ public class WalletSettingsController {
         long birthday = datePicker.getValue().atStartOfDay().toEpochSecond(ZoneOffset.UTC);
         DeterministicSeed seed = new DeterministicSeed(Splitter.on(' ').splitToList(wordsArea.getText()), null, "", birthday);
         // Shut down bitcoinj and restart it with the new seed.
-        Main.bitcoin.addListener(new Service.Listener() {
-            @Override
-            public void terminated(Service.State from) {
-                Main.instance.setupWalletKit(seed);
-                Main.bitcoin.startAsync();
-            }
-        }, Platform::runLater);
         Main.bitcoin.stopAsync();
     }
 
