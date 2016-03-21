@@ -6,7 +6,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Coin;
 

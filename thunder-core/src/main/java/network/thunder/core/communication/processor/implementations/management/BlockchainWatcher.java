@@ -1,6 +1,6 @@
 package network.thunder.core.communication.processor.implementations.management;
 
-import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
 
 public abstract class BlockchainWatcher {
     BlockchainHelper blockchainHelper;

@@ -24,7 +24,7 @@ import wallettemplate.utils.easing.ElasticInterpolator;
 import javax.annotation.Nullable;
 
 /**
- * Wraps the given NodeClient in a BorderPane and allows a thin bar to slide in from the bottom or top, squeezing the content
+ * Wraps the given ClientObject in a BorderPane and allows a thin bar to slide in from the bottom or top, squeezing the content
  * node. The API allows different "items" to be added/removed and they will be displayed one at a time, fading between
  * them when the topmost is removed. Each item is meant to be used for e.g. a background task and can contain a button
  * and/or a progress bar.

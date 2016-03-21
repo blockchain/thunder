@@ -1,6 +1,6 @@
 package network.thunder.core.database.objects;
 
-import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 
 import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
 import static network.thunder.core.database.objects.PaymentStatus.UNKNOWN;

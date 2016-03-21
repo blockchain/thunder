@@ -51,7 +51,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>network.thunder.core.Main</mainClass>
+                            <mainClass>network.thunder.core.MainNode</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

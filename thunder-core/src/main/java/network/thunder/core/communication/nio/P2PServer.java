@@ -21,8 +21,8 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import network.thunder.core.communication.nio.handler.ChannelInit;
-import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
+import network.thunder.core.communication.layer.ChannelInit;
+import network.thunder.core.communication.layer.ContextFactory;
 
 /**
  */

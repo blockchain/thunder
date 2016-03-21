@@ -5,9 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.Result;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
@@ -80,12 +78,9 @@ public class SendMoneyController {
         byteBuffer.get(hash);
         byteBuffer.get(destination);
 
-        Main.thunderContext.makePayment(destination, amount, new PaymentSecret(null, hash), new ResultCommand() {
-            @Override
-            public void execute (Result result) {
-                if(!result.wasSuccessful()) {
-                    GuiUtils.informationalAlert("Error", result.getMessage(), null);
-                }
+        Main.thunderContext.makePayment(destination, amount, new PaymentSecret(null, hash), result -> {
+            if (!result.wasSuccessful()) {
+                GuiUtils.informationalAlert("Error", result.getMessage(), null);
             }
         });
 

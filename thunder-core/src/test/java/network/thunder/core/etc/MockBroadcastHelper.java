@@ -1,7 +1,7 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
-import network.thunder.core.communication.processor.implementations.gossip.BroadcastHelper;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
+import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 
 import java.util.ArrayList;
 import java.util.List;

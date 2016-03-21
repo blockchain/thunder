@@ -1,21 +1,23 @@
 package network.thunder.core;
 
 import com.google.gson.Gson;
-import network.thunder.core.communication.nio.ConnectionManager;
-import network.thunder.core.communication.nio.ConnectionManagerImpl;
-import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
-import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
-import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNOnionHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.ConnectionManager;
+import network.thunder.core.communication.ConnectionManagerImpl;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.helper.events.LNEventHelperImpl;
+import network.thunder.core.communication.layer.ContextFactoryImpl;
+import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.communication.layer.ContextFactory;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
+import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.*;
-import network.thunder.core.mesh.NodeServer;
+import network.thunder.core.helper.wallet.MockWallet;
+import network.thunder.core.communication.ServerObject;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Wallet;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -40,7 +42,7 @@ public class MainClient {
 
         Configuration configuration = new Gson().fromJson(config, Configuration.class);
 
-        NodeServer server = new NodeServer();
+        ServerObject server = new ServerObject();
         server.portServer = configuration.portServer;
         server.hostServer = configuration.hostnameServer;
 //        server.pubKeyServer = ECKey.fromPrivate(Tools.hexStringToByteArray(configuration.serverKey));

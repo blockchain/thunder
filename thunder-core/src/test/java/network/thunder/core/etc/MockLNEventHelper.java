@@ -1,13 +1,13 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventListener;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.helper.events.LNEventListener;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.Payment;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.communication.ClientObject;
 
 /**
  * Created by matsjerratsch on 08/02/2016.
@@ -24,12 +24,12 @@ public class MockLNEventHelper implements LNEventHelper {
     }
 
     @Override
-    public void onConnectionOpened (NodeClient node) {
+    public void onConnectionOpened (ClientObject node) {
 
     }
 
     @Override
-    public void onConnectionClosed (NodeClient node) {
+    public void onConnectionClosed (ClientObject node) {
 
     }
 

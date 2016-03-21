@@ -20,9 +20,9 @@ import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import network.thunder.core.communication.nio.handler.ChannelInit;
-import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
-import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.ChannelInit;
+import network.thunder.core.communication.layer.ContextFactory;
 
 /**
  */
@@ -38,7 +38,7 @@ public final class P2PClient {
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void connectTo (NodeClient node) {
+    public void connectTo (ClientObject node) {
         new Thread(new Runnable() {
             @Override
             public void run () {
@@ -64,11 +64,11 @@ public final class P2PClient {
 
     }
 
-    public void connectBlocking (NodeClient node) {
+    public void connectBlocking (ClientObject node) {
         connect(node);
     }
 
-    private void connect (NodeClient node) {
+    private void connect (ClientObject node) {
         try {
             System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
 

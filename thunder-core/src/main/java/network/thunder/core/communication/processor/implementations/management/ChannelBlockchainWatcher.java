@@ -1,12 +1,12 @@
 package network.thunder.core.communication.processor.implementations.management;
 
-import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.ChannelManager;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.OnBlockCommand;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.OnTxCommand;
-import network.thunder.core.communication.processor.implementations.LNEstablishProcessorImpl;
-import network.thunder.core.communication.processor.interfaces.LNEstablishProcessor;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
+import network.thunder.core.communication.layer.high.channel.ChannelManager;
+import network.thunder.core.helper.blockchain.OnBlockCommand;
+import network.thunder.core.helper.blockchain.OnTxCommand;
+import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessorImpl;
+import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessor;
+import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionInput;
 

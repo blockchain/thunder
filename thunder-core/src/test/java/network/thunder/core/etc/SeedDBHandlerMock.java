@@ -1,9 +1,9 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
-import network.thunder.core.communication.processor.interfaces.PeerSeedProcessor;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessor;
 
 import java.util.ArrayList;
 import java.util.List;

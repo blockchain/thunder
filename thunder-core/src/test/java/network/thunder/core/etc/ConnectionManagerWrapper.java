@@ -1,6 +1,6 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.nio.ConnectionManager;
+import network.thunder.core.communication.ConnectionManager;
 import network.thunder.core.database.DBHandler;
 import org.bitcoinj.core.Wallet;
 

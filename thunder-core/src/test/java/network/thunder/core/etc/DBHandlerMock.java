@@ -1,13 +1,13 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.lightning.RevocationHash;
 
 import java.util.List;
 

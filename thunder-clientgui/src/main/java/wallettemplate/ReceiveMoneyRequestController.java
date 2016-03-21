@@ -15,7 +15,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 
 import java.awt.*;

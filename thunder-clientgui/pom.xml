@@ -71,7 +71,7 @@
         <dependency>
             <groupId>network.thunder</groupId>
             <artifactId>thunder-core</artifactId>
-            <version>0.0.1</version>
+            <version>0.1</version>
         </dependency>
         <dependency>
             <groupId>com.h2database</groupId>

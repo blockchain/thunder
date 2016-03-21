@@ -1,22 +1,26 @@
 package network.thunder.core;
 
-import network.thunder.core.communication.nio.ConnectionManager;
-import network.thunder.core.communication.nio.ConnectionManagerImpl;
-import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.factories.ContextFactoryImpl;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.OnionObject;
-import network.thunder.core.communication.objects.messages.impl.results.FailureResult;
-import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
-import network.thunder.core.communication.objects.messages.interfaces.factories.ContextFactory;
-import network.thunder.core.communication.objects.messages.interfaces.helper.*;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommand;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
+import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.LNRoutingHelper;
+import network.thunder.core.communication.ConnectionManager;
+import network.thunder.core.communication.ConnectionManagerImpl;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.helper.events.LNEventHelperImpl;
+import network.thunder.core.communication.layer.ContextFactoryImpl;
+import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.helper.callback.results.FailureResult;
+import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.communication.layer.ContextFactory;
+import network.thunder.core.helper.callback.ResultCommand;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.LNConfiguration;
-import network.thunder.core.mesh.NodeServer;
+import network.thunder.core.helper.events.LNEventListener;
+import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.ServerObject;
 import org.bitcoinj.core.Wallet;
 
 import java.util.Arrays;
@@ -29,7 +33,7 @@ public class ThunderContext {
 
     Wallet wallet;
     DBHandler dbHandler;
-    NodeServer node;
+    ServerObject node;
 
     LNEventHelper eventHelper;
     ContextFactory contextFactory;
@@ -38,7 +42,7 @@ public class ThunderContext {
 
     LNConfiguration configuration = new LNConfiguration();
 
-    public ThunderContext (Wallet wallet, DBHandler dbHandler, NodeServer node) {
+    public ThunderContext (Wallet wallet, DBHandler dbHandler, ServerObject node) {
         this.wallet = wallet;
         this.dbHandler = dbHandler;
         this.node = node;

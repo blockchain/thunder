@@ -1,14 +1,14 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.lightning.subobjects.ChannelStatus;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentAMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentBMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentCMessage;
-import network.thunder.core.communication.objects.messages.impl.message.lnpayment.LNPaymentDMessage;
-import network.thunder.core.communication.objects.messages.interfaces.factories.LNPaymentMessageFactory;
-import network.thunder.core.communication.objects.messages.interfaces.message.lnpayment.LNPayment;
-import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentLogic;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.communication.layer.high.ChannelStatus;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentAMessage;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentDMessage;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
+import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
+import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
+import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;

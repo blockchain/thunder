@@ -2,12 +2,12 @@ package network.thunder.core.database;
 
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.ChannelStatusObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.P2PDataObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyChannelObject;
-import network.thunder.core.communication.objects.messages.impl.message.gossip.objects.PubkeyIPObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.mesh.NodeClient;
+import network.thunder.core.communication.ClientObject;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -430,9 +430,9 @@ public class DatabaseHandler {
      * @return the active channels
      * @throws SQLException the SQL exception
      */
-    public static ArrayList<NodeClient> getNodesWithOpenChanels (Connection conn) throws SQLException {
+    public static ArrayList<ClientObject> getNodesWithOpenChanels (Connection conn) throws SQLException {
         PreparedStatement stmt = null;
-        ArrayList<NodeClient> channelList = new ArrayList<>();
+        ArrayList<ClientObject> channelList = new ArrayList<>();
         try {
             stmt = conn.prepareStatement("SELECT nodes.host, nodes.port FROM nodes, channels WHERE channels.is_ready=1 AND node.id=channels.nodeid");
 
@@ -443,7 +443,7 @@ public class DatabaseHandler {
             }
 
             while (!result.isAfterLast()) {
-                NodeClient node = new NodeClient(result);
+                ClientObject node = new ClientObject(result);
                 channelList.add(node);
                 result.next();
             }

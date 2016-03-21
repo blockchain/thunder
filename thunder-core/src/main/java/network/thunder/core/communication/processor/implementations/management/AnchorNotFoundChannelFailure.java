@@ -1,9 +1,9 @@
 package network.thunder.core.communication.processor.implementations.management;
 
-import network.thunder.core.communication.objects.messages.interfaces.helper.BlockchainHelper;
-import network.thunder.core.communication.objects.messages.interfaces.helper.ChannelManager;
-import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ChannelFailureAction;
-import network.thunder.core.database.objects.Channel;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
+import network.thunder.core.communication.layer.high.channel.ChannelManager;
+import network.thunder.core.helper.blockchain.ChannelFailureAction;
+import network.thunder.core.communication.layer.high.Channel;
 
 public class AnchorNotFoundChannelFailure implements ChannelFailureAction {
 

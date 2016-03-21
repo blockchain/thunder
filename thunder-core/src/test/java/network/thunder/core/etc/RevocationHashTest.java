@@ -1,6 +1,6 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.lightning.RevocationHash;
+import network.thunder.core.communication.layer.high.RevocationHash;
 import org.junit.Test;
 
 import java.util.Random;

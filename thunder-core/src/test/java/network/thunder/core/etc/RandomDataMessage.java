@@ -1,6 +1,6 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.Message;
+import network.thunder.core.communication.layer.Message;
 
 import java.util.Arrays;
 import java.util.Random;

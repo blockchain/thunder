@@ -1,9 +1,9 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.objects.lightning.subobjects.PaymentData;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNPaymentHelper;
-import network.thunder.core.communication.objects.subobjects.PaymentSecret;
-import network.thunder.core.communication.processor.interfaces.lnpayment.LNPaymentProcessor;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.LNPaymentProcessor;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 
 /**
  * Created by matsjerratsch on 03/02/2016.

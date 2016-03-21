@@ -9,12 +9,12 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import network.thunder.core.ThunderContext;
-import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.InMemoryDBHandler;
-import network.thunder.core.etc.MockWallet;
-import network.thunder.core.mesh.NodeServer;
+import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.NetworkParameters;
 import org.bitcoinj.core.Wallet;
 import org.bitcoinj.kits.WalletAppKit;
@@ -40,7 +40,7 @@ public class Main extends Application {
 
     public static ThunderContext thunderContext;
     public static DBHandler dbHandler = new InMemoryDBHandler();
-    public static NodeServer node = new NodeServer();
+    public static ServerObject node = new ServerObject();
 
     private StackPane uiStack;
     private Pane mainUI;
@@ -92,7 +92,6 @@ public class Main extends Application {
 
         mainWindow.show();
         controller.onBitcoinSetup();
-
 
         thunderContext.startUp(new NullResultCommand());
 

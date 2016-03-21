@@ -1,5 +1,6 @@
 package network.thunder.core.etc;
 
+import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
