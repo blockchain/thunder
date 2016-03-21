@@ -5,7 +5,6 @@
 P2P Software to send Off-Chain Bitcoin Payments
 
 Based on the idea of lightning.network[1], it will allow to let anyone send money anonymously and instantly. 
-See [thunder.network](http://thunder.network) for further information and a preliminary version that runs against a central server. 
 
 This is software in alpha status, don't even think about using it in production with real bitcoin.
 
@@ -78,7 +77,11 @@ thunder.network uses a commitment-transaction design that needs both, CSV and Se
 
 ### Dual-TX Approach
 
-thunder.network implemented a commit-transaction design where each payment pays to a 2-of-2 multisig + R || TIMEOUT first. Both parties than create an additional revocable transaction paying to the correct receiver. While this adds additional complexity and makes on-chain resolvement more expensive, it allows for decoupling the revocation delay from the refund timespan, which otherwise would not be possible.[1]
+thunder.network implemented a commit-transaction design where each payment pays to a 2-of-2 multisig + R || TIMEOUT first. Both parties than create an additional revocable transaction paying to the correct receiver. While this adds additional complexity and makes on-chain resolvement more expensive, it allows for decoupling the revocation delay from the refund timespan, which otherwise would not be possible.
+
+In the diagram below, A is receiving a payment from B. If he wants to accept the payment, he has to produce R within 5 days, or otherwise the payment is not enforcable anymore. Regardless of that, B can always claim even that payment for another 30d if A cheated and broadcasted a revoked transaction.
+
+![Dual TX Commitment Design](https://github.com/matsjj/thundernetwork/blob/master/docs/dual-tx-diagram.png)
 
 ### Anchor
 
@@ -89,7 +92,7 @@ Both parties will likely create the funding transaction together, sending a half
 
 ### Optimizations
 
-As this is still a prototype, various optimizations are left open for now, as they would hinder the active development that is going on. For example JSON was chosen to serialize messages, as Gson allows for very prototype-friendly development.
+As this is still a prototype, various optimizations are left open for now, as they would hinder the active development that is going on. For example JSON was chosen to serialize messages, as Gson allows for very prototype-friendly development, even though it 3-5 folds message size.
 
 
 
