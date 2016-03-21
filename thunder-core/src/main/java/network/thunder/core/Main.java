@@ -1,32 +1,49 @@
 package network.thunder.core;
 
 import com.google.gson.Gson;
-import network.thunder.core.communication.objects.messages.impl.LNEventHelperImpl;
-import network.thunder.core.communication.objects.messages.impl.results.NullResultCommand;
-import network.thunder.core.communication.objects.messages.interfaces.helper.LNEventHelper;
+import network.thunder.core.communication.objects.messages.interfaces.helper.etc.ResultCommandExt;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.objects.Channel;
 import network.thunder.core.etc.*;
 import network.thunder.core.mesh.NodeServer;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Wallet;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by matsjerratsch on 11/02/2016.
  */
 public class Main {
 
+    static final String CONFIG_FILE = "config.json";
+
     public static void main (String[] args) throws Exception {
-        String config = readFile("config.json", Charset.defaultCharset());
-
-        Configuration configuration = new Gson().fromJson(config, Configuration.class);
-
+        boolean newConfiguration = false;
+        Configuration configuration;
+        try {
+            String config = readFile(CONFIG_FILE, Charset.defaultCharset());
+            configuration = new Gson().fromJson(config, Configuration.class);
+        } catch (Exception e) {
+            //No configuration supplied - lets create a new one..
+            configuration = new Configuration();
+            configuration.portServer = 10000;
+            //Use external IP for now as a hack..
+            configuration.hostnameServer = getExternalIP();
+            configuration.serverKey = Tools.bytesToHex(new ECKey().getPrivKeyBytes());
+            newConfiguration = true;
+        }
         NodeServer server = new NodeServer();
         server.portServer = configuration.portServer;
         server.hostServer = configuration.hostnameServer;
@@ -40,31 +57,55 @@ public class Main {
         DBHandler dbHandler = new InMemoryDBHandler();
         Wallet wallet = new MockWallet(Constants.getNetwork());
 
-        LNEventHelper eventHelper = new LNEventHelperImpl();
-
         ThunderContext context = new ThunderContext(wallet, dbHandler, server);
 
-        context.startListening(new NullResultCommand());
+        ResultCommandExt listener = new ResultCommandExt();
+        context.startListening(listener);
+        listener.await();
 
-        Thread.sleep(1000);
-
-        final boolean[] successful = {false};
-        while (!successful[0]) {
-            context.fetchNetworkIPs(result -> successful[0] = result.wasSuccessful());
-            Thread.sleep(30000);
+        boolean successful = false;
+        while (!successful) {
+            ResultCommandExt fetchNetworkListener = new ResultCommandExt();
+            context.fetchNetworkIPs(fetchNetworkListener);
+            successful = fetchNetworkListener.await().wasSuccessful();
         }
-        Thread.sleep(2000);
 
-        for (String s : configuration.nodesToBuildChannelWith) {
-            byte[] nodeKey = Tools.hexStringToByteArray(s);
-            context.openChannel(nodeKey, new NullResultCommand());
-            Thread.sleep(1000);
+        ResultCommandExt buildChannelListener = new ResultCommandExt();
+        if (configuration.nodesToBuildChannelWith.size() == 0) {
+            context.createRandomChannels(buildChannelListener);
+            buildChannelListener.await(30, TimeUnit.SECONDS);
+        } else {
+            for (String s : configuration.nodesToBuildChannelWith) {
+                buildChannelListener = new ResultCommandExt();
+                byte[] nodeKey = Tools.hexStringToByteArray(s);
+                context.openChannel(nodeKey, buildChannelListener);
+                buildChannelListener.await(10, TimeUnit.SECONDS);
+            }
+        }
+
+        if (newConfiguration) {
+            List<Channel> openChannel = dbHandler.getOpenChannel();
+            for (Channel channel : openChannel) {
+                configuration.nodesToBuildChannelWith.add(Tools.bytesToHex(channel.nodeId));
+            }
+            Path file = Paths.get(CONFIG_FILE);
+            String config = new Gson().toJson(configuration);
+            System.out.println(config);
+            Files.write(file, config.getBytes(), StandardOpenOption.CREATE_NEW);
         }
 
         while (true) {
-            Thread.sleep(100000);
+            Thread.sleep(1000);
         }
 
+    }
+
+    static String getExternalIP () throws IOException {
+        URL whatismyip = new URL("http://checkip.amazonaws.com");
+        BufferedReader in = new BufferedReader(new InputStreamReader(
+                whatismyip.openStream()));
+
+        return in.readLine();
     }
 
     static String readFile (String path, Charset encoding)
