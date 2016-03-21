@@ -28,6 +28,8 @@ import org.bitcoinj.params.TestNet3Params;
  */
 public class Constants {
 
+    public static final int STANDARD_PORT = 2204;
+
     public static final int ESCAPE_REVOCATION_TIME = 24 * 60 * 60 / 10 * 60; //In blocks..
 
     /**
