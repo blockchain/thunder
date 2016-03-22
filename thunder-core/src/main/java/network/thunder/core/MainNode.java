@@ -1,13 +1,15 @@
 package network.thunder.core;
 
 import com.google.gson.Gson;
-import network.thunder.core.helper.callback.ResultCommandExt;
-import network.thunder.core.database.DBHandler;
-import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.database.InMemoryDBHandler;
-import network.thunder.core.etc.*;
-import network.thunder.core.helper.wallet.MockWallet;
 import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.etc.Configuration;
+import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.ResultCommandExt;
+import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Wallet;
 
@@ -70,6 +72,7 @@ public class MainNode {
             ResultCommandExt fetchNetworkListener = new ResultCommandExt();
             context.fetchNetworkIPs(fetchNetworkListener);
             successful = fetchNetworkListener.await().wasSuccessful();
+            Thread.sleep(5000);
         }
 
         ResultCommandExt buildChannelListener = new ResultCommandExt();
