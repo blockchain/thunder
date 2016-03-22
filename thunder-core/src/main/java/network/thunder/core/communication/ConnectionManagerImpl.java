@@ -2,18 +2,18 @@ package network.thunder.core.communication;
 
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.communication.nio.P2PClient;
 import network.thunder.core.communication.nio.P2PServer;
-import network.thunder.core.etc.SeedNodes;
 import network.thunder.core.communication.processor.ConnectionIntent;
-import network.thunder.core.helper.callback.results.*;
-import network.thunder.core.helper.events.LNEventHelperImpl;
-import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
-import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.helper.callback.ResultCommand;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.SeedNodes;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.ResultCommand;
+import network.thunder.core.helper.callback.results.*;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.helper.events.LNEventHelperImpl;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Wallet;
 
@@ -212,32 +212,31 @@ public class ConnectionManagerImpl implements ConnectionManager {
         }).start();
     }
 
+    //TODO: Right now we are blindly and fully syncing with 4 random nodes. Let this be a more distributed process, when data grows
     private void startSyncingBlocking (ResultCommand callback) {
         SynchronizationHelper synchronizationHelper = contextFactory.getSyncHelper();
         List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
         List<PubkeyIPObject> alreadyFetched = new ArrayList<>();
         List<PubkeyIPObject> seedNodes = SeedNodes.getSeedNodes();
         ipList.addAll(seedNodes);
-        while (!synchronizationHelper.fullySynchronized()) {
+        int amountOfNodesToSyncFrom = 3;
+        int totalSyncs = 0;
+        while (totalSyncs < amountOfNodesToSyncFrom) {
+            synchronizationHelper.resync();
+            ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
+            ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
 
-            try {
-                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
-                ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
-
-                if (ipList.size() == 0) {
-                    callback.execute(new NoSyncResult());
-                    return;
-                }
-
-                PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
-                ClientObject client = ipObjectToNode(randomNode, GET_SYNC_DATA);
-                connectBlocking(client);
-                alreadyFetched.add(randomNode);
-
-                ipList = dbHandler.getIPObjects();
-            } catch (Exception e) {
-                e.printStackTrace();
+            if (ipList.size() == 0) {
+                callback.execute(new NoSyncResult());
+                return;
             }
+
+            PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
+            ClientObject client = ipObjectToNode(randomNode, GET_SYNC_DATA);
+            connectBlocking(client);
+            alreadyFetched.add(randomNode);
+            totalSyncs++;
+            ipList = dbHandler.getIPObjects();
         }
         callback.execute(new SyncSuccessResult());
     }
