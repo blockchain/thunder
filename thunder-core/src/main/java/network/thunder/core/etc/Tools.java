@@ -18,6 +18,7 @@
  */
 package network.thunder.core.etc;
 
+import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
@@ -33,10 +34,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 /**
  * The Class Tools.
@@ -47,6 +45,50 @@ public class Tools {
 
     public static int getRandom (int min, int max) {
         return new Random().nextInt(max + 1 - min) + min;
+    }
+
+    public static Transaction applyBIP69 (Transaction transaction) {
+        //This will render an already signed transaction invalid, as the signature covers the ordering of the in/outputs.
+
+        List<TransactionInput> inputList = new ArrayList<>(transaction.getInputs());
+        List<TransactionOutput> outputList = new ArrayList<>(transaction.getOutputs());
+
+        inputList.sort(new Comparator<TransactionInput>() {
+            @Override
+            public int compare (TransactionInput o1, TransactionInput o2) {
+                byte[] hash1 = o1.getOutpoint().getHash().getBytes();
+                byte[] hash2 = o2.getOutpoint().getHash().getBytes();
+                int hashCompare = UnsignedBytes.lexicographicalComparator().compare(hash1, hash2);
+                if (hashCompare != 0) {
+                    return hashCompare;
+                } else {
+                    return (int) (o1.getOutpoint().getIndex() - o2.getOutpoint().getIndex());
+                }
+            }
+        });
+
+        outputList.sort(new Comparator<TransactionOutput>() {
+            @Override
+            public int compare (TransactionOutput o1, TransactionOutput o2) {
+                long amountDiff = o1.getValue().getValue() - o2.getValue().value;
+                if (amountDiff != 0) {
+                    return (int) amountDiff;
+                } else {
+                    byte[] hash1 = o1.getScriptBytes();
+                    byte[] hash2 = o2.getScriptBytes();
+                    return UnsignedBytes.lexicographicalComparator().compare(hash1, hash2);
+                }
+            }
+        });
+
+        Transaction sortedTransaction = new Transaction(Constants.getNetwork());
+        for (TransactionInput input : inputList) {
+            sortedTransaction.addInput(input);
+        }
+        for (TransactionOutput output : outputList) {
+            sortedTransaction.addOutput(output);
+        }
+        return sortedTransaction;
     }
 
     public static String InputStreamToString (InputStream in) {
