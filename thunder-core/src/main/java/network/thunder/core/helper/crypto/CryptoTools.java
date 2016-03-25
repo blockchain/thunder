@@ -65,15 +65,7 @@ public class CryptoTools {
     }
 
     public static byte[] decryptAES_CTR (byte[] data, byte[] keyBytes, byte[] ivBytes, long counter) {
-
         try {
-
-//			byte[] keyBytes = new byte[]{(byte) 0x36, (byte) 0xf1, (byte) 0x83, (byte) 0x57, (byte) 0xbe, (byte) 0x4d, (byte) 0xbd, (byte) 0x77, (byte) 0xf0,
-//					(byte) 0x50, (byte) 0x51, (byte) 0x5c, 0x73, (byte) 0xfc, (byte) 0xf9, (byte) 0xf2};
-
-//			byte[] ivBytes = new byte[]{(byte) 0x69, (byte) 0xdd, (byte) 0xa8, (byte) 0x45, (byte) 0x5c, (byte) 0x7d, (byte) 0xd4, (byte) 0x25, (byte) 0x4b,
-//					(byte) 0xf3, (byte) 0x53, (byte) 0xb7, (byte) 0x73, (byte) 0x30, (byte) 0x4e, (byte) 0xec};
-
             byte[] ivWithCounter = new byte[16];
             System.arraycopy(ivBytes, 0, ivWithCounter, 0, ivBytes.length);
             byte[] counterBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(counter).array();
@@ -87,13 +79,8 @@ public class CryptoTools {
             Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 
             cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] plain = cipher.doFinal(data);
 
-            String plaintext = new String(plain);
-//			System.out.println("plaintext: " + plaintext);
-
-            return plain;
-
+            return cipher.doFinal(data);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -102,35 +89,20 @@ public class CryptoTools {
     public static byte[] encryptAES_CTR (byte[] data, byte[] keyBytes, byte[] ivBytes, long counter) {
 
         try {
-
-//			byte[] keyBytes = new byte[]{(byte) 0x36, (byte) 0xf1, (byte) 0x83, (byte) 0x57, (byte) 0xbe, (byte) 0x4d, (byte) 0xbd, (byte) 0x77, (byte) 0xf0,
-//					(byte) 0x50, (byte) 0x51, (byte) 0x5c, 0x73, (byte) 0xfc, (byte) 0xf9, (byte) 0xf2};
-
-//			byte[] ivBytes = new byte[]{(byte) 0x69, (byte) 0xdd, (byte) 0xa8, (byte) 0x45, (byte) 0x5c, (byte) 0x7d, (byte) 0xd4, (byte) 0x25, (byte) 0x4b,
-//					(byte) 0xf3, (byte) 0x53, (byte) 0xb7, (byte) 0x73, (byte) 0x30, (byte) 0x4e, (byte) 0xec};
-
             byte[] ivWithCounter = new byte[16];
             System.arraycopy(ivBytes, 0, ivWithCounter, 0, ivBytes.length);
             byte[] counterBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).putLong(counter).array();
             System.arraycopy(counterBytes, 0, ivWithCounter, ivBytes.length, counterBytes.length);
 
             //Initialisation
-//			System.out.println(keyBytes.length);
             SecretKeySpec key = new SecretKeySpec(keyBytes, "AES");
             IvParameterSpec ivSpec = new IvParameterSpec(ivWithCounter);
-
-//			System.out.println(key);
 
             //Mode
             Cipher cipher = Cipher.getInstance("AES/CTR/NoPadding");
 
             cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-            byte[] original = cipher.doFinal(data);
-
-            String plaintext = new String(original);
-//			System.out.println("plaintext: " + plaintext);
-
-            return original;
+            return cipher.doFinal(data);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
