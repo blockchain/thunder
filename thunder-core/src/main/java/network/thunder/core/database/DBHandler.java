@@ -1,12 +1,13 @@
 package network.thunder.core.database;
 
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.communication.layer.high.RevocationHash;
+import org.bitcoinj.core.ECKey;
 
 import java.util.List;
 
@@ -39,9 +40,11 @@ public interface DBHandler {
 
     boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
 
-    Channel getChannel (byte[] nodeKey);
+    Channel getChannel (int id);
 
-    void saveChannel (Channel channel);
+    List<Channel> getChannel (ECKey nodeKey);
+
+    int saveChannel (Channel channel);
 
     void updateChannel (Channel channel);
 

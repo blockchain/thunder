@@ -1,13 +1,14 @@
 package network.thunder.core.etc;
 
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
+import org.bitcoinj.core.ECKey;
 
 import java.util.List;
 
@@ -71,13 +72,18 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public Channel getChannel (byte[] nodeKey) {
+    public Channel getChannel (int id) {
         return null;
     }
 
     @Override
-    public void saveChannel (Channel channel) {
+    public List<Channel> getChannel (ECKey nodeKey) {
+        return null;
+    }
 
+    @Override
+    public int saveChannel (Channel channel) {
+        return 0;
     }
 
     @Override

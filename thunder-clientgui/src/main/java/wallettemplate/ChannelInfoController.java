@@ -73,7 +73,7 @@ public class ChannelInfoController {
         assert cancelBtn != null : "fx:id=\"cancelBtn\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert cancelBtn1 != null : "fx:id=\"cancelBtn1\" was not injected: check your FXML file 'channel_info.fxml'.";
 
-        Channel channel = Main.dbHandler.getChannel(null);
+        Channel channel = Main.dbHandler.getChannel(0);
 
         balanceClient.setText(Coin.valueOf(channel.channelStatus.amountClient).toFriendlyString());
         balanceServer.setText(Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString());

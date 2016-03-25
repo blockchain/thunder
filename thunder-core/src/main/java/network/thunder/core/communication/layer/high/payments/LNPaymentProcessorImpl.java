@@ -1,5 +1,6 @@
 package network.thunder.core.communication.layer.high.payments;
 
+import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.MessageExecutor;
@@ -438,7 +439,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        channel = dbHandler.getChannel(node.pubKeyClient.getPubKey());
+        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
+        Preconditions.checkArgument(openChannel.size() > 0);
+
+        this.channel = openChannel.get(0);
         paymentLogic.initialise(channel);
 
         this.messageExecutor = messageExecutor;

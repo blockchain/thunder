@@ -1,17 +1,19 @@
 package network.thunder.core.database;
 
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
-import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.etc.Tools;
+import org.bitcoinj.core.ECKey;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Created by matsjerratsch on 04/12/2015.
@@ -164,18 +166,25 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public Channel getChannel (byte[] nodeKey) {
-        for (Channel channel : channelList) {
-            if (Arrays.equals(channel.nodeId, nodeKey)) {
-                return channel;
-            }
+    public Channel getChannel (int id) {
+        Optional<Channel> optional = channelList.stream().findAny().filter(channel1 -> channel1.id == id);
+        if (optional.isPresent()) {
+            return optional.get();
+        } else {
+            throw new RuntimeException("Channel not found..");
         }
-        return null;
     }
 
     @Override
-    public void saveChannel (Channel channel) {
+    public List<Channel> getChannel (ECKey nodeKey) {
+        return channelList.stream().filter(channel1 -> Arrays.equals(channel1.nodeId, nodeKey.getPubKey())).collect(Collectors.toList());
+    }
+
+    @Override
+    public int saveChannel (Channel channel) {
+        channel.id = this.channelList.size();
         this.channelList.add(channel);
+        return channel.id;
     }
 
     @Override

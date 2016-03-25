@@ -1,5 +1,6 @@
 package network.thunder.core.communication.layer.high.channel.close;
 
+import com.google.common.base.Preconditions;
 import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
@@ -56,6 +57,8 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
 
     boolean isBlocked = false;
     boolean weRequestedClose = false;
+
+    int channelIdToClose;
 
     public LNCloseProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, ClientObject node) {
         this.messageFactory = contextFactory.getLNCloseMessageFactory();
@@ -151,10 +154,11 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     @Override
-    public void closeChannel (ResultCommand callback) {
+    public void closeChannel (int id, ResultCommand callback) {
         //Before we do anything, make sure we lock the channel and don't accept any new payments anymore..
         //TODO lock the channel
         this.callback = callback;
+        this.channelIdToClose = id;
         isBlocked = true;
         weRequestedClose = true;
         channel.phase = CLOSE_REQUESTED_SERVER;
@@ -184,7 +188,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     private Channel getChannel () {
-        return dbHandler.getChannel(node.pubKeyClient.getPubKey());
+        return dbHandler.getChannel(channelIdToClose);
     }
 
     @Override
@@ -208,7 +212,11 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        channel = getChannel();
+        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
+        Preconditions.checkArgument(openChannel.size() > 0);
+
+        this.channel = openChannel.get(0);
+        this.channelIdToClose = channel.id;
 
         this.messageExecutor = messageExecutor;
         this.channelManager.addCloseProcessor(this, channel);

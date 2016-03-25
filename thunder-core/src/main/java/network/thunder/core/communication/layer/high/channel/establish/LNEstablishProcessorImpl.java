@@ -22,6 +22,7 @@ import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -87,7 +88,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public void onLayerActive (MessageExecutor messageExecutor) {
         //TODO check for existing channels, check if we are still waiting for them to gather enough confirmations, ...
         this.messageExecutor = messageExecutor;
-        if (dbHandler.getChannel(node.pubKeyClient.getPubKey()) != null) {
+        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
+        if (openChannel.size() > 0) {
             messageExecutor.sendNextLayerActive();
         } else {
             if (!node.isServer) {

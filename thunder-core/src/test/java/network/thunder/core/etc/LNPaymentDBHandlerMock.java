@@ -5,6 +5,7 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.database.objects.PaymentWrapper;
+import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,15 +20,24 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     List<PaymentSecret> secrets = new ArrayList<>();
 
     @Override
-    public Channel getChannel (byte[] node) {
+    public Channel getChannel (int id) {
         Channel channel = new Channel();
-        channel.nodeId = node;
+        channel.id = id;
         channel.channelStatus = new ChannelStatus();
         channel.amountServer = INITIAL_AMOUNT_CHANNEL;
         channel.amountClient = INITIAL_AMOUNT_CHANNEL;
         channel.channelStatus.amountServer = INITIAL_AMOUNT_CHANNEL;
         channel.channelStatus.amountClient = INITIAL_AMOUNT_CHANNEL;
         return channel;
+    }
+
+    @Override
+    public List<Channel> getChannel (ECKey nodeKey) {
+        List<Channel> list = new ArrayList<>();
+        Channel c = getChannel(1);
+        c.nodeId = nodeKey.getPubKey();
+        list.add(c);
+        return list;
     }
 
     @Override

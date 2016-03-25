@@ -59,7 +59,7 @@ public class ChannelManagerImpl implements ChannelManager {
     @Override
     public void closeChannel (Channel channel, ResultCommand callback) {
         if (closeProcessorMap.containsKey(channel)) {
-            closeProcessorMap.get(channel).closeChannel(callback);
+            closeProcessorMap.get(channel).closeChannel(channel.id, callback);
         }
 
     }
