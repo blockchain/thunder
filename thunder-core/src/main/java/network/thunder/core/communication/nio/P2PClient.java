@@ -21,7 +21,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.layer.ChannelInit;
+import network.thunder.core.communication.layer.PipelineInitialiser;
 import network.thunder.core.communication.layer.ContextFactory;
 
 /**
@@ -74,7 +74,7 @@ public final class P2PClient {
 
             EventLoopGroup group = new NioEventLoopGroup();
             Bootstrap b = new Bootstrap();
-            b.group(group).channel(NioSocketChannel.class).handler(new ChannelInit(contextFactory, node));
+            b.group(group).channel(NioSocketChannel.class).handler(new PipelineInitialiser(contextFactory, node));
 
             // Start the connection attempt.
             Channel ch = b.connect(node.host, node.port).sync().channel();

@@ -21,7 +21,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
-import network.thunder.core.communication.layer.ChannelInit;
+import network.thunder.core.communication.layer.PipelineInitialiser;
 import network.thunder.core.communication.layer.ContextFactory;
 
 /**
@@ -46,7 +46,7 @@ public final class P2PServer {
 
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
-                    .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new ChannelInit(contextFactory));
+                    .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new PipelineInitialiser(contextFactory));
 
             System.out.println(b.bind(port).sync().channel());
         } catch (Exception e) {

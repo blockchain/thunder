@@ -38,17 +38,6 @@ public class ConnectionManagerImplTest {
 
         connectionSeed.connectionManager.startListening(new NullResultCommand());
 
-//        clients.get(0).connectionManager.startUp();
-//        for(int i = 1; i<5; ++i) {
-//
-//            System.out.println("------------------------------------------------------------------------------");
-//            System.out.println(i + " started up...");
-//
-//
-//            clients.get(i).connectionManager.startUp();
-//            Thread.sleep(1000);
-//        }
-//
         for (int i = 6; i < 10; ++i) {
 
             System.out.println("------------------------------------------------------------------------------");
@@ -57,17 +46,6 @@ public class ConnectionManagerImplTest {
             clients.get(i).connectionManager.startUp(new NullResultCommand());
             Thread.sleep(500);
         }
-//        }
-//        Thread.sleep(5000);
-//        clients.get(1).connectionManager.startUp();
-//
-//        Thread.sleep(2000);
-//
-//        clients.get(2).connectionManager.startUp();
-//
-//        Thread.sleep(2000);
-//
-//        clients.get(3).connectionManager.startUp();
 
         Thread.sleep(1000);
     }

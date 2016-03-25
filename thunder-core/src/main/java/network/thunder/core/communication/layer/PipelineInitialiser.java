@@ -14,17 +14,17 @@ import network.thunder.core.communication.layer.low.serialisation.MessageSeriali
 /**
  * Created by matsjerratsch on 19/10/2015.
  */
-public class ChannelInit extends ChannelInitializer<SocketChannel> {
+public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
     ClientObject node;
     boolean serverMode = false;
 
-    public ChannelInit (ContextFactory contextFactory) {
+    public PipelineInitialiser (ContextFactory contextFactory) {
         this.contextFactory = contextFactory;
         serverMode = true;
     }
 
-    public ChannelInit (ContextFactory contextFactory, ClientObject node) {
+    public PipelineInitialiser (ContextFactory contextFactory, ClientObject node) {
         this.contextFactory = contextFactory;
         this.node = node;
     }
@@ -68,6 +68,9 @@ public class ChannelInit extends ChannelInitializer<SocketChannel> {
 
         Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));
+
+        Processor lnCloseProcessor = contextFactory.getLNCloseProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(lnCloseProcessor, "LNClose"));
 
         Processor lnPaymentProcessor = contextFactory.getLNPaymentProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnPaymentProcessor, "LNPayment"));
