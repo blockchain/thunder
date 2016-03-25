@@ -1,17 +1,16 @@
 package network.thunder.core.communication.layer.high.payments;
 
 import com.google.common.base.Preconditions;
-import network.thunder.core.communication.layer.high.payments.messages.*;
+import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.messages.*;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.helper.ScriptTools;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.communication.layer.high.RevocationHash;
-import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -97,16 +96,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     public List<TransactionSignature> getChannelSignatures () {
         //The channelTransaction is finished, we just need to produce the signatures..
-        TransactionSignature signature1 = Tools.getSignature(getClientTransaction(), 0, channel.getScriptAnchorOutputClient().getProgram(), channel
-                .getKeyServer());
-        TransactionSignature signature2 = Tools.getSignature(getClientTransaction(), 1, channel.getScriptAnchorOutputServer().getProgram(), channel
-                .getKeyServer());
-
-        List<TransactionSignature> channelSignatures = new ArrayList<>();
-
-        channelSignatures.add(signature1);
-        channelSignatures.add(signature2);
-        return channelSignatures;
+        return Tools.getChannelSignatures(channel, getClientTransaction());
     }
 
     public List<TransactionSignature> getPaymentSignatures () {
@@ -234,7 +224,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
         statusTemp = message.channelStatus.getCloneReversed();
 
-        System.out.println("Check received new status: " + statusTemp);
+        System.out.println("New status: " + statusTemp);
         System.out.println("Old status: " + channel.channelStatus);
 
         checkPaymentsInNewStatus(channel.channelStatus, statusTemp);

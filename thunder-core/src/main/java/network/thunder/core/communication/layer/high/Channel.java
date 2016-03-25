@@ -18,12 +18,12 @@
  */
 package network.thunder.core.communication.layer.high;
 
-import network.thunder.core.helper.wallet.WalletHelper;
+import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.helper.ScriptTools;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.helper.ScriptTools;
+import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -142,6 +142,9 @@ public class Channel {
      */
     public boolean isReady;
 
+    public boolean requestedClose;
+
+
     public ChannelStatus channelStatus;
 
     /*
@@ -151,8 +154,18 @@ public class Channel {
     public TransactionSignature channelSignature2;
     public List<TransactionSignature> paymentSignatures;
 
+    public List<TransactionSignature> closingSignatures;
+
     public void setNodeId (byte[] nodeId) {
         this.nodeId = nodeId;
+    }
+
+    public Script getAnchorScript (Sha256Hash outpoint) {
+        if (outpoint.equals(anchorTxHashClient)) {
+            return getScriptAnchorOutputClient();
+        } else {
+            return getScriptAnchorOutputServer();
+        }
     }
 
     //region Transaction Getter
@@ -898,6 +911,8 @@ public class Channel {
         ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION("12"),
         PAYMENT_REQUESTED("21"),
         UPDATE_REQUESTED("31"),
+        CLOSE_REQUESTED_CLIENT("52"),
+        CLOSE_REQUESTED_SERVER("53"),
         CLOSED("50");
 
         private String value;

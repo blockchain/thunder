@@ -1,12 +1,13 @@
 package network.thunder.core.communication.layer;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
+import network.thunder.core.communication.layer.high.channel.close.LNCloseProcessor;
+import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseMessageFactory;
 import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessor;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactory;
-import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
-import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
-import network.thunder.core.communication.layer.high.payments.LNRoutingHelper;
+import network.thunder.core.communication.layer.high.payments.*;
 import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
 import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessor;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
@@ -14,21 +15,18 @@ import network.thunder.core.communication.layer.low.encryption.EncryptionProcess
 import network.thunder.core.communication.layer.low.encryption.MessageEncrypter;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionMessageFactory;
 import network.thunder.core.communication.layer.low.serialisation.MessageSerializer;
-import network.thunder.core.communication.layer.middle.broadcasting.gossip.GossipProcessor;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.SyncProcessor;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
-import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactory;
-import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessor;
-import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.GossipMessageFactory;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
+import network.thunder.core.communication.layer.middle.broadcasting.gossip.GossipProcessor;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.GossipSubject;
+import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.GossipMessageFactory;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.SyncProcessor;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
-import network.thunder.core.communication.layer.high.payments.LNPaymentProcessor;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
+import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessor;
+import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactory;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
-import network.thunder.core.communication.ServerObject;
 
 /**
  * Created by matsjerratsch on 18/01/2016.
@@ -83,6 +81,10 @@ public interface ContextFactory {
     LNEstablishMessageFactory getLNEstablishMessageFactory ();
 
     LNPaymentMessageFactory getLNPaymentMessageFactory ();
+
+    LNCloseMessageFactory getLNCloseMessageFactory ();
+
+    LNCloseProcessor getLNCloseProcessor (ClientObject node);
 
     LNRoutingHelper getLNRoutingHelper ();
 

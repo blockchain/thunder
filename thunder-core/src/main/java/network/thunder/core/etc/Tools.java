@@ -22,6 +22,7 @@ import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
+import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.Transaction.SigHash;
@@ -89,6 +90,20 @@ public class Tools {
             sortedTransaction.addOutput(output);
         }
         return sortedTransaction;
+    }
+
+    public static List<TransactionSignature> getChannelSignatures (Channel channel, Transaction transaction) {
+        TransactionSignature signature1 = Tools.getSignature(transaction, 0,
+                channel.getAnchorScript(transaction.getInput(0).getOutpoint().getHash()).getProgram(), channel.keyServer);
+        TransactionSignature signature2 = Tools.getSignature(transaction, 1,
+                channel.getAnchorScript(transaction.getInput(1).getOutpoint().getHash()).getProgram(), channel.keyServer);
+
+        List<TransactionSignature> channelSignatures = new ArrayList<>();
+
+        channelSignatures.add(signature1);
+        channelSignatures.add(signature2);
+
+        return channelSignatures;
     }
 
     public static String InputStreamToString (InputStream in) {
@@ -229,6 +244,11 @@ public class Tools {
     public static boolean checkSignature (Transaction transaction, int index, TransactionOutput outputToSpend, ECKey key, byte[] signature) {
         Sha256Hash hash = transaction.hashForSignature(index, outputToSpend.getScriptBytes(), SigHash.ALL, false);
         return key.verify(hash, ECDSASignature.decodeFromDER(signature));
+    }
+
+    public static boolean checkSignature (Transaction transaction, int index, Script outputToSpend, ECKey key, TransactionSignature signature) {
+        Sha256Hash hash = transaction.hashForSignature(index, outputToSpend.getProgram(), SigHash.ALL, false);
+        return key.verify(hash, signature);
     }
 
     /**

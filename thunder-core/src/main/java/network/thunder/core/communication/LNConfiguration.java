@@ -21,9 +21,13 @@ public class LNConfiguration {
     public int DEFAULT_OVERLAY_REFUND = 3;
     public int MAX_OVERLAY_REFUND = 4;
 
+    public float MIN_FEE_PER_BYTE_CLOSING = 2;
+    public float DEFAULT_FEE_PER_BYTE_CLOSING = 5;
+    public float MAX_FEE_PER_BYTE_CLOSING = 10;
+
     public int MAX_DIFF_TIMESTAMPS = 60;
 
-    public int getTimeToReduceWhenRelayingPayment() {
+    public int getTimeToReduceWhenRelayingPayment () {
         return Tools.getRandom(DEFAULT_REFUND_DELAY * DEFAULT_OVERLAY_REFUND, MAX_REFUND_DELAY * MAX_OVERLAY_REFUND);
     }
 }

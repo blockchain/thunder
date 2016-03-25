@@ -1,15 +1,15 @@
 package network.thunder.core.communication.layer.low.authentication;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
+import network.thunder.core.communication.layer.low.authentication.messages.Authentication;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessage;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
-import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.communication.layer.low.authentication.messages.Authentication;
 import network.thunder.core.helper.crypto.CryptoTools;
-import network.thunder.core.communication.ServerObject;
+import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.ECKey;
 
 import java.security.NoSuchAlgorithmException;

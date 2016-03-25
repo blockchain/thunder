@@ -3,6 +3,9 @@ package network.thunder.core.communication.layer;
 import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.ChannelManagerImpl;
+import network.thunder.core.communication.layer.high.channel.close.LNCloseProcessor;
+import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseMessageFactory;
+import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseMessageFactoryImpl;
 import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessor;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactory;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactoryImpl;
@@ -208,6 +211,16 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public LNPaymentMessageFactory getLNPaymentMessageFactory () {
         return new LNPaymentMessageFactoryImpl(dbHandler);
+    }
+
+    @Override
+    public LNCloseMessageFactory getLNCloseMessageFactory () {
+        return new LNCloseMessageFactoryImpl();
+    }
+
+    @Override
+    public LNCloseProcessor getLNCloseProcessor (ClientObject node) {
+        return new network.thunder.core.communication.layer.high.channel.close.LNCloseProcessorImpl(this, dbHandler, node);
     }
 
     @Override

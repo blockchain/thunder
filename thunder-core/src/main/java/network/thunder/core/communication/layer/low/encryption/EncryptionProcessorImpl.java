@@ -1,11 +1,11 @@
 package network.thunder.core.communication.layer.low.encryption;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptedMessage;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionInitialMessage;
-import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionMessageFactory;
 import network.thunder.core.helper.crypto.ECDH;
 import org.bitcoinj.core.ECKey;
@@ -14,7 +14,7 @@ import org.bitcoinj.core.ECKey;
  * Created by matsjerratsch on 29/11/2015.
  */
 public class EncryptionProcessorImpl extends EncryptionProcessor {
-    public static final boolean OUTPUT_MESSAGE = true;
+    public static final boolean OUTPUT_MESSAGE = false;
     EncryptionMessageFactory messageFactory;
     MessageEncrypter messageEncrypter;
     ClientObject node;
