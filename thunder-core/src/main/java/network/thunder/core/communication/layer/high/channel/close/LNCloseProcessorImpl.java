@@ -162,6 +162,9 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         dbHandler.updateChannel(channel);
 
         calculateAndSendCloseMessage();
+
+        //TODO add some scheduler to check if we got an response within X minutes, do something about it
+        //      if the other party is just plain unresponsive
     }
 
     private void calculateAndSendCloseMessage () {
@@ -254,6 +257,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     private void onChannelClose () {
+        eventHelper.onChannelClosed(channel);
         callback.execute(new SuccessResult());
         channelManager.onChannelClosed(channel);
     }
