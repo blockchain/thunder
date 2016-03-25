@@ -260,7 +260,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
         node.isServer = false;
         node.intent = intent;
         node.pubKeyClient = ECKey.fromPublicOnly(ipObject.pubkey);
-        node.host = ipObject.IP;
+        node.host = ipObject.hostname;
         node.port = ipObject.port;
         return node;
     }

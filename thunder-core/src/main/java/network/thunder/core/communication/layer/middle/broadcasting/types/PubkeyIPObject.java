@@ -16,7 +16,7 @@ import java.util.*;
  * Created by matsjerratsch on 19/10/2015.
  */
 public class PubkeyIPObject extends P2PDataObject {
-    public String IP;
+    public String hostname;
     public int port;
     public byte[] pubkey;
     public byte[] signature;
@@ -26,7 +26,7 @@ public class PubkeyIPObject extends P2PDataObject {
     }
 
     public PubkeyIPObject (ResultSet set) throws SQLException {
-        this.IP = set.getString("host");
+        this.hostname = set.getString("host");
         this.port = set.getInt("port");
         this.timestamp = set.getInt("timestamp");
         this.signature = set.getBytes("signature");
@@ -38,7 +38,7 @@ public class PubkeyIPObject extends P2PDataObject {
 
         Random random = new Random();
 
-        obj.IP = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
+        obj.hostname = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
 
         obj.pubkey = Tools.getRandomByte(33);
         obj.timestamp = Tools.currentTime();
@@ -66,7 +66,7 @@ public class PubkeyIPObject extends P2PDataObject {
         if (timestamp != ipObject.timestamp) {
             return false;
         }
-        if (IP != null ? !IP.equals(ipObject.IP) : ipObject.IP != null) {
+        if (hostname != null ? !hostname.equals(ipObject.hostname) : ipObject.hostname != null) {
             return false;
         }
         if (!Arrays.equals(pubkey, ipObject.pubkey)) {
@@ -79,9 +79,9 @@ public class PubkeyIPObject extends P2PDataObject {
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(IP.length() + 4 + 4 + pubkey.length + signature.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(hostname.length() + 4 + 4 + pubkey.length + signature.length);
         try {
-            byteBuffer.put(IP.getBytes("UTF-8"));
+            byteBuffer.put(hostname.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -98,8 +98,8 @@ public class PubkeyIPObject extends P2PDataObject {
     }
 
     public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
-        ByteBuffer buffer = ByteBuffer.allocate(IP.getBytes("UTF-8").length + 2 + pubkey.length + 4);
-        buffer.put(IP.getBytes("UTF-8"));
+        ByteBuffer buffer = ByteBuffer.allocate(hostname.getBytes("UTF-8").length + 2 + pubkey.length + 4);
+        buffer.put(hostname.getBytes("UTF-8"));
         buffer.putShort((short) port);
         buffer.put(pubkey);
         buffer.putInt(timestamp);
@@ -116,7 +116,7 @@ public class PubkeyIPObject extends P2PDataObject {
 
     @Override
     public int hashCode () {
-        int result = IP != null ? IP.hashCode() : 0;
+        int result = hostname != null ? hostname.hashCode() : 0;
         result = 31 * result + port;
         result = 31 * result + (pubkey != null ? Arrays.hashCode(pubkey) : 0);
         result = 31 * result + (signature != null ? Arrays.hashCode(signature) : 0);
@@ -140,7 +140,7 @@ public class PubkeyIPObject extends P2PDataObject {
     public boolean isSimilarObject (P2PDataObject object) {
         if (object instanceof PubkeyIPObject) {
             PubkeyIPObject channel = (PubkeyIPObject) object;
-            return channel.IP.equals(this.IP);
+            return channel.hostname.equals(this.hostname);
         }
         return false;
     }
@@ -176,7 +176,7 @@ public class PubkeyIPObject extends P2PDataObject {
     @Override
     public String toString () {
         return "PubkeyIPObject{" +
-                "IP='" + IP + '\'' +
+                "hostname='" + hostname + '\'' +
                 ", port=" + port +
                 ", timestamp=" + timestamp +
                 '}';

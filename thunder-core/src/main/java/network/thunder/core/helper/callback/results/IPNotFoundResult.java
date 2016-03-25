@@ -13,6 +13,6 @@ public class IPNotFoundResult extends ConnectionResult {
 
     @Override
     public String getMessage () {
-        return "IP not found..";
+        return "hostname not found..";
     }
 }

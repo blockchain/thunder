@@ -159,7 +159,7 @@ public class Block extends SimpleBlock {
     }
 
     /**
-     * @return IP address that relayed the block
+     * @return hostname address that relayed the block
      */
     public String getRelayedBy () {
         return relayedBy;

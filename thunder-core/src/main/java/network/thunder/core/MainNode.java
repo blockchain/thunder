@@ -43,7 +43,7 @@ public class MainNode {
             //No configuration supplied - lets create a new one..
             configuration = new Configuration();
             configuration.portServer = Constants.STANDARD_PORT;
-            //Use external IP for now as a hack..
+            //Use external hostname for now as a hack..
             configuration.hostnameServer = getExternalIP();
             configuration.serverKey = Tools.bytesToHex(new ECKey().getPrivKeyBytes());
             newConfiguration = true;

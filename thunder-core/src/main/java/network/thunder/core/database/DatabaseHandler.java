@@ -739,7 +739,7 @@ public class DatabaseHandler {
         PreparedStatement stmt = null;
         try {
 
-            //Check if we have the IP already..
+            //Check if we have the hostname already..
             int id = getIPId(conn, IPObject.pubkey);
 
             if (id != 0) {
@@ -749,7 +749,7 @@ public class DatabaseHandler {
                 int i = 1;
                 stmt.setInt(i++, IPObject.getFragmentIndex());
                 stmt.setBytes(i++, IPObject.getHash());
-                stmt.setString(i++, IPObject.IP);
+                stmt.setString(i++, IPObject.hostname);
                 stmt.setInt(i++, IPObject.port);
                 stmt.setInt(i++, IPObject.timestamp);
                 stmt.setBytes(i++, IPObject.signature);
@@ -763,7 +763,7 @@ public class DatabaseHandler {
                 return (count > 0);
             }
 
-            //We don't have the IP currently..
+            //We don't have the hostname currently..
 
             stmt = conn.prepareStatement("INSERT INTO pubkey_ips VALUES(?,?,?,?,?,?,?,?)", Statement.RETURN_GENERATED_KEYS);
 
@@ -772,7 +772,7 @@ public class DatabaseHandler {
             stmt.setInt(i++, IPObject.getFragmentIndex());
             stmt.setBytes(i++, IPObject.getHash());
             stmt.setInt(i++, DatabaseHandler.getNodeId(conn, IPObject.pubkey));
-            stmt.setString(i++, IPObject.IP);
+            stmt.setString(i++, IPObject.hostname);
             stmt.setInt(i++, IPObject.port);
             stmt.setInt(i++, IPObject.timestamp);
             stmt.setBytes(i++, IPObject.signature);

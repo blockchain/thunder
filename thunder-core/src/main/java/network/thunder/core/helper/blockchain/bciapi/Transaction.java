@@ -115,7 +115,7 @@ public class Transaction {
     }
 
     /**
-     * @return IP address that relayed the transaction
+     * @return hostname address that relayed the transaction
      */
     public String getRelayedBy () {
         return relayedBy;

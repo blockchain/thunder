@@ -74,7 +74,7 @@ public class InventoryData {
     }
 
     /**
-     * @return IP of the peer from which Blockchain.info first received an inventory message
+     * @return hostname of the peer from which Blockchain.info first received an inventory message
      * containing a hash for this transaction.
      */
     public String getInitialIP () {

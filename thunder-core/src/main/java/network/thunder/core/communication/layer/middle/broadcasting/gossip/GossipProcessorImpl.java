@@ -112,7 +112,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         //TODO: Hack to show the other hostname in debugs
         if (firstMessage && sendMessage.pubkeyIPList.size() > 0) {
             node.port = sendMessage.pubkeyIPList.get(0).port;
-            node.host = sendMessage.pubkeyIPList.get(0).IP;
+            node.host = sendMessage.pubkeyIPList.get(0).hostname;
             firstMessage = false;
         }
     }
@@ -134,7 +134,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         PubkeyIPObject pubkeyIPObject = new PubkeyIPObject();
         pubkeyIPObject.pubkey = serverObject.pubKeyServer.getPubKey();
         pubkeyIPObject.port = serverObject.portServer;
-        pubkeyIPObject.IP = serverObject.hostServer;
+        pubkeyIPObject.hostname = serverObject.hostServer;
         pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
         pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(serverObject.pubKeyServer);
