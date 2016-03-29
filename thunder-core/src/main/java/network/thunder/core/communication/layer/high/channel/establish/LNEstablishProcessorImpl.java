@@ -27,8 +27,31 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
+/*
+ * Processor handling the creation of a channel.
+ *
+ * Open TODOS:
+ *  - Exchange more general information like min confirmation, fees, amounts, ...
+ *  - Rethink the anchor design, implementing SegWit
+ *    - We can use a single tx with inputs from both parties
+ *    - The problem with it is that we need a way to determine the value of the UTXOs
+ *  - Have a anchor_complete message
+ *  - Check after X confirmation for an anchor_complete, close and free our anchor again
+ *  - Add various changes to the channel status / updates to the database
+ *  - Reload a half-done channel from database if the connection breaks down
+ *
+ * Currently we are exchanging 4 messages,
+ *
+ *      Alice           Bob
+ *
+ *        A     ->
+ *              <-       B
+ *        C     ->
+ *              <-       D
+ *
+ * whereas receiving message C or D completes the process of creating the channel.
+ *
+ * Upon completion, we broadcast the transaction to the p2p network and listen for sufficient confirmations.
  */
 public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;

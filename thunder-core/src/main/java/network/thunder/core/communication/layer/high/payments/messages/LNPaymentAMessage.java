@@ -12,7 +12,6 @@ import java.util.Random;
 public class LNPaymentAMessage implements LNPayment {
 
     public int dice;
-
     public ChannelStatus channelStatus;
     public RevocationHash newRevocation;
 

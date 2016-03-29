@@ -11,12 +11,9 @@ public class ChannelStatusObject extends P2PDataObject {
 
     public byte[] pubkeyA;
     public byte[] pubkeyB;
-
     public byte[] infoA;
     public byte[] infoB;
-
     public int latency;
-
     public int feeA;
     public int feeB;
 
