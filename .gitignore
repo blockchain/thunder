@@ -53,3 +53,5 @@ config.json
 blockheaders
 
 thunder-core/blockheaders
+
+thunder-clientgui/dependency-reduced-pom.xml

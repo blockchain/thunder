@@ -190,7 +190,9 @@ public class MainController {
             public void changed (ObservableValue<? extends PubkeyIPObject> observable, PubkeyIPObject oldValue, PubkeyIPObject newValue) {
                 System.out.println("ListView selection changed from oldValue = "
                         + oldValue + " to newValue = " + newValue);
-                selectedNode = newValue;
+                if (newValue != null) {
+                    selectedNode = newValue;
+                }
             }
         });
 
