@@ -15,7 +15,7 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     DBHandler dbHandler;
     LNEventHelper eventHelper;
 
-    List<NodeObserver> observerList = Collections.synchronizedList(new ArrayList<>());
+    final List<NodeObserver> observerList = Collections.synchronizedList(new ArrayList<>());
 
     Map<NodeObserver, List<ByteBuffer>> dataObjectMap = new HashMap<>();
     Set<ByteBuffer> objectsKnownAlready = new HashSet<>();
@@ -27,14 +27,18 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
 
     @Override
     public void registerObserver (NodeObserver observer) {
-        observerList.add(observer);
-        dataObjectMap.put(observer, new ArrayList<>());
+        synchronized (observerList) {
+            observerList.add(observer);
+            dataObjectMap.put(observer, new ArrayList<>());
+        }
     }
 
     @Override
     public void removeObserver (NodeObserver observer) {
-        observerList.remove(observer);
-        dataObjectMap.remove(observer);
+        synchronized (observerList) {
+            observerList.remove(observer);
+            dataObjectMap.remove(observer);
+        }
     }
 
     @Override
@@ -78,23 +82,26 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     }
 
     private void broadcast () {
-        for (NodeObserver observer : observerList) {
-            List<ByteBuffer> objectList = dataObjectMap.get(observer);
-
-            if (objectList.size() > GossipProcessor.OBJECT_AMOUNT_TO_SEND) {
-                observer.update(new ArrayList<>(objectList));
-                objectList.clear();
+        synchronized (observerList) {
+            for (NodeObserver observer : observerList) {
+                List<ByteBuffer> objectList = dataObjectMap.get(observer);
+                if (objectList.size() > GossipProcessor.OBJECT_AMOUNT_TO_SEND) {
+                    observer.update(new ArrayList<>(objectList));
+                    objectList.clear();
+                }
             }
         }
     }
 
     private void addNewDataObjectToMap (NodeObserver nodeObserver, P2PDataObject dataObject) {
-        for (NodeObserver nodeObserver1 : observerList) {
-            if (nodeObserver == null || nodeObserver != nodeObserver1) {
-                List<ByteBuffer> bufferList = dataObjectMap.get(nodeObserver1);
-                ByteBuffer buffer = ByteBuffer.wrap(dataObject.getHash());
-                if (!bufferList.contains(buffer)) {
-                    bufferList.add(buffer);
+        synchronized (observerList) {
+            for (NodeObserver nodeObserver1 : observerList) {
+                if (nodeObserver == null || nodeObserver != nodeObserver1) {
+                    List<ByteBuffer> bufferList = dataObjectMap.get(nodeObserver1);
+                    ByteBuffer buffer = ByteBuffer.wrap(dataObject.getHash());
+                    if (!bufferList.contains(buffer)) {
+                        bufferList.add(buffer);
+                    }
                 }
             }
         }
