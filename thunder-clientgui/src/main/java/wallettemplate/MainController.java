@@ -29,6 +29,7 @@ import org.bitcoinj.utils.MonetaryFormat;
 import org.fxmisc.easybind.EasyBind;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
+import wallettemplate.utils.GuiUtils;
 
 import java.util.ResourceBundle;
 
@@ -341,6 +342,8 @@ public class MainController {
     void openChannel (ActionEvent event) {
         if (selectedNode != null) {
             Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
+        } else {
+            GuiUtils.informationalAlert("ThunderNetwork Wallet", "No node to open channel with selected..");
         }
     }
 
