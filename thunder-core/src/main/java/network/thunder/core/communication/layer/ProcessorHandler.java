@@ -13,6 +13,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
     Processor processor;
     String layerName = "";
     MessageExecutor messageExecutor;
+    boolean activated = false;
 
     public ProcessorHandler (Processor processor, String layerName) {
         this.processor = processor;
@@ -21,6 +22,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
+        activated = true;
         try {
             messageExecutor = new MessageExecutorImpl(ctx, layerName);
             processor.onLayerActive(messageExecutor);
@@ -83,7 +85,9 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelUnregistered (ChannelHandlerContext ctx) throws Exception {
-        processor.onLayerClose();
+        if (activated) {
+            processor.onLayerClose();
+        }
         super.channelUnregistered(ctx);
     }
 

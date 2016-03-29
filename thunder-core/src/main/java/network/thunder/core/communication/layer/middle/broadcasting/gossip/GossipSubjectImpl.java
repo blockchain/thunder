@@ -1,8 +1,8 @@
 package network.thunder.core.communication.layer.middle.broadcasting.gossip;
 
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
-import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.helper.events.LNEventHelper;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -15,7 +15,7 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
     DBHandler dbHandler;
     LNEventHelper eventHelper;
 
-    List<NodeObserver> observerList = new ArrayList<>();
+    List<NodeObserver> observerList = Collections.synchronizedList(new ArrayList<>());
 
     Map<NodeObserver, List<ByteBuffer>> dataObjectMap = new HashMap<>();
     Set<ByteBuffer> objectsKnownAlready = new HashSet<>();

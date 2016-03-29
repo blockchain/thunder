@@ -16,7 +16,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.PaymentWrapper;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
@@ -170,10 +173,15 @@ public class MainController {
         Bindings.bindContent(nodesList.getItems(), model.ipList);
         Bindings.bindContent(channelNetworkList.getItems(), model.channelNetworkList);
         Bindings.bindContent(channelList.getItems(), model.channelList);
+        Bindings.bindContent(thunderTxListIncluded.getItems(), model.transactionsThunderIncluded);
+        Bindings.bindContent(thunderTxListOpen.getItems(), model.transactionsThunderOpen);
+        Bindings.bindContent(thunderTxListRefunded.getItems(), model.transactionsThunderRefunded);
+        Bindings.bindContent(thunderTxListSettled.getItems(), model.transactionsThunderSettled);
 
         thunderBalance.textProperty().bind(EasyBind.map(model.balanceThunder, Coin::toFriendlyString));
 
         openChannel.disableProperty().bind(model.openChannelButtonEnabled);
+
         thunderReceiveMoneyBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
         thunderSendMoneyOutBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
 
@@ -185,6 +193,59 @@ public class MainController {
                 selectedNode = newValue;
             }
         });
+
+        nodesList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<PubkeyIPObject>() {
+            @Override
+            public String toString (PubkeyIPObject tx) {
+                return tx.hostname;
+            }
+
+            @Override
+            public PubkeyIPObject fromString (String string) {
+                return null;
+            }
+        }));
+
+        thunderTxListIncluded.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<PaymentWrapper>() {
+            @Override
+            public String toString (PaymentWrapper channel) {
+                String text = "";
+                String status = "";
+                if (channel.paymentData.sending) {
+                    text += "[ -> ]";
+                    status += channel.statusSender;
+                } else {
+                    text += "[ <- ]";
+                    status += channel.statusReceiver;
+                }
+
+                text += " " + Coin.valueOf(channel.paymentData.amount).toFriendlyString() + " ";
+
+                text += "<" + Tools.bytesToHex(channel.paymentData.secret.hash).substring(0, 8) + "..." + ">";
+
+                text += " [" + status + "]";
+
+                return text;
+            }
+
+            @Override
+            public PaymentWrapper fromString (String string) {
+                return null;
+            }
+        }));
+
+        channelList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<Channel>() {
+            @Override
+            public String toString (Channel channel) {
+                return Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString() +
+                        " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeId);
+            }
+
+            @Override
+            public Channel fromString (String string) {
+                return null;
+            }
+        }));
 
         blockchainTxList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<Transaction>() {
             @Override

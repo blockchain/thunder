@@ -136,7 +136,6 @@ public class GossipProcessorImpl extends GossipProcessor {
         pubkeyIPObject.port = serverObject.portServer;
         pubkeyIPObject.hostname = serverObject.hostServer;
         pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
-        pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(serverObject.pubKeyServer);
 
         List<P2PDataObject> ipAddresses = new ArrayList<>();

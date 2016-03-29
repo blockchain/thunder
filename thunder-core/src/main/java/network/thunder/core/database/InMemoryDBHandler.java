@@ -76,7 +76,7 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public void syncDatalist (List<P2PDataObject> dataList) {
+    public synchronized void syncDatalist (List<P2PDataObject> dataList) {
         for (P2PDataObject obj : dataList) {
             fragmentToListMap.get(obj.getFragmentIndex()).add(obj);
             if (obj instanceof PubkeyIPObject) {
@@ -236,7 +236,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<PaymentWrapper> getAllPayments () {
-        return new ArrayList<>();
+        return new ArrayList<>(payments);
     }
 
     @Override

@@ -45,7 +45,7 @@
                         <HBox alignment="CENTER_LEFT" prefHeight="30.0" prefWidth="305.0" AnchorPane.leftAnchor="143.0" AnchorPane.rightAnchor="152.0" AnchorPane.topAnchor="14.0" />
                         <HBox spacing="5.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
                            <children>
-                              <Button fx:id="reloadButton" onAction="#onReloadButton" style="-fx-base: white;" styleClass="fat-button" text="Reload" />
+                              <Button fx:id="reloadButton" onAction="#onReloadButton" style="-fx-base: white;" styleClass="fat-button" text="Reload" visible="false" />
                               <Button fx:id="openChannel" disable="true" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
                               <Button id="sendMoneyOut" fx:id="thunderReceiveMoneyBtn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#thunderReceiveMoney" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Receive" textOverrun="CLIP">
                                  <HBox.margin>
@@ -57,7 +57,7 @@
                                     <Insets />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="refreshButton" onAction="#refresh" style="-fx-base: white;" styleClass="fat-button" text="R" />
+                              <Button fx:id="refreshButton" maxHeight="27.0" maxWidth="27.0" onAction="#refresh" style="-fx-base: white;" styleClass="fat-button" text="Refresh" />
                            </children>
                         </HBox>
                         <TabPane layoutY="70.0" prefHeight="359.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE">
@@ -95,7 +95,7 @@
                                        <children>
                                           <TabPane prefHeight="359.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE">
                                              <tabs>
-                                                <Tab text="Included">
+                                                <Tab text="All">
                                                    <content>
                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                          <children>
@@ -104,7 +104,7 @@
                                                       </AnchorPane>
                                                    </content>
                                                 </Tab>
-                                                <Tab text="Settled">
+                                                <Tab disable="true" text="Settled">
                                                    <content>
                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                          <children>
@@ -113,7 +113,7 @@
                                                       </AnchorPane>
                                                    </content>
                                                 </Tab>
-                                                <Tab text="Open">
+                                                <Tab disable="true" text="Open">
                                                    <content>
                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                          <children>
@@ -122,7 +122,7 @@
                                                       </AnchorPane>
                                                    </content>
                                                 </Tab>
-                                                <Tab text="Refunded">
+                                                <Tab disable="true" text="Refunded">
                                                    <content>
                                                       <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                                                          <children>
@@ -139,7 +139,7 @@
                               </Tab>
                           </tabs>
                         </TabPane>
-                        <Label fx:id="thunderBalance" layoutX="112.0" layoutY="14.0" text="0.00" underline="false">
+                        <Label fx:id="thunderBalance" layoutX="112.0" layoutY="14.0" prefHeight="30.0" prefWidth="207.0" text="0.00" underline="false" AnchorPane.leftAnchor="122.0">
                            <font>
                               <Font size="25.0" />
                            </font>

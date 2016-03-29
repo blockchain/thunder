@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import static network.thunder.core.communication.layer.high.payments.LNPaymentProcessorImpl.Status.*;
 import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
+import static network.thunder.core.database.objects.PaymentStatus.REDEEMED;
 import static network.thunder.core.database.objects.PaymentStatus.REFUNDED;
 
 /**
@@ -371,10 +372,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         for (PaymentData payment : status.redeemedPayments) {
             PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
             if (weStartedExchange) {
-                wrapper.statusReceiver = REFUNDED;
+                wrapper.statusReceiver = REDEEMED;
                 dbHandler.updatePaymentReceiver(wrapper);
             } else {
-                wrapper.statusSender = REFUNDED;
+                wrapper.statusSender = REDEEMED;
                 dbHandler.updatePaymentSender(wrapper);
             }
         }

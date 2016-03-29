@@ -10,13 +10,16 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventListener;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
 import org.bitcoinj.core.DownloadProgressTracker;
 import wallettemplate.Main;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * A class that exposes relevant bitcoin stuff as JavaFX bindable properties.
@@ -27,7 +30,7 @@ public class BitcoinUIModel {
     public ObservableList<Node> channelNetworkList = FXCollections.observableArrayList();
     public ObservableList<Channel> channelList = FXCollections.observableArrayList();
 
-    public ObservableList<Node> transactionsThunderIncluded = FXCollections.observableArrayList();
+    public ObservableList<PaymentWrapper> transactionsThunderIncluded = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderSettled = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderRefunded = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderOpen = FXCollections.observableArrayList();
@@ -70,10 +73,9 @@ public class BitcoinUIModel {
             openChannelButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() > 0 || Main.dbHandler.getIPObjects().size() == 0);
             sendReceiveButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() == 0);
 
-            ObservableList<Node> items1 = FXCollections.observableArrayList();
+            ObservableList<PaymentWrapper> items1 = FXCollections.observableArrayList();
             for (PaymentWrapper p : Main.dbHandler.getAllPayments()) {
-                Label label = new Label(p.toString());
-                items1.add(label);
+                items1.add(p);
             }
             transactionsThunderIncluded.setAll(items1);
 
@@ -99,14 +101,17 @@ public class BitcoinUIModel {
             transactionsThunderOpen.setAll(items4);
 
             ObservableList<PubkeyIPObject> items5 = FXCollections.observableArrayList();
-            for (PubkeyIPObject p : Main.dbHandler.getIPObjects()) {
+            List<PubkeyIPObject> ipObjectList = Main.dbHandler.getIPObjects();
+            for (PubkeyIPObject p : ipObjectList) {
                 items5.add(p);
             }
             ipList.setAll(items5);
 
             ObservableList<Node> items6 = FXCollections.observableArrayList();
             for (ChannelStatusObject p : Main.dbHandler.getTopology()) {
-                Label label = new Label(p.toString());
+                String hostname1 = getHostname(ipObjectList, p.pubkeyA);
+                String hostname2 = getHostname(ipObjectList, p.pubkeyB);
+                Label label = new Label(hostname1 + "<->" + hostname2);
                 items6.add(label);
             }
             channelNetworkList.setAll(items6);
@@ -122,6 +127,15 @@ public class BitcoinUIModel {
 
             channelList.setAll(items7);
         });
+    }
+
+    public String getHostname (List<PubkeyIPObject> ipObjects, byte[] node) {
+        for (PubkeyIPObject ipObject : ipObjects) {
+            if (Arrays.equals(node, ipObject.pubkey)) {
+                return ipObject.hostname;
+            }
+        }
+        return Tools.bytesToHex(node);
     }
 
     private class ProgressBarUpdater extends DownloadProgressTracker {
