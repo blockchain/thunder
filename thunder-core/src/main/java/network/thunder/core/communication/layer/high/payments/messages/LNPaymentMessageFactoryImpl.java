@@ -1,9 +1,8 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.MesssageFactoryImpl;
-import network.thunder.core.database.DBHandler;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.database.DBHandler;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.ArrayList;
@@ -21,7 +20,7 @@ public class LNPaymentMessageFactoryImpl extends MesssageFactoryImpl implements 
     DBHandler dbHandler;
 
     @Override
-    public LNPaymentAMessage getMessageA (Channel channel, ChannelStatus statusTemp) {
+    public LNPaymentAMessage getMessageA (Channel channel, ChannelUpdate statusTemp) {
         return new LNPaymentAMessage(statusTemp, dbHandler.createRevocationHash(channel));
     }
 

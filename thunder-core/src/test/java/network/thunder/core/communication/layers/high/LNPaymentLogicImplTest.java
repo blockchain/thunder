@@ -1,23 +1,18 @@
 package network.thunder.core.communication.layers.high;
 
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogicImpl;
-import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactoryImpl;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
-import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.processor.exceptions.LNPaymentException;
-import network.thunder.core.communication.layer.high.payments.queue.QueueElementPayment;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
+import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
+import network.thunder.core.communication.layer.high.payments.LNPaymentLogicImpl;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.messages.*;
+import network.thunder.core.communication.layer.high.payments.queue.QueueElementPayment;
+import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.LNPaymentDBHandlerMock;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.communication.LNConfiguration;
 import org.bitcoinj.core.Context;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,8 +61,8 @@ public class LNPaymentLogicImplTest {
         channel1 = new Channel();
         channel2 = new Channel();
 
-        channel1.channelStatus.applyConfiguration(configuration);
-        channel2.channelStatus.applyConfiguration(configuration);
+//        channel1.channelStatus.applyConfiguration(configuration);
+//        channel2.channelStatus.applyConfiguration(configuration);
 
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
@@ -79,15 +74,17 @@ public class LNPaymentLogicImplTest {
         paymentLogic2.initialise(channel2);
     }
 
-
     @Test
     public void fullExchange () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(configuration);
+        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
 
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
+
+        LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);
 
         LNPayment messageB = paymentLogic2.getBMessage();
@@ -107,28 +104,15 @@ public class LNPaymentLogicImplTest {
     }
 
     @Test(expected = LNPaymentException.class)
-    public void sentSuccessFalse () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        PaymentData paymentData = getMockPaymentData();
-        QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
-
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
-
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
-        exchangeMessage(messageA, paymentLogic2);
-
-        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
-        messageB.success = false;
-        exchangeMessage(messageB, paymentLogic1);
-    }
-
-    @Test(expected = LNPaymentException.class)
     public void partyASendsWrongSignatureOne () {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(configuration);
+        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
 
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);
 
         LNPaymentBMessage messageB = paymentLogic2.getBMessage();
@@ -144,9 +128,11 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(configuration);
+        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
 
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);
 
         LNPaymentBMessage messageB = paymentLogic2.getBMessage();
@@ -162,9 +148,11 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(configuration);
+        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
 
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);
 
         LNPaymentBMessage messageB = paymentLogic2.getBMessage();
@@ -183,9 +171,11 @@ public class LNPaymentLogicImplTest {
         PaymentData paymentData = getMockPaymentData();
         QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
 
-        ChannelStatus status1 = elementPayment.produceNewChannelStatus(channel1.channelStatus, null);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(configuration);
+        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
 
-        LNPayment messageA = paymentLogic1.getAMessage(status1);
+        LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);
 
         LNPaymentBMessage messageB = paymentLogic2.getBMessage();

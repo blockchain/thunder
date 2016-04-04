@@ -89,13 +89,11 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         long amountClient = temp.amountClient;
         long amountServer = temp.amountServer;
 
-        for (PaymentData paymentData : temp.remainingPayments) {
+        for (PaymentData paymentData : temp.paymentList) {
             amountClient += paymentData.amount;
         }
 
-        temp.remainingPayments.clear();
-        temp.redeemedPayments.clear();
-        temp.refundedPayments.clear();
+        temp.paymentList.clear();
         temp.amountClient = amountClient;
         temp.amountServer = amountServer;
 

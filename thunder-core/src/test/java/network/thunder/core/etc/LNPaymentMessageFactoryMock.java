@@ -1,14 +1,9 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.MesssageFactoryImpl;
-import network.thunder.core.communication.layer.high.RevocationHash;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentAMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentDMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.messages.*;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.ArrayList;
@@ -22,9 +17,9 @@ public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements 
     Random random = new Random();
 
     @Override
-    public LNPaymentAMessage getMessageA (Channel channel, ChannelStatus statusTemp) {
+    public LNPaymentAMessage getMessageA (Channel channel, ChannelUpdate statusTemp) {
         if (statusTemp == null) {
-            statusTemp = new ChannelStatus();
+            statusTemp = new ChannelUpdate();
         }
         return new LNPaymentAMessage(statusTemp, getMockRevocationHash());
     }

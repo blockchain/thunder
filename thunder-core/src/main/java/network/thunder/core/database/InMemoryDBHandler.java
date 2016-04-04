@@ -307,8 +307,6 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
-        System.out.println(payments.size());
-
         for (PaymentWrapper payment : payments) {
             if (payment.paymentData.secret.equals(paymentSecret)) {
                 return payment;

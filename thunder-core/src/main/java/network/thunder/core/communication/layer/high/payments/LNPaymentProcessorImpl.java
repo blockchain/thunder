@@ -1,39 +1,33 @@
 package network.thunder.core.communication.layer.high.payments;
 
 import com.google.common.base.Preconditions;
-import network.thunder.core.communication.layer.Message;
-import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.MessageExecutor;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentAMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentDMessage;
+import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
+import network.thunder.core.communication.layer.Message;
+import network.thunder.core.communication.layer.MessageExecutor;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.ChannelStatus;
+import network.thunder.core.communication.layer.high.payments.messages.*;
 import network.thunder.core.communication.layer.high.payments.queue.*;
-import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.communication.ClientObject;
+import network.thunder.core.helper.events.LNEventHelper;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
 import static network.thunder.core.communication.layer.high.payments.LNPaymentProcessorImpl.Status.*;
-import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
-import static network.thunder.core.database.objects.PaymentStatus.REDEEMED;
-import static network.thunder.core.database.objects.PaymentStatus.REFUNDED;
+import static network.thunder.core.database.objects.PaymentStatus.*;
 
-/**
- * Created by matsjerratsch on 04/01/2016.
- */
+//TODO this class is very stateful. Currently the channel can break if a disconnect happens between the D messages.
+//      Save the state to disk after each message and be able to read it upon connection opening if we want to be able to replay lost messages..
 public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LNPaymentMessageFactory messageFactory;
     LNPaymentLogic paymentLogic;
@@ -41,6 +35,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     LNPaymentHelper paymentHelper;
     LNEventHelper eventHelper;
     ClientObject node;
+    ServerObject serverObject;
 
     MessageExecutor messageExecutor;
 
@@ -48,10 +43,10 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     Status status = IDLE;
 
-    LinkedBlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
+    BlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
     List<QueueElement> currentQueueElement = new ArrayList<>();
 
-    ChannelStatus statusTemp;
+    ChannelUpdate updateTemp;
     boolean aborted = false;
     boolean finished = false;
 
@@ -69,6 +64,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         this.paymentHelper = contextFactory.getPaymentHelper();
         this.eventHelper = contextFactory.getEventHelper();
         this.node = node;
+        this.serverObject = contextFactory.getServerSettings();
     }
 
     private void startQueueListener () {
@@ -120,24 +116,22 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             restartCountDown(timeToFinish);
             if (status != IDLE) {
                 //Other party started the exchange, but we hit the timeout for negotiation. Just abort it on our side..
-                statusTemp = channel.channelStatus;
                 setStatus(IDLE);
             }
         }
     }
 
     private void buildChannelStatus () {
-        ChannelStatus temp = channel.channelStatus.getClone();
-        System.out.println(node.name + " Old: " + temp);
+        ChannelUpdate update = new ChannelUpdate();
+        update.applyConfiguration(serverObject.configuration);
         for (QueueElement queueElement : currentQueueElement) {
-            temp = queueElement.produceNewChannelStatus(temp, paymentHelper);
+            update = queueElement.produceNewChannelStatus(channel.channelStatus, update, paymentHelper);
         }
-        System.out.println(node.name + " New: " + temp);
-        this.statusTemp = temp;
+        this.updateTemp = update;
     }
 
     private boolean checkForUpdates () {
-        int totalChanges = statusTemp.newPayments.size() + statusTemp.redeemedPayments.size() + statusTemp.refundedPayments.size();
+        int totalChanges = updateTemp.newPayments.size() + updateTemp.redeemedPayments.size() + updateTemp.refundedPayments.size();
         return totalChanges > 0;
     }
 
@@ -149,12 +143,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     public void restartCountDown (long sleepTime) throws InterruptedException {
-        System.out.println(node.name + " START TIME " + sleepTime);
-
         countDownLatch = new CountDownLatch(1);
         countDownLatch.await(sleepTime, TimeUnit.MILLISECONDS);
-        System.out.println(node.name + " STOP TIME");
-
     }
 
     public void abortCountDown () {
@@ -183,7 +173,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     public void abortCurrentExchange () {
-        System.out.println(node.name + " ABORT");
         abortCountDown();
     }
 
@@ -191,7 +180,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         testStatus(IDLE);
         weStartedExchange = true;
 
-        LNPaymentAMessage message = paymentLogic.getAMessage(statusTemp);
+        LNPaymentAMessage message = paymentLogic.getAMessage(updateTemp);
         latestDice = message.dice;
         sendMessage(message);
 
@@ -320,12 +309,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         weStartedExchange = false;
         currentQueueElement.add(new QueueElementUpdate());
 
-        System.out.println(node.name + " abortCurrentTask");
-
         abortCountDown();
     }
 
     private void successCurrentTask () {
+        this.updateTemp = paymentLogic.getChannelUpdate();
         currentQueueElement.clear();
         updatePaymentsDatabase();
         evaluateUpdates();
@@ -336,13 +324,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         finished = true;
         aborted = false;
         setStatus(IDLE);
-        System.out.println(node.name + " successCurrentTask");
         abortCountDown();
     }
 
     private void updatePaymentsDatabase () {
-        ChannelStatus status = paymentLogic.getTemporaryChannelStatus();
-        for (PaymentData payment : status.newPayments) {
+        for (PaymentData payment : updateTemp.newPayments) {
             if (weStartedExchange) {
                 PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
                 if (wrapper == null) {
@@ -359,7 +345,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 dbHandler.addPayment(wrapper);
             }
         }
-        for (PaymentData payment : status.refundedPayments) {
+        for (PaymentData payment : updateTemp.refundedPayments) {
             PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
             if (weStartedExchange) {
                 wrapper.statusReceiver = REFUNDED;
@@ -369,7 +355,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 dbHandler.updatePaymentSender(wrapper);
             }
         }
-        for (PaymentData payment : status.redeemedPayments) {
+        for (PaymentData payment : updateTemp.redeemedPayments) {
             PaymentWrapper wrapper = dbHandler.getPayment(payment.secret);
             if (weStartedExchange) {
                 wrapper.statusReceiver = REDEEMED;
@@ -383,28 +369,17 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     private void evaluateUpdates () {
-        statusTemp = paymentLogic.getTemporaryChannelStatus();
-
-        System.out.println(node.name + " " + statusTemp);
-
-        ChannelStatus statusToBeProcessed = statusTemp.getClone();
-
-        statusTemp.remainingPayments.addAll(statusTemp.newPayments);
-        statusTemp.newPayments.clear();
-        statusTemp.refundedPayments.clear();
-        statusTemp.redeemedPayments.clear();
-        channel.channelStatus = statusTemp;
-
+        channel.channelStatus.applyUpdate(updateTemp);
         if (!weStartedExchange) {
-            for (PaymentData newPayment : statusToBeProcessed.newPayments) {
+            for (PaymentData newPayment : updateTemp.newPayments) {
                 paymentHelper.relayPayment(this, newPayment);
             }
 
-            for (PaymentData redeemedPayment : statusToBeProcessed.redeemedPayments) {
+            for (PaymentData redeemedPayment : updateTemp.redeemedPayments) {
                 paymentHelper.paymentRedeemed(redeemedPayment.secret);
             }
 
-            for (PaymentData refundedPayment : statusToBeProcessed.refundedPayments) {
+            for (PaymentData refundedPayment : updateTemp.refundedPayments) {
                 paymentHelper.paymentRefunded(refundedPayment);
             }
         }
@@ -467,9 +442,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     }
 
     public ChannelStatus getStatusTemp () {
-        if (statusTemp == null) {
-            statusTemp = channel.channelStatus;
-        }
+        ChannelStatus statusTemp = channel.channelStatus.getClone();
         return statusTemp;
     }
 

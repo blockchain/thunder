@@ -2,7 +2,6 @@ package network.thunder.core.communication.layer.high.payments;
 
 import com.sun.javafx.geom.Edge;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
-import network.thunder.core.communication.layer.high.payments.LNRoutingHelper;
 import network.thunder.core.communication.processor.exceptions.LNRoutingException;
 import network.thunder.core.database.DBHandler;
 
@@ -12,9 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by matsjerratsch on 12/02/2016.
- */
 public class LNRoutingHelperImpl implements LNRoutingHelper {
 
     DBHandler dbHandler;
@@ -183,10 +179,6 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
         if (!hasPathTo(v)) {
             return null;
         }
-
-//        for(ByteBuffer b : nodes) {
-//            System.out.println(Tools.bytesToHex(b.array()) + routeList.get(b));
-//        }
 
         List<byte[]> path = new ArrayList<>();
         path.add(source.array());

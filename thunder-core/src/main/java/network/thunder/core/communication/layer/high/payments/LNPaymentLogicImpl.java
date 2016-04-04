@@ -26,7 +26,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     DBHandler dbHandler;
 
     Channel channel;
-    ChannelStatus statusTemp;
+
+    ChannelStatus oldStatus;
+    ChannelStatus newStatus;
+    ChannelUpdate channelUpdate;
 
     TransactionSignature signature1;
     TransactionSignature signature2;
@@ -58,10 +61,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashClient,
                 channel.keyClient, channel.keyServer, Constants.ESCAPE_REVOCATION_TIME));
-        transaction.addOutput(Coin.valueOf(statusTemp.amountServer), ScriptTools.getChannelTxOutputPlain(channel.keyServer));
-        transaction = addPayments(transaction, statusTemp.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
+        transaction.addOutput(Coin.valueOf(newStatus.amountServer), ScriptTools.getChannelTxOutputPlain(channel.keyServer));
+        transaction = addPayments(transaction, newStatus.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
 
-        long amountEncumbered = statusTemp.amountClient - transaction.getMessageSize() * statusTemp.feePerByte;
+        long amountEncumbered = newStatus.amountClient - transaction.getMessageSize() * newStatus.feePerByte;
         transaction.getOutput(0).setValue(Coin.valueOf(amountEncumbered));
 
         return transaction;
@@ -75,10 +78,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         transaction.addInput(channel.anchorTxHashClient, 0, Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0), ScriptTools.getChannelTxOutputRevocation(revocationHashServer,
                 channel.keyServer, channel.keyClient, Constants.ESCAPE_REVOCATION_TIME));
-        transaction.addOutput(Coin.valueOf(statusTemp.amountClient), ScriptTools.getChannelTxOutputPlain(channel.keyClient));
-        transaction = addPayments(transaction, statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
+        transaction.addOutput(Coin.valueOf(newStatus.amountClient), ScriptTools.getChannelTxOutputPlain(channel.keyClient));
+        transaction = addPayments(transaction, newStatus, revocationHashServer, channel.keyServer, channel.keyClient);
 
-        long amountEncumbered = statusTemp.amountServer - transaction.getMessageSize() * statusTemp.feePerByte;
+        long amountEncumbered = newStatus.amountServer - transaction.getMessageSize() * newStatus.feePerByte;
         transaction.getOutput(0).setValue(Coin.valueOf(amountEncumbered));
 
         return transaction;
@@ -86,12 +89,12 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     public List<Transaction> getClientPaymentTransactions () {
         Transaction t = getClientTransaction();
-        return getPaymentTransactions(t.getHash(), statusTemp.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
+        return getPaymentTransactions(t.getHash(), newStatus.getCloneReversed(), revocationHashClient, channel.keyClient, channel.keyServer);
     }
 
     public List<Transaction> getServerPaymentTransactions () {
         Transaction t = getServerTransaction();
-        return getPaymentTransactions(t.getHash(), statusTemp, revocationHashServer, channel.keyServer, channel.keyClient);
+        return getPaymentTransactions(t.getHash(), newStatus, revocationHashServer, channel.keyServer, channel.keyClient);
     }
 
     public List<TransactionSignature> getChannelSignatures () {
@@ -113,8 +116,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     private Transaction addPayments (Transaction transaction, ChannelStatus channelStatus, RevocationHash revocationHash, ECKey keyServer, ECKey keyClient) {
-        List<PaymentData> allPayments = new ArrayList<>(channelStatus.remainingPayments);
-        allPayments.addAll(channelStatus.newPayments);
+        List<PaymentData> allPayments = new ArrayList<>(channelStatus.paymentList);
 
         for (PaymentData payment : allPayments) {
             //TODO value here should include fees for the next transaction you need to spend it..pa
@@ -133,9 +135,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     private List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, ChannelStatus channelStatus, RevocationHash
             revocationHash, ECKey keyServer, ECKey keyClient) {
 
-        List<PaymentData> allPayments = new ArrayList<>(channelStatus.remainingPayments);
-        allPayments.addAll(channelStatus.newPayments);
-
+        List<PaymentData> allPayments = new ArrayList<>(channelStatus.paymentList);
         List<Transaction> transactions = new ArrayList<>(allPayments.size());
 
         int index = 2;
@@ -181,16 +181,18 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     @Override
-    public ChannelStatus getTemporaryChannelStatus () {
+    public ChannelUpdate getChannelUpdate () {
         Preconditions.checkNotNull(channel);
-
-        return statusTemp.getClone();
+        return channelUpdate;
     }
 
     @Override
-    public LNPaymentAMessage getAMessage (ChannelStatus newStatus) {
-        this.statusTemp = newStatus;
-        LNPaymentAMessage message = messageFactory.getMessageA(channel, statusTemp);
+    public LNPaymentAMessage getAMessage (ChannelUpdate update) {
+        this.channelUpdate = update;
+        this.oldStatus = channel.channelStatus;
+        this.newStatus = oldStatus.getClone();
+        this.newStatus.applyUpdate(update);
+        LNPaymentAMessage message = messageFactory.getMessageA(channel, update);
         this.revocationHashServer = message.newRevocation;
         return message;
     }
@@ -216,43 +218,28 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private void parseAMessage (LNPaymentAMessage message) {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
-        long amountServer = channel.channelStatus.amountServer;
-        long amountClient = channel.channelStatus.amountClient;
+        channelUpdate = message.channelStatus;
+        oldStatus = channel.channelStatus;
+        newStatus = oldStatus.getClone();
+        newStatus.applyUpdate(channelUpdate.getCloneReversed());
 
         revocationHashClient = null;
         revocationHashServer = null;
 
-        statusTemp = message.channelStatus.getCloneReversed();
+        System.out.println("New status: " + newStatus);
+        System.out.println("Old status: " + oldStatus);
 
-        System.out.println("New status: " + statusTemp);
-        System.out.println("Old status: " + channel.channelStatus);
+        //Check if the update is allowed..
+        checkPaymentsInNewStatus(oldStatus, channelUpdate);
+        checkRefundedPayments(channelUpdate);
+        checkRedeemedPayments(channelUpdate);
 
-        checkPaymentsInNewStatus(channel.channelStatus, statusTemp);
-        checkRefundedPayments(statusTemp);
-        checkRedeemedPayments(statusTemp);
-
-        for (PaymentData refund : statusTemp.refundedPayments) {
-            amountServer += refund.amount;
-        }
-
-        for (PaymentData redeem : statusTemp.redeemedPayments) {
-            amountClient += redeem.amount;
-        }
-
-        for (PaymentData payment : statusTemp.newPayments) {
-            amountClient -= payment.amount;
-        }
-
-        if (amountClient != statusTemp.amountClient || amountClient < 0) {
-            throw new LNPaymentException("amountClient not correct.. Is " + statusTemp.amountClient + " Should be: " + amountClient);
-        }
-
-        if (amountServer != statusTemp.amountServer || amountServer < 0) {
-            throw new LNPaymentException("amountServer not correct..Is " + statusTemp.amountServer + " Should be: " + amountServer);
+        if (newStatus.amountClient < 0 || newStatus.amountServer < 0) {
+            throw new LNPaymentException("Amount is negative: " + newStatus.amountServer + " " + newStatus.amountClient);
         }
 
         //Sufficient to test new payments
-        for (PaymentData payment : statusTemp.newPayments) {
+        for (PaymentData payment : channelUpdate.newPayments) {
             int diff = Math.abs(Tools.currentTime() - payment.timestampOpen);
             if (diff > configuration.MAX_DIFF_TIMESTAMPS) {
                 throw new LNPaymentException("timestampOpen is too far off. Calibrate your system clock. Diff: " + diff);
@@ -269,11 +256,11 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
                 throw new LNPaymentException("Refund timeout is too short. Is: " + diff);
             }
         }
-        if (statusTemp.csvDelay < configuration.MIN_REVOCATION_DELAY || statusTemp.csvDelay > configuration.MAX_REVOCATION_DELAY) {
-            throw new LNPaymentException("Change-Revocation delay not within allowed boundaries. Is: " + statusTemp.csvDelay);
+        if (newStatus.csvDelay < configuration.MIN_REVOCATION_DELAY || newStatus.csvDelay > configuration.MAX_REVOCATION_DELAY) {
+            throw new LNPaymentException("Change-Revocation delay not within allowed boundaries. Is: " + newStatus.csvDelay);
         }
-        if (statusTemp.feePerByte > configuration.MAX_FEE_PER_BYTE || statusTemp.feePerByte < configuration.MIN_FEE_PER_BYTE) {
-            throw new LNPaymentException("feePerByte not within allowed boundaries. Is: " + statusTemp.feePerByte);
+        if (newStatus.feePerByte > configuration.MAX_FEE_PER_BYTE || newStatus.feePerByte < configuration.MIN_FEE_PER_BYTE) {
+            throw new LNPaymentException("feePerByte not within allowed boundaries. Is: " + newStatus.feePerByte);
         }
 
         dbHandler.insertRevocationHash(message.newRevocation);
@@ -281,9 +268,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     private void parseBMessage (LNPaymentBMessage message) {
-        if (!message.success) {
-            throw new LNPaymentException(message.error);
-        }
         revocationHashClient = message.newRevocation;
         dbHandler.insertRevocationHash(message.newRevocation);
     }
@@ -306,8 +290,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             throw new LNPaymentException("Signature2 is not correct..");
         }
 
-        List<PaymentData> allPayments = new ArrayList<>(statusTemp.remainingPayments);
-        allPayments.addAll(statusTemp.newPayments);
+        List<PaymentData> allPayments = new ArrayList<>(newStatus.paymentList);
         List<Transaction> paymentTransactions = getServerPaymentTransactions();
 
         if (allPayments.size() != message.newPaymentSignatures.size()) {
@@ -344,31 +327,21 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     }
 
-    private void checkPaymentsInNewStatus (ChannelStatus oldStatus, ChannelStatus newStatus) {
+    private void checkPaymentsInNewStatus (ChannelStatus oldStatus, ChannelUpdate channelUpdate) {
 
         oldStatus = oldStatus.getClone();
-        newStatus = newStatus.getClone();
+        channelUpdate = channelUpdate.getClone();
 
-        for (PaymentData paymentData : oldStatus.remainingPayments) {
-            //All of these should be in either refund/settled/old
-            if (newStatus.remainingPayments.remove(paymentData)) {
+        for (PaymentData paymentData : channelUpdate.getRemovedPayments()) {
+            //All of these should be in the remaining payments
+            if (oldStatus.paymentList.remove(paymentData)) {
                 continue;
             }
-            if (newStatus.redeemedPayments.remove(paymentData)) {
-                continue;
-            }
-            if (newStatus.refundedPayments.remove(paymentData)) {
-                continue;
-            }
-            throw new LNPaymentException("Old payment that is in neither refund/settle/old");
-        }
-
-        if (newStatus.remainingPayments.size() + newStatus.refundedPayments.size() + newStatus.redeemedPayments.size() > 0) {
-            throw new LNPaymentException("New payments that are not in newPayments");
+            throw new LNPaymentException("Removed payment that wasn't part of the remaining payments previously");
         }
     }
 
-    private void checkRefundedPayments (ChannelStatus newStatus) {
+    private void checkRefundedPayments (ChannelUpdate newStatus) {
         for (PaymentData paymentData : newStatus.refundedPayments) {
             //We reversed the ChannelStatus, so if we are receiving, he is sending
             if (!paymentData.sending) {
@@ -377,7 +350,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         }
     }
 
-    private void checkRedeemedPayments (ChannelStatus newStatus) {
+    private void checkRedeemedPayments (ChannelUpdate newStatus) {
         for (PaymentData paymentData : newStatus.redeemedPayments) {
             if (!paymentData.sending) {
                 throw new LNPaymentException("Trying to redeem a sent payment?");

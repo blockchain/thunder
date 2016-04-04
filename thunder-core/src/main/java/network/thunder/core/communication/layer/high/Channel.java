@@ -567,7 +567,6 @@ public class Channel {
         channelStatus = new ChannelStatus();
         channelStatus.amountClient = amountClient;
         channelStatus.amountServer = amountServer;
-        channelStatus.applyConfiguration(configuration);
     }
 
     @Override

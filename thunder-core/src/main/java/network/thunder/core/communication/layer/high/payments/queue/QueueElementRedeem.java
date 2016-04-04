@@ -1,9 +1,10 @@
 package network.thunder.core.communication.layer.high.payments.queue;
 
 import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 
 /**
  * Created by matsjerratsch on 07/01/2016.
@@ -17,13 +18,13 @@ public class QueueElementRedeem extends QueueElement {
     }
 
     @Override
-    public ChannelStatus produceNewChannelStatus (ChannelStatus channelStatus, LNPaymentHelper paymentHelper) {
+    public ChannelUpdate produceNewChannelStatus (ChannelStatus channel, ChannelUpdate channelUpdate, LNPaymentHelper paymentHelper) {
         //TODO Also test yet-to-be-included payments for refund..
 
-        ChannelStatus status = channelStatus.getClone();
+        ChannelStatus status = channel.getClone();
 
         PaymentData paymentData = null;
-        for (PaymentData p : channelStatus.remainingPayments) {
+        for (PaymentData p : channel.paymentList) {
             if (p.secret.equals(paymentSecret)) {
                 paymentData = p;
             }
@@ -32,14 +33,10 @@ public class QueueElementRedeem extends QueueElement {
         if (paymentData == null) {
             //TODO We want to redeem a payment, but apparently it's no longer within the oldpayments?
             System.out.println("QueueElementRedeem: Can't redeem, not part of old payments..");
-            return channelStatus;
+            return channelUpdate;
         }
 
-        status.redeemedPayments.add(paymentData);
-        status.remainingPayments.remove(paymentData);
-
-        status.amountServer += paymentData.amount;
-
-        return status;
+        channelUpdate.redeemedPayments.add(paymentData);
+        return channelUpdate;
     }
 }

@@ -82,9 +82,6 @@ public class LNCloseHandlerTest {
         channel1.nodeId = node1.pubKeyClient.getPubKey();
         channel2.nodeId = node2.pubKeyClient.getPubKey();
 
-        channel1.channelStatus.applyConfiguration(configuration);
-        channel2.channelStatus.applyConfiguration(configuration);
-
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
 

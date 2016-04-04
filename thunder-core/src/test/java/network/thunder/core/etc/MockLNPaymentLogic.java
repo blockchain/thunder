@@ -1,12 +1,7 @@
 package network.thunder.core.etc;
 
 import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentAMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentDMessage;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
-import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
+import network.thunder.core.communication.layer.high.payments.messages.*;
 import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
 import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.crypto.TransactionSignature;
@@ -18,6 +13,7 @@ import java.util.List;
  */
 public class MockLNPaymentLogic implements LNPaymentLogic {
     ChannelStatus status;
+    ChannelUpdate update;
     Channel channel;
 
     LNPaymentMessageFactory messageFactory;
@@ -42,13 +38,13 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     @Override
     public void checkMessageIncoming (LNPayment message) {
         if (message instanceof LNPaymentAMessage) {
-            status = ((LNPaymentAMessage) message).channelStatus.getCloneReversed();
+            update = ((LNPaymentAMessage) message).channelStatus.getCloneReversed();
         }
     }
 
     public void readMessageOutbound (LNPayment message) {
         if (message instanceof LNPaymentAMessage) {
-            status = ((LNPaymentAMessage) message).channelStatus;
+            update = ((LNPaymentAMessage) message).channelStatus;
         }
     }
 
@@ -58,14 +54,14 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     }
 
     @Override
-    public ChannelStatus getTemporaryChannelStatus () {
-        return status;
+    public ChannelUpdate getChannelUpdate () {
+        return update;
     }
 
     @Override
-    public LNPaymentAMessage getAMessage (ChannelStatus newStatus) {
-        this.status = newStatus;
-        return messageFactory.getMessageA(channel, status);
+    public LNPaymentAMessage getAMessage (ChannelUpdate update) {
+        this.update = update;
+        return messageFactory.getMessageA(channel, update);
     }
 
     @Override

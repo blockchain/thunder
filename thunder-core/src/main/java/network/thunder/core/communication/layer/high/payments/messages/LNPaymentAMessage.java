@@ -1,7 +1,6 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
 import com.google.common.base.Preconditions;
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.RevocationHash;
 
 import java.util.Random;
@@ -12,13 +11,13 @@ import java.util.Random;
 public class LNPaymentAMessage implements LNPayment {
 
     public int dice;
-    public ChannelStatus channelStatus;
+    public ChannelUpdate channelStatus;
     public RevocationHash newRevocation;
 
-    public LNPaymentAMessage (ChannelStatus channelStatus, RevocationHash newRevocation) {
+    public LNPaymentAMessage (ChannelUpdate channelUpdate, RevocationHash newRevocation) {
         this.dice = new Random().nextInt(Integer.MAX_VALUE);
 
-        this.channelStatus = channelStatus;
+        this.channelStatus = channelUpdate;
         this.newRevocation = newRevocation;
     }
 
@@ -31,7 +30,7 @@ public class LNPaymentAMessage implements LNPayment {
     @Override
     public String toString () {
         return "LNPaymentAMessage{" +
-                "channelStatus=" + channelStatus +
+                "channelUpdate=" + channelStatus +
                 '}';
     }
 }

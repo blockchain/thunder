@@ -1,9 +1,10 @@
 package network.thunder.core.communication.layer.high;
 
-import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -13,20 +14,10 @@ public class ChannelStatus implements Cloneable {
     public long amountClient;
     public long amountServer;
 
-    public List<PaymentData> remainingPayments = new ArrayList<>();
-
-    public List<PaymentData> newPayments = new ArrayList<>();
-
-    public List<PaymentData> refundedPayments = new ArrayList<>();
-    public List<PaymentData> redeemedPayments = new ArrayList<>();
+    public List<PaymentData> paymentList = new ArrayList<>();
 
     public int feePerByte;
     public long csvDelay;
-
-    public void applyConfiguration (LNConfiguration configuration) {
-        this.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
-        this.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
-    }
 
     @Override
     protected Object clone () throws CloneNotSupportedException {
@@ -36,14 +27,7 @@ public class ChannelStatus implements Cloneable {
     public ChannelStatus getClone () {
         try {
             ChannelStatus status = (ChannelStatus) this.clone();
-            status.remainingPayments = clonePaymentList(this.remainingPayments);
-            status.newPayments = clonePaymentList(this.newPayments);
-            status.redeemedPayments = clonePaymentList(this.redeemedPayments);
-            status.refundedPayments = clonePaymentList(this.refundedPayments);
-
-            status.csvDelay = this.csvDelay;
-            status.feePerByte = this.feePerByte;
-
+            status.paymentList = clonePaymentList(this.paymentList);
             return status;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);
@@ -56,13 +40,51 @@ public class ChannelStatus implements Cloneable {
         long temp = status.amountServer;
         status.amountServer = status.amountClient;
         status.amountClient = temp;
-
-        reverseSending(status.newPayments);
-        reverseSending(status.remainingPayments);
-        reverseSending(status.redeemedPayments);
-        reverseSending(status.refundedPayments);
+        reverseSending(status.paymentList);
 
         return status;
+    }
+
+    public void applyUpdate (ChannelUpdate update) {
+        for (PaymentData refund : update.refundedPayments) {
+            if (refund.sending) {
+                amountServer += refund.amount;
+            } else {
+                amountClient += refund.amount;
+            }
+        }
+        for (PaymentData redeem : update.redeemedPayments) {
+            if (redeem.sending) {
+                amountClient += redeem.amount;
+            } else {
+                amountServer += redeem.amount;
+            }
+        }
+        for (PaymentData payment : update.newPayments) {
+            if (payment.sending) {
+                amountServer -= payment.amount;
+            } else {
+                amountClient -= payment.amount;
+            }
+        }
+
+        List<PaymentData> removedPayments = new ArrayList<>();
+        removedPayments.addAll(update.redeemedPayments);
+        removedPayments.addAll(update.refundedPayments);
+
+        paymentList.addAll(update.newPayments);
+        Iterator<PaymentData> iterator = paymentList.iterator();
+        while (iterator.hasNext()) {
+            PaymentData paymentData = iterator.next();
+
+            if (removedPayments.contains(paymentData)) {
+                removedPayments.remove(paymentData);
+                iterator.remove();
+            }
+        }
+
+        this.feePerByte = update.feePerByte;
+        this.csvDelay = update.csvDelay;
     }
 
     private List<PaymentData> reverseSending (List<PaymentData> paymentDataList) {
@@ -73,7 +95,7 @@ public class ChannelStatus implements Cloneable {
     }
 
     private List<PaymentData> clonePaymentList (List<PaymentData> paymentList) {
-        List<PaymentData> list = new ArrayList<>(this.remainingPayments.size());
+        List<PaymentData> list = new ArrayList<>(this.paymentList.size());
         for (PaymentData data : paymentList) {
             try {
                 list.add((PaymentData) data.clone());
@@ -90,12 +112,7 @@ public class ChannelStatus implements Cloneable {
         return "ChannelStatus{" +
                 ", amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
-                ", newPayments=" + listToString(newPayments) +
-                ", remainingPayments=" + listToString(remainingPayments) +
-                ", refundedPayments=" + listToString(refundedPayments) +
-                ", redeemedPayments=" + listToString(redeemedPayments) +
-                ", csvDelay=" + csvDelay +
-
+                ", paymentList=" + listToString(paymentList) +
                 '}';
     }
 
