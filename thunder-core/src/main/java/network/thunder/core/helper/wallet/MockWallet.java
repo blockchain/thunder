@@ -4,12 +4,16 @@ import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.WalletTransaction;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Created by matsjerratsch on 12/11/15.
@@ -18,12 +22,11 @@ public class MockWallet extends Wallet {
 
     public static boolean USE_REAL_TRANSACTION = false;
 
-    ArrayList<ECKey> keyList = new ArrayList<>();
-    ArrayList<TransactionOutput> outputs = new ArrayList<>();
+    List<ECKey> keyList = new ArrayList<>();
+    List<TransactionOutput> outputs = new ArrayList<>();
 
     public MockWallet (NetworkParameters params) {
         super(params);
-
         //
         Random random = new Random(1000);
 
@@ -69,8 +72,40 @@ public class MockWallet extends Wallet {
 
     @Override
     public List<TransactionOutput> calculateAllSpendCandidates (boolean excludeImmatureCoinbases, boolean excludeUnsignable) {
-
         return outputs;
+    }
+
+    @Override
+    public Coin getBalance () {
+        Coin value = Coin.ZERO;
+        this.outputs.stream().forEach(transactionOutput -> value.add(transactionOutput.getValue()));
+        return value;
+    }
+
+    @Override
+    public void addWalletTransaction (WalletTransaction wtx) {
+        wtx.getTransaction().getInputs().stream().forEach(new Consumer<TransactionInput>() {
+            @Override
+            public void accept (TransactionInput transactionInput) {
+                outputs = outputs.stream().filter(new Predicate<TransactionOutput>() {
+                    @Override
+                    public boolean test (TransactionOutput transactionOutput) {
+                        return transactionInput.getOutpoint().equals(transactionOutput.getOutPointFor());
+                    }
+                }).collect(Collectors.toList());
+            }
+        });
+        wtx.getTransaction().getOutputs().forEach(transactionOutput ->
+        {
+            Address address = transactionOutput.getAddressFromP2PKHScript(Constants.getNetwork());
+            if (address != null) {
+                if (keyList.stream().anyMatch(
+                        ecKey -> ecKey.toAddress(Constants.getNetwork()).equals(address))) {
+                    outputs.add(transactionOutput);
+                }
+            }
+        });
+
     }
 
     @Override
