@@ -39,7 +39,7 @@ public class PaymentSecret {
     }
 
     public boolean verify () {
-        return true;
+        return Arrays.equals(this.hash, Tools.hashSecret(secret));
     }
 
     @Override
