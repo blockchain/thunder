@@ -57,6 +57,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     int latestDice = 0;
 
+    boolean connectionClosed = false;
+
     public LNPaymentProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, ClientObject node) {
         this.messageFactory = contextFactory.getLNPaymentMessageFactory();
         this.paymentLogic = contextFactory.getLNPaymentLogic();
@@ -69,7 +71,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     private void startQueueListener () {
         new Thread(() -> {
-            while (true) {
+            while (!connectionClosed) {
                 try {
                     checkQueue();
                 } catch (InterruptedException e) {
@@ -428,6 +430,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     @Override
     public void onLayerClose () {
+        this.connectionClosed = true;
         this.paymentHelper.removeProcessor(this);
     }
 
