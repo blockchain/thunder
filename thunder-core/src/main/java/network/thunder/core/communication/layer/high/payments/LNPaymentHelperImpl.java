@@ -1,13 +1,13 @@
 package network.thunder.core.communication.layer.high.payments;
 
-import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
+import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.communication.LNConfiguration;
-import network.thunder.core.communication.ServerObject;
+import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.ECKey;
 
 import java.util.ArrayList;
@@ -58,7 +58,6 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
                     processorSent.refundPayment(paymentData);
                 } else {
                     System.out.println("Received money!");
-                    eventHelper.onPaymentCompleted(secret);
                     processorSent.redeemPayment(secret);
                 }
 

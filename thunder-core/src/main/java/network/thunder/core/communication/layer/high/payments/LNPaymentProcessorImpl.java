@@ -366,6 +366,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 wrapper.statusSender = REDEEMED;
                 dbHandler.updatePaymentSender(wrapper);
             }
+            eventHelper.onPaymentCompleted(payment.secret);
         }
 
     }
