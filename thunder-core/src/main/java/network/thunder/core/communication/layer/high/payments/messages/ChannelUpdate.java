@@ -70,4 +70,15 @@ public class ChannelUpdate implements Cloneable {
         }
         return list;
     }
+
+    @Override
+    public String toString () {
+        return "ChannelUpdate{" +
+                "newPayments=" + newPayments +
+                ", refundedPayments=" + refundedPayments +
+                ", redeemedPayments=" + redeemedPayments +
+                ", feePerByte=" + feePerByte +
+                ", csvDelay=" + csvDelay +
+                '}';
+    }
 }

@@ -46,7 +46,7 @@
                         <HBox spacing="5.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="17.0">
                            <children>
                               <Button fx:id="reloadButton" onAction="#onReloadButton" style="-fx-base: white;" styleClass="fat-button" text="Reload" visible="false" />
-                              <Button fx:id="openChannel" disable="true" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
+                              <Button fx:id="openChannel" onAction="#openChannel" style="-fx-base: white;" styleClass="fat-button" text="Open Channel" />
                               <Button id="sendMoneyOut" fx:id="thunderReceiveMoneyBtn" alignment="CENTER" disable="true" mnemonicParsing="false" onAction="#thunderReceiveMoney" style="-fx-base: lightgreen; -fx-font-weight: bold" styleClass="fat-button" text="Receive" textOverrun="CLIP">
                                  <HBox.margin>
                                     <Insets />
@@ -57,7 +57,6 @@
                                     <Insets />
                                  </HBox.margin>
                               </Button>
-                              <Button fx:id="refreshButton" maxHeight="27.0" maxWidth="27.0" onAction="#refresh" style="-fx-base: white;" styleClass="fat-button" text="Refresh" />
                            </children>
                         </HBox>
                         <TabPane layoutY="70.0" prefHeight="359.0" prefWidth="800.0" tabClosingPolicy="UNAVAILABLE">
@@ -145,6 +144,14 @@
                            </font>
                            <textFill>
                               <Color blue="0.750" green="0.750" red="0.750" fx:id="x21" />
+                           </textFill>
+                        </Label>
+                        <Label fx:id="blockchainBalance" layoutX="122.0" layoutY="44.0" prefHeight="30.0" prefWidth="207.0" text="0.00" underline="false">
+                           <font>
+                              <Font size="25.0" />
+                           </font>
+                           <textFill>
+                              <Color blue="0.750" green="0.750" red="0.750" fx:id="x211" />
                            </textFill>
                         </Label>
                      </children>

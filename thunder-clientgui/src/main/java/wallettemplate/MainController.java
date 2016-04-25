@@ -31,6 +31,7 @@ import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.GuiUtils;
 
+import java.util.List;
 import java.util.ResourceBundle;
 
 /**
@@ -119,6 +120,9 @@ public class MainController {
     private Label thunderBalance;
 
     @FXML
+    private Label blockchainBalance;
+
+    @FXML
     private Color x21;
 
     @FXML
@@ -180,8 +184,9 @@ public class MainController {
         Bindings.bindContent(thunderTxListSettled.getItems(), model.transactionsThunderSettled);
 
         thunderBalance.textProperty().bind(EasyBind.map(model.balanceThunder, Coin::toFriendlyString));
+        blockchainBalance.textProperty().bind(EasyBind.map(model.balance, Coin::toFriendlyString));
 
-        openChannel.disableProperty().bind(model.openChannelButtonEnabled);
+        openChannel.textProperty().bind(model.openChannelButtonText);
 
         thunderReceiveMoneyBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
         thunderSendMoneyOutBtn.disableProperty().bind(model.sendReceiveButtonEnabled);
@@ -293,7 +298,6 @@ public class MainController {
                 return null;
             }
         }));
-
     }
 
     private void showBitcoinSyncMessage () {
@@ -341,7 +345,12 @@ public class MainController {
     @FXML
     void openChannel (ActionEvent event) {
         if (selectedNode != null) {
-            Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
+            List<Channel> openChannel = Main.dbHandler.getOpenChannel();
+            if(openChannel.size() == 0) {
+                Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
+            } else {
+                Main.thunderContext.closeChannel(openChannel.get(0), new NullResultCommand());
+            }
         } else {
             GuiUtils.informationalAlert("ThunderNetwork Wallet", "No node to open channel with selected..");
         }

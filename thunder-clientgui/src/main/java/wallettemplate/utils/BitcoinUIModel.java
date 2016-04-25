@@ -35,8 +35,8 @@ public class BitcoinUIModel {
     public ObservableList<Node> transactionsThunderRefunded = FXCollections.observableArrayList();
     public ObservableList<Node> transactionsThunderOpen = FXCollections.observableArrayList();
 
-    public BooleanProperty openChannelButtonEnabled = new SimpleBooleanProperty(true);
     public BooleanProperty sendReceiveButtonEnabled = new SimpleBooleanProperty(true);
+    public StringProperty openChannelButtonText = new SimpleStringProperty();
 
     private SimpleObjectProperty<Address> address = new SimpleObjectProperty<>();
     public SimpleObjectProperty<Coin> balance = new SimpleObjectProperty<>(Coin.ZERO);
@@ -70,8 +70,10 @@ public class BitcoinUIModel {
 
     public void update () {
         Platform.runLater(() -> {
-            openChannelButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() > 0 || Main.dbHandler.getIPObjects().size() == 0);
-            sendReceiveButtonEnabled.setValue(Main.dbHandler.getOpenChannel().size() == 0);
+            List<Channel> openChannel = Main.dbHandler.getOpenChannel();
+
+            openChannelButtonText.setValue(openChannel.size() == 0 ? "Open Channel" : "Close Channel");
+            sendReceiveButtonEnabled.setValue(openChannel.size() == 0);
 
             ObservableList<PaymentWrapper> items1 = FXCollections.observableArrayList();
             for (PaymentWrapper p : Main.dbHandler.getAllPayments()) {
@@ -118,12 +120,13 @@ public class BitcoinUIModel {
 
             long totalAmount = 0;
             ObservableList<Channel> items7 = FXCollections.observableArrayList();
-            for (Channel p : Main.dbHandler.getOpenChannel()) {
+            for (Channel p : openChannel) {
                 totalAmount += p.channelStatus.amountServer;
                 items7.add(p);
             }
 
             balanceThunder.set(Coin.valueOf(totalAmount));
+            balance.set(Main.wallet.getBalance());
 
             channelList.setAll(items7);
         });

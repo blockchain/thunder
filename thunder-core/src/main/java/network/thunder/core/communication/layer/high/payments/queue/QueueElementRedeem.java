@@ -36,6 +36,7 @@ public class QueueElementRedeem extends QueueElement {
             return channelUpdate;
         }
 
+        paymentData.secret.secret = paymentSecret.secret;
         channelUpdate.redeemedPayments.add(paymentData);
         return channelUpdate;
     }

@@ -84,7 +84,7 @@ public class ContextFactoryImpl implements ContextFactory {
         this.syncHelper = new SynchronizationHelper(dbHandler);
 
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
-        this.blockchainHelper = new MockBlockchainHelper();
+        this.blockchainHelper = new MockBlockchainHelper(wallet);
         this.channelManager = new ChannelManagerImpl(getBlockchainHelper());
     }
 

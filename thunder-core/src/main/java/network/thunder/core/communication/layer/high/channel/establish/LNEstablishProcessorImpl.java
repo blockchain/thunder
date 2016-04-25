@@ -171,10 +171,14 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     }
 
     private void onChannelEstablished () {
+        channel.isReady = true;
         dbHandler.saveChannel(channel);
 //        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
         this.onEnoughConfirmations();
         blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
+
+        //TODO not nice abstraction here, but we need it for now until we use dedicated keys for channel closure
+        walletHelper.getWallet().addKey(channel.keyClient);
 
     }
 

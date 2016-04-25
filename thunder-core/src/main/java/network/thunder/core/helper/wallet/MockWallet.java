@@ -15,9 +15,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-/**
- * Created by matsjerratsch on 12/11/15.
- */
 public class MockWallet extends Wallet {
 
     public static boolean USE_REAL_TRANSACTION = false;
@@ -26,6 +23,10 @@ public class MockWallet extends Wallet {
     List<TransactionOutput> outputs = new ArrayList<>();
 
     public MockWallet (NetworkParameters params) {
+        this(params, 100);
+    }
+
+    public MockWallet (NetworkParameters params, int totalOutputs) {
         super(params);
         //
         Random random = new Random(1000);
@@ -77,9 +78,9 @@ public class MockWallet extends Wallet {
 
     @Override
     public Coin getBalance () {
-        Coin value = Coin.ZERO;
-        this.outputs.stream().forEach(transactionOutput -> value.add(transactionOutput.getValue()));
-        return value;
+        final long[] value = {0};
+        this.outputs.stream().forEach(transactionOutput -> value[0] += transactionOutput.getValue().value);
+        return Coin.valueOf(value[0]);
     }
 
     @Override
@@ -90,7 +91,7 @@ public class MockWallet extends Wallet {
                 outputs = outputs.stream().filter(new Predicate<TransactionOutput>() {
                     @Override
                     public boolean test (TransactionOutput transactionOutput) {
-                        return transactionInput.getOutpoint().equals(transactionOutput.getOutPointFor());
+                        return !transactionInput.getOutpoint().equals(transactionOutput.getOutPointFor());
                     }
                 }).collect(Collectors.toList());
             }
@@ -103,7 +104,10 @@ public class MockWallet extends Wallet {
                         ecKey -> ecKey.toAddress(Constants.getNetwork()).equals(address))) {
                     outputs.add(transactionOutput);
                 }
+            } else {
+
             }
+
         });
 
     }
@@ -116,6 +120,12 @@ public class MockWallet extends Wallet {
             }
         }
         return null;
+    }
+
+    @Override
+    public boolean addKey (ECKey key) {
+        keyList.add(key);
+        return true;
     }
 
     @Override

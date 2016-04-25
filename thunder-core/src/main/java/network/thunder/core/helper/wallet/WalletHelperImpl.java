@@ -34,6 +34,11 @@ public class WalletHelperImpl implements WalletHelper {
         return addOutAndInputs(transaction);
     }
 
+    @Override
+    public Wallet getWallet () {
+        return wallet;
+    }
+
     private Transaction addOutAndInputs (Transaction transaction) {
 
         long totalInput = 0;

@@ -203,6 +203,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<Channel> getOpenChannel () {
+        channelList = channelList.stream().filter(channel -> channel.isReady).collect(Collectors.toList());
         return channelList;
     }
 

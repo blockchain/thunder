@@ -92,8 +92,6 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
 
     @Override
     public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
-        System.out.println(payments.size());
-
         for (PaymentWrapper payment : payments) {
             if (payment.paymentData.secret.equals(paymentSecret)) {
                 return payment;

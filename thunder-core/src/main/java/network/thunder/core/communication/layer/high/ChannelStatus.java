@@ -7,9 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 16/12/2015.
- */
 public class ChannelStatus implements Cloneable {
     public long amountClient;
     public long amountServer;
@@ -110,7 +107,7 @@ public class ChannelStatus implements Cloneable {
     @Override
     public String toString () {
         return "ChannelStatus{" +
-                ", amountClient=" + amountClient +
+                "amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
                 ", paymentList=" + listToString(paymentList) +
                 '}';

@@ -48,6 +48,18 @@ public class Tools {
         return new Random().nextInt(max + 1 - min) + min;
     }
 
+    /**
+     * Get the method name for a depth in call stack. <br />
+     * Utility function
+     *
+     * @param depth depth in the call stack (0 means current method, 1 means call method, ...)
+     * @return method name
+     */
+    public static String getMethodName (final int depth) {
+        final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
+        return ste[ste.length - 1 - depth].getMethodName();
+    }
+
     public static Transaction applyBIP69 (Transaction transaction) {
         //This will render an already signed transaction invalid, as the signature covers the ordering of the in/outputs.
 

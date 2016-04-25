@@ -101,7 +101,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     public Transaction getClosingTransaction (ChannelStatus channelStatus, float feePerByte) {
-        ChannelStatus status = getChannelStatus(weRequestedClose ? channelStatus : channelStatus.getCloneReversed());
+        ChannelStatus status = getChannelStatus(weRequestedClose ? channelStatus.getCloneReversed() : channelStatus);
 
         //For the sake of privacy (and simplicity) we use lexicographically ordering here, as defined in BIP69
         Transaction transaction = new Transaction(Constants.getNetwork());
@@ -109,8 +109,9 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
 
         //TODO deduct the transaction fee correctly from both amounts
-        transaction.addOutput(Coin.valueOf(status.amountClient), channel.keyClient);
-        transaction.addOutput(Coin.valueOf(status.amountServer), channel.keyServer);
+        //TODO would be better to have another address on file that we can use here..
+        transaction.addOutput(Coin.valueOf(status.amountClient), channel.keyClient.toAddress(Constants.getNetwork()));
+        transaction.addOutput(Coin.valueOf(status.amountServer), channel.keyServer.toAddress(Constants.getNetwork()));
 
         return Tools.applyBIP69(transaction);
     }
@@ -186,7 +187,8 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     private Channel getChannel () {
-        return dbHandler.getChannel(channelIdToClose);
+        //TODO quick hack here - we have to allow multiple channels per connection somehow..
+        return dbHandler.getChannel(node.pubKeyClient).get(0);
     }
 
     @Override
@@ -240,14 +242,16 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         Transaction transaction = getClosingTransaction(channel.channelStatus, message.feePerByte);
         List<TransactionSignature> signatures = getTransactionSignatures(transaction);
 
-        if (channel.phase == CLOSE_REQUESTED_SERVER) {
-            //Okay, so the other party sent us correct signatures to close down the channel..
-            isBlocked = true;
-            Channel channel = getChannel();
+        isBlocked = true;
+        Channel channel = getChannel();
+        channel.isReady = false;
+        channel.closingSignatures = message.getSignatureList();
+        dbHandler.updateChannel(channel);
+
+        if (channel.phase != CLOSE_REQUESTED_SERVER) {
             channel.phase = CLOSE_REQUESTED_CLIENT;
-            channel.isReady = false;
-            dbHandler.updateChannel(channel);
             sendCloseMessage(signatures);
+            //Okay, so the other party sent us correct signatures to close down the channel..
         }
         Script multiSig1 = Tools.getMultisigInputScript(message.getSignatureList().get(0), signatures.get(0));
         Script multiSig2 = Tools.getMultisigInputScript(message.getSignatureList().get(1), signatures.get(1));
@@ -255,11 +259,8 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         transaction.getInput(0).setScriptSig(multiSig1);
         transaction.getInput(1).setScriptSig(multiSig2);
 
-        channel.closingSignatures = message.getSignatureList();
-
         blockchainHelper.broadcastTransaction(transaction);
         onChannelClose();
-
     }
 
     private void onChannelClose () {
