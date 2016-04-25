@@ -1,11 +1,10 @@
 package network.thunder.core.helper.events;
 
-import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.database.objects.Payment;
-import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.PaymentWrapper;
 
 /**
  * Created by matsjerratsch on 08/02/2016.
@@ -35,11 +34,11 @@ public abstract class LNEventListener {
         onEvent();
     }
 
-    public void onPaymentRefunded (Payment payment) {
+    public void onPaymentRefunded (PaymentData payment) {
         onEvent();
     }
 
-    public void onPaymentCompleted (PaymentSecret payment) {
+    public void onPaymentCompleted (PaymentData payment) {
         onEvent();
     }
 

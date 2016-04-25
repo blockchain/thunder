@@ -1,13 +1,12 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventListener;
-import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.database.objects.Payment;
-import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.communication.ClientObject;
 
 /**
  * Created by matsjerratsch on 08/02/2016.
@@ -54,7 +53,12 @@ public class MockLNEventHelper implements LNEventHelper {
     }
 
     @Override
-    public void onPaymentRefunded (Payment payment) {
+    public void onPaymentRefunded (PaymentData payment) {
+
+    }
+
+    @Override
+    public void onPaymentCompleted (PaymentData payment) {
 
     }
 
@@ -63,10 +67,6 @@ public class MockLNEventHelper implements LNEventHelper {
 
     }
 
-    @Override
-    public void onPaymentCompleted (PaymentSecret payment) {
-
-    }
 
     @Override
     public void onP2PDataReceived () {

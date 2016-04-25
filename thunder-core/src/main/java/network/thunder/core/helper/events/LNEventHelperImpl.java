@@ -1,11 +1,10 @@
 package network.thunder.core.helper.events;
 
-import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.database.objects.Payment;
-import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.PaymentWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +68,7 @@ public class LNEventHelperImpl implements LNEventHelper {
     }
 
     @Override
-    public void onPaymentRefunded (Payment payment) {
+    public void onPaymentRefunded (PaymentData payment) {
         for (LNEventListener listener : listeners) {
             listener.onPaymentRefunded(payment);
         }
@@ -81,7 +80,7 @@ public class LNEventHelperImpl implements LNEventHelper {
     }
 
     @Override
-    public void onPaymentCompleted (PaymentSecret payment) {
+    public void onPaymentCompleted (PaymentData payment) {
         for (LNEventListener listener : listeners) {
             listener.onPaymentCompleted(payment);
         }
