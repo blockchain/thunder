@@ -218,10 +218,10 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private void parseAMessage (LNPaymentAMessage message) {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
-        channelUpdate = message.channelStatus;
+        channelUpdate = message.channelStatus.getCloneReversed();
         oldStatus = channel.channelStatus;
         newStatus = oldStatus.getClone();
-        newStatus.applyUpdate(channelUpdate.getCloneReversed());
+        newStatus.applyUpdate(channelUpdate);
 
         revocationHashClient = null;
         revocationHashServer = null;
