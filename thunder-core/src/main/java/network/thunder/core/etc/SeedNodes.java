@@ -21,11 +21,11 @@ public class SeedNodes {
         ClientObject node = new ClientObject();
         node.init();
         node.host = "localhost";
-        node.port = 10001;
+        node.port = Constants.STANDARD_PORT;
 
         PubkeyIPObject seed1 = new PubkeyIPObject();
-        seed1.IP = "localhost";
-        seed1.port = 10001;
+        seed1.hostname = "localhost";
+        seed1.port = Constants.STANDARD_PORT;
         seed1.pubkey = node.pubKeyClient.getPubKey();
 
         ipList.clear();
