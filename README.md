@@ -81,7 +81,15 @@ thunder.network implemented a commit-transaction design where each payment pays 
 
 In the diagram below, A is receiving a payment from B. If he wants to accept the payment, he has to produce R within 5 days, or otherwise the payment is not enforcable anymore. Regardless of that, B can always claim even that payment for another 30d if A cheated and broadcasted a revoked transaction.
 
-![Dual TX Commitment Design](https://github.com/matsjj/thundernetwork/blob/master/docs/dual-tx-diagram.png)
+![Dual TX Commitment Design](docs/dual-tx-diagram.png)
+
+### Routing
+
+Currently we are using a completely source-oriented onion-encrypted routing algorithm. This means that the receiver is only giving his public key and the sender is creating the complete route to the receiver (_source-oriented__).  To make this reliable, each `ChannelPubkeyObject` and other topology data has to be broadcasted and gossiped through the network. This can be problematic in case of bad network conditions, where the `ChannelPubkeyObject` of a new node might now propagate to the sender. In this case the sender is not able to find a route and therefore the payment fails. 
+
+It is therefore an open TODO to allow for Rendezvous-Point routing (_RP_). In _RP_-Routing the sender will send the public key of a nearby node and the encrypted route from this node to himself. This will make addresses much longer (as they now contain an encrypted route), but will greatly improve privacy (the sender actually does not know whe the final receiver is anymore) and reliability of path finding (nodes have a much higher probability to be in the senders topology already than the receivers wallet). 
+
+Furthermore all routes are onion-encrypted, meaning that for each node in the route we will add one layer encrypting all subsequent layers. When decrypting, each node is only able to read the one node where it should pass the payment on. Doing so makes disincentivizing wrong behaviour much more difficult later on, but it makes active analysis of payments less feasible.   
 
 ### Anchor
 
