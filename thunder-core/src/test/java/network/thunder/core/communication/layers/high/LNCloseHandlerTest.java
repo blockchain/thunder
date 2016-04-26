@@ -2,14 +2,12 @@ package network.thunder.core.communication.layers.high;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.ProcessorHandler;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.close.LNCloseException;
 import network.thunder.core.communication.layer.high.channel.close.LNCloseProcessorImpl;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseAMessage;
@@ -17,7 +15,10 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.Broad
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
-import network.thunder.core.etc.*;
+import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.MockBroadcastHelper;
+import network.thunder.core.etc.MockLNEventHelper;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -60,10 +61,6 @@ public class LNCloseHandlerTest {
     MockBlockchainHelper mockBlockchainHelper = new MockBlockchainHelper();
     MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();
 
-    MockChannelManager channelManager = new MockChannelManager();
-
-    LNConfiguration configuration = new LNConfiguration();
-
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
         node1.isServer = false;
@@ -79,8 +76,8 @@ public class LNCloseHandlerTest {
         channel1 = new Channel();
         channel2 = new Channel();
 
-        channel1.nodeId = node1.pubKeyClient.getPubKey();
-        channel2.nodeId = node2.pubKeyClient.getPubKey();
+        channel1.nodeKeyClient = node1.pubKeyClient.getPubKey();
+        channel2.nodeKeyClient = node2.pubKeyClient.getPubKey();
 
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
@@ -95,6 +92,8 @@ public class LNCloseHandlerTest {
         assertNull(m);
         m = (Message) embeddedChannel1.readOutbound();
         assertNull(m);
+
+        contextFactory1.getChannelManager().closeChannel(channel1, new NullResultCommand());
     }
 
     public void after () {
@@ -104,7 +103,6 @@ public class LNCloseHandlerTest {
 
     @Test
     public void shouldSendMessage () {
-        channelManager.closeChannel(channel1, new NullResultCommand());
         LNCloseAMessage message = (LNCloseAMessage) embeddedChannel1.readOutbound();
         assertNotNull(message);
         after();
@@ -112,7 +110,7 @@ public class LNCloseHandlerTest {
 
     @Test
     public void shouldVerifyMessage () {
-        channelManager.closeChannel(channel1, new NullResultCommand());
+//        channelManager.closeChannel(channel1, new NullResultCommand());
         LNCloseAMessage message = (LNCloseAMessage) embeddedChannel1.readOutbound();
         embeddedChannel2.writeInbound(message);
         after();
@@ -120,7 +118,7 @@ public class LNCloseHandlerTest {
 
     @Test(expected = LNCloseException.class)
     public void shouldFailSignatureOne () {
-        channelManager.closeChannel(channel1, new NullResultCommand());
+//        channelManager.closeChannel(channel1, new NullResultCommand());
         LNCloseAMessage message = (LNCloseAMessage) embeddedChannel1.readOutbound();
         Tools.copyRandomByteInByteArray(message.signatureList.get(0), 30, 2);
         embeddedChannel2.writeInbound(message);
@@ -129,7 +127,7 @@ public class LNCloseHandlerTest {
 
     @Test(expected = LNCloseException.class)
     public void shouldFailSignatureTwo () {
-        channelManager.closeChannel(channel1, new NullResultCommand());
+//        channelManager.closeChannel(channel1, new NullResultCommand());
         LNCloseAMessage message = (LNCloseAMessage) embeddedChannel1.readOutbound();
         Tools.copyRandomByteInByteArray(message.signatureList.get(1), 30, 2);
         embeddedChannel2.writeInbound(message);
@@ -152,10 +150,10 @@ public class LNCloseHandlerTest {
             return broadcastHelper;
         }
 
-        @Override
-        public ChannelManager getChannelManager () {
-            return channelManager;
-        }
+//        @Override
+//        public ChannelManager getChannelManager () {
+//            return channelManager;
+//        }
     }
 
 }

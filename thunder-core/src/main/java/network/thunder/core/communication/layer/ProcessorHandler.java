@@ -22,6 +22,9 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
     @Override
     public void channelActive (final ChannelHandlerContext ctx) {
+        if (activated) {
+            return;
+        }
         activated = true;
         try {
             messageExecutor = new MessageExecutorImpl(ctx, layerName);

@@ -8,6 +8,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDat
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
 
 import java.util.List;
 
@@ -41,6 +42,7 @@ public interface DBHandler {
     boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
 
     Channel getChannel (int id);
+    Channel getChannel (Sha256Hash hash);
 
     List<Channel> getChannel (ECKey nodeKey);
 

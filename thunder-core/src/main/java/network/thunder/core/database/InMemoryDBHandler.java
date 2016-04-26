@@ -11,6 +11,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     public Map<Integer, List<P2PDataObject>> fragmentToListMap = new HashMap<>();
 
-    public List<P2PDataObject> totalList = Collections.synchronizedList(new ArrayList<>());
+    public final List<P2PDataObject> totalList = Collections.synchronizedList(new ArrayList<>());
 
     public List<PubkeyIPObject> pubkeyIPObjectOpenChannel = Collections.synchronizedList(new ArrayList<>());
 
@@ -57,9 +58,11 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public P2PDataObject getP2PDataObjectByHash (byte[] hash) {
-        for (P2PDataObject object : totalList) {
-            if (Arrays.equals(object.getHash(), hash)) {
-                return object;
+        synchronized (totalList) {
+            for (P2PDataObject object : totalList) {
+                if (Arrays.equals(object.getHash(), hash)) {
+                    return object;
+                }
             }
         }
         return null;
@@ -167,7 +170,17 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public Channel getChannel (int id) {
-        Optional<Channel> optional = channelList.stream().findAny().filter(channel1 -> channel1.id == id);
+        Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
+        if (optional.isPresent()) {
+            return optional.get();
+        } else {
+            throw new RuntimeException("Channel not found..");
+        }
+    }
+
+    @Override
+    public Channel getChannel (Sha256Hash hash) {
+        Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.getHash().equals(hash)).findAny();
         if (optional.isPresent()) {
             return optional.get();
         } else {
@@ -177,7 +190,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<Channel> getChannel (ECKey nodeKey) {
-        return channelList.stream().filter(channel1 -> Arrays.equals(channel1.nodeId, nodeKey.getPubKey())).collect(Collectors.toList());
+        return channelList.stream().filter(channel1 -> Arrays.equals(channel1.nodeKeyClient, nodeKey.getPubKey())).collect(Collectors.toList());
     }
 
     @Override
@@ -192,7 +205,7 @@ public class InMemoryDBHandler implements DBHandler {
         Iterator<Channel> iterator = channelList.iterator();
         while (iterator.hasNext()) {
             Channel c = iterator.next();
-            if (Arrays.equals(c.nodeId, channel.nodeId)) {
+            if (Arrays.equals(c.nodeKeyClient, channel.nodeKeyClient)) {
                 iterator.remove();
                 channelList.add(channel);
                 return;

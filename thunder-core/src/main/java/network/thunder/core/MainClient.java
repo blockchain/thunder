@@ -3,21 +3,25 @@ package network.thunder.core;
 import com.google.gson.Gson;
 import network.thunder.core.communication.ConnectionManager;
 import network.thunder.core.communication.ConnectionManagerImpl;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
-import network.thunder.core.helper.events.LNEventHelperImpl;
-import network.thunder.core.communication.layer.ContextFactoryImpl;
-import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
-import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
 import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
-import network.thunder.core.etc.*;
+import network.thunder.core.etc.Configuration;
+import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.ChannelOpenListener;
+import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.wallet.MockWallet;
-import network.thunder.core.communication.ServerObject;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Wallet;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -68,8 +72,8 @@ public class MainClient {
         connectionManager.fetchNetworkIPs(new NullResultCommand());
 
         for (String s : configuration.nodesToBuildChannelWith) {
-            byte[] nodeKey = Tools.hexStringToByteArray(s);
-            connectionManager.buildChannel(nodeKey, new NullResultCommand());
+            NodeKey nodeKey = new NodeKey(Tools.hexStringToByteArray(s));
+            contextFactory.getChannelManager().openChannel(nodeKey, new ChannelOpenListener());
             Thread.sleep(1000);
         }
 

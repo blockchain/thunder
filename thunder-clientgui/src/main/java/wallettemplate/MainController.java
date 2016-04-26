@@ -194,8 +194,6 @@ public class MainController {
         nodesList.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<PubkeyIPObject>() {
             @Override
             public void changed (ObservableValue<? extends PubkeyIPObject> observable, PubkeyIPObject oldValue, PubkeyIPObject newValue) {
-                System.out.println("ListView selection changed from oldValue = "
-                        + oldValue + " to newValue = " + newValue);
                 if (newValue != null) {
                     selectedNode = newValue;
                 }
@@ -246,7 +244,7 @@ public class MainController {
             @Override
             public String toString (Channel channel) {
                 return Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString() +
-                        " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeId);
+                        " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeKeyClient);
             }
 
             @Override
@@ -346,7 +344,7 @@ public class MainController {
     void openChannel (ActionEvent event) {
         if (selectedNode != null) {
             List<Channel> openChannel = Main.dbHandler.getOpenChannel();
-            if(openChannel.size() == 0) {
+            if (openChannel.size() == 0) {
                 Main.thunderContext.openChannel(selectedNode.pubkey, new NullResultCommand());
             } else {
                 Main.thunderContext.closeChannel(openChannel.get(0), new NullResultCommand());

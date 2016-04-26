@@ -35,8 +35,8 @@ public class WalletHelperImpl implements WalletHelper {
     }
 
     @Override
-    public Wallet getWallet () {
-        return wallet;
+    public Address fetchAddress () {
+        return wallet.freshReceiveAddress();
     }
 
     private Transaction addOutAndInputs (Transaction transaction) {

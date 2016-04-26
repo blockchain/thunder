@@ -1,8 +1,8 @@
 package network.thunder.core.communication;
 
-import network.thunder.core.helper.callback.results.NullResultCommand;
-import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.communication.processor.ConnectionIntent;
+import network.thunder.core.helper.callback.ResultCommand;
+import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 
@@ -12,10 +12,12 @@ import java.sql.SQLException;
 public class ClientObject {
     public boolean isServer;
 
+    //TODO transition to NodeKey.class
     public ECKey pubKeyClient;
+
+    //Encryption keys
     public ECKey ephemeralKeyServer;
     public ECKey ephemeralKeyClient;
-
     public ECDHKeySet ecdhKeySet;
 
     public ConnectionIntent intent = ConnectionIntent.MISC;
@@ -25,8 +27,6 @@ public class ClientObject {
     public int port;
 
     public String name;
-
-    public boolean isConnected;
 
     public ClientObject (String host, int port) {
         this.host = host;
@@ -75,7 +75,6 @@ public class ClientObject {
     @Override
     public String toString () {
         return "ClientObject{" +
-                "isConnected=" + isConnected +
                 ", name='" + name + '\'' +
                 ", port=" + port +
                 ", host='" + host + '\'' +

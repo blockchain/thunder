@@ -9,6 +9,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
 
 import java.util.List;
 
@@ -73,6 +74,11 @@ public class DBHandlerMock implements DBHandler {
 
     @Override
     public Channel getChannel (int id) {
+        return null;
+    }
+
+    @Override
+    public Channel getChannel (Sha256Hash hash) {
         return null;
     }
 

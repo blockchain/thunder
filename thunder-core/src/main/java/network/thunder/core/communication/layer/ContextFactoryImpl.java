@@ -1,21 +1,24 @@
 package network.thunder.core.communication.layer;
 
-import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.*;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.ChannelManagerImpl;
 import network.thunder.core.communication.layer.high.channel.close.LNCloseProcessor;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseMessageFactory;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseMessageFactoryImpl;
 import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessor;
+import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessorImpl;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactory;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactoryImpl;
 import network.thunder.core.communication.layer.high.payments.*;
 import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
 import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactoryImpl;
 import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessor;
+import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessorImpl;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactoryImpl;
 import network.thunder.core.communication.layer.low.encryption.EncryptionProcessor;
+import network.thunder.core.communication.layer.low.encryption.EncryptionProcessorImpl;
 import network.thunder.core.communication.layer.low.encryption.MessageEncrypter;
 import network.thunder.core.communication.layer.low.encryption.MessageEncrypterImpl;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionMessageFactory;
@@ -26,28 +29,20 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.*;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.GossipMessageFactory;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.GossipMessageFactoryImpl;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SyncProcessor;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactoryImpl;
-import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactory;
-import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessor;
-import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactoryImpl;
-import network.thunder.core.helper.blockchain.BlockchainHelper;
-import network.thunder.core.helper.blockchain.MockBlockchainHelper;
-import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessorImpl;
-import network.thunder.core.communication.layer.low.encryption.EncryptionProcessorImpl;
-import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessorImpl;
-import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessorImpl;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogicImpl;
-import network.thunder.core.communication.layer.high.payments.LNPaymentProcessorImpl;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SyncProcessorImpl;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
-import network.thunder.core.communication.layer.high.payments.LNPaymentProcessor;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactoryImpl;
+import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessor;
+import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcessorImpl;
+import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactory;
+import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactoryImpl;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
+import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import network.thunder.core.helper.wallet.WalletHelperImpl;
-import network.thunder.core.communication.ServerObject;
 import org.bitcoinj.core.Wallet;
 
 /**
@@ -71,6 +66,9 @@ public class ContextFactoryImpl implements ContextFactory {
     BlockchainHelper blockchainHelper;
     ChannelManager channelManager;
 
+    ConnectionRegistry connectionRegistry;
+    ConnectionManager connectionManager;
+
     public ContextFactoryImpl (ServerObject node, DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper) {
         this.serverObject = node;
         this.dbHandler = dbHandler;
@@ -85,7 +83,12 @@ public class ContextFactoryImpl implements ContextFactory {
 
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
         this.blockchainHelper = new MockBlockchainHelper(wallet);
-        this.channelManager = new ChannelManagerImpl(getBlockchainHelper());
+
+        ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(node, this, dbHandler, eventHelper);
+        this.connectionManager = connectionManager;
+        this.connectionRegistry = connectionManager;
+
+        this.channelManager = new ChannelManagerImpl(this, dbHandler);
     }
 
     @Override
@@ -236,6 +239,16 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public ChannelManager getChannelManager () {
         return channelManager;
+    }
+
+    @Override
+    public ConnectionManager getConnectionManager () {
+        return connectionManager;
+    }
+
+    @Override
+    public ConnectionRegistry getConnectionRegistry () {
+        return connectionRegistry;
     }
 
 }

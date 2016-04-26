@@ -1,22 +1,26 @@
 package network.thunder.core.communication.layer.high.channel.establish;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ConnectionRegistry;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
+import network.thunder.core.communication.layer.high.channel.ChannelOpener;
 import network.thunder.core.communication.layer.high.channel.establish.messages.*;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
-import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
+import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.results.ChannelCreatedResult;
+import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.Transaction;
@@ -53,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  *
  * Upon completion, we broadcast the transaction to the p2p network and listen for sufficient confirmations.
  */
-public class LNEstablishProcessorImpl extends LNEstablishProcessor {
+public class LNEstablishProcessorImpl extends LNEstablishProcessor implements ChannelOpener {
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
 
     WalletHelper walletHelper;
@@ -65,6 +69,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     ServerObject serverObject;
     BlockchainHelper blockchainHelper;
     ChannelManager channelManager;
+    ConnectionRegistry connectionRegistry;
 
     MessageExecutor messageExecutor;
 
@@ -72,6 +77,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     public Channel channel;
     int status = 0;
+
+    ChannelOpenListener channelOpenListener;
 
     public LNEstablishProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, ClientObject node) {
         this.walletHelper = contextFactory.getWalletHelper();
@@ -83,6 +90,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         this.serverObject = contextFactory.getServerSettings();
         this.blockchainHelper = contextFactory.getBlockchainHelper();
         this.channelManager = contextFactory.getChannelManager();
+        this.connectionRegistry = contextFactory.getConnectionRegistry();
     }
 
     @Override
@@ -110,18 +118,26 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         //TODO check for existing channels, check if we are still waiting for them to gather enough confirmations, ...
+        setNode(new NodeKey(node.pubKeyClient));
         this.messageExecutor = messageExecutor;
+        channelManager.addChannelOpener(getNode(), this);
+        //TODO optimally have a dedicated processor for connections..
+        connectionRegistry.onConnected(getNode());
+        sendNextLayerActiveIfOpenChannelExists();
+    }
+
+    @Override
+    public void onLayerClose () {
+        channelManager.removeChannelOpener(getNode());
+        connectionRegistry.onDisconnected(getNode());
+        scheduler.shutdown();
+    }
+
+    private void sendNextLayerActiveIfOpenChannelExists () {
         List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
         if (openChannel.size() > 0) {
             messageExecutor.sendNextLayerActive();
-        } else {
-            if (!node.isServer) {
-                if (node.intent == ConnectionIntent.OPEN_CHANNEL) {
-                    sendEstablishMessageA();
-                }
-            }
         }
-
     }
 
     private void consumeMessage (Message message) {
@@ -136,6 +152,13 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         } else {
             throw new UnsupportedOperationException("Don't know this LNEstablish Message: " + message);
         }
+    }
+
+    @Override
+    public void openChannel (Channel channel, ChannelOpenListener callback) {
+        //TODO take values from channel object to choose opening values
+        this.channelOpenListener = callback;
+        sendEstablishMessageA();
     }
 
     private void processMessageA (Message message) {
@@ -177,17 +200,21 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         this.onEnoughConfirmations();
         blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
 
-        //TODO not nice abstraction here, but we need it for now until we use dedicated keys for channel closure
-        walletHelper.getWallet().addKey(channel.keyClient);
-
+        if (channelOpenListener != null) {
+            channelOpenListener.onStart(new SuccessResult());
+        }
     }
 
     private void onEnoughConfirmations () {
         channel.initiateChannelStatus(serverObject.configuration);
         dbHandler.updateChannel(channel);
         startScheduledBroadcasting();
-        eventHelper.onChannelOpened(channel);
         messageExecutor.sendNextLayerActive();
+        eventHelper.onChannelOpened(channel);
+
+        if (channelOpenListener != null) {
+            channelOpenListener.onFinished(new SuccessResult());
+        }
     }
 
     private void sendEstablishMessageA () {
@@ -233,11 +260,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
 
     private void prepareNewChannel () {
         channel = new Channel(node.pubKeyClient.getPubKey(), serverObject.pubKeyServer, getAmountForNewChannel());
+        channel.addressServer = walletHelper.fetchAddress();
         status = 1;
     }
 
     private void broadcastChannelObject () {
-        //TODO only broadcast the channel object here and the status object in some other processor
+        //TODO fill in some usable data into ChannelStatusObject
         PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
         ChannelStatusObject statusObject = new ChannelStatusObject();
         statusObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
@@ -255,11 +283,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor {
         if (status != expected) {
             throw new LNEstablishException("Status not correct.. Is: " + status + " Expected: " + expected);
         }
-    }
-
-    @Override
-    public void onLayerClose () {
-        scheduler.shutdown();
     }
 
     private void startScheduledBroadcasting () {

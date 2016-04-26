@@ -18,6 +18,7 @@
  */
 package network.thunder.core.communication.layer.high;
 
+import com.google.common.primitives.UnsignedBytes;
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.etc.Constants;
@@ -29,8 +30,10 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 
+import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -41,7 +44,8 @@ import java.util.List;
 public class Channel {
 
     public int id;
-    public byte[] nodeId;
+    public byte[] nodeKeyClient;
+    private Sha256Hash hash;
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
@@ -50,6 +54,9 @@ public class Channel {
     public ECKey keyServer;
     public ECKey keyClientA;
     public ECKey keyServerA;
+
+    public Address addressClient;
+    public Address addressServer;
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
@@ -144,7 +151,6 @@ public class Channel {
 
     public boolean requestedClose;
 
-
     public ChannelStatus channelStatus;
 
     /*
@@ -156,8 +162,8 @@ public class Channel {
 
     public List<TransactionSignature> closingSignatures;
 
-    public void setNodeId (byte[] nodeId) {
-        this.nodeId = nodeId;
+    public void setNodeKeyClient (byte[] nodeKeyClient) {
+        this.nodeKeyClient = nodeKeyClient;
     }
 
     public Script getAnchorScript (Sha256Hash outpoint) {
@@ -166,6 +172,23 @@ public class Channel {
         } else {
             return getScriptAnchorOutputServer();
         }
+    }
+
+    public Sha256Hash getHash () {
+        if (hash != null) {
+            return hash;
+        }
+        //TODO for now we take the two anchor hashes, this works until we have multiple anchors..
+        List<byte[]> list = new ArrayList<>();
+
+        list.add(anchorTxHashClient.getBytes());
+        list.add(anchorTxHashServer.getBytes());
+        list.sort(UnsignedBytes.lexicographicalComparator());
+        ByteBuffer byteBuffer = ByteBuffer.allocate(list.get(0).length + list.get(1).length);
+        byteBuffer.put(list.get(0));
+        byteBuffer.put(list.get(1));
+        hash = Sha256Hash.of(byteBuffer.array());
+        return hash;
     }
 
     //region Transaction Getter
@@ -440,7 +463,7 @@ public class Channel {
      */
     public Channel (ResultSet result) throws SQLException {
         this.setId(result.getInt("id"));
-        this.setNodeId(result.getBytes("node_id"));
+        this.setNodeKeyClient(result.getBytes("node_id"));
 
         this.setKeyClient(ECKey.fromPublicOnly(result.getBytes("key_client")));
         this.setKeyServer(ECKey.fromPrivate(result.getBytes("key_server")));
@@ -498,6 +521,9 @@ public class Channel {
         keyServer = new ECKey();
         keyServerA = new ECKey();
 
+        addressClient = keyClient.toAddress(Constants.getNetwork());
+        addressServer = keyServer.toAddress(Constants.getNetwork());
+
         anchorTxHashServer = Sha256Hash.wrap(Tools.getRandomByte(32));
         anchorTxHashClient = Sha256Hash.wrap(Tools.getRandomByte(32));
 
@@ -528,7 +554,7 @@ public class Channel {
 
     public Channel (byte[] nodeId, ECKey keyServer, long amount) {
         this();
-        this.nodeId = nodeId;
+        this.nodeKeyClient = nodeId;
         setInitialAmountServer(amount);
         setAmountServer(amount);
         setInitialAmountClient(amount);
@@ -552,6 +578,7 @@ public class Channel {
     public void retrieveDataFromOtherChannel (Channel channel) {
         keyClient = channel.keyServer;
         keyClientA = channel.keyServerA;
+        addressClient = channel.addressServer;
 
         masterPrivateKeyClient = channel.masterPrivateKeyServer;
         anchorSecretClient = channel.anchorSecretServer;

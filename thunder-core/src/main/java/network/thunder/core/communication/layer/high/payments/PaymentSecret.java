@@ -39,6 +39,9 @@ public class PaymentSecret {
     }
 
     public boolean verify () {
+        if (this.hash == null || this.secret == null) {
+            return false;
+        }
         return Arrays.equals(this.hash, Tools.hashSecret(secret));
     }
 

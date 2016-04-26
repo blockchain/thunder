@@ -1,6 +1,8 @@
 package network.thunder.core.communication.layer;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ConnectionManager;
+import network.thunder.core.communication.ConnectionRegistry;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.close.LNCloseProcessor;
@@ -91,4 +93,7 @@ public interface ContextFactory {
     BlockchainHelper getBlockchainHelper ();
 
     ChannelManager getChannelManager ();
+
+    ConnectionManager getConnectionManager ();
+    ConnectionRegistry getConnectionRegistry ();
 }

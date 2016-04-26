@@ -35,7 +35,7 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     public List<Channel> getChannel (ECKey nodeKey) {
         List<Channel> list = new ArrayList<>();
         Channel c = getChannel(1);
-        c.nodeId = nodeKey.getPubKey();
+        c.nodeKeyClient = nodeKey.getPubKey();
         list.add(c);
         return list;
     }

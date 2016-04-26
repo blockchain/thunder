@@ -18,7 +18,8 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
                 channel.getAnchorSecretHashServer(),
                 channel.getAnchorRevocationHashServer(),
                 channel.getInitialAmountClient(),
-                channel.getInitialAmountServer());
+                channel.getInitialAmountServer(),
+                channel.addressServer);
         return message;
     }
 
@@ -30,7 +31,8 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
                 channel.getAnchorSecretHashServer(),
                 channel.getAnchorRevocationHashServer(),
                 anchor.getHash().getBytes(),
-                channel.getInitialAmountServer()
+                channel.getInitialAmountServer(),
+                channel.addressServer
         );
 
         return message;

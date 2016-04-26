@@ -1,13 +1,14 @@
 package network.thunder.core.communication.layer.high.channel.close;
 
-import com.google.common.base.Preconditions;
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.ChannelStatus;
+import network.thunder.core.communication.layer.high.channel.ChannelCloser;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNClose;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNCloseAMessage;
@@ -22,6 +23,7 @@ import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
@@ -36,7 +38,7 @@ import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_
 /**
  * Created by matsjerratsch on 03/12/2015.
  */
-public class LNCloseProcessorImpl extends LNCloseProcessor {
+public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelCloser {
 
     LNEventHelper eventHelper;
     DBHandler dbHandler;
@@ -58,7 +60,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     boolean isBlocked = false;
     boolean weRequestedClose = false;
 
-    int channelIdToClose;
+    Sha256Hash channelHashToClose;
 
     public LNCloseProcessorImpl (ContextFactory contextFactory, DBHandler dbHandler, ClientObject node) {
         this.messageFactory = contextFactory.getLNCloseMessageFactory();
@@ -110,37 +112,10 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
 
         //TODO deduct the transaction fee correctly from both amounts
         //TODO would be better to have another address on file that we can use here..
-        transaction.addOutput(Coin.valueOf(status.amountClient), channel.keyClient.toAddress(Constants.getNetwork()));
-        transaction.addOutput(Coin.valueOf(status.amountServer), channel.keyServer.toAddress(Constants.getNetwork()));
+        transaction.addOutput(Coin.valueOf(status.amountClient), channel.addressClient);
+        transaction.addOutput(Coin.valueOf(status.amountServer), channel.addressServer);
 
         return Tools.applyBIP69(transaction);
-    }
-
-    private void checkClosingMessage (LNCloseAMessage message) {
-        if (!checkFee(message)) {
-            //TODO return some error message
-            //TODO handle the error message appropriately..
-            throw new LNCloseException("Fee not within allowed boundaries..");
-        }
-
-        Channel channel = getChannel();
-        ChannelStatus status = getChannelStatus(channel.channelStatus.getCloneReversed());
-        Transaction transaction = getClosingTransaction(status, message.feePerByte);
-
-        List<TransactionSignature> signatureList = message.getSignatureList();
-
-        int i = 0;
-        for (TransactionSignature signature : signatureList) {
-
-            boolean correct = Tools.checkSignature(
-                    transaction, i, channel.getAnchorScript(transaction.getInput(i).getOutpoint().getHash()), channel.keyClient, signature);
-
-            if (!correct) {
-                throw new LNCloseException("Signature is not correct..");
-            }
-            i++;
-
-        }
     }
 
     private boolean checkFee (LNCloseAMessage message) {
@@ -153,11 +128,12 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     @Override
-    public void closeChannel (int id, ResultCommand callback) {
+    public void closeChannel (Channel channel, ResultCommand callback) {
         //Before we do anything, make sure we lock the channel and don't accept any new payments anymore..
         //TODO lock the channel
         this.callback = callback;
-        this.channelIdToClose = id;
+        this.channelHashToClose = channel.getHash();
+        this.channel = getChannel();
         isBlocked = true;
         weRequestedClose = true;
         channel.phase = CLOSE_REQUESTED_SERVER;
@@ -181,14 +157,14 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
     }
 
     private void sendCloseMessage (List<TransactionSignature> signatureList) {
-        LNClose close = messageFactory.getLNCloseAMessage(signatureList, serverObject.configuration.DEFAULT_FEE_PER_BYTE_CLOSING);
+        LNClose close = messageFactory.getLNCloseAMessage(channelHashToClose, signatureList, serverObject.configuration.DEFAULT_FEE_PER_BYTE_CLOSING);
         messageExecutor.sendMessageUpwards(close);
 
     }
 
     private Channel getChannel () {
         //TODO quick hack here - we have to allow multiple channels per connection somehow..
-        return dbHandler.getChannel(node.pubKeyClient).get(0);
+        return dbHandler.getChannel(channelHashToClose);
     }
 
     @Override
@@ -212,23 +188,13 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
-        Preconditions.checkArgument(openChannel.size() > 0);
+        //TODO move obligation to save channel object in ChannelManagement
+        //Need to also keep track of channels after reconnecting..
 
-        this.channel = openChannel.get(0);
-        this.channelIdToClose = channel.id;
-
+        setNode(new NodeKey(node.pubKeyClient));
         this.messageExecutor = messageExecutor;
-        this.channelManager.addCloseProcessor(this, channel);
-
-        if (channel.phase == CLOSE_REQUESTED_SERVER) {
-            this.weRequestedClose = true;
-        }
-        if (channel.phase == CLOSE_REQUESTED_CLIENT || channel.phase == CLOSE_REQUESTED_SERVER) {
-            calculateAndSendCloseMessage();
-        } else {
-            messageExecutor.sendNextLayerActive();
-        }
+        this.channelManager.addChannelCloser(getNode(), this);
+        this.messageExecutor.sendNextLayerActive();
     }
 
     private void consumeMessage (Message message) {
@@ -263,15 +229,45 @@ public class LNCloseProcessorImpl extends LNCloseProcessor {
         onChannelClose();
     }
 
+    private void checkClosingMessage (LNCloseAMessage message) {
+        if (!checkFee(message)) {
+            //TODO return some error message
+            //TODO handle the error message appropriately..
+            throw new LNCloseException("Fee not within allowed boundaries..");
+        }
+        if (channelHashToClose == null) {
+            channelHashToClose = Sha256Hash.wrap(message.channelHash);
+        }
+        this.channel = getChannel();
+        ChannelStatus status = getChannelStatus(channel.channelStatus.getCloneReversed());
+        Transaction transaction = getClosingTransaction(status, message.feePerByte);
+
+        List<TransactionSignature> signatureList = message.getSignatureList();
+
+        int i = 0;
+        for (TransactionSignature signature : signatureList) {
+
+            boolean correct = Tools.checkSignature(
+                    transaction, i, channel.getAnchorScript(transaction.getInput(i).getOutpoint().getHash()), channel.keyClient, signature);
+
+            if (!correct) {
+                throw new LNCloseException("Signature is not correct..");
+            }
+            i++;
+
+        }
+    }
+
     private void onChannelClose () {
         eventHelper.onChannelClosed(channel);
         callback.execute(new SuccessResult());
         channelManager.onChannelClosed(channel);
+        messageExecutor.closeConnection();
     }
 
     @Override
     public void onLayerClose () {
-        channelManager.removeCloseProcessor(channel);
+        channelManager.removeChannelCloser(getNode());
         scheduler.shutdown();
     }
 

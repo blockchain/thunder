@@ -139,7 +139,6 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
         if (isEmptyByte(sender)) {
             System.out.println("Payment was redeemed: " + paymentSecret);
-            eventHelper.onPaymentCompleted(paymentSecret);
             return;
         } else {
 

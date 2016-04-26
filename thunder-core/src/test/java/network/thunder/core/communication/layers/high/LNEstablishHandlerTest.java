@@ -2,6 +2,8 @@ package network.thunder.core.communication.layers.high;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ConnectionManager;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.*;
 import network.thunder.core.communication.layer.high.Channel;
@@ -17,9 +19,11 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.MockBroadcastHelper;
+import network.thunder.core.etc.MockConnectionManager;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
+import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
@@ -75,6 +79,8 @@ public class LNEstablishHandlerTest {
 
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNEstablish1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNEstablish2"));
+
+        contextFactory1.getChannelManager().openChannel(new NodeKey(node1.pubKeyClient), new ChannelOpenListener());
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);
@@ -216,9 +222,12 @@ public class LNEstablishHandlerTest {
     }
 
     class EstablishMockContextFactory extends ContextFactoryImpl {
+        ConnectionManager connManager;
 
         public EstablishMockContextFactory (ServerObject node, DBHandler dbHandler) {
             super(node, dbHandler, new MockWallet(Constants.getNetwork()), new MockLNEventHelper());
+            connManager = new MockConnectionManager();
+
         }
 
         @Override
@@ -230,6 +239,15 @@ public class LNEstablishHandlerTest {
         public BroadcastHelper getBroadcastHelper () {
             return broadcastHelper;
         }
+
+        @Override
+        public ConnectionManager getConnectionManager () {
+            if (connManager == null) {
+                connManager = new MockConnectionManager();
+            }
+            return connManager;
+        }
+
     }
 
 }

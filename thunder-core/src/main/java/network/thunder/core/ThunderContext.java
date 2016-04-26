@@ -1,9 +1,6 @@
 package network.thunder.core;
 
-import network.thunder.core.communication.ConnectionManager;
-import network.thunder.core.communication.ConnectionManagerImpl;
-import network.thunder.core.communication.LNConfiguration;
-import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.*;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.Channel;
@@ -12,6 +9,7 @@ import network.thunder.core.communication.layer.high.payments.messages.OnionObje
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.FailureResult;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -77,7 +75,8 @@ public class ThunderContext {
 
     public void openChannel (byte[] node, ResultCommand resultCallback) {
         contextFactory.getSyncHelper().resync();
-        connectionManager.buildChannel(node, resultCallback);
+        contextFactory.getChannelManager().openChannel(new NodeKey(node), new ChannelOpenListener());
+//        connectionManager.buildChannel(node, resultCallback);
     }
 
     public void makePayment (byte[] receiver, long amount, PaymentSecret secret, ResultCommand resultCallback) {

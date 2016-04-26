@@ -1,7 +1,9 @@
 package network.thunder.core.communication;
 
+import com.google.common.collect.Sets;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
+import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.communication.nio.P2PClient;
@@ -10,6 +12,8 @@ import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.SeedNodes;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.ChannelOpenListener;
+import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.*;
 import network.thunder.core.helper.events.LNEventHelper;
@@ -19,13 +23,16 @@ import org.bitcoinj.core.Wallet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static network.thunder.core.communication.processor.ConnectionIntent.*;
 
 /**
  * Created by matsjerratsch on 22/01/2016.
  */
-public class ConnectionManagerImpl implements ConnectionManager {
+public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
     public final static int NODES_TO_SYNC = 5;
     public final static int CHANNELS_TO_OPEN = 5;
     public final static int MINIMUM_AMOUNT_OF_IPS = 10;
@@ -38,6 +45,11 @@ public class ConnectionManagerImpl implements ConnectionManager {
     LNEventHelper eventHelper;
 
     P2PServer server;
+    ChannelManager channelManager;
+
+    Set<NodeKey> connectedNodes = Sets.newConcurrentHashSet();
+    Set<NodeKey> currentlyConnecting = Sets.newConcurrentHashSet();
+    Map<NodeKey, ConnectionListener> connectionListenerMap = new ConcurrentHashMap<>();
 
     public ConnectionManagerImpl (ServerObject node, Wallet wallet, DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -51,6 +63,59 @@ public class ConnectionManagerImpl implements ConnectionManager {
         this.contextFactory = contextFactory;
         this.dbHandler = dbHandler;
         this.eventHelper = eventHelper;
+        this.channelManager = contextFactory.getChannelManager();
+    }
+
+    @Override
+    public void onConnected (NodeKey node) {
+        connectedNodes.add(node);
+
+        ConnectionListener listener = connectionListenerMap.get(node);
+        if (listener != null) {
+            listener.onConnection(new SuccessResult());
+            connectionListenerMap.remove(node);
+        }
+        currentlyConnecting.remove(node);
+    }
+
+    @Override
+    public void onDisconnected (NodeKey node) {
+        connectedNodes.remove(node);
+        currentlyConnecting.remove(node);
+    }
+
+    @Override
+    public boolean isConnected (NodeKey node) {
+        return connectedNodes.contains(node);
+    }
+
+    @Override
+    public void connect (NodeKey node, ConnectionListener connectionListener) {
+        if (connectedNodes.contains(node)) {
+            //Already connected
+            connectionListener.onConnection(new SuccessResult());
+        } else if (currentlyConnecting.contains(node)) {
+            //TODO we are overwriting the old listener - not sure if rather multimap or normal map..
+            connectionListenerMap.put(node, connectionListener);
+        } else {
+            currentlyConnecting.add(node);
+            connectionListenerMap.put(node, connectionListener);
+
+            //TODO legacy below...
+            //TODO handle connection failures
+            PubkeyIPObject ipObject = dbHandler.getIPObject(node.nodeKey.getPubKey());
+            connect(ipObjectToNode(ipObject, ConnectionIntent.MISC), getDisconnectListener(node));
+        }
+
+    }
+
+    private ConnectionListener getDisconnectListener (NodeKey nodeKey) {
+        return new ConnectionListener() {
+            @Override
+            public void onConnection (Result result) {
+                onDisconnected(nodeKey);
+            }
+        };
     }
 
     @Override
@@ -152,7 +217,7 @@ public class ConnectionManagerImpl implements ConnectionManager {
                 System.out.println("BUILD CHANNEL WITH: " + randomNode);
 
                 ClientObject node = ipObjectToNode(randomNode, OPEN_CHANNEL);
-                buildChannel(node.pubKeyClient.getPubKey(), callback);
+                channelManager.openChannel(new NodeKey(node.pubKeyClient), new ChannelOpenListener());
 
                 alreadyTried.add(randomNode);
 
@@ -164,45 +229,6 @@ public class ConnectionManagerImpl implements ConnectionManager {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }
-
-    //TODO be able to tear down a channel completely again
-    //TODO reset sleepIntervall if
-    //TODO build random channels tries to reconnect here even if non-existent
-    @Override
-    public void buildChannel (byte[] nodeKey, ResultCommand callback) {
-        new Thread(() -> {
-            final long[] sleepIntervall = {1000};
-            final boolean[] reconnectAutomatically = {true};
-            while (reconnectAutomatically[0]) {
-
-                PubkeyIPObject ipObject = dbHandler.getIPObject(nodeKey);
-                if (ipObject != null) {
-                    ClientObject node1 = ipObjectToNode(ipObject, OPEN_CHANNEL);
-                    node1.resultCallback = result -> {
-                        if (result instanceof ConnectionResult) {
-                            ConnectionResult result1 = (ConnectionResult) result;
-                            if (result1.shouldTryToReconnect()) {
-                                reconnectAutomatically[0] = true;
-                            }
-                            if (result.wasSuccessful()) {
-                                sleepIntervall[0] = 1000;
-                            }
-                            callback.execute(result);
-                        }
-                    };
-
-                    connectBlocking(node1);
-                }
-                sleepIntervall[0] *= 1.2;
-                try {
-                    sleepIntervall[0] = Math.min(sleepIntervall[0], 5 * 60 * 1000);
-                    Thread.sleep(sleepIntervall[0]);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
     @Override
@@ -241,15 +267,15 @@ public class ConnectionManagerImpl implements ConnectionManager {
         callback.execute(new SyncSuccessResult());
     }
 
-    private void connect (ClientObject node) {
+    private void connect (ClientObject node, ConnectionListener listener) {
         P2PClient client = new P2PClient(contextFactory);
-        client.connectTo(node);
+        client.connectTo(node, listener);
     }
 
     private void connectBlocking (ClientObject node) {
         try {
             P2PClient client = new P2PClient(contextFactory);
-            client.connectBlocking(node);
+            client.connectBlocking(node, new ConnectionListener());
         } catch (Exception e) {
             e.printStackTrace();
         }

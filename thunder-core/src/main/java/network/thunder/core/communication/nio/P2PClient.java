@@ -21,8 +21,11 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.layer.PipelineInitialiser;
 import network.thunder.core.communication.layer.ContextFactory;
+import network.thunder.core.communication.layer.PipelineInitialiser;
+import network.thunder.core.helper.callback.ConnectionListener;
+import network.thunder.core.helper.callback.results.FailureResult;
+import network.thunder.core.helper.callback.results.SuccessResult;
 
 /**
  */
@@ -38,25 +41,14 @@ public final class P2PClient {
     //Furthermore, we will add a new handler for the different message types,
     //as it will greatly improve readability and maintainability of the code.
 
-    public void connectTo (ClientObject node) {
+    public void connectTo (ClientObject node, ConnectionListener connectionListener) {
         new Thread(new Runnable() {
             @Override
             public void run () {
-
-                while (!node.isConnected) {
-
-                    //TODO Refactor
-                    try {
-                        connect(node);
-                    } catch (Exception e) {
-                        //Not able to connect?
-                        try {
-                            Thread.sleep(60 * 1000);
-                        } catch (InterruptedException e1) {
-                            e1.printStackTrace();
-                        }
-                        e.printStackTrace();
-                    }
+                try {
+                    connect(node, connectionListener);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
 
             }
@@ -64,26 +56,35 @@ public final class P2PClient {
 
     }
 
-    public void connectBlocking (ClientObject node) {
-        connect(node);
+    public void connectBlocking (ClientObject node, ConnectionListener connectionListener) {
+        connect(node, connectionListener);
     }
 
-    private void connect (ClientObject node) {
+    private void connect (ClientObject node, ConnectionListener connectionListener) {
+        boolean successfulConnection = false;
         try {
             System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
-
-            EventLoopGroup group = new NioEventLoopGroup();
-            Bootstrap b = new Bootstrap();
-            b.group(group).channel(NioSocketChannel.class).handler(new PipelineInitialiser(contextFactory, node));
-
-            // Start the connection attempt.
-            Channel ch = b.connect(node.host, node.port).sync().channel();
-            node.isConnected = ch.isOpen();
+            Channel ch = createChannel(node);
+            if (ch.isOpen()) {
+                successfulConnection = true;
+                connectionListener.onConnection(new SuccessResult());
+            }
             ch.closeFuture().sync();
 
             System.out.println("Connection to " + node.host + " closed..");
         } catch (Exception e) {
+            if (!successfulConnection) {
+                //Don't notify a previously successful connection again..
+                connectionListener.onConnection(new FailureResult());
+            }
             throw new RuntimeException(e);
         }
+    }
+
+    private Channel createChannel(ClientObject node) throws InterruptedException {
+        EventLoopGroup group = new NioEventLoopGroup();
+        Bootstrap b = new Bootstrap();
+        b.group(group).channel(NioSocketChannel.class).handler(new PipelineInitialiser(contextFactory, node));
+        return b.connect(node.host, node.port).sync().channel();
     }
 }
