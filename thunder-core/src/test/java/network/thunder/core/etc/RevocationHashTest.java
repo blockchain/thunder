@@ -28,7 +28,7 @@ public class RevocationHashTest {
         byte[] secret = new byte[20];
         Random r = new Random();
         r.nextBytes(secret);
-        byte[] hash = Tools.hashSecret(secret); //TODO: Maybe get that dependency out here?
+        byte[] hash = Tools.hashSecret(secret);
 
         RevocationHash revocationHash = new RevocationHash(10, 10, secret, hash);
         assertTrue(revocationHash.check());

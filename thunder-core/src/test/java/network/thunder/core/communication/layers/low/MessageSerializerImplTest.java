@@ -10,8 +10,6 @@ import java.util.Arrays;
 import static org.junit.Assert.assertTrue;
 
 /**
- * Created by matsjerratsch on 07/12/2015.
- * <p>
  * TODO: Maybe add some more different messages here?
  */
 public class MessageSerializerImplTest {

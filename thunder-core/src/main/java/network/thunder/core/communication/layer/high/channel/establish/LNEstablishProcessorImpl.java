@@ -117,7 +117,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        //TODO check for existing channels, check if we are still waiting for them to gather enough confirmations, ...
         setNode(new NodeKey(node.pubKeyClient));
         this.messageExecutor = messageExecutor;
         channelManager.addChannelOpener(getNode(), this);

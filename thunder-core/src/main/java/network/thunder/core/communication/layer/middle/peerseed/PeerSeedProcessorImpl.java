@@ -89,7 +89,6 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
             dbHandler.insertIPObjects(P2PDataObject.generaliseList(list));
             fireIPEvents(list);
 
-            //TODO We might always want to close here, given that we only ever get here if intent = GET_IPS
             if (!node.isServer && node.intent == ConnectionIntent.GET_IPS) {
                 node.resultCallback.execute(new PeerSeedResult());
                 messageExecutor.closeConnection();

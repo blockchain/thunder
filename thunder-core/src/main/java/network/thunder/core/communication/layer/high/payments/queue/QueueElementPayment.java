@@ -1,8 +1,8 @@
 package network.thunder.core.communication.layer.high.payments.queue;
 
 import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 
 /**
@@ -29,10 +29,10 @@ public class QueueElementPayment extends QueueElement {
         if (status.amountServer > 0) {
             return update;
         } else {
+            //TODO Once we can populate a message back to the sender, we should add some useful information here..
             System.out.println("Payment amount too big - refund..");
             paymentHelper.paymentRefunded(paymentData);
             return channelUpdate;
-            //TODO CANNOT RELAY PAYMENT..
         }
     }
 }

@@ -36,11 +36,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-/*
- * TODO: We probably want very flexible rules for channels in the future. Currently, these rules are set as Constants in Constants.class.
- * Add all those constants as columns to the Channels table?
- */
-
 public class Channel {
 
     public int id;

@@ -119,7 +119,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         List<PaymentData> allPayments = new ArrayList<>(channelStatus.paymentList);
 
         for (PaymentData payment : allPayments) {
-            //TODO value here should include fees for the next transaction you need to spend it..pa
             Coin value = Coin.valueOf(payment.amount);
             Script script;
             if (payment.sending) {

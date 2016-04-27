@@ -219,7 +219,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             testStatus(RECEIVED_D);
         }
 
-        //TODO sending and constructing message..
         LNPayment message = paymentLogic.getDMessage();
         sendMessage(message);
 

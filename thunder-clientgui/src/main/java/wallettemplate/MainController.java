@@ -354,10 +354,6 @@ public class MainController {
         }
     }
 
-    public void closeChannel (ActionEvent actionEvent) {
-        //TODO
-    }
-
     @FXML
     void thunderRefresh (ActionEvent event) {
     }

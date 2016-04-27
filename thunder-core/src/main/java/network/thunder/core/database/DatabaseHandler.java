@@ -2,12 +2,12 @@ package network.thunder.core.database;
 
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
+import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.etc.Tools;
-import network.thunder.core.communication.ClientObject;
 
 import javax.sql.DataSource;
 import java.beans.PropertyVetoException;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 /**
- * Created by matsjerratsch on 14/10/2015.
+ * Used to implement DBHandler as a SQL storage engine. Needs some rework once we actually save to a persistence storage
  */
 public class DatabaseHandler {
 

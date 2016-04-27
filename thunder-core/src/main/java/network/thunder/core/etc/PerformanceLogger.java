@@ -20,11 +20,6 @@ package network.thunder.core.etc;
 
 import org.spongycastle.util.Arrays;
 
-// TODO: Auto-generated Javadoc
-
-/**
- * The Class PerformanceLogger.
- */
 public class PerformanceLogger {
 
     long time1;
@@ -32,24 +27,15 @@ public class PerformanceLogger {
     String title;
     int i = 0;
 
-    /**
-     * Instantiates a new performance logger.
-     */
     public PerformanceLogger () {
         time1 = System.currentTimeMillis();
     }
 
-    /**
-     * Instantiates a new performance logger.
-     *
-     * @param title the title
-     */
     public PerformanceLogger (String title) {
         time1 = System.currentTimeMillis();
     }
 
     public void measure (String event) {
-
         time2 = System.currentTimeMillis();
         if (Arrays.contains(Constants.LOG_LEVELS, 1)) {
             System.out.println((time2 - time1) + "		" + event);

@@ -128,20 +128,17 @@ public class Tools {
             }
             qry = new String(out.toByteArray());
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
             try {
                 in.close();
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
         try {
             return java.net.URLDecoder.decode(qry, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         return qry;
@@ -230,17 +227,6 @@ public class Tools {
             hexChars[j * 2 + 1] = hexArray[v & 0x0F];
         }
         return new String(hexChars);
-    }
-
-    /**
-     * Calculate server fee.
-     *
-     * @param amount the amount
-     * @return the long
-     */
-    public static long calculateServerFee (long amount) {
-        long fee = (long) (amount * Constants.SERVER_FEE_PERCENTAGE + Constants.SERVER_FEE_FLAT);
-        return Math.min(Constants.SERVER_FEE_MAX, Math.max(Constants.SERVER_FEE_MIN, fee));
     }
 
     /**
@@ -497,11 +483,6 @@ public class Tools {
             a = false;
         }
         return a;
-    }
-
-    public static byte[] intToByte (int i) {
-        //TODO: Add functionality..
-        return new byte[4];
     }
 
     public static Transaction setTransactionLockTime (Transaction transaction, int locktime) {

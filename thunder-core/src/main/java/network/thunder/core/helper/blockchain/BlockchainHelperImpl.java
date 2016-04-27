@@ -75,7 +75,6 @@ public class BlockchainHelperImpl implements BlockchainHelper {
             if (height > 0) {
                 transaction.getConfidence().setDepthInBlocks((int) (blockChain.getChainHead().getHeight() - height));
             }
-            //TODO maybe get the number of confirmations in here somehow
             return transaction;
         } catch (Exception e) {
             throw new RuntimeException(e);

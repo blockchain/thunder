@@ -35,6 +35,7 @@ import static network.thunder.core.communication.processor.ConnectionIntent.*;
  * <p>
  * TODO: When a new connection comes in from a node that we were connected already, close the old connection
  * TODO: Move Syncing and IP-Seeding to their respective classes, together with hookups for Syncer / IPSeeder interface hookups
+ * TODO: Think about how we want to close channels again once we removed the ChannelIntent object in ClientObject (maybe prune connection pool?)
  */
 public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
     public final static int CHANNELS_TO_OPEN = 5;
