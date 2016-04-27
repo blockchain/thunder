@@ -31,7 +31,7 @@
     <parent>
         <groupId>network.thunder</groupId>
         <artifactId>thunder-parent</artifactId>
-        <version>develop-SNAPSHOT</version>
+        <version>0.1</version>
     </parent>
 
     <build>
