@@ -2,7 +2,6 @@ package network.thunder.core.communication;
 
 import com.google.common.collect.Sets;
 import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -17,9 +16,7 @@ import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.*;
 import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.helper.events.LNEventHelperImpl;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Wallet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,39 +27,36 @@ import java.util.concurrent.ConcurrentHashMap;
 import static network.thunder.core.communication.processor.ConnectionIntent.*;
 
 /**
- * Created by matsjerratsch on 22/01/2016.
+ * ConnectionManager is responsible to keep track of which connections are currently open and connect to nodes by NodeKey.
+ * <p>
+ * We are keeping track of open connections not on IP level, but rather on a per node basis. Similar,
+ * when a new connection is requested, the ConnectionManager is in charge to look up the most recent
+ * address out of the database.
+ * <p>
+ * TODO: When a new connection comes in from a node that we were connected already, close the old connection
+ * TODO: Move Syncing and IP-Seeding to their respective classes, together with hookups for Syncer / IPSeeder interface hookups
  */
 public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
-    public final static int NODES_TO_SYNC = 5;
     public final static int CHANNELS_TO_OPEN = 5;
     public final static int MINIMUM_AMOUNT_OF_IPS = 10;
-
-    ServerObject node;
-
-    ContextFactory contextFactory;
-    DBHandler dbHandler;
-
-    LNEventHelper eventHelper;
-
-    P2PServer server;
-    ChannelManager channelManager;
 
     Set<NodeKey> connectedNodes = Sets.newConcurrentHashSet();
     Set<NodeKey> currentlyConnecting = Sets.newConcurrentHashSet();
     Map<NodeKey, ConnectionListener> connectionListenerMap = new ConcurrentHashMap<>();
 
-    public ConnectionManagerImpl (ServerObject node, Wallet wallet, DBHandler dbHandler) {
-        this.dbHandler = dbHandler;
-        this.node = node;
-        eventHelper = new LNEventHelperImpl();
-        contextFactory = new ContextFactoryImpl(node, dbHandler, wallet, eventHelper);
-    }
+    P2PServer server;
+    ServerObject node;
 
-    public ConnectionManagerImpl (ServerObject node, ContextFactory contextFactory, DBHandler dbHandler, LNEventHelper eventHelper) {
-        this.node = node;
-        this.contextFactory = contextFactory;
+    DBHandler dbHandler;
+    ContextFactory contextFactory;
+    LNEventHelper eventHelper;
+    ChannelManager channelManager;
+
+    public ConnectionManagerImpl (ContextFactory contextFactory, DBHandler dbHandler) {
         this.dbHandler = dbHandler;
-        this.eventHelper = eventHelper;
+        this.node = contextFactory.getServerSettings();
+        this.contextFactory = contextFactory;
+        this.eventHelper = contextFactory.getEventHelper();
         this.channelManager = contextFactory.getChannelManager();
     }
 
@@ -102,11 +96,9 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
             connectionListenerMap.put(node, connectionListener);
 
             //TODO legacy below...
-            //TODO handle connection failures
             PubkeyIPObject ipObject = dbHandler.getIPObject(node.nodeKey.getPubKey());
             connect(ipObjectToNode(ipObject, ConnectionIntent.MISC), getDisconnectListener(node));
         }
-
     }
 
     private ConnectionListener getDisconnectListener (NodeKey nodeKey) {
@@ -118,36 +110,11 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
         };
     }
 
-    @Override
-    public void startUp (ResultCommand callback) {
-        new Thread(new Runnable() {
-            @Override
-            public void run () {
-                try {
-                    startUpBlocking(callback);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
-    public void startUpBlocking (ResultCommand callback) throws Exception {
-        startListening(callback);
-        connectOpenChannels();
-        fetchNetworkIPs(callback);
-        startBuildingRandomChannel(callback);
-    }
-
     public void startListening (ResultCommand callback) {
-        System.out.println("startListening " + this.node.portServer);
+        System.out.println("Started listening on port " + this.node.portServer);
         server = new P2PServer(contextFactory);
         server.startServer(this.node.portServer);
         callback.execute(new SuccessResult());
-    }
-
-    private void connectOpenChannels () {
-        //TODO
     }
 
     @Override

@@ -84,7 +84,7 @@ public class ContextFactoryImpl implements ContextFactory {
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
         this.blockchainHelper = new MockBlockchainHelper(wallet);
 
-        ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(node, this, dbHandler, eventHelper);
+        ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(this, dbHandler);
         this.connectionManager = connectionManager;
         this.connectionRegistry = connectionManager;
 

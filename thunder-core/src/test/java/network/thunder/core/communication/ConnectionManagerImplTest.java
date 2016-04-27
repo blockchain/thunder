@@ -1,10 +1,12 @@
 package network.thunder.core.communication;
 
+import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.ConnectionManagerWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.SeedNodes;
 import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +45,9 @@ public class ConnectionManagerImplTest {
             System.out.println("------------------------------------------------------------------------------");
             System.out.println(i + " started up...");
 
-            clients.get(i).connectionManager.startUp(new NullResultCommand());
+            clients.get(i).connectionManager.fetchNetworkIPs(new NullResultCommand());
+            clients.get(i).connectionManager.startSyncing(new NullResultCommand());
+            clients.get(i).connectionManager.startBuildingRandomChannel(new NullResultCommand());
             Thread.sleep(500);
         }
 
@@ -81,7 +85,8 @@ public class ConnectionManagerImplTest {
         ConnectionManagerWrapper connection = new ConnectionManagerWrapper();
         connection.dbHandler = new InMemoryDBHandler();
         connection.wallet = new MockWallet(Constants.getNetwork());
-        connection.connectionManager = new ConnectionManagerImpl(node, connection.wallet, connection.dbHandler);
+        connection.contextFactory = new ContextFactoryImpl(node, connection.dbHandler, connection.wallet, new LNEventHelperImpl());
+        connection.connectionManager = new ConnectionManagerImpl(connection.contextFactory, connection.dbHandler);
         return connection;
     }
 

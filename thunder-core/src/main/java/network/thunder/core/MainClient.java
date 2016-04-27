@@ -63,7 +63,7 @@ public class MainClient {
         LNEventHelper eventHelper = new LNEventHelperImpl();
         ContextFactory contextFactory = new ContextFactoryImpl(server, dbHandler, wallet, eventHelper);
 
-        ConnectionManager connectionManager = new ConnectionManagerImpl(server, contextFactory, dbHandler, eventHelper);
+        ConnectionManager connectionManager = new ConnectionManagerImpl(contextFactory, dbHandler);
 
         connectionManager.startListening(new NullResultCommand());
 

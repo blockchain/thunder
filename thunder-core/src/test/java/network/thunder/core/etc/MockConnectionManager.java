@@ -7,10 +7,6 @@ import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.SuccessResult;
 
 public class MockConnectionManager implements ConnectionManager {
-    @Override
-    public void startUp (ResultCommand callback) throws Exception {
-
-    }
 
     @Override
     public void startListening (ResultCommand callback) {

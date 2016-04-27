@@ -48,7 +48,7 @@ public class ThunderContext {
     private void init () {
         eventHelper = new LNEventHelperImpl();
         contextFactory = new ContextFactoryImpl(node, dbHandler, wallet, eventHelper);
-        connectionManager = new ConnectionManagerImpl(node, contextFactory, dbHandler, eventHelper);
+        connectionManager = new ConnectionManagerImpl(contextFactory, dbHandler);
     }
 
     public void startUp (ResultCommand resultCallback) {
