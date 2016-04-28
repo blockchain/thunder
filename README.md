@@ -58,6 +58,7 @@ java -jar node.jar
 ```
 
 #### Wallet
+
 will start up an autonomous node that will connect to the thunder.network and build channels with other random nodes. On first startup it will ask the user for some basic configuration. Afterwards it will write this configuration to disk for the next start. To be an active part of the network, please configure your firewall to allow incoming connections on port 2204. You can change the default port in the config file.
 
 Running
@@ -104,6 +105,6 @@ Both parties will likely create the funding transaction together, sending a half
 As this is still a prototype, various optimizations are left open for now, as they would hinder active development. For example, JSON was chosen to serialize messages, as Gson allows for very prototype-friendly development, even though it increases message size 3-5 fold.
 
 
-## Ressources
+## Resources
 
 - [1] LN-Implementation by Rusty Russel, https://github.com/ElementsProject/lightning
