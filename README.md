@@ -23,7 +23,7 @@ Donations appreciated:
 - [X] Basic Gossip Protocol
 - [X] Interface for Connecting into Wallet Software    
 - [X] Basic Blockchain Watching Capability    
-- [ ] Closing a Channel    
+- [X] Closing a Channel    
 - [ ] Hardening against various DDoS attacks   
 - [ ] Backing Database Implementation (currently only in memory)    
 - [ ] Restoring state after restart - cheking old TX for cheating
@@ -51,15 +51,21 @@ will run the tests and create the executables.
 
 ### Running
 
+Node software and Wallet software are completely independent projects. Nodes are generally passive participants of the network that only relay payments, whereas the Wallet software is only used to make and receive payments.
+
+#### Node
+
 Starting
 ```
-node.jar
+java -jar node.jar
 ```
-will start up an autonomous node that will try to connect to the thunder.network and build channels with random nodes. After doing so, it will write a basic configuration to disk to read from after next start. To be an active part of the network, please configure your firewall to allow incoming connections. The default port is 10000, but it can be set in the config file too.
+will start up an autonomous node that will try to connect to the thunder.network and build channels with random nodes. On first startup it will ask the user for some basic configuration. After doing so, it will write a basic configuration to disk to read from after next start. To be an active part of the network, please configure your firewall to allow incoming connections. The default port is 2204, but it can be set in the config file too.
+
+#### Wallet
 
 Starting 
 ```
-wallet.jar
+java -jar wallet.jar
 ```
 will start up the wallet. It will ask for known nodes and get a topology of the network. The user can then chose a node to form a channel with and make and receive payments. 
 
