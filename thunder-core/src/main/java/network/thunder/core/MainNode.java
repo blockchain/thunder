@@ -28,6 +28,11 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * This is the entry point for starting a thunder.network node.
+ * <p>
+ * On startup it tries to read from `config.json`, if that fails it creates a new configuration with a new private nodekey.
+ */
 public class MainNode {
 
     static final String CONFIG_FILE = "config.json";
@@ -50,48 +55,42 @@ public class MainNode {
             newConfiguration = true;
             askForHostname(configuration);
         }
+
+        //Let's create a ServerObject that holds the general configuration, it will get passed into each Layer of each Connection later.
         ServerObject server = new ServerObject();
         server.portServer = configuration.portServer;
         server.hostServer = configuration.hostnameServer;
         server.pubKeyServer = ECKey.fromPrivate(Tools.hexStringToByteArray(configuration.serverKey));
 
-        List<byte[]> nodesToBuildChannelWith = new ArrayList<>();
-        for (String s : configuration.nodesToBuildChannelWith) {
-            nodesToBuildChannelWith.add(Tools.hexStringToByteArray(s));
-        }
-
+        //Currently we are only using an in-memory implementation of the DBHandler and a Wallet that is not holding real bitcoin
         DBHandler dbHandler = new InMemoryDBHandler();
         Wallet wallet = new MockWallet(Constants.getNetwork());
-
         ThunderContext context = new ThunderContext(wallet, dbHandler, server);
 
-        ResultCommandExt listener = new ResultCommandExt();
-        context.startListening(listener);
-        listener.await();
 
-        boolean successful = false;
-        while (!successful) {
-            ResultCommandExt fetchNetworkListener = new ResultCommandExt();
-            context.fetchNetworkIPs(fetchNetworkListener);
-            successful = fetchNetworkListener.await().wasSuccessful();
-        }
+        //Start listening on port specified in the configuration
+        startListening(context);
 
-        ResultCommandExt buildChannelListener = new ResultCommandExt();
-        if (newConfiguration) {
+        //Fetch IPs from other participants in the network
+        fetchNetworkIPs(context);
+
+        //Finally build payment channels
+        if (!newConfiguration) {
+            //Known configuration
+            buildPaymentChannels(context, configuration);
+        } else {
+            //New configuration, ask the user which nodes he wants to connect to..
             List<String> channelList = showIntroductionAndGetNodeList(server, dbHandler);
 
             if (channelList == null) {
+                ResultCommandExt buildChannelListener = new ResultCommandExt();
                 context.createRandomChannels(buildChannelListener);
                 buildChannelListener.await(30, TimeUnit.SECONDS);
             } else {
                 configuration.nodesToBuildChannelWith.addAll(channelList);
-                buildConnection(context, configuration);
+                buildPaymentChannels(context, configuration);
             }
-        } else {
-            buildConnection(context, configuration);
-        }
 
-        if (newConfiguration) {
             List<Channel> openChannel = dbHandler.getOpenChannel();
             for (Channel channel : openChannel) {
                 configuration.nodesToBuildChannelWith.add(Tools.bytesToHex(channel.nodeKeyClient));
@@ -101,13 +100,24 @@ public class MainNode {
             System.out.println(config);
             Files.write(file, config.getBytes(), StandardOpenOption.CREATE_NEW);
         }
+    }
 
-        while (true) {
-            Thread.sleep(1000);
+    static void startListening (ThunderContext context) {
+        ResultCommandExt listener = new ResultCommandExt();
+        context.startListening(listener);
+        listener.await();
+    }
+
+    static void fetchNetworkIPs (ThunderContext context) {
+        boolean successful = false;
+        while (!successful) {
+            ResultCommandExt fetchNetworkListener = new ResultCommandExt();
+            context.fetchNetworkIPs(fetchNetworkListener);
+            successful = fetchNetworkListener.await().wasSuccessful();
         }
     }
 
-    static void buildConnection (ThunderContext context, Configuration configuration) {
+    static void buildPaymentChannels (ThunderContext context, Configuration configuration) {
         for (String s : configuration.nodesToBuildChannelWith) {
             ResultCommandExt buildChannelListener = new ResultCommandExt();
             byte[] nodeKey = Tools.hexStringToByteArray(s);
