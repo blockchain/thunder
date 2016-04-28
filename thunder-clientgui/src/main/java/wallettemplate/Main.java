@@ -30,8 +30,13 @@ import java.net.URL;
 
 import static wallettemplate.utils.GuiUtils.*;
 
+/**
+ * Entry point for starting the Wallet. We create the context here and load the UI.
+ * <p>
+ * The rest of the functionality is hidden inside the ThunderContext and wired to the buttons.
+ */
 public class Main extends Application {
-    public static String APP_NAME = "ThunderWallet";
+    public static final String APP_NAME = "ThunderWallet";
 
     public static NetworkParameters params = TestNet3Params.get();
     public static WalletAppKit bitcoin;
@@ -62,8 +67,23 @@ public class Main extends Application {
     }
 
     private void realStart (Stage mainWindow) throws IOException {
-        this.mainWindow = mainWindow;
         instance = this;
+        prepareUI(mainWindow);
+
+        //Initiate the ThunderContext with a ServerObject
+        //For now create a new node key every time. Want to read it from disk here once we have a storage engine
+        node.init();
+        wallet = new MockWallet(Constants.getNetwork());
+        thunderContext = new ThunderContext(wallet, dbHandler, node);
+
+        mainWindow.show();
+        controller.onBitcoinSetup();
+
+        thunderContext.startUp(new NullResultCommand());
+    }
+
+    private void prepareUI (Stage mainWindow) throws IOException {
+        this.mainWindow = mainWindow;
         // Show the crash dialog for any exceptions that we don't handle and that hit the main loop.
         GuiUtils.handleCrashesOnThisThread();
 
@@ -85,16 +105,6 @@ public class Main extends Application {
         scene.getStylesheets().add(getClass().getResource("wallet.css").toString());
         uiStack.getChildren().add(notificationBar);
         mainWindow.setScene(scene);
-
-        node.init();
-        wallet = new MockWallet(Constants.getNetwork());
-        thunderContext = new ThunderContext(wallet, dbHandler, node);
-
-        mainWindow.show();
-        controller.onBitcoinSetup();
-
-        thunderContext.startUp(new NullResultCommand());
-
         scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
 
