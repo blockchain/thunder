@@ -84,10 +84,7 @@ public class AuthenticationHandlerTest {
 
         channel2.writeInbound(falseMessage);
 
-        Message failureMessage = (Message) channel2.readOutbound();
-        assertTrue(failureMessage instanceof FailureMessage);
-        assertEquals(((FailureMessage) failureMessage).getFailure(), "Signature does not match..");
-
+        assertFalse(channel2.isOpen());
         after();
     }
 

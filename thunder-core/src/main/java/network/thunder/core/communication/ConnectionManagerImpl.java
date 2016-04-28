@@ -98,7 +98,10 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
 
             //TODO legacy below...
             PubkeyIPObject ipObject = dbHandler.getIPObject(node.nodeKey.getPubKey());
-            connect(ipObjectToNode(ipObject, ConnectionIntent.MISC), getDisconnectListener(node));
+            ClientObject clientObject = ipObjectToNode(ipObject, ConnectionIntent.MISC);
+            clientObject.onAuthenticationFailed.add(() -> onAuthenticationFailed(ipObject));
+
+            connect(clientObject, getDisconnectListener(node));
         }
     }
 
@@ -109,6 +112,10 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 onDisconnected(nodeKey);
             }
         };
+    }
+
+    private void onAuthenticationFailed (PubkeyIPObject ipObject) {
+        dbHandler.invalidateP2PObject(ipObject);
     }
 
     public void startListening (ResultCommand callback) {

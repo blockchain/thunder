@@ -21,7 +21,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
-    public List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
+    public final List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
     public List<PubkeyChannelObject> pubkeyChannelList = Collections.synchronizedList(new ArrayList<>());
     public List<ChannelStatusObject> channelStatusList = Collections.synchronizedList(new ArrayList<>());
 
@@ -73,6 +73,20 @@ public class InMemoryDBHandler implements DBHandler {
             }
         }
         return null;
+    }
+
+    @Override
+    public void invalidateP2PObject (P2PDataObject ipObject) {
+        //TODO with a real database, we rather want to invalidate them, rather then just deleting these..
+        synchronized (totalList) {
+            totalList.remove(ipObject);
+        }
+        if (ipObject instanceof PubkeyIPObject) {
+            synchronized (pubkeyIPList) {
+                pubkeyIPList.remove(ipObject);
+            }
+        }
+        //TODO implement other objects
     }
 
     @Override

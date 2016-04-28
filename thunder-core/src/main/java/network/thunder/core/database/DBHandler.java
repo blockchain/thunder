@@ -16,17 +16,12 @@ public interface DBHandler {
 
     //Syncing / Gossiping
     List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex);
-
     List<P2PDataObject> getSyncDataIPObjects ();
-
     void insertIPObjects (List<P2PDataObject> ipList);
-
     List<PubkeyIPObject> getIPObjects ();
-
     P2PDataObject getP2PDataObjectByHash (byte[] hash);
-
     PubkeyIPObject getIPObject (byte[] nodeKey);
-
+    void invalidateP2PObject (P2PDataObject ipObject);
     void syncDatalist (List<P2PDataObject> dataList);
 
     //Channels

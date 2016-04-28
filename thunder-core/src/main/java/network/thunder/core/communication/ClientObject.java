@@ -1,6 +1,7 @@
 package network.thunder.core.communication;
 
 import network.thunder.core.communication.processor.ConnectionIntent;
+import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.crypto.ECDHKeySet;
@@ -8,6 +9,8 @@ import org.bitcoinj.core.ECKey;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
 
 public class ClientObject {
     public boolean isServer;
@@ -22,6 +25,8 @@ public class ClientObject {
 
     public ConnectionIntent intent = ConnectionIntent.MISC;
     public ResultCommand resultCallback = new NullResultCommand();
+    //TODO apparently we need all kind of callbacks over here - move them into a common Connection object?
+    public List<Command> onAuthenticationFailed = Collections.emptyList();
 
     public String host;
     public int port;

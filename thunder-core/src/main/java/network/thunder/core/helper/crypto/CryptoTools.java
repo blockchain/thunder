@@ -106,15 +106,11 @@ public class CryptoTools {
         }
     }
 
-    public static void verifySignature (ECKey pubkey, byte[] data, byte[] signature) throws NoSuchProviderException, NoSuchAlgorithmException {
+    public static boolean verifySignature (ECKey pubkey, byte[] data, byte[] signature) throws NoSuchProviderException, NoSuchAlgorithmException {
         MessageDigest hashHandler = MessageDigest.getInstance("SHA256", "BC");
         hashHandler.update(data);
         byte[] hash = hashHandler.digest();
-
-        if (!pubkey.verify(hash, signature)) {
-            System.out.println("Signature does not match..");
-            throw new RuntimeException("Signature does not match..");
-        }
+        return pubkey.verify(hash, signature);
     }
 
     public static ECKey getEphemeralKey () {

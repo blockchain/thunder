@@ -8,12 +8,14 @@ import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.low.authentication.messages.Authentication;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessage;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
+import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.crypto.CryptoTools;
 import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.ECKey;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.Arrays;
 
 public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
@@ -103,7 +105,6 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             e.printStackTrace();
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
         }
-
     }
 
     @Override
@@ -133,8 +134,17 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
     public void checkAuthenticationMessage (AuthenticationMessage authentication, ClientObject node) throws NoSuchProviderException,
             NoSuchAlgorithmException {
 
-        //TODO: Check whether the pubkeyClient is actually the pubkey we are expecting
-        node.pubKeyClient = ECKey.fromPublicOnly(authentication.pubKeyServer);
+        ECKey ecKey = ECKey.fromPublicOnly(authentication.pubKeyServer);
+        if (node.pubKeyClient != null) {
+            //Must be an outgoing connection, check if the nodeKey is what we expect it to be
+            if (!Arrays.equals(ecKey.getPubKey(), node.pubKeyClient.getPubKey())) {
+                //We connected to the wrong node?
+                System.out.println("Connected to wrong node? Expected: " + node.pubKeyClient.getPublicKeyAsHex() + ". Is: " + ecKey.getPublicKeyAsHex());
+                authenticationFailed();
+            }
+        }
+
+        node.pubKeyClient = ecKey;
 
         ECKey pubKeyClient = node.pubKeyClient;
         ECKey pubKeyTempServer = node.ephemeralKeyServer;
@@ -143,7 +153,15 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         System.arraycopy(pubKeyClient.getPubKey(), 0, data, 0, pubKeyClient.getPubKey().length);
         System.arraycopy(pubKeyTempServer.getPubKey(), 0, data, pubKeyClient.getPubKey().length, pubKeyTempServer.getPubKey().length);
 
-        CryptoTools.verifySignature(pubKeyClient, data, authentication.signature);
+        if (!CryptoTools.verifySignature(pubKeyClient, data, authentication.signature)) {
+            System.out.println("Node was not able to authenticate..");
+            authenticationFailed();
+        }
+    }
+
+    private void authenticationFailed () {
+        node.onAuthenticationFailed.stream().forEach(Command::execute);
+        this.messageExecutor.closeConnection();
     }
 
     private boolean authenticationExchangeFinished () {
