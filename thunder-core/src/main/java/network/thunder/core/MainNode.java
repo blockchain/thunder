@@ -170,8 +170,6 @@ public class MainNode {
         }
     }
 
-    }
-
     static String getExternalIP () throws IOException {
         URL whatismyip = new URL("http://checkip.amazonaws.com");
         BufferedReader in = new BufferedReader(new InputStreamReader(
