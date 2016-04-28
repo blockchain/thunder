@@ -60,7 +60,6 @@ public class ClientObject {
         this.port = node.portServer;
         this.pubKeyClient = node.pubKeyServer;
         this.isServer = false;
-        this.name = node.name;
     }
 
     public void init () {

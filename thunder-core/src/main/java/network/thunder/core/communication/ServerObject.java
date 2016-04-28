@@ -8,8 +8,6 @@ public class ServerObject {
     public String hostServer;
     public int portServer;
 
-    public String name;
-
     public LNConfiguration configuration = new LNConfiguration();
 
     public ServerObject (ServerObject node) {
@@ -17,7 +15,6 @@ public class ServerObject {
         this.portServer = node.portServer;
         this.hostServer = node.hostServer;
         this.pubKeyServer = node.pubKeyServer;
-        this.name = node.name;
     }
 
     public ServerObject (ClientObject node) {
@@ -25,7 +22,6 @@ public class ServerObject {
         this.portServer = node.port;
         this.hostServer = node.host;
         this.pubKeyServer = node.pubKeyClient;
-        this.name = node.name;
     }
 
     public ServerObject () {
