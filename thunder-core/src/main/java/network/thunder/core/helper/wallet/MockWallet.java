@@ -29,7 +29,7 @@ public class MockWallet extends Wallet {
     public MockWallet (NetworkParameters params, int totalOutputs) {
         super(params);
         //
-        Random random = new Random(1000);
+        Random random = new Random();
 
         for (int i = 1; i < 101; i++) {
             Transaction transaction = new Transaction(Constants.getNetwork());
