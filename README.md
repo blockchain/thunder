@@ -57,9 +57,9 @@ Running
 java -jar node.jar
 ```
 
-#### Wallet
-
 will start up an autonomous node that will connect to the thunder.network and build channels with other random nodes. On first startup it will ask the user for some basic configuration. Afterwards it will write this configuration to disk for the next start. To be an active part of the network, please configure your firewall to allow incoming connections on port 2204. You can change the default port in the config file.
+
+#### Wallet
 
 Running
 ```
