@@ -28,7 +28,8 @@ public class InventoryData {
     }
 
     public InventoryData (JsonObject i) {
-        this(i.get("hash").getAsString(), i.get("type").getAsString(), i.get("initial_time").getAsLong(), i.get("last_time").getAsLong(), i.get("initial_ip").getAsString(), i.get("nconnected").getAsInt(), i.get("relayed_count").getAsInt(), i.get("relayed_percent").getAsInt());
+        this(i.get("hash").getAsString(), i.get("type").getAsString(), i.get("initial_time").getAsLong(), i.get("last_time").getAsLong(), i.get("initial_ip")
+                .getAsString(), i.get("nconnected").getAsInt(), i.get("relayed_count").getAsInt(), i.get("relayed_percent").getAsInt());
     }
 
     @Override

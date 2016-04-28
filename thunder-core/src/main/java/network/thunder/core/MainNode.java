@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by matsjerratsch on 11/02/2016.
- */
 public class MainNode {
 
     static final String CONFIG_FILE = "config.json";

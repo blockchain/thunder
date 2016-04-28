@@ -15,9 +15,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by matsjerratsch on 03/11/15.
- */
 public class ScriptTools {
     /*
     A9 HASH160
@@ -97,7 +94,7 @@ public class ScriptTools {
     public static Script getChannelTxOutputPaymentSending (ECKey keyServer, ECKey keyClient,
                                                            RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
         return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE, revocationHash.getSecretHash(), secret.hash,
-                keyClient.getPubKey(),integerToByteArray(refundTimeout), keyServer.getPubKey(), keyClient.getPubKey());
+                keyClient.getPubKey(), integerToByteArray(refundTimeout), keyServer.getPubKey(), keyClient.getPubKey());
     }
 
     //TODO not very efficient yet with 3 times client pubkey...

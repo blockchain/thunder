@@ -5,9 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import network.thunder.core.communication.processor.exceptions.LNException;
 
-/**
- * Created by matsjerratsch on 07/12/2015.
- */
 public class ProcessorHandler extends ChannelDuplexHandler {
 
     Processor processor;

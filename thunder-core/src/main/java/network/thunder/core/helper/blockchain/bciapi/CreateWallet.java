@@ -37,7 +37,8 @@ public class CreateWallet {
      * @return An instance of the CreateWalletResponse class
      * @throws APIException If the server returns an error
      */
-    public static CreateWalletResponse create (String password, String apiCode, String privateKey, String label, String email) throws IOException, APIException {
+    public static CreateWalletResponse create (String password, String apiCode, String privateKey, String label, String email) throws IOException,
+            APIException {
         Map<String, String> params = new HashMap<String, String>();
 
         params.put("password", password);

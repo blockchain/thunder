@@ -17,9 +17,6 @@ import org.junit.Test;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.*;
 
-/**
- * Created by matsjerratsch on 02/11/2015.
- */
 public class PeerSeedHandlerTest {
 
     EmbeddedChannel channel1;

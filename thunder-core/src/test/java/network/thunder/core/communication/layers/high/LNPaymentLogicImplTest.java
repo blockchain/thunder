@@ -20,9 +20,6 @@ import org.junit.Test;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 
-/**
- * Created by matsjerratsch on 02/11/2015.
- */
 public class LNPaymentLogicImplTest {
 
     Channel channel1;
@@ -82,7 +79,6 @@ public class LNPaymentLogicImplTest {
         ChannelUpdate update = new ChannelUpdate();
         update.applyConfiguration(configuration);
         update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
-
 
         LNPayment messageA = paymentLogic1.getAMessage(update);
         exchangeMessage(messageA, paymentLogic2);

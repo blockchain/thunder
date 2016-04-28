@@ -31,9 +31,6 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-/**
- * Created by matsjerratsch on 02/11/2015.
- */
 public class LNPaymentHandlerTest {
 
     EmbeddedChannel channel12;

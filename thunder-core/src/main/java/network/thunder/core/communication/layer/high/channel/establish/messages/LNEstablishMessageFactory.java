@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public interface LNEstablishMessageFactory extends MessageFactory {
     LNEstablishAMessage getEstablishMessageA (Channel channel);
 

@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 
-/**
- * Created by matsjerratsch on 07/01/2016.
- */
 public class QueueElementPayment extends QueueElement {
 
     public QueueElementPayment (PaymentData paymentData) {

@@ -6,9 +6,6 @@ import org.bitcoinj.core.ECKey;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 08/12/2015.
- */
 public interface LNOnionHelper {
     int BYTES_OFFSET_PER_ENCRYPTION = 150;
 

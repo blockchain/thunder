@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.RevocationHash;
 
 import java.util.Random;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNPaymentAMessage implements LNPayment {
 
     public int dice;

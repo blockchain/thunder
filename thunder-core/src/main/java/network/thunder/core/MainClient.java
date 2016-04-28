@@ -34,9 +34,6 @@ import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 11/02/2016.
- */
 public class MainClient {
 
     public static void main (String[] args) throws Exception {

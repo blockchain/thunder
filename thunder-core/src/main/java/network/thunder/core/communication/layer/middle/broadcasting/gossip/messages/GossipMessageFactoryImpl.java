@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDat
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public class GossipMessageFactoryImpl extends MesssageFactoryImpl implements GossipMessageFactory {
     @Override
     public GossipGetMessage getGossipGetMessage (List<byte[]> inventoryList) {

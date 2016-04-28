@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.RevocationHash;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 07/01/2016.
- */
 public class LNPaymentDMessage implements LNPayment {
 
     public List<RevocationHash> oldRevocationHashes;

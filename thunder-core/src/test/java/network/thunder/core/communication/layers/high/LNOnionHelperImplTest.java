@@ -15,9 +15,6 @@ import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by matsjerratsch on 25/01/2016.
- */
 public class LNOnionHelperImplTest {
 
     List<ECKey> keyList = new ArrayList<>();

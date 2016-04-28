@@ -36,13 +36,13 @@ public class WalletSetPasswordController {
             .setSalt(ByteString.copyFrom(KeyCrypterScrypt.randomSalt()))
             .build();
 
-    public void initialize() {
+    public void initialize () {
         progressMeter.setOpacity(0);
     }
 
     public static Duration estimatedKeyDerivationTime = null;
 
-    public static CompletableFuture<Duration> estimateKeyDerivationTimeMsec() {
+    public static CompletableFuture<Duration> estimateKeyDerivationTimeMsec () {
         // This is run in the background after startup. If we haven't recorded it before, do a key derivation to see
         // how long it takes. This helps us produce better progress feedback, as on Windows we don't currently have a
         // native Scrypt impl and the Java version is ~3 times slower, plus it depends a lot on CPU speed.
@@ -63,7 +63,7 @@ public class WalletSetPasswordController {
     }
 
     @FXML
-    public void setPasswordClicked(ActionEvent event) {
+    public void setPasswordClicked (ActionEvent event) {
         if (!pass1.getText().equals(pass2.getText())) {
             informationalAlert("Passwords do not match", "Try re-typing your chosen passwords.");
             return;
@@ -80,13 +80,12 @@ public class WalletSetPasswordController {
         fadeOut(explanationLabel);
         fadeOut(closeButton);
 
-
         KeyCrypterScrypt scrypt = new KeyCrypterScrypt(SCRYPT_PARAMETERS);
 
         // Deriving the actual key runs on a background thread. 500msec is empirical on my laptop (actual val is more like 333 but we give padding time).
         KeyDerivationTasks tasks = new KeyDerivationTasks(scrypt, password, estimatedKeyDerivationTime) {
             @Override
-            protected void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
                 // Write the target time to the wallet so we can make the progress bar work when entering the password.
                 WalletPasswordController.setTargetTime(Duration.ofMillis(timeTakenMsec));
                 // The actual encryption part doesn't take very long as most private keys are derived on demand.
@@ -102,7 +101,7 @@ public class WalletSetPasswordController {
         tasks.start();
     }
 
-    public void closeClicked(ActionEvent event) {
+    public void closeClicked (ActionEvent event) {
         overlayUI.done();
     }
 }

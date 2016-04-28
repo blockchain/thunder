@@ -15,12 +15,11 @@ import java.util.List;
 
 public class PaymentProtocolServerSocket {
 
-    public static void init() {
+    public static void init () {
 
         new Thread(new Runnable() {
             @Override
-            public void run() {
-
+            public void run () {
 
                 int portNumber = 15462;
 
@@ -30,8 +29,7 @@ public class PaymentProtocolServerSocket {
 
                     serverSocket = new ServerSocket(portNumber);
 
-
-                    while(true) {
+                    while (true) {
                         try {
                             Socket clientSocket = serverSocket.accept();
                             PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);

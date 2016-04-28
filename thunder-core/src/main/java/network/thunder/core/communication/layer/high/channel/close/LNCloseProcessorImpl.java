@@ -35,9 +35,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_REQUESTED_CLIENT;
 import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_REQUESTED_SERVER;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelCloser {
 
     LNEventHelper eventHelper;

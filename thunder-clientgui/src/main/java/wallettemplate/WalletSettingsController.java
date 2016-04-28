@@ -33,17 +33,21 @@ import static wallettemplate.utils.WTUtils.unchecked;
 public class WalletSettingsController {
     private static final Logger log = LoggerFactory.getLogger(WalletSettingsController.class);
 
-    @FXML Button passwordButton;
-    @FXML DatePicker datePicker;
-    @FXML TextArea wordsArea;
-    @FXML Button restoreButton;
+    @FXML
+    Button passwordButton;
+    @FXML
+    DatePicker datePicker;
+    @FXML
+    TextArea wordsArea;
+    @FXML
+    Button restoreButton;
 
     public Main.OverlayUI overlayUI;
 
     private KeyParameter aesKey;
 
     // Note: NOT called by FXMLLoader!
-    public void initialize(@Nullable KeyParameter aesKey) {
+    public void initialize (@Nullable KeyParameter aesKey) {
         DeterministicSeed seed = Main.bitcoin.wallet().getKeyChainSeed();
         if (aesKey == null) {
             if (seed.isEncrypted()) {
@@ -73,22 +77,23 @@ public class WalletSettingsController {
         // Validate words as they are being typed.
         MnemonicCode codec = unchecked(MnemonicCode::new);
         TextFieldValidator validator = new TextFieldValidator(wordsArea, text ->
-            !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text)))
+                !didThrow(() -> codec.check(Splitter.on(' ').splitToList(text)))
         );
 
         // Clear the date picker if the user starts editing the words, if it contained the current wallets date.
         // This forces them to set the birthday field when restoring.
         wordsArea.textProperty().addListener(o -> {
-            if (origDate.equals(datePicker.getValue()))
+            if (origDate.equals(datePicker.getValue())) {
                 datePicker.setValue(null);
+            }
         });
 
         BooleanBinding datePickerIsInvalid = or(
                 datePicker.valueProperty().isNull(),
 
                 createBooleanBinding(() ->
-                        datePicker.getValue().isAfter(LocalDate.now())
-                , /* depends on */ datePicker.valueProperty())
+                                datePicker.getValue().isAfter(LocalDate.now())
+                        , /* depends on */ datePicker.valueProperty())
         );
 
         // Don't let the user click restore if the words area contains the current wallet words, or are an invalid set,
@@ -114,7 +119,7 @@ public class WalletSettingsController {
         });
     }
 
-    private void askForPasswordAndRetry() {
+    private void askForPasswordAndRetry () {
         Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
         pwd.controller.aesKeyProperty().addListener((observable, old, cur) -> {
             // We only get here if the user found the right password. If they don't or they cancel, we end up back on
@@ -125,11 +130,11 @@ public class WalletSettingsController {
         });
     }
 
-    public void closeClicked(ActionEvent event) {
+    public void closeClicked (ActionEvent event) {
         overlayUI.done();
     }
 
-    public void restoreClicked(ActionEvent event) {
+    public void restoreClicked (ActionEvent event) {
         // Don't allow a restore unless this wallet is presently empty. We don't want to end up with two wallets, too
         // much complexity, even though WalletAppKit will keep the current one as a backup file in case of disaster.
         if (Main.bitcoin.wallet().getBalance().value > 0) {
@@ -157,8 +162,7 @@ public class WalletSettingsController {
         Main.bitcoin.stopAsync();
     }
 
-
-    public void passwordButtonClicked(ActionEvent event) {
+    public void passwordButtonClicked (ActionEvent event) {
         if (aesKey == null) {
             Main.instance.overlayUI("wallet_set_password.fxml");
         } else {

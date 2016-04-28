@@ -13,9 +13,6 @@ import org.bitcoinj.core.Sha256Hash;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 13/01/2016.
- */
 public class DBHandlerMock implements DBHandler {
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {

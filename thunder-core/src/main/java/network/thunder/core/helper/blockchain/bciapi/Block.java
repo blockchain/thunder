@@ -23,7 +23,8 @@ public class Block extends SimpleBlock {
     private String relayedBy;
     private List<Transaction> transactions;
 
-    public Block (long height, String hash, long time, boolean mainChain, int version, String previousBlockHash, String merkleRoot, long bits, long fees, long nonce, long size, long index, long receivedTime, String relayedBy, List<Transaction> transactions) {
+    public Block (long height, String hash, long time, boolean mainChain, int version, String previousBlockHash, String merkleRoot, long bits, long fees,
+                  long nonce, long size, long index, long receivedTime, String relayedBy, List<Transaction> transactions) {
         super(height, hash, time, mainChain);
         this.version = version;
         this.previousBlockHash = previousBlockHash;
@@ -39,7 +40,10 @@ public class Block extends SimpleBlock {
     }
 
     public Block (JsonObject b) {
-        this(b.get("height").getAsLong(), b.get("hash").getAsString(), b.get("time").getAsLong(), b.get("main_chain").getAsBoolean(), b.get("ver").getAsInt(), b.get("prev_block").getAsString(), b.get("mrkl_root").getAsString(), b.get("bits").getAsLong(), b.get("fee").getAsLong(), b.get("nonce").getAsLong(), b.get("size").getAsLong(), b.get("block_index").getAsLong(), b.has("received_time") ? b.get("received_time").getAsLong() : b.get("time").getAsLong(), b.has("relayed_by") ? b.get("relayed_by").getAsString() : null, null);
+        this(b.get("height").getAsLong(), b.get("hash").getAsString(), b.get("time").getAsLong(), b.get("main_chain").getAsBoolean(), b.get("ver").getAsInt()
+                , b.get("prev_block").getAsString(), b.get("mrkl_root").getAsString(), b.get("bits").getAsLong(), b.get("fee").getAsLong(), b.get("nonce")
+                        .getAsLong(), b.get("size").getAsLong(), b.get("block_index").getAsLong(), b.has("received_time") ? b.get("received_time").getAsLong
+                        () : b.get("time").getAsLong(), b.has("relayed_by") ? b.get("relayed_by").getAsString() : null, null);
 
         transactions = new ArrayList<Transaction>();
         for (JsonElement txElem : b.get("tx").getAsJsonArray()) {

@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.database.DBHandler;
 import org.bitcoinj.core.Wallet;
 
-/**
- * Created by matsjerratsch on 26/01/2016.
- */
 public class ConnectionManagerWrapper {
     public ContextFactory contextFactory;
     public Wallet wallet;

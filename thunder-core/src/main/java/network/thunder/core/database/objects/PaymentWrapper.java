@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
 import static network.thunder.core.database.objects.PaymentStatus.UNKNOWN;
 
-/**
- * Created by matsjerratsch on 04/02/2016.
- */
 public class PaymentWrapper {
 
     public PaymentData paymentData;

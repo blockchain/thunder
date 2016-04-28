@@ -6,9 +6,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 04/01/2016.
- */
 public interface LNPaymentMessageFactory extends MessageFactory {
     LNPaymentAMessage getMessageA (Channel channel, ChannelUpdate update);
 

@@ -60,7 +60,8 @@ public class Output {
     }
 
     public Output (JsonObject o, boolean spent) {
-        this(o.get("n").getAsInt(), o.get("value").getAsLong(), o.has("addr") ? o.get("addr").getAsString() : "", o.get("tx_index").getAsLong(), o.get("script").getAsString(), spent);
+        this(o.get("n").getAsInt(), o.get("value").getAsLong(), o.has("addr") ? o.get("addr").getAsString() : "", o.get("tx_index").getAsLong(), o.get
+                ("script").getAsString(), spent);
     }
 
     /**

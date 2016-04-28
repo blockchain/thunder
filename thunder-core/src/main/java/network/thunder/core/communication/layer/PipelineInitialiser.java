@@ -11,9 +11,6 @@ import network.thunder.core.communication.layer.low.serialisation.MessageObjectT
 import network.thunder.core.communication.layer.low.ping.PingHandler;
 import network.thunder.core.communication.layer.low.serialisation.MessageSerializer;
 
-/**
- * Created by matsjerratsch on 19/10/2015.
- */
 public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
     ContextFactory contextFactory;
     ClientObject node;

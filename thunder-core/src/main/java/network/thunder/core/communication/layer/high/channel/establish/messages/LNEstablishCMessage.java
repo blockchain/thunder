@@ -7,9 +7,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.Arrays;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNEstablishCMessage implements LNEstablish {
     public byte[] signatureEscape;
     public byte[] signatureFastEscape;

@@ -21,9 +21,6 @@ import org.bitcoinj.core.Wallet;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 08/02/2016.
- */
 public class ThunderContext {
 
     Wallet wallet;

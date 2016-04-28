@@ -2,9 +2,6 @@ package network.thunder.core.communication.layer.low.encryption.messages;
 
 import network.thunder.core.communication.layer.MesssageFactoryImpl;
 
-/**
- * Created by matsjerratsch on 29/11/2015.
- */
 public class EncryptionMessageFactoryImpl extends MesssageFactoryImpl implements EncryptionMessageFactory {
 
     @Override

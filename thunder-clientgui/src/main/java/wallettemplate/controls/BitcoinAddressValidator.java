@@ -15,7 +15,7 @@ public class BitcoinAddressValidator {
     private NetworkParameters params;
     private Node[] nodes;
 
-    public BitcoinAddressValidator(NetworkParameters params, TextField field, Node... nodes) {
+    public BitcoinAddressValidator (NetworkParameters params, TextField field, Node... nodes) {
         this.params = params;
         this.nodes = nodes;
 
@@ -29,12 +29,14 @@ public class BitcoinAddressValidator {
         toggleButtons(field.getText());
     }
 
-    private void toggleButtons(String current) {
+    private void toggleButtons (String current) {
         boolean valid = testAddr(current);
-        for (Node n : nodes) n.setDisable(!valid);
+        for (Node n : nodes) {
+            n.setDisable(!valid);
+        }
     }
 
-    private boolean testAddr(String text) {
+    private boolean testAddr (String text) {
         try {
             new Address(params, text);
             return true;

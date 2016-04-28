@@ -6,9 +6,6 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
 
-/**
- * Created by matsjerratsch on 08/02/2016.
- */
 public abstract class LNEventListener {
     public void onConnectionOpened (ClientObject node) {
         onEvent();

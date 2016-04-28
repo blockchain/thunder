@@ -32,9 +32,6 @@ import java.sql.SQLException;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
-/**
- * Created by matsjerratsch on 12/11/15.
- */
 public class LNCloseHandlerTest {
 
     EmbeddedChannel embeddedChannel1;

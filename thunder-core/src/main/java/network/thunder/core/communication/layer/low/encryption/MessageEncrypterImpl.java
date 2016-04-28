@@ -6,9 +6,6 @@ import network.thunder.core.communication.layer.low.serialisation.MessageSeriali
 import network.thunder.core.helper.crypto.CryptoTools;
 import network.thunder.core.helper.crypto.ECDHKeySet;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public class MessageEncrypterImpl implements MessageEncrypter {
 
     public MessageEncrypterImpl (MessageSerializer serializater) {

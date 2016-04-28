@@ -28,9 +28,6 @@ import java.util.Random;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.*;
 
-/**
- * Created by matsjerratsch on 27/10/2015.
- */
 public class GossipHandlerTest {
 
     ClientObject node1 = new ClientObject();
@@ -212,7 +209,7 @@ public class GossipHandlerTest {
         channel43.readOutbound();
     }
 
-    public void sendMessage(EmbeddedChannel from, EmbeddedChannel to) {
+    public void sendMessage (EmbeddedChannel from, EmbeddedChannel to) {
         Message m = (Message) from.readOutbound();
         to.writeInbound(m);
     }

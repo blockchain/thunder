@@ -30,7 +30,7 @@ public class SendMoneyBlockchainController {
     private KeyParameter aesKey;
 
     // Called by FXMLLoader
-    public void initialize() {
+    public void initialize () {
         Coin balance = Main.bitcoin.wallet().getBalance();
         checkState(!balance.isZero());
         new BitcoinAddressValidator(Main.params, address, sendBtn);
@@ -39,43 +39,45 @@ public class SendMoneyBlockchainController {
         amountEdit.setText(balance.toPlainString());
     }
 
-    public void cancel(ActionEvent event) {
+    public void cancel (ActionEvent event) {
         overlayUI.done();
     }
 
-    public void send(ActionEvent event) {
+    public void send (ActionEvent event) {
         // Address exception cannot happen as we validated it beforehand.
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = new Address(Main.params, address.getText());
             Wallet.SendRequest req;
-            if (amount.equals(Main.bitcoin.wallet().getBalance()))
+            if (amount.equals(Main.bitcoin.wallet().getBalance())) {
                 req = Wallet.SendRequest.emptyWallet(destination);
-            else
+            } else {
                 req = Wallet.SendRequest.to(destination, amount);
+            }
             req.aesKey = aesKey;
             sendResult = Main.bitcoin.wallet().sendCoins(req);
             Futures.addCallback(sendResult.broadcastComplete, new FutureCallback<Transaction>() {
                 @Override
-                public void onSuccess(Transaction result) {
+                public void onSuccess (Transaction result) {
                     checkGuiThread();
                     overlayUI.done();
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure (Throwable t) {
                     // We died trying to empty the wallet.
                     crashAlert(t);
                 }
             });
             sendResult.tx.getConfidence().addEventListener((tx, reason) -> {
-                if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS)
+                if (reason == TransactionConfidence.Listener.ChangeReason.SEEN_PEERS) {
                     updateTitleForBroadcast();
+                }
             });
             sendBtn.setDisable(true);
             address.setDisable(true);
-            ((HBox)amountEdit.getParent()).getChildren().remove(amountEdit);
-            ((HBox)btcLabel.getParent()).getChildren().remove(btcLabel);
+            ((HBox) amountEdit.getParent()).getChildren().remove(amountEdit);
+            ((HBox) btcLabel.getParent()).getChildren().remove(btcLabel);
             updateTitleForBroadcast();
         } catch (InsufficientMoneyException e) {
             informationalAlert("Could not empty the wallet",
@@ -89,7 +91,7 @@ public class SendMoneyBlockchainController {
         }
     }
 
-    private void askForPasswordAndRetry() {
+    private void askForPasswordAndRetry () {
         Main.OverlayUI<WalletPasswordController> pwd = Main.instance.overlayUI("wallet_password.fxml");
         final String addressStr = address.getText();
         final String amountStr = amountEdit.getText();
@@ -105,7 +107,7 @@ public class SendMoneyBlockchainController {
         });
     }
 
-    private void updateTitleForBroadcast() {
+    private void updateTitleForBroadcast () {
         final int peers = sendResult.tx.getConfidence().numBroadcastPeers();
         titleLabel.setText(String.format("Broadcasting ... seen by %d peers", peers));
     }

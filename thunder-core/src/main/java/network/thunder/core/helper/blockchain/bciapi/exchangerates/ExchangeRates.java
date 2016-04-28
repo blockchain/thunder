@@ -49,7 +49,8 @@ public class ExchangeRates {
         Map<String, Currency> resultMap = new HashMap<String, Currency>();
         for (Entry<String, JsonElement> ccyKVP : ticker.entrySet()) {
             JsonObject ccy = ccyKVP.getValue().getAsJsonObject();
-            Currency currency = new Currency(ccy.get("buy").getAsDouble(), ccy.get("sell").getAsDouble(), ccy.get("last").getAsDouble(), ccy.get("15m").getAsDouble(), ccy.get("symbol").getAsString());
+            Currency currency = new Currency(ccy.get("buy").getAsDouble(), ccy.get("sell").getAsDouble(), ccy.get("last").getAsDouble(), ccy.get("15m")
+                    .getAsDouble(), ccy.get("symbol").getAsString());
 
             resultMap.put(ccyKVP.getKey(), currency);
         }

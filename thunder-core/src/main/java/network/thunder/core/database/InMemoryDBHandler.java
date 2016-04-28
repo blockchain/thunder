@@ -16,9 +16,6 @@ import org.bitcoinj.core.Sha256Hash;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Created by matsjerratsch on 04/12/2015.
- */
 public class InMemoryDBHandler implements DBHandler {
     final static int MAXIMUM_AGE_SYNC_DATA = 36 * 60 * 60;
 

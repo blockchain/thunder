@@ -31,23 +31,30 @@ import static wallettemplate.utils.GuiUtils.*;
 public class WalletPasswordController {
     private static final Logger log = LoggerFactory.getLogger(WalletPasswordController.class);
 
-    @FXML HBox buttonsBox;
-    @FXML PasswordField pass1;
-    @FXML ImageView padlockImage;
-    @FXML ProgressIndicator progressMeter;
-    @FXML GridPane widgetGrid;
-    @FXML Label explanationLabel;
+    @FXML
+    HBox buttonsBox;
+    @FXML
+    PasswordField pass1;
+    @FXML
+    ImageView padlockImage;
+    @FXML
+    ProgressIndicator progressMeter;
+    @FXML
+    GridPane widgetGrid;
+    @FXML
+    Label explanationLabel;
 
     public Main.OverlayUI overlayUI;
 
     private SimpleObjectProperty<KeyParameter> aesKey = new SimpleObjectProperty<>();
 
-    public void initialize() {
+    public void initialize () {
         progressMeter.setOpacity(0);
         Platform.runLater(pass1::requestFocus);
     }
 
-    @FXML void confirmClicked(ActionEvent event) {
+    @FXML
+    void confirmClicked (ActionEvent event) {
         String password = pass1.getText();
         if (password.isEmpty() || password.length() < 4) {
             informationalAlert("Bad password", "The password you entered is empty or too short.");
@@ -58,7 +65,7 @@ public class WalletPasswordController {
         checkNotNull(keyCrypter);   // We should never arrive at this GUI if the wallet isn't actually encrypted.
         KeyDerivationTasks tasks = new KeyDerivationTasks(keyCrypter, password, getTargetTime()) {
             @Override
-            protected void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+            protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
                 checkGuiThread();
                 if (Main.bitcoin.wallet().checkAESKey(aesKey)) {
                     WalletPasswordController.this.aesKey.set(aesKey);
@@ -82,24 +89,24 @@ public class WalletPasswordController {
         fadeOut(buttonsBox);
     }
 
-    public void cancelClicked(ActionEvent event) {
+    public void cancelClicked (ActionEvent event) {
         overlayUI.done();
     }
 
-    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty() {
+    public ReadOnlyObjectProperty<KeyParameter> aesKeyProperty () {
         return aesKey;
     }
 
     public static final String TAG = WalletPasswordController.class.getName() + ".target-time";
 
     // Writes the given time to the wallet as a tag so we can find it again in this class.
-    public static void setTargetTime(Duration targetTime) {
+    public static void setTargetTime (Duration targetTime) {
         ByteString bytes = ByteString.copyFrom(Longs.toByteArray(targetTime.toMillis()));
         Main.bitcoin.wallet().setTag(TAG, bytes);
     }
 
     // Reads target time or throws if not set yet (should never happen).
-    public static Duration getTargetTime() throws IllegalArgumentException {
+    public static Duration getTargetTime () throws IllegalArgumentException {
         return Duration.ofMillis(Longs.fromByteArray(Main.bitcoin.wallet().getTag(TAG).toByteArray()));
     }
 }

@@ -10,7 +10,6 @@ public class ReceiveMoneyBlockchainController {
 
     public Main.OverlayUI overlayUI;
 
-
     @FXML
     private HBox topHBox;
 
@@ -20,15 +19,12 @@ public class ReceiveMoneyBlockchainController {
     @FXML
     private Button cancelBtn;
 
-
-
-    public void cancel(ActionEvent event) {
+    public void cancel (ActionEvent event) {
         overlayUI.done();
     }
 
-
     @FXML
-    void initialize() {
+    void initialize () {
         textfieldAmount.setText(Main.bitcoin.wallet().currentReceiveAddress().toString());
 
     }

@@ -45,9 +45,6 @@ import network.thunder.core.helper.wallet.WalletHelper;
 import network.thunder.core.helper.wallet.WalletHelperImpl;
 import org.bitcoinj.core.Wallet;
 
-/**
- * Created by matsjerratsch on 18/01/2016.
- */
 public class ContextFactoryImpl implements ContextFactory {
     DBHandler dbHandler;
     LNEventHelper eventHelper;

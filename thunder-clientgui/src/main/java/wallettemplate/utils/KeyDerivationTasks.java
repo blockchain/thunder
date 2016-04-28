@@ -27,10 +27,10 @@ public class KeyDerivationTasks {
 
     private volatile int timeTakenMsec = -1;
 
-    public KeyDerivationTasks(KeyCrypterScrypt scrypt, String password, @Nullable Duration targetTime) {
+    public KeyDerivationTasks (KeyCrypterScrypt scrypt, String password, @Nullable Duration targetTime) {
         keyDerivationTask = new Task<KeyParameter>() {
             @Override
-            protected KeyParameter call() throws Exception {
+            protected KeyParameter call () throws Exception {
                 long start = System.currentTimeMillis();
                 try {
                     log.info("Started key derivation");
@@ -51,7 +51,7 @@ public class KeyDerivationTasks {
             private KeyParameter aesKey;
 
             @Override
-            protected Void call() throws Exception {
+            protected Void call () throws Exception {
                 if (targetTime != null) {
                     long startTime = System.currentTimeMillis();
                     long curTime;
@@ -73,7 +73,7 @@ public class KeyDerivationTasks {
             }
 
             @Override
-            protected void succeeded() {
+            protected void succeeded () {
                 checkGuiThread();
                 onFinish(aesKey, timeTakenMsec);
             }
@@ -81,11 +81,11 @@ public class KeyDerivationTasks {
         progress = progressTask.progressProperty();
     }
 
-    public void start() {
+    public void start () {
         new Thread(keyDerivationTask, "Key derivation").start();
         new Thread(progressTask, "Progress ticker").start();
     }
 
-    protected void onFinish(KeyParameter aesKey, int timeTakenMsec) {
+    protected void onFinish (KeyParameter aesKey, int timeTakenMsec) {
     }
 }

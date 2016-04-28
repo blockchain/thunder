@@ -10,9 +10,6 @@ import network.thunder.core.communication.layer.low.encryption.messages.Encrypti
 import network.thunder.core.helper.crypto.ECDH;
 import org.bitcoinj.core.ECKey;
 
-/**
- * Created by matsjerratsch on 29/11/2015.
- */
 public class EncryptionProcessorImpl extends EncryptionProcessor {
     public static final boolean OUTPUT_MESSAGE = false;
     EncryptionMessageFactory messageFactory;

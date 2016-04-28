@@ -7,9 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
-/**
- * Created by matsjerratsch on 19/10/2015.
- */
 public class PubkeyChannelObject extends P2PDataObject {
 
     public byte[] secretAHash;
@@ -174,7 +171,7 @@ public class PubkeyChannelObject extends P2PDataObject {
 
     @Override
     public boolean isSimilarObject (P2PDataObject object) {
-        if(object instanceof  PubkeyChannelObject) {
+        if (object instanceof PubkeyChannelObject) {
             PubkeyChannelObject channel = (PubkeyChannelObject) object;
             return Arrays.equals(channel.pubkeyA, this.pubkeyA) &&
                     Arrays.equals(channel.pubkeyB, this.pubkeyB);

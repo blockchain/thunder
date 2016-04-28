@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 public class WTUtils {
     private static final Logger log = LoggerFactory.getLogger(WTUtils.class);
 
-    public interface UncheckedRun<T> {
+    public interface UncheckedRun <T> {
         T run () throws Throwable;
     }
 
@@ -17,7 +17,7 @@ public class WTUtils {
         void run () throws Throwable;
     }
 
-    public static <T> T unchecked(UncheckedRun<T> run) {
+    public static <T> T unchecked (UncheckedRun<T> run) {
         try {
             return run.run();
         } catch (Throwable throwable) {
@@ -25,7 +25,7 @@ public class WTUtils {
         }
     }
 
-    public static void uncheck(UncheckedRunnable run) {
+    public static void uncheck (UncheckedRunnable run) {
         try {
             run.run();
         } catch (Throwable throwable) {
@@ -33,7 +33,7 @@ public class WTUtils {
         }
     }
 
-    public static void ignoreAndLog(UncheckedRunnable runnable) {
+    public static void ignoreAndLog (UncheckedRunnable runnable) {
         try {
             runnable.run();
         } catch (Throwable t) {
@@ -41,7 +41,7 @@ public class WTUtils {
         }
     }
 
-    public static <T> T ignoredAndLogged(UncheckedRun<T> runnable) {
+    public static <T> T ignoredAndLogged (UncheckedRun<T> runnable) {
         try {
             return runnable.run();
         } catch (Throwable t) {
@@ -50,7 +50,7 @@ public class WTUtils {
         }
     }
 
-    public static boolean didThrow(UncheckedRun run) {
+    public static boolean didThrow (UncheckedRun run) {
         try {
             run.run();
             return false;
@@ -59,7 +59,7 @@ public class WTUtils {
         }
     }
 
-    public static boolean didThrow(UncheckedRunnable run) {
+    public static boolean didThrow (UncheckedRunnable run) {
         try {
             run.run();
             return false;

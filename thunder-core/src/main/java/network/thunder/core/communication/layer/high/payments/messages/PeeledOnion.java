@@ -4,9 +4,6 @@ import org.bitcoinj.core.ECKey;
 
 import java.util.Arrays;
 
-/**
- * Created by matsjerratsch on 17/02/2016.
- */
 public class PeeledOnion {
     public PeeledOnion (OnionObject onionObject, byte[] data) {
         this.onionObject = onionObject;

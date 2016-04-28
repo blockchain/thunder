@@ -11,9 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * Created by matsjerratsch on 13/01/2016.
- */
 public class LNPaymentDBHandlerMock extends DBHandlerMock {
     public static final long INITIAL_AMOUNT_CHANNEL = 10000000;
     List<PaymentWrapper> payments = new ArrayList<>();

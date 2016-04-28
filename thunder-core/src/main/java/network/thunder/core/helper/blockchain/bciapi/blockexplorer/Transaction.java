@@ -21,7 +21,8 @@ public class Transaction {
     private List<Input> inputs;
     private List<Output> outputs;
 
-    public Transaction (boolean doubleSpend, long blockHeight, long time, String relayedBy, String hash, long index, int version, long size, List<Input> inputs, List<Output> outputs) {
+    public Transaction (boolean doubleSpend, long blockHeight, long time, String relayedBy, String hash, long index, int version, long size, List<Input>
+            inputs, List<Output> outputs) {
         this.doubleSpend = doubleSpend;
         this.blockHeight = blockHeight;
         this.time = time;
@@ -39,7 +40,8 @@ public class Transaction {
     }
 
     public Transaction (JsonObject t, long blockHeight, boolean doubleSpend) {
-        this(doubleSpend, blockHeight, t.get("time").getAsLong(), t.get("relayed_by").getAsString(), t.get("hash").getAsString(), t.get("tx_index").getAsLong(), t.get("ver").getAsInt(), t.get("size").getAsLong(), null, null);
+        this(doubleSpend, blockHeight, t.get("time").getAsLong(), t.get("relayed_by").getAsString(), t.get("hash").getAsString(), t.get("tx_index").getAsLong
+                (), t.get("ver").getAsInt(), t.get("size").getAsLong(), null, null);
 
         inputs = new ArrayList<Input>();
         for (JsonElement inputElem : t.get("inputs").getAsJsonArray()) {

@@ -2,9 +2,6 @@ package network.thunder.core.communication.layer.low.encryption.messages;
 
 import com.google.common.base.Preconditions;
 
-/**
- * Created by matsjerratsch on 29/11/2015.
- */
 public class EncryptedMessage implements Encryption {
     public byte[] hmac;
     public byte[] payload;

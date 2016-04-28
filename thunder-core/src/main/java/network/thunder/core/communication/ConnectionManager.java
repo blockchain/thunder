@@ -3,9 +3,6 @@ package network.thunder.core.communication;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
 
-/**
- * Created by matsjerratsch on 22/01/2016.
- */
 public interface ConnectionManager {
     void startListening (ResultCommand callback);
 

@@ -7,32 +7,34 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="" xmlns="http://javafx.com/javafx/null" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ReceiveMoneyBlockchainController">
+<AnchorPane id="AnchorPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style=""
+            xmlns="http://javafx.com/javafx/null" xmlns:fx="http://javafx.com/fxml/1" fx:controller="wallettemplate.ReceiveMoneyBlockchainController">
     <children>
-    <VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
-      <children>
-            <Label text="Address">
-               <font>
-                  <Font size="21.0" />
-               </font>
-            </Label>
-            <HBox fx:id="topHBox" alignment="CENTER" prefHeight="25.0" prefWidth="419.0" spacing="15.0">
-               <children>
-                  <TextField fx:id="textfieldAmount" alignment="CENTER" editable="false" prefHeight="25.0" prefWidth="430.0" />
-               </children>
-            </HBox>
-        <HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
-          <children>
-            <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="Close" />
-          </children>
-        </HBox>
-      </children>
-      <effect>
-        <DropShadow />
-      </effect>
-         <padding>
-            <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-         </padding>
-    </VBox>
-  </children>
+        <VBox alignment="CENTER_LEFT" layoutY="100.0" prefHeight="200.0" prefWidth="600.0" spacing="20.0" style="-fx-background-color: white;"
+              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+            <children>
+                <Label text="Address">
+                    <font>
+                        <Font size="21.0"/>
+                    </font>
+                </Label>
+                <HBox fx:id="topHBox" alignment="CENTER" prefHeight="25.0" prefWidth="419.0" spacing="15.0">
+                    <children>
+                        <TextField fx:id="textfieldAmount" alignment="CENTER" editable="false" prefHeight="25.0" prefWidth="430.0"/>
+                    </children>
+                </HBox>
+                <HBox alignment="CENTER_RIGHT" fillHeight="true" prefHeight="30.0" prefWidth="600.0" spacing="15.0" VBox.vgrow="NEVER">
+                    <children>
+                        <Button fx:id="cancelBtn" cancelButton="true" mnemonicParsing="false" onAction="#cancel" prefWidth="79.0" text="Close"/>
+                    </children>
+                </HBox>
+            </children>
+            <effect>
+                <DropShadow/>
+            </effect>
+            <padding>
+                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0"/>
+            </padding>
+        </VBox>
+    </children>
 </AnchorPane>

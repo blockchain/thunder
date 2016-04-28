@@ -3,9 +3,6 @@ package network.thunder.core.communication.layer;
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.FailureMessage;
 
-/**
- * Created by matsjerratsch on 27/11/2015.
- */
 public class FailureMessageImpl implements FailureMessage {
     String failure;
 

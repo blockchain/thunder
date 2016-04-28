@@ -4,5 +4,5 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.helper.callback.ResultCommand;
 
 public interface ChannelCloser {
-    void closeChannel(Channel channel, ResultCommand callback);
+    void closeChannel (Channel channel, ResultCommand callback);
 }

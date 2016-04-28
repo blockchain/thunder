@@ -6,9 +6,6 @@ import network.thunder.core.etc.Constants;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNEstablishAMessage implements LNEstablish {
     public byte[] pubKeyEscape;
     public byte[] pubKeyFastEscape;

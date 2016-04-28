@@ -28,7 +28,9 @@ public class Address {
 
     public Address (JsonObject a) {
 
-        this(a.has("hash160") ? a.get("hash160").getAsString() : "", a.has("address") ? a.get("address").getAsString() : "", a.has("total_received") ? a.get("total_received").getAsLong() : 0, a.has("total_sent") ? a.get("total_sent").getAsLong() : 0, a.has("final_balance") ? a.get("final_balance").getAsLong() : 0, null);
+        this(a.has("hash160") ? a.get("hash160").getAsString() : "", a.has("address") ? a.get("address").getAsString() : "", a.has("total_received") ? a.get
+                ("total_received").getAsLong() : 0, a.has("total_sent") ? a.get("total_sent").getAsLong() : 0, a.has("final_balance") ? a.get
+                ("final_balance").getAsLong() : 0, null);
 
         transactions = new ArrayList<Transaction>();
         for (JsonElement txElem : a.get("txs").getAsJsonArray()) {

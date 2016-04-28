@@ -39,9 +39,6 @@ import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by matsjerratsch on 12/11/15.
- */
 public class LNEstablishHandlerTest {
 
     EmbeddedChannel channel1;

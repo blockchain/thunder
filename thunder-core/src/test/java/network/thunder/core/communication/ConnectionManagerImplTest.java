@@ -16,9 +16,6 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- * Created by matsjerratsch on 26/01/2016.
- */
 public class ConnectionManagerImplTest {
 
     final static int AMOUNT_OF_NODES = 100;

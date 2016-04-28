@@ -4,9 +4,6 @@ import com.google.common.base.Preconditions;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 07/01/2016.
- */
 public class LNPaymentCMessage implements LNPayment {
     public byte[] newCommitSignature1;
     public byte[] newCommitSignature2;

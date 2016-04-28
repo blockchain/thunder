@@ -8,9 +8,6 @@ import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcesso
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 04/12/2015.
- */
 public class SeedDBHandlerMock extends DBHandlerMock {
 
     public List<PubkeyIPObject> pubkeyIPObjectArrayList = new ArrayList<>();

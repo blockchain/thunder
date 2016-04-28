@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.MesssageFactoryImpl;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 04/12/2015.
- */
 public class SyncMessageFactoryImpl extends MesssageFactoryImpl implements SyncMessageFactory {
     @Override
     public SyncGetMessage getSyncGetMessage (int fragment) {

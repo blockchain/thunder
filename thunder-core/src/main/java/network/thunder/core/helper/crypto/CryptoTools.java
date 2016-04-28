@@ -14,9 +14,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
-/**
- * Created by matsjerratsch on 12/10/2015.
- */
 public class CryptoTools {
 
     public static byte[] addHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {

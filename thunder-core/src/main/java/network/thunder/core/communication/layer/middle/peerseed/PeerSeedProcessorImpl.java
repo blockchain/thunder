@@ -21,9 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 22/01/2016.
- */
 public class PeerSeedProcessorImpl extends PeerSeedProcessor {
 
     DBHandler dbHandler;

@@ -8,9 +8,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
-/**
- * Created by matsjerratsch on 03/11/15.
- */
 public class HashDerivationTest {
 
     @Test

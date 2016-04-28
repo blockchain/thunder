@@ -8,9 +8,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDat
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public interface GossipMessageFactory extends MessageFactory {
     GossipGetMessage getGossipGetMessage (List<byte[]> inventoryList);
 

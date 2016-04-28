@@ -7,9 +7,6 @@ import network.thunder.core.helper.wallet.MockWallet;
 import network.thunder.core.communication.ServerObject;
 import org.bitcoinj.core.Wallet;
 
-/**
- * Created by matsjerratsch on 16/02/2016.
- */
 public class MockContextFactory extends ContextFactoryImpl {
 
     public MockContextFactory (ServerObject node) {

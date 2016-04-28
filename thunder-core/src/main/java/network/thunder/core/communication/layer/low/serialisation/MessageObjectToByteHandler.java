@@ -5,9 +5,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import network.thunder.core.communication.layer.Message;
 
-/**
- * Created by matsjerratsch on 13/10/2015.
- */
 public class MessageObjectToByteHandler extends MessageToByteEncoder {
 
     MessageSerializer serializater;

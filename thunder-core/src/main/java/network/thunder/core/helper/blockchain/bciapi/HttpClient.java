@@ -63,12 +63,11 @@ public class HttpClient implements HttpClientInterface {
         String responseStr = null;
 
         if (requestMethod.equals("GET")) {
-            if(encodedParams.isEmpty()) {
+            if (encodedParams.isEmpty()) {
                 url = new URL(BASE_URL + resource);
-            }
-            else {
+            } else {
                 url = new URL(BASE_URL + resource + '?' + encodedParams);
-            }            
+            }
         } else if (requestMethod.equals("POST")) {
             url = new URL(BASE_URL + resource);
         }

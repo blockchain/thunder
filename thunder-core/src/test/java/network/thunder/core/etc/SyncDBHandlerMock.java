@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by matsjerratsch on 04/12/2015.
- */
 public class SyncDBHandlerMock extends DBHandlerMock {
 
     public List<PubkeyChannelObject> pubkeyChannelObjectArrayList = new ArrayList<>();

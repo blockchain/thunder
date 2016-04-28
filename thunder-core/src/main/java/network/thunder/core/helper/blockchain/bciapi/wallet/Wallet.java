@@ -123,7 +123,8 @@ public class Wallet {
         String response = HttpClient.getInstance().post(String.format("merchant/%s/%s", identifier, method), params);
         JsonObject topElem = parseResponse(response);
 
-        return new PaymentResponse(topElem.get("message").getAsString(), topElem.get("tx_hash").getAsString(), topElem.has("notice") ? topElem.get("notice").getAsString() : null);
+        return new PaymentResponse(topElem.get("message").getAsString(), topElem.get("tx_hash").getAsString(), topElem.has("notice") ? topElem.get("notice")
+                .getAsString() : null);
     }
 
     /**
@@ -158,7 +159,8 @@ public class Wallet {
         List<Address> addresses = new ArrayList<Address>();
         for (JsonElement jAddr : topElem.get("addresses").getAsJsonArray()) {
             JsonObject a = jAddr.getAsJsonObject();
-            Address address = new Address(a.get("balance").getAsLong(), a.get("address").getAsString(), a.has("label") && !a.get("label").isJsonNull() ? a.get("label").getAsString() : null, a.get("total_received").getAsLong());
+            Address address = new Address(a.get("balance").getAsLong(), a.get("address").getAsString(), a.has("label") && !a.get("label").isJsonNull() ? a
+                    .get("label").getAsString() : null, a.get("total_received").getAsLong());
 
             addresses.add(address);
         }
@@ -183,7 +185,8 @@ public class Wallet {
         String response = HttpClient.getInstance().get(String.format("merchant/%s/address_balance", identifier), params);
         JsonObject topElem = parseResponse(response);
 
-        return new Address(topElem.get("balance").getAsLong(), topElem.get("address").getAsString(), topElem.has("label") && !topElem.get("label").isJsonNull() ? topElem.get("label").getAsString() : null, topElem.get("total_received").getAsLong());
+        return new Address(topElem.get("balance").getAsLong(), topElem.get("address").getAsString(), topElem.has("label") && !topElem.get("label").isJsonNull
+                () ? topElem.get("label").getAsString() : null, topElem.get("total_received").getAsLong());
     }
 
     /**
@@ -202,7 +205,8 @@ public class Wallet {
         String response = HttpClient.getInstance().post(String.format("merchant/%s/new_address", identifier), params);
         JsonObject topElem = parseResponse(response);
 
-        return new Address(0L, topElem.get("address").getAsString(), topElem.has("label") && !topElem.get("label").isJsonNull() ? topElem.get("label").getAsString() : null, 0L);
+        return new Address(0L, topElem.get("address").getAsString(), topElem.has("label") && !topElem.get("label").isJsonNull() ? topElem.get("label")
+                .getAsString() : null, 0L);
     }
 
     /**

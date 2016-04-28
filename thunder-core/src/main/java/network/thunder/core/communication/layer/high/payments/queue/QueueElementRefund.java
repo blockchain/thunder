@@ -6,9 +6,6 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 
-/**
- * Created by matsjerratsch on 07/01/2016.
- */
 public class QueueElementRefund extends QueueElement {
 
     PaymentSecret paymentSecret;

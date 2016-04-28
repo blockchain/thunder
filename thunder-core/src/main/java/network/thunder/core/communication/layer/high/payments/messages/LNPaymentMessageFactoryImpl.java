@@ -8,9 +8,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 08/01/2016.
- */
 public class LNPaymentMessageFactoryImpl extends MesssageFactoryImpl implements LNPaymentMessageFactory {
 
     public LNPaymentMessageFactoryImpl (DBHandler dbHandler) {

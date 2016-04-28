@@ -14,9 +14,6 @@ import java.util.Arrays;
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by matsjerratsch on 04/11/15.
- */
 public class ScriptToolsTest {
 
     ECKey keyServer = ECKey.fromPrivate(Tools.hexStringToByteArray("95b9ba99ce547d0346ae69adeef116b51c77f3285fe8941c9bfe83a0857d606e"));

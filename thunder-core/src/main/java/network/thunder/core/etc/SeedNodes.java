@@ -6,9 +6,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 22/01/2016.
- */
 public class SeedNodes {
     static List<PubkeyIPObject> ipList = new ArrayList<>();
     public static List<ClientObject> nodeList = new ArrayList<>();

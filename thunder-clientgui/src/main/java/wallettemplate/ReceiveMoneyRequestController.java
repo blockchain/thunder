@@ -83,7 +83,7 @@ public class ReceiveMoneyRequestController {
         if (secret == null) {
             secret = new PaymentSecret(Tools.getRandomByte(20));
             Main.dbHandler.addPaymentSecret(secret);
-            System.out.println("HASH: "+Tools.bytesToHex(secret.hash));
+            System.out.println("HASH: " + Tools.bytesToHex(secret.hash));
         }
 
         try {

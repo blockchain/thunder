@@ -15,9 +15,6 @@ import network.thunder.core.communication.processor.ConnectionIntent;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public class SyncProcessorImpl extends SyncProcessor {
     SyncMessageFactory messageFactory;
     SynchronizationHelper syncStructure;

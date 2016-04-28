@@ -30,9 +30,6 @@ import java.util.List;
 import static junit.framework.TestCase.assertEquals;
 import static org.junit.Assert.assertNull;
 
-/**
- * Created by matsjerratsch on 02/11/2015.
- */
 public class LNPaymentRoutingTest {
 
     EmbeddedChannel channel12;

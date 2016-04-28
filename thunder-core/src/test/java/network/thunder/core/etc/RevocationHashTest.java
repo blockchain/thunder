@@ -8,9 +8,6 @@ import java.util.Random;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by matsjerratsch on 03/11/15.
- */
 public class RevocationHashTest {
 
     @Test

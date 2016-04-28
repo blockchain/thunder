@@ -5,9 +5,6 @@ import network.thunder.core.etc.Tools;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public class GossipGetMessage implements Gossip {
     public List<byte[]> inventoryList;
 

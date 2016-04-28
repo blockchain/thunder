@@ -13,9 +13,6 @@ import org.bitcoinj.core.ECKey;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 02/02/2016.
- */
 public class LNPaymentHelperImpl implements LNPaymentHelper {
 
     LNOnionHelper onionHelper;

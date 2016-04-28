@@ -8,9 +8,6 @@ import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventListener;
 
-/**
- * Created by matsjerratsch on 08/02/2016.
- */
 public class MockLNEventHelper implements LNEventHelper {
     @Override
     public void addListener (LNEventListener listener) {
@@ -66,7 +63,6 @@ public class MockLNEventHelper implements LNEventHelper {
     public void onPaymentExchangeDone () {
 
     }
-
 
     @Override
     public void onP2PDataReceived () {

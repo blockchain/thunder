@@ -1,8 +1,5 @@
 package network.thunder.core.communication.processor;
 
-/**
- * Created by matsjerratsch on 22/01/2016.
- */
 public enum ConnectionIntent {
     GET_IPS(1),
     GET_SYNC_DATA(2),

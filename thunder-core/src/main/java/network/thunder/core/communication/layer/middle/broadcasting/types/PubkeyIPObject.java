@@ -12,9 +12,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
-/**
- * Created by matsjerratsch on 19/10/2015.
- */
 public class PubkeyIPObject extends P2PDataObject {
     public String hostname;
     public int port;

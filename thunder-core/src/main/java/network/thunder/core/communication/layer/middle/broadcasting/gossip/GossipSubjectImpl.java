@@ -7,9 +7,6 @@ import network.thunder.core.helper.events.LNEventHelper;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-/**
- * Created by matsjerratsch on 01/12/2015.
- */
 public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
 
     DBHandler dbHandler;

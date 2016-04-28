@@ -1,8 +1,5 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
-/**
- * Created by matsjerratsch on 08/12/2015.
- */
 public class OnionObject implements LNPayment {
     public final static int MAX_HOPS = 10;
 

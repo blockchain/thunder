@@ -12,9 +12,6 @@ import org.bitcoinj.core.Sha256Hash;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 30/11/2015.
- */
 public interface DBHandler {
 
     //Syncing / Gossiping

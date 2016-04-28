@@ -9,9 +9,6 @@ import network.thunder.core.database.objects.PaymentWrapper;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 08/02/2016.
- */
 public class LNEventHelperImpl implements LNEventHelper {
     List<LNEventListener> listeners = new ArrayList<>();
 

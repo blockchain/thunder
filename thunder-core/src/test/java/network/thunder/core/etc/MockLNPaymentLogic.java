@@ -8,9 +8,6 @@ import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 13/01/2016.
- */
 public class MockLNPaymentLogic implements LNPaymentLogic {
     ChannelStatus status;
     ChannelUpdate update;

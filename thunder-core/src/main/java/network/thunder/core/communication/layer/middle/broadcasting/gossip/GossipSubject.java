@@ -4,9 +4,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDat
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 01/12/2015.
- */
 public interface GossipSubject {
     void registerObserver (NodeObserver observer);
 

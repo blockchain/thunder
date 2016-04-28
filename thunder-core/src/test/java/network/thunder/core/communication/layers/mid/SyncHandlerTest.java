@@ -16,9 +16,6 @@ import java.util.List;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-/**
- * Created by matsjerratsch on 02/11/2015.
- */
 public class SyncHandlerTest {
 
     EmbeddedChannel channel1;

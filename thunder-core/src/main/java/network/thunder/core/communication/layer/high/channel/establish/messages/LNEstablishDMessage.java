@@ -4,9 +4,6 @@ import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.high.Channel;
 import org.bitcoinj.crypto.TransactionSignature;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNEstablishDMessage implements LNEstablish {
     public byte[] signatureEscape;
     public byte[] signatureFastEscape;

@@ -23,7 +23,8 @@ public class UnspentOutput {
     }
 
     public UnspentOutput (JsonObject o) {
-        this(o.get("tx_output_n").getAsInt(), o.get("tx_hash").getAsString(), o.get("tx_index").getAsLong(), o.get("script").getAsString(), o.get("value").getAsLong(), o.get("confirmations").getAsLong());
+        this(o.get("tx_output_n").getAsInt(), o.get("tx_hash").getAsString(), o.get("tx_index").getAsLong(), o.get("script").getAsString(), o.get("value")
+                .getAsLong(), o.get("confirmations").getAsLong());
     }
 
     @Override

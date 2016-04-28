@@ -6,9 +6,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.Broad
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 01/02/2016.
- */
 public class MockBroadcastHelper implements BroadcastHelper {
 
     public List<P2PDataObject> broadcastedObjects = new ArrayList<>();

@@ -2,9 +2,6 @@ package network.thunder.core.communication.layer;
 
 import io.netty.channel.ChannelHandlerContext;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class MessageExecutorImpl implements MessageExecutor {
     ChannelHandlerContext context;
     String layerName;

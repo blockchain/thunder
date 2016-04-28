@@ -81,7 +81,7 @@ public final class P2PClient {
         }
     }
 
-    private Channel createChannel(ClientObject node) throws InterruptedException {
+    private Channel createChannel (ClientObject node) throws InterruptedException {
         EventLoopGroup group = new NioEventLoopGroup();
         Bootstrap b = new Bootstrap();
         b.group(group).channel(NioSocketChannel.class).handler(new PipelineInitialiser(contextFactory, node));

@@ -9,9 +9,6 @@ import org.bitcoinj.core.Sha256Hash;
 
 import java.util.Arrays;
 
-/**
- * Created by matsjerratsch on 03/12/2015.
- */
 public class LNEstablishBMessage implements LNEstablish {
     public byte[] pubKeyEscape;
     public byte[] pubKeyFastEscape;

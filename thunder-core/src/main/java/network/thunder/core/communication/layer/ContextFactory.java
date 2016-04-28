@@ -30,9 +30,6 @@ import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 
-/**
- * Created by matsjerratsch on 18/01/2016.
- */
 public interface ContextFactory {
     MessageSerializer getMessageSerializer ();
 

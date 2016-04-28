@@ -11,9 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Created by matsjerratsch on 19/01/2016.
- */
 public class WalletHelperImpl implements WalletHelper {
     final static int TIME_LOCK_IN_SECONDS = 60;
 

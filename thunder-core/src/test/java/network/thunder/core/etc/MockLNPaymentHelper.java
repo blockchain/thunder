@@ -5,9 +5,6 @@ import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
 import network.thunder.core.communication.layer.high.payments.LNPaymentProcessor;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 
-/**
- * Created by matsjerratsch on 03/02/2016.
- */
 public class MockLNPaymentHelper implements LNPaymentHelper {
     @Override
     public void addProcessor (LNPaymentProcessor processor) {
@@ -26,7 +23,7 @@ public class MockLNPaymentHelper implements LNPaymentHelper {
 
     @Override
     public void makePayment (PaymentData paymentData) {
-        
+
     }
 
     @Override

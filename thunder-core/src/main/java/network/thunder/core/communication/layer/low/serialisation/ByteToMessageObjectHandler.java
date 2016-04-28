@@ -7,9 +7,6 @@ import network.thunder.core.communication.layer.Message;
 
 import java.util.List;
 
-/**
- * Created by matsjerratsch on 13/10/2015.
- */
 public class ByteToMessageObjectHandler extends ByteToMessageDecoder {
     MessageSerializer serializater;
 

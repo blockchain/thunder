@@ -21,7 +21,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static wallettemplate.utils.WTUtils.unchecked;
 
 public class GuiUtils {
-    public static void runAlert(BiConsumer<Stage, AlertWindowController> setup) {
+    public static void runAlert (BiConsumer<Stage, AlertWindowController> setup) {
         try {
             // JavaFX2 doesn't actually have a standard alert template. Instead the Scene Builder app will create FXML
             // files for an alert window for you, and then you customise it as you see fit. I guess it makes sense in
@@ -40,43 +40,47 @@ public class GuiUtils {
         }
     }
 
-    public static void crashAlert(Throwable t) {
+    public static void crashAlert (Throwable t) {
         t.printStackTrace();
         Throwable rootCause = Throwables.getRootCause(t);
         Runnable r = () -> {
             runAlert((stage, controller) -> controller.crashAlert(stage, rootCause.toString()));
             Platform.exit();
         };
-        if (Platform.isFxApplicationThread())
+        if (Platform.isFxApplicationThread()) {
             r.run();
-        else
+        } else {
             Platform.runLater(r);
+        }
     }
 
-    /** Show a GUI alert box for any unhandled exceptions that propagate out of this thread. */
-    public static void handleCrashesOnThisThread() {
+    /**
+     * Show a GUI alert box for any unhandled exceptions that propagate out of this thread.
+     */
+    public static void handleCrashesOnThisThread () {
         Thread.currentThread().setUncaughtExceptionHandler((thread, exception) -> {
             GuiUtils.crashAlert(Throwables.getRootCause(exception));
         });
     }
 
-    public static void informationalAlert(String message, String details, Object... args) {
+    public static void informationalAlert (String message, String details, Object... args) {
         String formattedDetails = String.format(details, args);
         Runnable r = () -> runAlert((stage, controller) -> controller.informational(stage, message, formattedDetails));
-        if (Platform.isFxApplicationThread())
+        if (Platform.isFxApplicationThread()) {
             r.run();
-        else
+        } else {
             Platform.runLater(r);
+        }
     }
 
     public static final int UI_ANIMATION_TIME_MSEC = 600;
     public static final Duration UI_ANIMATION_TIME = Duration.millis(UI_ANIMATION_TIME_MSEC);
 
-    public static Animation fadeIn(Node ui) {
+    public static Animation fadeIn (Node ui) {
         return fadeIn(ui, 0);
     }
 
-    public static Animation fadeIn(Node ui, int delayMillis) {
+    public static Animation fadeIn (Node ui, int delayMillis) {
         ui.setCache(true);
         FadeTransition ft = new FadeTransition(Duration.millis(UI_ANIMATION_TIME_MSEC), ui);
         ft.setFromValue(0.0);
@@ -87,7 +91,7 @@ public class GuiUtils {
         return ft;
     }
 
-    public static Animation fadeOut(Node ui) {
+    public static Animation fadeOut (Node ui) {
         FadeTransition ft = new FadeTransition(Duration.millis(UI_ANIMATION_TIME_MSEC), ui);
         ft.setFromValue(ui.getOpacity());
         ft.setToValue(0.0);
@@ -95,13 +99,13 @@ public class GuiUtils {
         return ft;
     }
 
-    public static Animation fadeOutAndRemove(Pane parentPane, Node... nodes) {
+    public static Animation fadeOutAndRemove (Pane parentPane, Node... nodes) {
         Animation animation = fadeOut(nodes[0]);
         animation.setOnFinished(actionEvent -> parentPane.getChildren().removeAll(nodes));
         return animation;
     }
 
-    public static Animation fadeOutAndRemove(Duration duration, Pane parentPane, Node... nodes) {
+    public static Animation fadeOutAndRemove (Duration duration, Pane parentPane, Node... nodes) {
         nodes[0].setCache(true);
         FadeTransition ft = new FadeTransition(duration, nodes[0]);
         ft.setFromValue(nodes[0].getOpacity());
@@ -111,7 +115,7 @@ public class GuiUtils {
         return ft;
     }
 
-    public static void blurOut(Node node) {
+    public static void blurOut (Node node) {
         GaussianBlur blur = new GaussianBlur(0.0);
         node.setEffect(blur);
         Timeline timeline = new Timeline();
@@ -121,7 +125,7 @@ public class GuiUtils {
         timeline.play();
     }
 
-    public static void blurIn(Node node) {
+    public static void blurIn (Node node) {
         GaussianBlur blur = (GaussianBlur) node.getEffect();
         Timeline timeline = new Timeline();
         KeyValue kv = new KeyValue(blur.radiusProperty(), 0.0);
@@ -131,19 +135,19 @@ public class GuiUtils {
         timeline.play();
     }
 
-    public static ScaleTransition zoomIn(Node node) {
+    public static ScaleTransition zoomIn (Node node) {
         return zoomIn(node, 0);
     }
 
-    public static ScaleTransition zoomIn(Node node, int delayMillis) {
+    public static ScaleTransition zoomIn (Node node, int delayMillis) {
         return scaleFromTo(node, 0.95, 1.0, delayMillis);
     }
 
-    public static ScaleTransition explodeOut(Node node) {
+    public static ScaleTransition explodeOut (Node node) {
         return scaleFromTo(node, 1.0, 1.05, 0);
     }
 
-    private static ScaleTransition scaleFromTo(Node node, double from, double to, int delayMillis) {
+    private static ScaleTransition scaleFromTo (Node node, double from, double to, int delayMillis) {
         ScaleTransition scale = new ScaleTransition(Duration.millis(UI_ANIMATION_TIME_MSEC / 2), node);
         scale.setFromX(from);
         scale.setFromY(from);
@@ -158,14 +162,15 @@ public class GuiUtils {
      * A useful helper for development purposes. Used as a switch for loading files from local disk, allowing live
      * editing whilst the app runs without rebuilds.
      */
-    public static URL getResource(String name) {
-        if (false)
+    public static URL getResource (String name) {
+        if (false) {
             return unchecked(() -> new URL("file:///your/path/here/src/main/wallettemplate/" + name));
-        else
+        } else {
             return MainController.class.getResource(name);
+        }
     }
 
-    public static void checkGuiThread() {
+    public static void checkGuiThread () {
         checkState(Platform.isFxApplicationThread());
     }
 }

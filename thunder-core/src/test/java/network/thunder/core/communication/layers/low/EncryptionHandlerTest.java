@@ -26,9 +26,6 @@ import java.util.Arrays;
 
 import static org.junit.Assert.*;
 
-/**
- * Created by matsjerratsch on 29/10/2015.
- */
 public class EncryptionHandlerTest {
 
     EmbeddedChannel channel1;
