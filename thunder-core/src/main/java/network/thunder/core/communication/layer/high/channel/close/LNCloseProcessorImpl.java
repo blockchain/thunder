@@ -100,7 +100,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
     }
 
     public Transaction getClosingTransaction (ChannelStatus channelStatus, float feePerByte) {
-        ChannelStatus status = getChannelStatus(weRequestedClose ? channelStatus.getCloneReversed() : channelStatus);
+        ChannelStatus status = getChannelStatus(weRequestedClose ? channelStatus : channelStatus.getCloneReversed());
 
         //For the sake of privacy (and simplicity) we use lexicographically ordering here, as defined in BIP69
         Transaction transaction = new Transaction(Constants.getNetwork());
