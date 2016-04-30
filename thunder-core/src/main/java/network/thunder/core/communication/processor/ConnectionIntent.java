@@ -8,15 +8,19 @@ public enum ConnectionIntent {
     MISC(16);
 
     ConnectionIntent (int i) {
-        this.state = i;
+        this.priority = i;
     }
 
     @Override
     public String toString () {
         return "ConnectionIntent{" +
-                "state=" + state +
+                "priority=" + priority +
                 '}';
     }
 
-    int state = 0;
+    public int getPriority () {
+        return priority;
+    }
+
+    int priority = 0;
 }

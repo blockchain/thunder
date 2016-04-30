@@ -11,6 +11,7 @@ public interface ConnectionManager {
     void startBuildingRandomChannel (ResultCommand callback);
 
     void connect (NodeKey node, ConnectionListener connectionListener);
+    void disconnectByIntent (ConnectionIntent intent);
 
     void startSyncing (ResultCommand callback);
 }

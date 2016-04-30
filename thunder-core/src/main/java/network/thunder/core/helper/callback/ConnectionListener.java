@@ -1,9 +1,16 @@
 package network.thunder.core.helper.callback;
 
-import network.thunder.core.helper.callback.results.Result;
-
 public class ConnectionListener {
-    public void onConnection (Result result) {
+    public Command onSuccess = NullCommand.get();
+    public Command onFailure = NullCommand.get();
 
+    public ConnectionListener setOnSuccess (Command onSuccess) {
+        this.onSuccess = onSuccess;
+        return this;
+    }
+
+    public ConnectionListener setOnFailure (Command onFailure) {
+        this.onFailure = onFailure;
+        return this;
     }
 }

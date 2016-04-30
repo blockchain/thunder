@@ -39,11 +39,14 @@ import static network.thunder.core.communication.processor.ConnectionIntent.*;
  */
 public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
     public final static int CHANNELS_TO_OPEN = 5;
-    public final static int MINIMUM_AMOUNT_OF_IPS = 10;
+    public final static int MINIMUM_AMOUNT_OF_IPS = 5;
 
     Set<NodeKey> connectedNodes = Sets.newConcurrentHashSet();
     Set<NodeKey> currentlyConnecting = Sets.newConcurrentHashSet();
+    Map<NodeKey, Connection> connectionMap = new ConcurrentHashMap<>();
+    Map<NodeKey, ConnectionIntent> intentMap = new ConcurrentHashMap<>();
     Map<NodeKey, ConnectionListener> connectionListenerMap = new ConcurrentHashMap<>();
+    Map<NodeKey, String> stringMap = new ConcurrentHashMap<>();
 
     P2PServer server;
     ServerObject node;
@@ -62,8 +65,16 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     }
 
     @Override
-    public void onConnected (NodeKey node) {
+    public void onConnected (NodeKey node, Connection connection) {
+        //Check if there is already an open connection and close it..
+        if (connectedNodes.contains(node)) {
+            //closeConnection will automatically call onDisconnected..
+            closeConnection(node);
+        }
+
+        //Add the new connection to the pool..
         connectedNodes.add(node);
+        connectionMap.put(node, connection);
 
         ConnectionListener listener = connectionListenerMap.get(node);
         if (listener != null) {
@@ -112,6 +123,12 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 onDisconnected(nodeKey);
             }
         };
+    private void closeConnection (NodeKey nodeKey) {
+        Connection connection = connectionMap.get(nodeKey);
+        if (connection != null) {
+            connection.close();
+        }
+    }
     }
 
     private void onAuthenticationFailed (PubkeyIPObject ipObject) {

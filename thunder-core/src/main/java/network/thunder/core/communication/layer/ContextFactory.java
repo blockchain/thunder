@@ -49,6 +49,8 @@ public interface ContextFactory {
 
     LNPaymentProcessor getLNPaymentProcessor (ClientObject node);
 
+    ConnectionProcessor getConnectionProcessor (ClientObject node);
+
     LNPaymentHelper getPaymentHelper ();
 
     LNOnionHelper getOnionHelper ();

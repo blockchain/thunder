@@ -37,7 +37,7 @@ public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
 //        ch.pipeline().addLast(new DumpHexHandler());
 
 //        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
-//        ch.pipeline().addLast(new NodeConnectionHandler(context, node));
+//        ch.pipeline().addLast(new NodeConnectionHandler(context, nodeKey));
 
         ch.pipeline().addLast(new LengthFieldBasedFrameDecoder(2147483647, 0, 4, 0, 4));
         ch.pipeline().addLast(new LengthFieldPrepender(4));
@@ -63,6 +63,10 @@ public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
 
         Processor syncProcessor = contextFactory.getSyncProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(syncProcessor, "Sync"));
+
+        //TODO move this to the end of the pipeline once the LNPaymentProcessor uses the ChannelManager
+        Processor connectionProcessor = contextFactory.getConnectionProcessor(node);
+        ch.pipeline().addLast(new ProcessorHandler(connectionProcessor, "Connection"));
 
         Processor lnEstablishProcessor = contextFactory.getLNEstablishProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnEstablishProcessor, "LNEstablish"));

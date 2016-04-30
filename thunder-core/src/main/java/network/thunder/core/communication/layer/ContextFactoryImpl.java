@@ -134,6 +134,11 @@ public class ContextFactoryImpl implements ContextFactory {
     }
 
     @Override
+    public ConnectionProcessor getConnectionProcessor (ClientObject node) {
+        return new ConnectionProcessor(this, node);
+    }
+
+    @Override
     public LNPaymentHelper getPaymentHelper () {
         return paymentHelper;
     }
