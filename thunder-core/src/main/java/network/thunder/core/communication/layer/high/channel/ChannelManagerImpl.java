@@ -5,6 +5,7 @@ import network.thunder.core.communication.ConnectionRegistry;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.implementations.management.BlockchainWatcher;
 import network.thunder.core.communication.processor.implementations.management.ChannelBlockchainWatcher;
 import network.thunder.core.database.DBHandler;
@@ -14,7 +15,7 @@ import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
-import network.thunder.core.helper.callback.results.Result;
+import network.thunder.core.helper.callback.results.FailureResult;
 
 import java.util.HashMap;
 import java.util.List;
@@ -80,15 +81,10 @@ public class ChannelManagerImpl implements ChannelManager {
 
     @Override
     public void openChannel (NodeKey node, ChannelOpenListener channelOpenListener) {
-        connectionManager.connect(node, new ConnectionListener() {
-            @Override
-            public void onConnection (Result result) {
-                channelOpenListener.onConnection(result);
-                if (result.wasSuccessful()) {
-                    openChannelWithOpenConnection(node, channelOpenListener);
-                }
-            }
-        });
+        connectionManager.connect(node, ConnectionIntent.OPEN_CHANNEL,
+                new ConnectionListener()
+                        .setOnSuccess(() -> openChannelWithOpenConnection(node, channelOpenListener))
+                        .setOnFailure(() -> channelOpenListener.onFinished(new FailureResult())));
     }
 
     private void openChannelWithOpenConnection (NodeKey node, ChannelOpenListener channelOpenListener) {
@@ -151,7 +147,7 @@ public class ChannelManagerImpl implements ChannelManager {
         for (Channel channel : openChannel) {
             NodeKey node = new NodeKey(channel.nodeKeyClient);
             if (!connectionRegistry.isConnected(node)) {
-                connectionManager.connect(node, new ConnectionListener());
+                connectionManager.connect(node, ConnectionIntent.MAINTAIN_CHANNEL, new ConnectionListener());
             }
         }
     }

@@ -542,7 +542,7 @@ public class DatabaseHandler {
 
             for (P2PDataObject o : dataObjectList) {
                 if (o.getFragmentIndex() != index) {
-                    System.out.println("!!!!!!!!!Object should not be in that index.. Is in: " + index + " Should be: " + o.getFragmentIndex());
+                    System.out.println("Object should not be in that index.. Is in: " + index + " Should be: " + o.getFragmentIndex());
 
                 }
             }

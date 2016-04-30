@@ -58,13 +58,10 @@ public class PeerSeedProcessorImpl extends PeerSeedProcessor {
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         this.messageExecutor = messageExecutor;
-        if (node.isServer) {
-            messageExecutor.sendNextLayerActive();
-        } else {
+        messageExecutor.sendNextLayerActive();
+        if (!node.isServer) {
             if (node.intent == ConnectionIntent.GET_IPS) {
                 messageExecutor.sendMessageUpwards(messageFactory.getPeerSeedGetMessage());
-            } else {
-                messageExecutor.sendNextLayerActive();
             }
         }
     }

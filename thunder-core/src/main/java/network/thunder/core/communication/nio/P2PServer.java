@@ -47,8 +47,7 @@ public final class P2PServer {
             ServerBootstrap b = new ServerBootstrap();
             b.group(bossGroup, workerGroup)
                     .channel(NioServerSocketChannel.class).handler(new LoggingHandler(LogLevel.INFO)).childHandler(new PipelineInitialiser(contextFactory));
-
-            System.out.println(b.bind(port).sync().channel());
+            b.bind(port).sync().channel();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

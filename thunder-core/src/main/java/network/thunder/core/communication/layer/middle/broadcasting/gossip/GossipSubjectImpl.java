@@ -47,9 +47,11 @@ public class GossipSubjectImpl implements GossipSubject, BroadcastHelper {
                 objectsToInsertIntoDatabase.add(dataObject);
             }
         }
-        dbHandler.syncDatalist(objectsToInsertIntoDatabase);
-        eventHelper.onP2PDataReceived();
-        broadcast();
+        if (objectsToInsertIntoDatabase.size() > 0) {
+            dbHandler.syncDatalist(objectsToInsertIntoDatabase);
+            eventHelper.onP2PDataReceived();
+            broadcast();
+        }
     }
 
     @Override
