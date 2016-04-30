@@ -66,17 +66,14 @@ public class PubkeyIPObject extends P2PDataObject {
         if (hostname != null ? !hostname.equals(ipObject.hostname) : ipObject.hostname != null) {
             return false;
         }
-        if (!Arrays.equals(pubkey, ipObject.pubkey)) {
-            return false;
-        }
-        return Arrays.equals(signature, ipObject.signature);
 
+        return Arrays.equals(pubkey, ipObject.pubkey);
     }
 
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(hostname.length() + 4 + 4 + pubkey.length + signature.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(hostname.length() + 4 + 4 + pubkey.length);
         try {
             byteBuffer.put(hostname.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
@@ -84,7 +81,6 @@ public class PubkeyIPObject extends P2PDataObject {
         }
         byteBuffer.putInt(port);
         byteBuffer.put(pubkey);
-        byteBuffer.put(signature);
         byteBuffer.putInt(timestamp);
         return byteBuffer.array();
     }
@@ -92,15 +88,6 @@ public class PubkeyIPObject extends P2PDataObject {
     @Override
     public int getTimestamp () {
         return timestamp;
-    }
-
-    public byte[] getDataWithoutSignature () throws UnsupportedEncodingException {
-        ByteBuffer buffer = ByteBuffer.allocate(hostname.getBytes("UTF-8").length + 2 + pubkey.length + 4);
-        buffer.put(hostname.getBytes("UTF-8"));
-        buffer.putShort((short) port);
-        buffer.put(pubkey);
-        buffer.putInt(timestamp);
-        return buffer.array();
     }
 
     @Override
@@ -116,14 +103,13 @@ public class PubkeyIPObject extends P2PDataObject {
         int result = hostname != null ? hostname.hashCode() : 0;
         result = 31 * result + port;
         result = 31 * result + (pubkey != null ? Arrays.hashCode(pubkey) : 0);
-        result = 31 * result + (signature != null ? Arrays.hashCode(signature) : 0);
         result = 31 * result + timestamp;
         return result;
     }
 
     public void sign (ECKey key) {
         try {
-            this.signature = CryptoTools.createSignature(key, this.getDataWithoutSignature());
+            this.signature = CryptoTools.createSignature(key, this.getData());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -137,13 +123,14 @@ public class PubkeyIPObject extends P2PDataObject {
     public boolean isSimilarObject (P2PDataObject object) {
         if (object instanceof PubkeyIPObject) {
             PubkeyIPObject channel = (PubkeyIPObject) object;
-            return channel.hostname.equals(this.hostname);
+            boolean equals = channel.hostname.equals(this.hostname);
+            return equals;
         }
         return false;
     }
 
     public void verifySignature () throws UnsupportedEncodingException, NoSuchProviderException, NoSuchAlgorithmException {
-        if (!CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getDataWithoutSignature(), this.signature)) {
+        if (!CryptoTools.verifySignature(ECKey.fromPublicOnly(pubkey), this.getData(), this.signature)) {
             throw new RuntimeException("Signature failed..");
         }
     }

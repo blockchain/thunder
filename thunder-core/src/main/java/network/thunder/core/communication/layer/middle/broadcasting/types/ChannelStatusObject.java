@@ -75,13 +75,8 @@ public class ChannelStatusObject extends P2PDataObject {
         if (!Arrays.equals(infoA, that.infoA)) {
             return false;
         }
-        if (!Arrays.equals(infoB, that.infoB)) {
-            return false;
-        }
-        if (!Arrays.equals(signatureA, that.signatureA)) {
-            return false;
-        }
-        return Arrays.equals(signatureB, that.signatureB);
+
+        return Arrays.equals(infoB, that.infoB);
 
     }
 
@@ -138,8 +133,6 @@ public class ChannelStatusObject extends P2PDataObject {
         result = 31 * result + (pubkeyB != null ? Arrays.hashCode(pubkeyB) : 0);
         result = 31 * result + (infoA != null ? Arrays.hashCode(infoA) : 0);
         result = 31 * result + (infoB != null ? Arrays.hashCode(infoB) : 0);
-        result = 31 * result + (signatureA != null ? Arrays.hashCode(signatureA) : 0);
-        result = 31 * result + (signatureB != null ? Arrays.hashCode(signatureB) : 0);
         result = 31 * result + timestamp;
         return result;
     }

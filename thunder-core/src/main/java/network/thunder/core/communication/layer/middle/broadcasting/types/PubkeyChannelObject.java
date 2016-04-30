@@ -100,21 +100,15 @@ public class PubkeyChannelObject extends P2PDataObject {
         if (!Arrays.equals(pubkeyA2, that.pubkeyA2)) {
             return false;
         }
-        if (!Arrays.equals(txidAnchor, that.txidAnchor)) {
-            return false;
-        }
-        if (!Arrays.equals(signatureA, that.signatureA)) {
-            return false;
-        }
-        return Arrays.equals(signatureB, that.signatureB);
 
+        return !Arrays.equals(txidAnchor, that.txidAnchor);
     }
 
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
         ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA
-                .length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length + signatureA.length + signatureB.length);
+                .length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length);
 
         byteBuffer.put(secretAHash);
         byteBuffer.put(secretBHash);
@@ -125,8 +119,6 @@ public class PubkeyChannelObject extends P2PDataObject {
         byteBuffer.put(pubkeyA1);
         byteBuffer.put(pubkeyA2);
         byteBuffer.put(txidAnchor);
-        byteBuffer.put(signatureA);
-        byteBuffer.put(signatureB);
 
         return byteBuffer.array();
     }
@@ -155,8 +147,6 @@ public class PubkeyChannelObject extends P2PDataObject {
         result = 31 * result + (pubkeyA1 != null ? Arrays.hashCode(pubkeyA1) : 0);
         result = 31 * result + (pubkeyA2 != null ? Arrays.hashCode(pubkeyA2) : 0);
         result = 31 * result + (txidAnchor != null ? Arrays.hashCode(txidAnchor) : 0);
-        result = 31 * result + (signatureA != null ? Arrays.hashCode(signatureA) : 0);
-        result = 31 * result + (signatureB != null ? Arrays.hashCode(signatureB) : 0);
         return result;
     }
 
@@ -173,8 +163,8 @@ public class PubkeyChannelObject extends P2PDataObject {
     public boolean isSimilarObject (P2PDataObject object) {
         if (object instanceof PubkeyChannelObject) {
             PubkeyChannelObject channel = (PubkeyChannelObject) object;
-            return Arrays.equals(channel.pubkeyA, this.pubkeyA) &&
-                    Arrays.equals(channel.pubkeyB, this.pubkeyB);
+            return (Arrays.equals(channel.pubkeyA, this.pubkeyA) && Arrays.equals(channel.pubkeyB, this.pubkeyB)) ||
+                    (Arrays.equals(channel.pubkeyA, this.pubkeyB) && Arrays.equals(channel.pubkeyB, this.pubkeyA));
 
         }
         return false;
