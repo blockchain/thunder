@@ -96,9 +96,8 @@ public class SynchronizationHelper {
         }
         int counter = 0;
         while (!fullySynchronized()) {
+            Thread.sleep(100);
             synchronized (syncClientList) {
-                Thread.sleep(100);
-
                 for (SyncClient syncClient : syncClientList) {
                     Integer currentSegment = currentlySyncing.get(syncClient);
                     if (currentSegment != null) {

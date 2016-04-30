@@ -17,8 +17,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class InMemoryDBHandler implements DBHandler {
-    final static int MAXIMUM_AGE_SYNC_DATA = 36 * 60 * 60;
-
     public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
     public final List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
@@ -117,9 +115,22 @@ public class InMemoryDBHandler implements DBHandler {
                         channelStatusList.remove(object2);
                     }
                     deleted = true;
-                    System.out.println(deleted + " " + object1 + " " + object2 + " " + Tools.bytesToHex(object1.getHash()) + " " + Tools.bytesToHex(object2
-                            .getHash()));
                 }
+            }
+        }
+
+        Iterator<P2PDataObject> iterator2 = totalList.iterator();
+        while (iterator2.hasNext()) {
+            P2PDataObject object2 = iterator2.next();
+            int timestamp = object2.getTimestamp();
+            if (timestamp != 0 && Tools.currentTime() - timestamp > P2PDataObject.MAXIMUM_AGE_SYNC_DATA) {
+                iterator2.remove();
+                for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
+                    fragmentToListMap.get(i).remove(object2);
+                }
+                pubkeyIPList.remove(object2);
+                pubkeyChannelList.remove(object2);
+                channelStatusList.remove(object2);
             }
         }
 
@@ -254,7 +265,7 @@ public class InMemoryDBHandler implements DBHandler {
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
 //        cleanFragmentMap();
         fragmentToListMap.get(fragmentIndex).removeIf(
-                p -> (Tools.currentTime() - p.getTimestamp() > MAXIMUM_AGE_SYNC_DATA));
+                p -> (Tools.currentTime() - p.getTimestamp() > P2PDataObject.MAXIMUM_AGE_SYNC_DATA));
         return fragmentToListMap.get(fragmentIndex);
     }
 

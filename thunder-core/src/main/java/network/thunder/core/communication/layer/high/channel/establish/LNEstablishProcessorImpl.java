@@ -12,6 +12,7 @@ import network.thunder.core.communication.layer.high.channel.ChannelOpener;
 import network.thunder.core.communication.layer.high.channel.establish.messages.*;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
@@ -258,11 +259,23 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     private void broadcastChannelObject () {
         //TODO fill in some usable data into ChannelStatusObject
-        PubkeyChannelObject channelObject = PubkeyChannelObject.getRandomObject();
+        PubkeyChannelObject channelObject = new PubkeyChannelObject();
+        channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
+        channelObject.pubkeyB = node.pubKeyClient.getPubKey();
+        channelObject.pubkeyA1 = channel.keyServer.getPubKey();
+        channelObject.pubkeyA2 = channel.keyServerA.getPubKey();
+        channelObject.pubkeyB1 = channel.keyClient.getPubKey();
+        channelObject.pubkeyB2 = channel.keyClientA.getPubKey();
+        channelObject.timestamp = Tools.currentTime();
+        channelObject.secretAHash = channel.anchorSecretHashServer;
+        channelObject.secretBHash = channel.anchorSecretHashClient;
+        channelObject.txidAnchor = channel.anchorTxHashServer.getBytes();
+
         ChannelStatusObject statusObject = new ChannelStatusObject();
         statusObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         statusObject.pubkeyB = node.pubKeyClient.getPubKey();
         statusObject.timestamp = Tools.currentTime();
+
         broadcastHelper.broadcastNewObject(channelObject);
         broadcastHelper.broadcastNewObject(statusObject);
     }
@@ -280,7 +293,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     private void startScheduledBroadcasting () {
         broadcastChannelObject();
-        scheduler.scheduleAtFixedRate((Runnable) () -> broadcastChannelObject(), 1, 1, TimeUnit.HOURS);
+        int time = (int) (P2PDataObject.MAXIMUM_AGE_SYNC_DATA * 0.1);
+        scheduler.scheduleAtFixedRate((Runnable) () -> broadcastChannelObject(), time, time, TimeUnit.SECONDS);
     }
 
 }

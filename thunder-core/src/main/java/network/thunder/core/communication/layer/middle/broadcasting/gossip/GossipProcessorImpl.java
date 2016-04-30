@@ -187,7 +187,8 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     private void startScheduledBroadcasting () {
         sendOwnIPAddress();
-        scheduler.scheduleAtFixedRate((Runnable) () -> sendOwnIPAddress(), 1, 1, TimeUnit.HOURS);
+        int time = (int) (P2PDataObject.MAXIMUM_AGE_SYNC_DATA * 0.75);
+        scheduler.scheduleAtFixedRate((Runnable) () -> sendOwnIPAddress(), time, time, TimeUnit.SECONDS);
     }
 
     @Override
