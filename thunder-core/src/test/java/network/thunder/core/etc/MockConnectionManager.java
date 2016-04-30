@@ -2,9 +2,11 @@ package network.thunder.core.etc;
 
 import network.thunder.core.communication.ConnectionManager;
 import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
-import network.thunder.core.helper.callback.results.SuccessResult;
+
+import java.util.concurrent.Future;
 
 public class MockConnectionManager implements ConnectionManager {
 
@@ -24,8 +26,18 @@ public class MockConnectionManager implements ConnectionManager {
     }
 
     @Override
-    public void connect (NodeKey node, ConnectionListener connectionListener) {
-        connectionListener.onConnection(new SuccessResult());
+    public void connect (NodeKey node, ConnectionIntent intent, ConnectionListener connectionListener) {
+        connectionListener.onSuccess.execute();
+    }
+
+    @Override
+    public Future randomConnections (int amount, ConnectionIntent intent, ConnectionListener connectionListener) {
+        return null;
+    }
+
+    @Override
+    public void disconnectByIntent (ConnectionIntent intent) {
+
     }
 
     @Override

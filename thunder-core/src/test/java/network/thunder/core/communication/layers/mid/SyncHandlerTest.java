@@ -9,6 +9,8 @@ import network.thunder.core.communication.layer.middle.broadcasting.sync.Synchro
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.SyncDBHandlerMock;
 import network.thunder.core.communication.ServerObject;
+import network.thunder.core.etc.TestTools;
+import network.thunder.core.helper.callback.SyncListener;
 import org.junit.Test;
 
 import java.util.List;
@@ -65,23 +67,26 @@ public class SyncHandlerTest {
     }
 
     @Test
-    public void testSyncingDataObjects () {
+    public void testSyncingDataObjects () throws InterruptedException {
         buildDatabase();
         prepare();
 
         SynchronizationHelper syncStructure1 = contextFactory1.getSyncHelper();
+        syncStructure1.resync(new SyncListener());
 
-        while (!syncStructure1.fullySynchronized()) {
-            Message m1 = (Message) channel1.readOutbound();
-            channel2.writeInbound(m1);
-            Message m2 = (Message) channel2.readOutbound();
-            channel1.writeInbound(m2);
+        Thread.sleep(500);
+
+        int counter = 0;
+        while (!syncStructure1.fullySynchronized() && counter  < 100) {
+            TestTools.exchangeMessagesDuplex(channel1, channel2);
+            Thread.sleep(100);
+            counter++;
         }
 
         assertNull(channel1.readOutbound());
         assertNull(channel2.readOutbound());
 
-        syncStructure1.saveFullSyncToDatabase();
+//        syncStructure1.saveFullSyncToDatabase();
 
         assertTrue(checkListsEqual(dbHandler1.channelStatusObjectArrayList, dbHandler2.channelStatusObjectArrayList));
         assertTrue(checkListsEqual(dbHandler1.pubkeyChannelObjectArrayList, dbHandler2.pubkeyChannelObjectArrayList));

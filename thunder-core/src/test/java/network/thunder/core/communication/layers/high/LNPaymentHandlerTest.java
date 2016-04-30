@@ -80,12 +80,12 @@ public class LNPaymentHandlerTest {
         processor12.makePayment(getMockPaymentData());
         Thread.sleep(200);
 
-        exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
 
         assertNull(channel12.readOutbound());
         assertNull(channel21.readOutbound());
@@ -98,8 +98,8 @@ public class LNPaymentHandlerTest {
         processor12.makePayment(getMockPaymentData());
         Thread.sleep(2000);
 
-        exchangeMessages(channel12, channel21);
-        exchangeMessages(channel21, channel12);
+        TestTools.exchangeMessages(channel12, channel21);
+        TestTools.exchangeMessages(channel21, channel12);
         Message message = (Message) channel12.readOutbound();
 
         Thread.sleep(LNPaymentProcessor.TIMEOUT_NEGOTIATION + 5000);
@@ -109,8 +109,8 @@ public class LNPaymentHandlerTest {
         channel21.writeInbound(message);
         assertNull(channel21.readOutbound());
 
-        exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
 
         after();
     }
@@ -120,10 +120,10 @@ public class LNPaymentHandlerTest {
         processor12.makePayment(getMockPaymentData());
         Thread.sleep(200);
 
-        exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
 
         Message message = (Message) channel12.readOutbound();
         assertThat(message, instanceOf(LNPaymentDMessage.class));
@@ -135,12 +135,12 @@ public class LNPaymentHandlerTest {
         processor21.abortCurrentExchange();
         Thread.sleep(500);
 
-        exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
 
         after();
     }
@@ -170,52 +170,31 @@ public class LNPaymentHandlerTest {
             channel21 = channel3;
         }
 
-        exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
 
         Thread.sleep(200);
 
-        exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
-        exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
 
         after();
     }
 
     public void exchangePayment (EmbeddedChannel from, EmbeddedChannel to) {
-        exchangeMessages(from, to, LNPaymentAMessage.class);
-        exchangeMessages(to, from, LNPaymentBMessage.class);
-        exchangeMessages(from, to, LNPaymentCMessage.class);
-        exchangeMessages(to, from, LNPaymentCMessage.class);
-        exchangeMessages(from, to, LNPaymentDMessage.class);
-        exchangeMessages(to, from, LNPaymentDMessage.class);
-    }
-
-    public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to) {
-        Object message = from.readOutbound();
-        System.out.println(message);
-        if (message != null) {
-            to.writeInbound(message);
-        }
-    }
-
-    public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to, Class expectedMessage) {
-        Object message = from.readOutbound();
-        assertThat(message, instanceOf(expectedMessage));
-        if (message != null) {
-            to.writeInbound(message);
-        }
-    }
-
-    public static void exchangeMessagesDuplex (EmbeddedChannel from, EmbeddedChannel to) {
-        exchangeMessages(from, to);
-        exchangeMessages(to, from);
+        TestTools.exchangeMessages(from, to, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(to, from, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(from, to, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(to, from, LNPaymentCMessage.class);
+        TestTools.exchangeMessages(from, to, LNPaymentDMessage.class);
+        TestTools.exchangeMessages(to, from, LNPaymentDMessage.class);
     }
 
     public PaymentData getMockPaymentData () {
@@ -232,7 +211,7 @@ public class LNPaymentHandlerTest {
             @Override
             public void run () {
                 while (true) {
-                    exchangeMessagesDuplex(from, to);
+                    TestTools.exchangeMessagesDuplex(from, to);
                     try {
                         Thread.sleep(10);
                     } catch (InterruptedException e) {

@@ -38,6 +38,11 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     }
 
     @Override
+    public List<Channel> getOpenChannel (ECKey nodeKey) {
+        return getChannel(nodeKey);
+    }
+
+    @Override
     public void addPayment (PaymentWrapper paymentWrapper) {
         if (payments.contains(paymentWrapper)) {
             throw new RuntimeException("Double payment added?");

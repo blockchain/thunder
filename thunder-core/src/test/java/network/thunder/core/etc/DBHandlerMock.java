@@ -45,6 +45,11 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
+    public void invalidateP2PObject (P2PDataObject ipObject) {
+
+    }
+
+    @Override
     public void syncDatalist (List<P2PDataObject> dataList) {
 
     }
@@ -81,6 +86,11 @@ public class DBHandlerMock implements DBHandler {
 
     @Override
     public List<Channel> getChannel (ECKey nodeKey) {
+        return null;
+    }
+
+    @Override
+    public List<Channel> getOpenChannel (ECKey nodeKey) {
         return null;
     }
 
