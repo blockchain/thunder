@@ -104,6 +104,7 @@ public class BitcoinUIModel {
 
             ObservableList<PubkeyIPObject> items5 = FXCollections.observableArrayList();
             List<PubkeyIPObject> ipObjectList = Main.dbHandler.getIPObjects();
+            ipObjectList.sort((o1, o2) -> o1.hostname.compareTo(o2.hostname));
             for (PubkeyIPObject p : ipObjectList) {
                 items5.add(p);
             }
