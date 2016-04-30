@@ -3,7 +3,6 @@ package network.thunder.core.database;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
@@ -13,6 +12,7 @@ import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -28,8 +28,7 @@ public class InMemoryDBHandler implements DBHandler {
     public Map<Integer, List<P2PDataObject>> fragmentToListMap = new HashMap<>();
 
     public final List<P2PDataObject> totalList = Collections.synchronizedList(new ArrayList<>());
-
-    public List<PubkeyIPObject> pubkeyIPObjectOpenChannel = Collections.synchronizedList(new ArrayList<>());
+    private final Collection<ByteBuffer> knownObjects = new HashSet<>();
 
     public List<RevocationHash> revocationHashListTheir = Collections.synchronizedList(new ArrayList<>());
     public List<RevocationHash> revocationHashListOurs = Collections.synchronizedList(new ArrayList<>());
@@ -38,7 +37,7 @@ public class InMemoryDBHandler implements DBHandler {
     List<PaymentSecret> secrets = new ArrayList<>();
 
     public InMemoryDBHandler () {
-        for (int i = 0; i < SynchronizationHelper.NUMBER_OF_NODE_TO_SYNC_FROM + 1; i++) {
+        for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
             fragmentToListMap.put(i, Collections.synchronizedList(new ArrayList<>()));
         }
     }
@@ -91,6 +90,39 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public synchronized void syncDatalist (List<P2PDataObject> dataList) {
+        Iterator<P2PDataObject> iterator1 = dataList.iterator();
+        while (iterator1.hasNext()) {
+            boolean deleted = false;
+            P2PDataObject object1 = iterator1.next();
+
+            if (knownObjects.contains(ByteBuffer.wrap(object1.getHash()))) {
+                iterator1.remove();
+                continue;
+            }
+
+            Iterator<P2PDataObject> iterator2 = totalList.iterator();
+            while (iterator2.hasNext() && !deleted) {
+                P2PDataObject object2 = iterator2.next();
+                if (object1.isSimilarObject(object2)) {
+
+                    if (object1.getTimestamp() <= object2.getTimestamp()) {
+                        iterator1.remove();
+                    } else {
+                        iterator2.remove();
+                        for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
+                            fragmentToListMap.get(i).remove(object2);
+                        }
+                        pubkeyIPList.remove(object2);
+                        pubkeyChannelList.remove(object2);
+                        channelStatusList.remove(object2);
+                    }
+                    deleted = true;
+                    System.out.println(deleted + " " + object1 + " " + object2 + " " + Tools.bytesToHex(object1.getHash()) + " " + Tools.bytesToHex(object2
+                            .getHash()));
+                }
+            }
+        }
+
         for (P2PDataObject obj : dataList) {
             fragmentToListMap.get(obj.getFragmentIndex()).add(obj);
             if (obj instanceof PubkeyIPObject) {
@@ -131,27 +163,8 @@ public class InMemoryDBHandler implements DBHandler {
             if (!totalList.contains(obj)) {
                 totalList.add(obj);
             }
+            knownObjects.add(ByteBuffer.wrap(obj.getHash()));
         }
-        cleanFragmentMap();
-    }
-
-    private void cleanFragmentMap () {
-        List<P2PDataObject> oldObjects = new ArrayList<>();
-        for (P2PDataObject object1 : totalList) {
-            for (P2PDataObject object2 : totalList) {
-                if (object1.isSimilarObject(object2) && object1.getTimestamp() < object2.getTimestamp()) {
-                    oldObjects.add(object1);
-                    break;
-                }
-            }
-        }
-        for (int i = 0; i < SynchronizationHelper.NUMBER_OF_NODE_TO_SYNC_FROM + 1; i++) {
-            fragmentToListMap.get(i).removeAll(oldObjects);
-        }
-        totalList.removeAll(oldObjects);
-        pubkeyIPList.removeAll(oldObjects);
-        pubkeyChannelList.removeAll(oldObjects);
-        channelStatusList.removeAll(oldObjects);
     }
 
     @Override
@@ -239,6 +252,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
+//        cleanFragmentMap();
         fragmentToListMap.get(fragmentIndex).removeIf(
                 p -> (Tools.currentTime() - p.getTimestamp() > MAXIMUM_AGE_SYNC_DATA));
         return fragmentToListMap.get(fragmentIndex);
@@ -382,21 +396,5 @@ public class InMemoryDBHandler implements DBHandler {
             }
         }
         return null;
-    }
-
-    private void pruneLists () {
-        List<PubkeyIPObject> oldList = new ArrayList<>();
-
-        for (PubkeyIPObject oldIP : pubkeyIPList) {
-            for (PubkeyIPObject newIP : pubkeyIPList) {
-                if (!oldIP.equals(newIP)) {
-                    if (Arrays.equals(oldIP.pubkey, newIP.pubkey) && (oldIP.timestamp < newIP.timestamp)) {
-                        oldList.add(oldIP);
-                    }
-                }
-            }
-        }
-
-        pubkeyIPList.removeAll(oldList);
     }
 }
