@@ -1,21 +1,19 @@
 package network.thunder.core.communication.layer.middle.broadcasting.sync;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
-import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncGetMessage;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncSendMessage;
-import network.thunder.core.helper.callback.results.SyncSuccessResult;
-import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
-import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.Sync;
-import network.thunder.core.communication.processor.ConnectionIntent;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncGetMessage;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncMessageFactory;
+import network.thunder.core.communication.layer.middle.broadcasting.sync.messages.SyncSendMessage;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
+import network.thunder.core.helper.events.LNEventHelper;
 
 import java.util.List;
 
-public class SyncProcessorImpl extends SyncProcessor {
+public class SyncProcessorImpl extends SyncProcessor implements SyncClient {
     SyncMessageFactory messageFactory;
     SynchronizationHelper syncStructure;
     LNEventHelper eventHelper;
@@ -35,11 +33,13 @@ public class SyncProcessorImpl extends SyncProcessor {
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         this.messageExecutor = messageExecutor;
-        if (shouldSync()) {
-            startSyncing();
-        } else {
-            syncComplete();
-        }
+        syncStructure.addSyncClient(this);
+        messageExecutor.sendNextLayerActive();
+    }
+
+    @Override
+    public void onLayerClose () {
+        syncStructure.removeSyncClient(this);
     }
 
     @Override
@@ -61,34 +61,17 @@ public class SyncProcessorImpl extends SyncProcessor {
         return false;
     }
 
-    public boolean shouldSync () {
-        return !node.isServer && !synchronizationComplete();
-    }
-
-    private void startSyncing () {
-        sendGetNextSyncData();
-    }
-
-    private void syncComplete () {
-        if (node.intent == ConnectionIntent.GET_SYNC_DATA) {
-            node.resultCallback.execute(new SyncSuccessResult());
-            messageExecutor.closeConnection();
-        } else {
-            messageExecutor.sendNextLayerActive();
-        }
+    @Override
+    public void syncSegment (int segment) {
+        lastIndex = segment;
+        SyncGetMessage getMessage = messageFactory.getSyncGetMessage(segment);
+        messageExecutor.sendMessageUpwards(getMessage);
     }
 
     private void processSyncSendMessage (Message message) {
         SyncSendMessage syncMessage = (SyncSendMessage) message;
         syncStructure.newFragment(lastIndex, syncMessage.getDataList());
         eventHelper.onP2PDataReceived();
-
-        //TODO cancel the connection with some other condition as well..
-        if (!syncStructure.fullySynchronized()) {
-            sendGetNextSyncData();
-        } else {
-            syncComplete();
-        }
     }
 
     private void processSyncGetMessage (Message message) {
@@ -96,19 +79,9 @@ public class SyncProcessorImpl extends SyncProcessor {
         sendSyncData(syncMessage.fragmentIndex);
     }
 
-    private void sendGetNextSyncData () {
-        lastIndex = syncStructure.getNextFragmentIndexToSynchronize();
-        SyncGetMessage getMessage = messageFactory.getSyncGetMessage(lastIndex);
-        messageExecutor.sendMessageUpwards(getMessage);
-    }
-
     private void sendSyncData (int fragmentIndex) {
         List<P2PDataObject> dataObjects = syncStructure.getFragment(fragmentIndex);
         Message syncSendMessage = messageFactory.getSyncSendMessage(dataObjects);
         messageExecutor.sendMessageUpwards(syncSendMessage);
-    }
-
-    private boolean synchronizationComplete () {
-        return syncStructure.fullySynchronized();
     }
 }

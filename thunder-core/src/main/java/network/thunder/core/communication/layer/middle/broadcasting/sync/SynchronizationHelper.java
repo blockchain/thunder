@@ -1,11 +1,16 @@
 package network.thunder.core.communication.layer.middle.broadcasting.sync;
 
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
-import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.SyncListener;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Structure for synchronizing new nodes.
@@ -14,8 +19,8 @@ import java.util.*;
  * If the topography after the complete sync is not good enough, we can always add further queries to it.
  */
 public class SynchronizationHelper {
-    public final static int NUMBER_OF_NODE_TO_SYNC_FROM = 10;
-
+    public final static int TIME_TO_SYNC_ONE_FRAGMENT = 1000;
+    private final static int MAXIMUM_TRIES_SYNCING = P2PDataObject.NUMBER_OF_FRAGMENTS * 50;
     private DBHandler dbHandler;
 
     private Map<Integer, List<P2PDataObject>> fragmentList = new HashMap<>();
@@ -23,22 +28,39 @@ public class SynchronizationHelper {
     private Set<P2PDataObject> fullDataListSet = new HashSet<>();
 
     private Map<Integer, Boolean> fragmentIsSyncedList = new HashMap<>();
-    private Map<Integer, Integer> fragmentJobList = new HashMap<>();
-
-    private List<PubkeyIPObject> ipObjectList = new ArrayList<>();
+    private Map<Integer, Long> fragmentJobList = new HashMap<>();
 
     private boolean fullySynchronized = false;
 
+    final List<SyncClient> syncClientList = Collections.synchronizedList(new ArrayList<>());
+    Map<SyncClient, Integer> currentlySyncing = new HashMap<>();
+
+    private SyncListener syncListener;
+
+    private ExecutorService executorService = new ThreadPoolExecutor(1, 1, 5, TimeUnit.MINUTES, new BlockingArrayQueue<>());
+
     public SynchronizationHelper (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
-        resync();
+        initialise();
     }
 
-    public synchronized int getNextFragmentIndexToSynchronize () {
+    public void addSyncClient (SyncClient syncClient) {
+        synchronized (syncClientList) {
+            syncClientList.add(syncClient);
+        }
+    }
+
+    public void removeSyncClient (SyncClient syncClient) {
+        synchronized (syncClientList) {
+            syncClientList.remove(syncClient);
+        }
+    }
+
+    private synchronized int getNextFragmentIndexToSynchronize () {
         for (int i = 1; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
             if (!fragmentIsSyncedList.get(i)) {
-                if ((Tools.currentTime() - fragmentJobList.get(i)) > 60) { //Give each fragment 60s to sync..
-                    fragmentJobList.put(i, Tools.currentTime());
+                if ((Tools.currentTime() - fragmentJobList.get(i)) > TIME_TO_SYNC_ONE_FRAGMENT) {
+                    fragmentJobList.put(i, System.currentTimeMillis());
                     return i;
                 }
             }
@@ -46,14 +68,65 @@ public class SynchronizationHelper {
         return 0;
     }
 
-    public void resync () {
+    public Future resync (SyncListener syncListener) {
+        this.syncListener = syncListener;
+        initialise();
+        return executorService.submit((Runnable) () -> {
+            try {
+                sync();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void initialise () {
         for (int i = 1; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
-            List<P2PDataObject> objList = new ArrayList<>();
-            fragmentList.put(i, objList);
+            fragmentList.put(i, new ArrayList<>());
             fragmentIsSyncedList.put(i, false);
-            fragmentJobList.put(i, 0);
+            fragmentJobList.put(i, (long) 0);
         }
         fullySynchronized = false;
+    }
+
+    private void sync () throws InterruptedException {
+        if (syncClientList.size() == 0) {
+            syncListener.onSyncFailed();
+            return;
+        }
+        int counter = 0;
+        while (!fullySynchronized()) {
+            synchronized (syncClientList) {
+                Thread.sleep(100);
+
+                for (SyncClient syncClient : syncClientList) {
+                    Integer currentSegment = currentlySyncing.get(syncClient);
+                    if (currentSegment != null) {
+                        Boolean segmentSynced = fragmentIsSyncedList.get(currentSegment);
+                        if (segmentSynced == null || segmentSynced == Boolean.FALSE) {
+                            long time = System.currentTimeMillis() - fragmentJobList.get(currentSegment);
+                            if (time < TIME_TO_SYNC_ONE_FRAGMENT) {
+                                continue;
+                            }
+                        }
+                    }
+                    int nextFragment = getNextFragmentIndexToSynchronize();
+                    if (nextFragment == 0) {
+                        continue;
+                    }
+                    counter++;
+                    currentlySyncing.put(syncClient, nextFragment);
+                    syncClient.syncSegment(nextFragment);
+                }
+            }
+
+            if (counter > MAXIMUM_TRIES_SYNCING) {
+                syncListener.onSyncFailed();
+                return;
+            }
+        }
+        saveFullSyncToDatabase();
+        syncListener.onSyncFinished();
     }
 
     public void newFragment (int index, List<P2PDataObject> newFragment) {
@@ -63,15 +136,7 @@ public class SynchronizationHelper {
         }
         dbHandler.syncDatalist(newFragment);
         fragmentIsSyncedList.put(index, true);
-    }
 
-    public void newIPList (List<P2PDataObject> ipList) {
-        for (P2PDataObject ip : ipList) {
-            if (ip instanceof PubkeyIPObject) {
-                ipObjectList.add((PubkeyIPObject) ip);
-            }
-        }
-        dbHandler.insertIPObjects(ipList);
     }
 
     private boolean verifyDataObject (int index, P2PDataObject object) {
@@ -93,7 +158,7 @@ public class SynchronizationHelper {
         if (!objectArrayList.contains(object)) {
             objectArrayList.add(object);
         }
-        if (!fullDataListSet.contains(object)) {
+        if (!fullDataListSet.add(object)) {
             fullDataList.add(object);
         }
     }
@@ -111,10 +176,7 @@ public class SynchronizationHelper {
         return true;
     }
 
-    public void saveFullSyncToDatabase () {
-
-        System.out.println("Received all sync data...");
-
+    private void saveFullSyncToDatabase () {
         //TODO: Validate all anchors we received. We need some kind of full blockchain to do that..
 
         dbHandler.syncDatalist(fullDataList);
@@ -123,9 +185,4 @@ public class SynchronizationHelper {
     public List<P2PDataObject> getFragment (int index) {
         return dbHandler.getSyncDataByFragmentIndex(index);
     }
-
-    public List<P2PDataObject> getIPAddresses () {
-        return dbHandler.getSyncDataIPObjects();
-    }
-
 }

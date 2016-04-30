@@ -17,6 +17,7 @@ package network.thunder.core.communication.nio;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -24,8 +25,6 @@ import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.PipelineInitialiser;
 import network.thunder.core.helper.callback.ConnectionListener;
-import network.thunder.core.helper.callback.results.FailureResult;
-import network.thunder.core.helper.callback.results.SuccessResult;
 
 /**
  */
@@ -67,7 +66,7 @@ public final class P2PClient {
             Channel ch = createChannel(node);
             if (ch.isOpen()) {
                 successfulConnection = true;
-                connectionListener.onConnection(new SuccessResult());
+                connectionListener.onSuccess.execute();
             }
             ch.closeFuture().sync();
 
@@ -75,7 +74,7 @@ public final class P2PClient {
         } catch (Exception e) {
             if (!successfulConnection) {
                 //Don't notify a previously successful connection again..
-                connectionListener.onConnection(new FailureResult());
+                connectionListener.onFailure.execute();
             }
             throw new RuntimeException(e);
         }
@@ -84,6 +83,7 @@ public final class P2PClient {
     private Channel createChannel (ClientObject node) throws InterruptedException {
         EventLoopGroup group = new NioEventLoopGroup();
         Bootstrap b = new Bootstrap();
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000);
         b.group(group).channel(NioSocketChannel.class).handler(new PipelineInitialiser(contextFactory, node));
         return b.connect(node.host, node.port).sync().channel();
     }
