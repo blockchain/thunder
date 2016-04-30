@@ -175,7 +175,6 @@ public class Tools {
     }
 
     public static <T extends Object> T getRandomItemFromList (List<T> list) {
-        System.out.println(list.size());
         int randomNumber = new Random().nextInt(list.size());
         return list.get(randomNumber);
     }

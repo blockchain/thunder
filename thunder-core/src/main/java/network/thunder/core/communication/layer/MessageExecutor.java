@@ -1,5 +1,7 @@
 package network.thunder.core.communication.layer;
 
+import java.util.concurrent.Future;
+
 public interface MessageExecutor {
     void sendNextLayerActive ();
 
@@ -7,5 +9,5 @@ public interface MessageExecutor {
 
     void sendMessageDownwards (Message message);
 
-    void closeConnection ();
+    Future closeConnection ();
 }

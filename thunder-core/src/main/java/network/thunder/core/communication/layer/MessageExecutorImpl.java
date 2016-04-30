@@ -2,6 +2,8 @@ package network.thunder.core.communication.layer;
 
 import io.netty.channel.ChannelHandlerContext;
 
+import java.util.concurrent.Future;
+
 public class MessageExecutorImpl implements MessageExecutor {
     ChannelHandlerContext context;
     String layerName;
@@ -23,6 +25,7 @@ public class MessageExecutorImpl implements MessageExecutor {
     @Override
     public void sendMessageUpwards (Message message) {
         context.writeAndFlush(message);
+
     }
 
     @Override
@@ -31,7 +34,7 @@ public class MessageExecutorImpl implements MessageExecutor {
     }
 
     @Override
-    public void closeConnection () {
-        context.close();
+    public Future closeConnection () {
+        return context.close();
     }
 }

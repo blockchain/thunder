@@ -9,7 +9,7 @@ import org.bitcoinj.core.ECKey;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ClientObject {
@@ -26,7 +26,8 @@ public class ClientObject {
     public ConnectionIntent intent = ConnectionIntent.MISC;
     public ResultCommand resultCallback = new NullResultCommand();
     //TODO apparently we need all kind of callbacks over here - move them into a common Connection object?
-    public List<Command> onAuthenticationFailed = Collections.emptyList();
+    public List<Command> onAuthenticationFailed = new ArrayList<>();
+    public List<Command> onConnectionComplete = new ArrayList<>();
 
     public String host;
     public int port;

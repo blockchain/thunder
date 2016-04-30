@@ -1,6 +1,7 @@
 package network.thunder.core;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -70,9 +71,11 @@ public class MainNode {
 
         //Start listening on port specified in the configuration
         startListening(context);
+        Thread.sleep(1000);
 
         //Fetch IPs from other participants in the network
         fetchNetworkIPs(context);
+        Thread.sleep(5000);
 
         //Finally build payment channels
         if (!newConfiguration) {
@@ -86,26 +89,31 @@ public class MainNode {
                 ResultCommandExt buildChannelListener = new ResultCommandExt();
                 context.createRandomChannels(buildChannelListener);
                 buildChannelListener.await(30, TimeUnit.SECONDS);
+                List<Channel> openChannel = dbHandler.getOpenChannel();
+                for (Channel channel : openChannel) {
+                    configuration.nodesToBuildChannelWith.add(Tools.bytesToHex(channel.nodeKeyClient));
+                }
+                writeConfigurationFile(configuration);
             } else {
                 configuration.nodesToBuildChannelWith.addAll(channelList);
+                writeConfigurationFile(configuration);
                 buildPaymentChannels(context, configuration);
             }
-
-            List<Channel> openChannel = dbHandler.getOpenChannel();
-            for (Channel channel : openChannel) {
-                configuration.nodesToBuildChannelWith.add(Tools.bytesToHex(channel.nodeKeyClient));
-            }
-            Path file = Paths.get(CONFIG_FILE);
-            String config = new Gson().toJson(configuration);
-            System.out.println(config);
-            Files.write(file, config.getBytes(), StandardOpenOption.CREATE_NEW);
         }
+    }
+
+    static void writeConfigurationFile (Configuration configuration) throws IOException {
+        Path file = Paths.get(CONFIG_FILE);
+        String config = new GsonBuilder().setPrettyPrinting().create().toJson(configuration);
+        System.out.println(config);
+        Files.write(file, config.getBytes(), StandardOpenOption.CREATE_NEW);
     }
 
     static void startListening (ThunderContext context) {
         ResultCommandExt listener = new ResultCommandExt();
         context.startListening(listener);
         listener.await();
+        System.out.println("MainNode.startListening");
     }
 
     static void fetchNetworkIPs (ThunderContext context) {
@@ -119,6 +127,7 @@ public class MainNode {
 
     static void buildPaymentChannels (ThunderContext context, Configuration configuration) {
         for (String s : configuration.nodesToBuildChannelWith) {
+            System.out.println("MainNode.buildPaymentChannels "+s);
             ResultCommandExt buildChannelListener = new ResultCommandExt();
             byte[] nodeKey = Tools.hexStringToByteArray(s);
             context.openChannel(nodeKey, buildChannelListener);

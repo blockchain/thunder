@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.middle.broadcasting.sync.SynchronizationHelper;
+import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.communication.nio.P2PClient;
 import network.thunder.core.communication.nio.P2PServer;
@@ -14,15 +15,19 @@ import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
+import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.*;
 import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.ECKey;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static network.thunder.core.communication.processor.ConnectionIntent.*;
 
@@ -56,6 +61,8 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     LNEventHelper eventHelper;
     ChannelManager channelManager;
 
+    ExecutorService executorService = new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new BlockingArrayQueue<>());
+
     public ConnectionManagerImpl (ContextFactory contextFactory, DBHandler dbHandler) {
         this.dbHandler = dbHandler;
         this.node = contextFactory.getServerSettings();
@@ -78,7 +85,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
 
         ConnectionListener listener = connectionListenerMap.get(node);
         if (listener != null) {
-            listener.onConnection(new SuccessResult());
+            listener.onSuccess.execute();
             connectionListenerMap.remove(node);
         }
         currentlyConnecting.remove(node);
@@ -96,39 +103,65 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     }
 
     @Override
-    public void connect (NodeKey node, ConnectionListener connectionListener) {
+    public void connect (NodeKey node, ConnectionIntent intent, ConnectionListener connectionListener) {
         if (connectedNodes.contains(node)) {
             //Already connected
-            connectionListener.onConnection(new SuccessResult());
+            overrideIntentIfNecessary(node, intent);
+            connectionListener.onSuccess.execute();
         } else if (currentlyConnecting.contains(node)) {
             //TODO we are overwriting the old listener - not sure if rather multimap or normal map..
+            overrideIntentIfNecessary(node, intent);
             connectionListenerMap.put(node, connectionListener);
         } else {
             currentlyConnecting.add(node);
             connectionListenerMap.put(node, connectionListener);
+            stringMap.put(node, connectionListener.toString());
+            intentMap.put(node, intent);
 
             //TODO legacy below...
             PubkeyIPObject ipObject = dbHandler.getIPObject(node.nodeKey.getPubKey());
             ClientObject clientObject = ipObjectToNode(ipObject, ConnectionIntent.MISC);
             clientObject.onAuthenticationFailed.add(() -> onAuthenticationFailed(ipObject));
 
-            connect(clientObject, getDisconnectListener(node));
+            ConnectionListener internalListener = new ConnectionListener();
+            internalListener.onFailure = () -> this.onDisconnected(node);
+
+            connect(clientObject, internalListener);
         }
     }
 
-    private ConnectionListener getDisconnectListener (NodeKey nodeKey) {
-        return new ConnectionListener() {
-            @Override
-            public void onConnection (Result result) {
-                onDisconnected(nodeKey);
+    @Override
+    public Future randomConnections (int amount, ConnectionIntent intent, ConnectionListener connectionListener) {
+        return executorService.submit(new RandomConnections(amount, intent, connectionListener));
+    }
+
+    @Override
+    public void disconnectByIntent (ConnectionIntent intent) {
+        for (NodeKey nodeKey : connectedNodes) {
+            ConnectionIntent currentIntent = intentMap.get(nodeKey);
+            if (currentIntent != null) {
+                if (intent.getPriority() >= currentIntent.getPriority()) {
+                    closeConnection(nodeKey);
+                }
             }
-        };
+        }
+    }
+
     private void closeConnection (NodeKey nodeKey) {
         Connection connection = connectionMap.get(nodeKey);
         if (connection != null) {
             connection.close();
         }
     }
+
+    private void overrideIntentIfNecessary (NodeKey node, ConnectionIntent intent) {
+        ConnectionIntent currentIntent = intentMap.get(node);
+        if (currentIntent == null) {
+            intentMap.put(node, intent);
+        } else if (currentIntent.getPriority() < intent.getPriority()) {
+            //Connection got upgraded to a higher purpose. Update intentMap to not close connection when closing down an intent.
+            intentMap.put(node, intent);
+        }
     }
 
     private void onAuthenticationFailed (PubkeyIPObject ipObject) {
@@ -136,7 +169,6 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     }
 
     public void startListening (ResultCommand callback) {
-        System.out.println("Started listening on port " + this.node.portServer);
         server = new P2PServer(contextFactory);
         server.startServer(this.node.portServer);
         callback.execute(new SuccessResult());
@@ -150,12 +182,12 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     }
 
     private void fetchNetworkIPsBlocking (ResultCommand callback) {
+        dbHandler.insertIPObjects(
+                SeedNodes.getSeedNodes().stream().map((Function<PubkeyIPObject, P2PDataObject>) ipObject -> ipObject).collect(Collectors.toList()));
         List<PubkeyIPObject> ipList = dbHandler.getIPObjects();
         List<PubkeyIPObject> alreadyFetched = new ArrayList<>();
-        List<PubkeyIPObject> seedNodes = SeedNodes.getSeedNodes();
-        ipList.addAll(seedNodes);
 
-        while (ipList.size() < MINIMUM_AMOUNT_OF_IPS) {
+        do {
             try {
                 ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
                 ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
@@ -167,15 +199,17 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
                 ClientObject client = ipObjectToNode(randomNode, GET_IPS);
                 client.resultCallback = new NullResultCommand();
-                connectBlocking(client);
+                connect(client, new ConnectionListener());
                 alreadyFetched.add(randomNode);
 
                 ipList = dbHandler.getIPObjects();
+                Thread.sleep(100);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
+        } while (ipList.size() < MINIMUM_AMOUNT_OF_IPS);
         ipList = dbHandler.getIPObjects();
+
         if (ipList.size() > 0) {
             callback.execute(new SuccessResult());
         } else {
@@ -240,7 +274,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
         int amountOfNodesToSyncFrom = 3;
         int totalSyncs = 0;
         while (totalSyncs < amountOfNodesToSyncFrom) {
-            synchronizationHelper.resync();
+            synchronizationHelper.resync(new SyncListener());
             ipList = PubkeyIPObject.removeFromListByPubkey(ipList, alreadyFetched);
             ipList = PubkeyIPObject.removeFromListByPubkey(ipList, node.pubKeyServer.getPubKey());
 
@@ -281,6 +315,58 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
         node.host = ipObject.hostname;
         node.port = ipObject.port;
         return node;
+    }
+
+    private class RandomConnections implements Runnable {
+
+        public RandomConnections (int amount, ConnectionIntent intent, ConnectionListener connectionListener) {
+            this.amount = amount;
+            this.intent = intent;
+            this.connectionListener = connectionListener;
+        }
+
+        int amount = 0;
+        ConnectionIntent intent;
+        ConnectionListener connectionListener;
+
+        int connections = 0;
+        int currentlyConnecting = 0;
+
+        @Override
+        public void run () {
+            try {
+                List<PubkeyIPObject> ipObjects = dbHandler.getIPObjects();
+                while (ipObjects.size() > 0 && connections < amount) {
+                    if (currentlyConnecting + connections > amount) {
+                        Thread.sleep(100);
+                        continue;
+                    }
+
+                    PubkeyIPObject pubkeyIPObject = Tools.getRandomItemFromList(ipObjects);
+                    ipObjects.remove(pubkeyIPObject);
+                    NodeKey nodeKey = new NodeKey(pubkeyIPObject.pubkey);
+
+                    ConnectionListener connectionListener = new ConnectionListener();
+                    connectionListener.onFailure = this::connectionFailed;
+                    connectionListener.onSuccess = this::connectionEstablished;
+
+                    currentlyConnecting++;
+                    connect(nodeKey, intent, connectionListener);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+            }
+        }
+
+        private void connectionEstablished () {
+            connections++;
+            currentlyConnecting--;
+        }
+
+        private void connectionFailed () {
+            currentlyConnecting--;
+        }
     }
 
 }

@@ -6,20 +6,28 @@ import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.payments.*;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ChannelOpenListener;
+import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
+import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.FailureResult;
-import network.thunder.core.helper.callback.results.NullResultCommand;
+import network.thunder.core.helper.callback.results.Result;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.events.LNEventListener;
 import org.bitcoinj.core.Wallet;
+import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ThunderContext {
 
@@ -30,9 +38,9 @@ public class ThunderContext {
     LNEventHelper eventHelper;
     ContextFactory contextFactory;
 
-    ConnectionManager connectionManager;
-
     LNConfiguration configuration = new LNConfiguration();
+
+    ExecutorService executorService = new ThreadPoolExecutor(1, 4, 10, TimeUnit.MINUTES, new BlockingArrayQueue<>());
 
     public ThunderContext (Wallet wallet, DBHandler dbHandler, ServerObject node) {
         this.wallet = wallet;
@@ -45,7 +53,6 @@ public class ThunderContext {
     private void init () {
         eventHelper = new LNEventHelperImpl();
         contextFactory = new ContextFactoryImpl(node, dbHandler, wallet, eventHelper);
-        connectionManager = new ConnectionManagerImpl(contextFactory, dbHandler);
     }
 
     public void startUp (ResultCommand resultCallback) {
@@ -53,7 +60,7 @@ public class ThunderContext {
                 result -> fetchNetworkIPs(
                         result1 -> {
                             if (result1.wasSuccessful()) {
-                                getSyncData(new NullResultCommand());
+                                getSyncData(new SyncListener());
                             }
                         }));
     }
@@ -67,13 +74,18 @@ public class ThunderContext {
     }
 
     public void startListening (ResultCommand resultCallback) {
-        connectionManager.startListening(resultCallback);
+        contextFactory.getConnectionManager().startListening(resultCallback);
     }
 
     public void openChannel (byte[] node, ResultCommand resultCallback) {
-        contextFactory.getSyncHelper().resync();
-        contextFactory.getChannelManager().openChannel(new NodeKey(node), new ChannelOpenListener());
-//        connectionManager.buildChannel(node, resultCallback);
+        contextFactory.getChannelManager().openChannel(new NodeKey(node),
+                new ChannelOpenListener() {
+                    @Override
+                    public void onFinished (Result result) {
+                        resultCallback.execute(result);
+                        contextFactory.getSyncHelper().resync(new SyncListener());
+                    }
+                });
     }
 
     public void makePayment (byte[] receiver, long amount, PaymentSecret secret, ResultCommand resultCallback) {
@@ -110,12 +122,23 @@ public class ThunderContext {
     }
 
     public void fetchNetworkIPs (ResultCommand resultCallback) {
-        connectionManager.fetchNetworkIPs(resultCallback);
+        contextFactory.getConnectionManager().fetchNetworkIPs(resultCallback);
     }
 
-    public void getSyncData (ResultCommand resultCallback) {
-        contextFactory.getSyncHelper().resync();
-        connectionManager.startSyncing(resultCallback);
+    public Future getSyncData (SyncListener syncListener) {
+        System.out.println("ThunderContext.getSyncData");
+        return executorService.submit(new Runnable() {
+            @Override
+            public void run () {
+                try {
+                    contextFactory.getConnectionManager().randomConnections(2, ConnectionIntent.GET_SYNC_DATA, new ConnectionListener()).get();
+                    contextFactory.getSyncHelper().resync(syncListener).get();
+                    contextFactory.getConnectionManager().disconnectByIntent(ConnectionIntent.GET_SYNC_DATA);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        });
     }
 
     public void createRandomChannels (ResultCommand resultCallback) {
@@ -123,7 +146,7 @@ public class ThunderContext {
             @Override
             public void run () {
                 try {
-                    connectionManager.startBuildingRandomChannel(resultCallback);
+                    contextFactory.getConnectionManager().startBuildingRandomChannel(resultCallback);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
