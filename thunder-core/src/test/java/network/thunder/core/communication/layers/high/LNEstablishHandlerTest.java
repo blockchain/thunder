@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.util.Arrays;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -207,14 +208,14 @@ public class LNEstablishHandlerTest {
         after();
     }
 
-    @Test(expected = LNEstablishException.class)
+    @Test
     public void shouldNotAcceptMessageInWrongOrder () {
         Message c1 = (Message) channel1.readOutbound();
         channel2.writeInbound(c1);
         Message c2 = (Message) channel2.readOutbound();
         channel1.writeInbound(c2);
         channel2.writeInbound(c1);
-        assertTrue(channel2.readOutbound() instanceof FailureMessage);
+        assertFalse(channel2.isOpen());
         after();
     }
 

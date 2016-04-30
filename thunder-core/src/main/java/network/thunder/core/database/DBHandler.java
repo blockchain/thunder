@@ -26,17 +26,15 @@ public interface DBHandler {
 
     //Channels
     void insertRevocationHash (RevocationHash hash);
-
     RevocationHash createRevocationHash (Channel channel);
-
     List<RevocationHash> getOldRevocationHashes (Channel channel);
-
     boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
 
     Channel getChannel (int id);
     Channel getChannel (Sha256Hash hash);
 
     List<Channel> getChannel (ECKey nodeKey);
+    List<Channel> getOpenChannel (ECKey nodeKey);
 
     int saveChannel (Channel channel);
 

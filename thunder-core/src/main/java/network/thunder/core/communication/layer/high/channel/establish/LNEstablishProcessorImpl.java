@@ -1,7 +1,6 @@
 package network.thunder.core.communication.layer.high.channel.establish;
 
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.ConnectionRegistry;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
@@ -14,7 +13,6 @@ import network.thunder.core.communication.layer.high.channel.establish.messages.
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
-import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
@@ -69,7 +67,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     ServerObject serverObject;
     BlockchainHelper blockchainHelper;
     ChannelManager channelManager;
-    ConnectionRegistry connectionRegistry;
 
     MessageExecutor messageExecutor;
 
@@ -90,7 +87,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         this.serverObject = contextFactory.getServerSettings();
         this.blockchainHelper = contextFactory.getBlockchainHelper();
         this.channelManager = contextFactory.getChannelManager();
-        this.connectionRegistry = contextFactory.getConnectionRegistry();
     }
 
     @Override
@@ -120,20 +116,17 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         setNode(new NodeKey(node.pubKeyClient));
         this.messageExecutor = messageExecutor;
         channelManager.addChannelOpener(getNode(), this);
-        //TODO optimally have a dedicated processor for connections..
-        connectionRegistry.onConnected(getNode());
         sendNextLayerActiveIfOpenChannelExists();
     }
 
     @Override
     public void onLayerClose () {
         channelManager.removeChannelOpener(getNode());
-        connectionRegistry.onDisconnected(getNode());
         scheduler.shutdown();
     }
 
     private void sendNextLayerActiveIfOpenChannelExists () {
-        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
+        List<Channel> openChannel = dbHandler.getOpenChannel(node.pubKeyClient);
         if (openChannel.size() > 0) {
             messageExecutor.sendNextLayerActive();
         }
@@ -280,7 +273,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     private void checkStatus (int expected) {
         if (status != expected) {
-            throw new LNEstablishException("Status not correct.. Is: " + status + " Expected: " + expected);
+            messageExecutor.closeConnection();
+            System.out.println("Status not correct.. Is: " + status + " Expected: " + expected);
         }
     }
 

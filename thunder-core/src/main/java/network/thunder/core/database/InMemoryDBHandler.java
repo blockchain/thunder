@@ -205,6 +205,12 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
+    public List<Channel> getOpenChannel (ECKey nodeKey) {
+        return getChannel(nodeKey).stream().filter(channel -> channel.isReady).collect(Collectors.toList());
+
+    }
+
+    @Override
     public int saveChannel (Channel channel) {
         channel.id = this.channelList.size();
         this.channelList.add(channel);

@@ -399,16 +399,14 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     @Override
     public void onInboundMessage (Message message) {
         try {
-            if (message instanceof LNPayment) {
-                if (message instanceof LNPaymentAMessage) {
-                    readMessageA((LNPaymentAMessage) message);
-                } else if (message instanceof LNPaymentBMessage) {
-                    readMessageB((LNPaymentBMessage) message);
-                } else if (message instanceof LNPaymentCMessage) {
-                    readMessageC((LNPaymentCMessage) message);
-                } else if (message instanceof LNPaymentDMessage) {
-                    readMessageD((LNPaymentDMessage) message);
-                }
+            if (message instanceof LNPaymentAMessage) {
+                readMessageA((LNPaymentAMessage) message);
+            } else if (message instanceof LNPaymentBMessage) {
+                readMessageB((LNPaymentBMessage) message);
+            } else if (message instanceof LNPaymentCMessage) {
+                readMessageC((LNPaymentCMessage) message);
+            } else if (message instanceof LNPaymentDMessage) {
+                readMessageD((LNPaymentDMessage) message);
             }
         } catch (LNPaymentException e) {
             sendMessage(messageFactory.getFailureMessage(e.getMessage()));
@@ -417,12 +415,11 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        List<Channel> openChannel = dbHandler.getChannel(node.pubKeyClient);
+        List<Channel> openChannel = dbHandler.getOpenChannel(node.pubKeyClient);
         Preconditions.checkArgument(openChannel.size() > 0);
 
         this.channel = openChannel.get(0);
         paymentLogic.initialise(channel);
-
         this.messageExecutor = messageExecutor;
         this.paymentHelper.addProcessor(this);
         startQueueListener();
