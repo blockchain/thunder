@@ -20,6 +20,7 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
@@ -147,8 +148,21 @@ public class MainController {
 
     @FXML
     void onReloadButton (ActionEvent event) {
-        Main.thunderContext.getSyncData(result -> {
-            System.out.println("Sync finished: " + result.getMessage());
+        Main.thunderContext.getSyncData(new SyncListener() {
+            @Override
+            public void onSegmentSynced (int segment) {
+                System.out.println("Segment synced: " + segment);
+            }
+
+            @Override
+            public void onSyncFinished () {
+                System.out.println("MainController.onSyncFinished");
+            }
+
+            @Override
+            public void onSyncFailed () {
+                System.out.println("MainController.onSyncFailed");
+            }
         });
     }
 
