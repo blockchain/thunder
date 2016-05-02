@@ -1,6 +1,5 @@
 package network.thunder.core.communication.layer.high.payments;
 
-import com.sun.javafx.geom.Edge;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.processor.exceptions.LNRoutingException;
 import network.thunder.core.database.DBHandler;
@@ -32,9 +31,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     }
 
     int cost;
-
-    Iterable<Edge> cycle;
-
+    
     ByteBuffer source;
 
     private float weightPrivacy;
@@ -150,11 +147,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     }
 
     public boolean hasNegativeCycle () {
-        return cycle != null;
-    }
-
-    public Iterable<Edge> negativeCycle () {
-        return cycle;
+        return false; //TODO negative cycle detection not yet implemented
     }
 
     public boolean hasPathTo (ByteBuffer v) {
