@@ -1,7 +1,7 @@
 # thundernetwork
 
 [![Build Status](https://travis-ci.org/matsjj/thundernetwork.svg?branch=master)](https://travis-ci.org/matsjj/thundernetwork)
-
+![Wallet Screenshot](docs/screenshot.png)
 Client/server implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
 
 This is software in alpha status, don't even think about using it in production with real bitcoin.
