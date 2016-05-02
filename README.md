@@ -40,6 +40,8 @@ to build both the node and the wallet software.
 
 ### Installation
 
+Install Java 8 SDK (not just JRE) and OpenJFX before proceeding.
+
 Executing 
 ```
 ./build.sh
@@ -54,7 +56,7 @@ Node software and Wallet software are completely independent projects. Nodes are
 
 Running
 ```
-java -jar node.jar
+java -jar thunder-node.jar
 ```
 
 will start up an autonomous node that will connect to the thunder.network and build channels with other random nodes. On first startup it will ask the user for some basic configuration. Afterwards it will write this configuration to disk for the next start. To be an active part of the network, please configure your firewall to allow incoming connections on port 2204. You can change the default port in the config file.
@@ -63,7 +65,7 @@ will start up an autonomous node that will connect to the thunder.network and bu
 
 Running
 ```
-java -jar wallet.jar
+java -jar thunder-wallet.jar
 ```
 will start up the wallet. It will ask for known nodes and get a topology of the network. The user can then chose a node to form a channel with and make and receive payments. 
 
