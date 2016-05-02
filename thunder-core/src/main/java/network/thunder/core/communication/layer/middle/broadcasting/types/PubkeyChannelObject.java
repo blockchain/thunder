@@ -66,50 +66,12 @@ public class PubkeyChannelObject extends P2PDataObject {
     }
 
     @Override
-    public boolean equals (Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        PubkeyChannelObject that = (PubkeyChannelObject) o;
-
-        if (!Arrays.equals(secretAHash, that.secretAHash)) {
-            return false;
-        }
-        if (!Arrays.equals(secretBHash, that.secretBHash)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyB1, that.pubkeyB1)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyB2, that.pubkeyB2)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyA1, that.pubkeyA1)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyA2, that.pubkeyA2)) {
-            return false;
-        }
-
-        return !Arrays.equals(txidAnchor, that.txidAnchor);
-    }
-
-    @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA
                 .length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length);
 
+        byteBuffer.putInt(timestamp);
         byteBuffer.put(secretAHash);
         byteBuffer.put(secretBHash);
         byteBuffer.put(pubkeyB);
@@ -137,20 +99,6 @@ public class PubkeyChannelObject extends P2PDataObject {
     }
 
     @Override
-    public int hashCode () {
-        int result = secretAHash != null ? Arrays.hashCode(secretAHash) : 0;
-        result = 31 * result + (secretBHash != null ? Arrays.hashCode(secretBHash) : 0);
-        result = 31 * result + (pubkeyB != null ? Arrays.hashCode(pubkeyB) : 0);
-        result = 31 * result + (pubkeyB1 != null ? Arrays.hashCode(pubkeyB1) : 0);
-        result = 31 * result + (pubkeyB2 != null ? Arrays.hashCode(pubkeyB2) : 0);
-        result = 31 * result + (pubkeyA != null ? Arrays.hashCode(pubkeyA) : 0);
-        result = 31 * result + (pubkeyA1 != null ? Arrays.hashCode(pubkeyA1) : 0);
-        result = 31 * result + (pubkeyA2 != null ? Arrays.hashCode(pubkeyA2) : 0);
-        result = 31 * result + (txidAnchor != null ? Arrays.hashCode(txidAnchor) : 0);
-        return result;
-    }
-
-    @Override
     public String toString () {
         return "PubkeyChannelObject{" + Tools.bytesToHex(getHash()) + "}";
     }
@@ -168,5 +116,62 @@ public class PubkeyChannelObject extends P2PDataObject {
 
         }
         return false;
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PubkeyChannelObject that = (PubkeyChannelObject) o;
+
+        if (timestamp != that.timestamp) {
+            return false;
+        }
+        if (!Arrays.equals(secretAHash, that.secretAHash)) {
+            return false;
+        }
+        if (!Arrays.equals(secretBHash, that.secretBHash)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyB1, that.pubkeyB1)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyB2, that.pubkeyB2)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyA1, that.pubkeyA1)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyA2, that.pubkeyA2)) {
+            return false;
+        }
+        return Arrays.equals(txidAnchor, that.txidAnchor);
+
+    }
+
+    @Override
+    public int hashCode () {
+        int result = Arrays.hashCode(secretAHash);
+        result = 31 * result + Arrays.hashCode(secretBHash);
+        result = 31 * result + Arrays.hashCode(pubkeyB);
+        result = 31 * result + Arrays.hashCode(pubkeyB1);
+        result = 31 * result + Arrays.hashCode(pubkeyB2);
+        result = 31 * result + Arrays.hashCode(pubkeyA);
+        result = 31 * result + Arrays.hashCode(pubkeyA1);
+        result = 31 * result + Arrays.hashCode(pubkeyA2);
+        result = 31 * result + Arrays.hashCode(txidAnchor);
+        result = 31 * result + timestamp;
+        return result;
     }
 }

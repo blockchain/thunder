@@ -14,7 +14,7 @@ import java.util.List;
 public abstract class P2PDataObject implements Message {
     public final static int NUMBER_OF_FRAGMENTS = 2;
     public final static long FRAGMENT_SIZE = Long.MAX_VALUE / NUMBER_OF_FRAGMENTS;
-    public final static int MAXIMUM_AGE_SYNC_DATA = 36 * 60 * 60;
+    public final static int MAXIMUM_AGE_SYNC_DATA = 10 * 60; //ten minutes seem to be okay for now
 
     public abstract byte[] getData ();
 

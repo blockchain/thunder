@@ -72,6 +72,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     MessageExecutor messageExecutor;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+    private boolean startedPeriodicBroadcasting = false;
 
     public Channel channel;
     int status = 0;
@@ -129,6 +130,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     private void sendNextLayerActiveIfOpenChannelExists () {
         List<Channel> openChannel = dbHandler.getOpenChannel(node.pubKeyClient);
         if (openChannel.size() > 0) {
+            startScheduledBroadcasting();
             messageExecutor.sendNextLayerActive();
         }
     }
@@ -201,8 +203,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     private void onEnoughConfirmations () {
         channel.initiateChannelStatus(serverObject.configuration);
         dbHandler.updateChannel(channel);
-        startScheduledBroadcasting();
-        messageExecutor.sendNextLayerActive();
+        sendNextLayerActiveIfOpenChannelExists();
         eventHelper.onChannelOpened(channel);
 
         if (channelOpenListener != null) {
@@ -258,7 +259,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void broadcastChannelObject () {
-        //TODO fill in some usable data into ChannelStatusObject
         PubkeyChannelObject channelObject = new PubkeyChannelObject();
         channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         channelObject.pubkeyB = node.pubKeyClient.getPubKey();
@@ -271,6 +271,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         channelObject.secretBHash = channel.anchorSecretHashClient;
         channelObject.txidAnchor = channel.anchorTxHashServer.getBytes();
 
+        //TODO fill in some usable data into ChannelStatusObject
         ChannelStatusObject statusObject = new ChannelStatusObject();
         statusObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         statusObject.pubkeyB = node.pubKeyClient.getPubKey();
@@ -291,10 +292,13 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         }
     }
 
-    private void startScheduledBroadcasting () {
-        broadcastChannelObject();
-        int time = (int) (P2PDataObject.MAXIMUM_AGE_SYNC_DATA * 0.1);
-        scheduler.scheduleAtFixedRate((Runnable) () -> broadcastChannelObject(), time, time, TimeUnit.SECONDS);
+    private synchronized void startScheduledBroadcasting () {
+        if (!startedPeriodicBroadcasting) {
+            startedPeriodicBroadcasting = true;
+            broadcastChannelObject();
+            int time = (int) (P2PDataObject.MAXIMUM_AGE_SYNC_DATA * 0.75);
+            scheduler.scheduleAtFixedRate((Runnable) () -> broadcastChannelObject(), Tools.getRandom(0, time), time, TimeUnit.SECONDS);
+        }
     }
 
 }

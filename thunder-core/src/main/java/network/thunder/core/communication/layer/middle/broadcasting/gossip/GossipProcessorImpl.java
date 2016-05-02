@@ -135,7 +135,7 @@ public class GossipProcessorImpl extends GossipProcessor {
         pubkeyIPObject.pubkey = serverObject.pubKeyServer.getPubKey();
         pubkeyIPObject.port = serverObject.portServer;
         pubkeyIPObject.hostname = serverObject.hostServer;
-        pubkeyIPObject.timestamp = Tools.currentTimeFlooredToCurrentDay();
+        pubkeyIPObject.timestamp = Tools.currentTime();
         pubkeyIPObject.sign(serverObject.pubKeyServer);
 
         List<P2PDataObject> ipAddresses = new ArrayList<>();
@@ -188,7 +188,7 @@ public class GossipProcessorImpl extends GossipProcessor {
     private void startScheduledBroadcasting () {
         sendOwnIPAddress();
         int time = (int) (P2PDataObject.MAXIMUM_AGE_SYNC_DATA * 0.75);
-        scheduler.scheduleAtFixedRate((Runnable) () -> sendOwnIPAddress(), time, time, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate((Runnable) () -> sendOwnIPAddress(), Tools.getRandom(0, time), time, TimeUnit.SECONDS);
     }
 
     @Override

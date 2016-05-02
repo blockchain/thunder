@@ -282,9 +282,11 @@ public class InMemoryDBHandler implements DBHandler {
     @Override
     public List<ChannelStatusObject> getTopology () {
         List<ChannelStatusObject> list = new ArrayList<>();
-        for (P2PDataObject object : totalList) {
-            if (object instanceof ChannelStatusObject) {
-                list.add((ChannelStatusObject) object);
+        synchronized (totalList) {
+            for (P2PDataObject object : totalList) {
+                if (object instanceof ChannelStatusObject) {
+                    list.add((ChannelStatusObject) object);
+                }
             }
         }
         return list;

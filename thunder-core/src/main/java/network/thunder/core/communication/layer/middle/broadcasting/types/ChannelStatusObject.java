@@ -53,38 +53,11 @@ public class ChannelStatusObject extends P2PDataObject {
     }
 
     @Override
-    public boolean equals (Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ChannelStatusObject that = (ChannelStatusObject) o;
-
-        if (timestamp != that.timestamp) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
-            return false;
-        }
-        if (!Arrays.equals(infoA, that.infoA)) {
-            return false;
-        }
-
-        return Arrays.equals(infoB, that.infoB);
-
-    }
-
-    @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(pubkeyA.length + pubkeyB.length + 4 + 4 + 4);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + pubkeyA.length + pubkeyB.length + 4 + 4 + 4);
 
+        byteBuffer.putInt(timestamp);
         byteBuffer.put(pubkeyA);
         byteBuffer.put(pubkeyB);
         byteBuffer.putInt(latency);
@@ -128,16 +101,6 @@ public class ChannelStatusObject extends P2PDataObject {
     }
 
     @Override
-    public int hashCode () {
-        int result = pubkeyA != null ? Arrays.hashCode(pubkeyA) : 0;
-        result = 31 * result + (pubkeyB != null ? Arrays.hashCode(pubkeyB) : 0);
-        result = 31 * result + (infoA != null ? Arrays.hashCode(infoA) : 0);
-        result = 31 * result + (infoB != null ? Arrays.hashCode(infoB) : 0);
-        result = 31 * result + timestamp;
-        return result;
-    }
-
-    @Override
     public void verify () {
     }
 
@@ -155,5 +118,54 @@ public class ChannelStatusObject extends P2PDataObject {
     @Override
     public String toString () {
         return "ChannelStatusObject{nodeA: " + Tools.bytesToHex(pubkeyA) + ", nodeB: " + Tools.bytesToHex(pubkeyB) + "}";
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ChannelStatusObject that = (ChannelStatusObject) o;
+
+        if (latency != that.latency) {
+            return false;
+        }
+        if (feeA != that.feeA) {
+            return false;
+        }
+        if (feeB != that.feeB) {
+            return false;
+        }
+        if (timestamp != that.timestamp) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
+            return false;
+        }
+        if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
+            return false;
+        }
+        if (!Arrays.equals(infoA, that.infoA)) {
+            return false;
+        }
+        return Arrays.equals(infoB, that.infoB);
+
+    }
+
+    @Override
+    public int hashCode () {
+        int result = Arrays.hashCode(pubkeyA);
+        result = 31 * result + Arrays.hashCode(pubkeyB);
+        result = 31 * result + Arrays.hashCode(infoA);
+        result = 31 * result + Arrays.hashCode(infoB);
+        result = 31 * result + latency;
+        result = 31 * result + feeA;
+        result = 31 * result + feeB;
+        result = 31 * result + timestamp;
+        return result;
     }
 }
