@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class InMemoryDBHandler implements DBHandler {
-    public List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
+    public final List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
     public final List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
     public List<PubkeyChannelObject> pubkeyChannelList = Collections.synchronizedList(new ArrayList<>());
@@ -31,7 +31,7 @@ public class InMemoryDBHandler implements DBHandler {
     public List<RevocationHash> revocationHashListTheir = Collections.synchronizedList(new ArrayList<>());
     public List<RevocationHash> revocationHashListOurs = Collections.synchronizedList(new ArrayList<>());
 
-    List<PaymentWrapper> payments = new ArrayList<>();
+    final List<PaymentWrapper> payments = Collections.synchronizedList(new ArrayList<>());
     List<PaymentSecret> secrets = new ArrayList<>();
 
     public InMemoryDBHandler () {
@@ -171,8 +171,10 @@ public class InMemoryDBHandler implements DBHandler {
             if (!list.contains(obj)) {
                 list.add(obj);
             }
-            if (!totalList.contains(obj)) {
-                totalList.add(obj);
+            synchronized (totalList) {
+                if (!totalList.contains(obj)) {
+                    totalList.add(obj);
+                }
             }
             knownObjects.add(ByteBuffer.wrap(obj.getHash()));
         }
@@ -205,60 +207,74 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public Channel getChannel (int id) {
-        Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
-        if (optional.isPresent()) {
-            return optional.get();
-        } else {
-            throw new RuntimeException("Channel not found..");
+        synchronized (channelList) {
+            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
+            if (optional.isPresent()) {
+                return optional.get();
+            } else {
+                throw new RuntimeException("Channel not found..");
+            }
         }
     }
 
     @Override
     public Channel getChannel (Sha256Hash hash) {
-        Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.getHash().equals(hash)).findAny();
-        if (optional.isPresent()) {
-            return optional.get();
-        } else {
-            throw new RuntimeException("Channel not found..");
+        synchronized (channelList) {
+            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.getHash().equals(hash)).findAny();
+            if (optional.isPresent()) {
+                return optional.get();
+            } else {
+                throw new RuntimeException("Channel not found..");
+            }
         }
     }
 
     @Override
     public List<Channel> getChannel (ECKey nodeKey) {
-        return channelList.stream().filter(channel1 -> Arrays.equals(channel1.nodeKeyClient, nodeKey.getPubKey())).collect(Collectors.toList());
+        synchronized (channelList) {
+            return channelList.stream().filter(channel1 -> Arrays.equals(channel1.nodeKeyClient, nodeKey.getPubKey())).collect(Collectors.toList());
+        }
     }
 
     @Override
     public List<Channel> getOpenChannel (ECKey nodeKey) {
-        return getChannel(nodeKey).stream().filter(channel -> channel.isReady).collect(Collectors.toList());
+        synchronized (channelList) {
+            return getChannel(nodeKey).stream().filter(channel -> channel.isReady).collect(Collectors.toList());
+        }
 
     }
 
     @Override
     public int saveChannel (Channel channel) {
-        channel.id = this.channelList.size();
-        this.channelList.add(channel);
-        return channel.id;
+        synchronized (channelList) {
+            channel.id = this.channelList.size();
+            this.channelList.add(channel);
+            return channel.id;
+        }
     }
 
     @Override
     public void updateChannel (Channel channel) {
-        Iterator<Channel> iterator = channelList.iterator();
-        while (iterator.hasNext()) {
-            Channel c = iterator.next();
-            if (Arrays.equals(c.nodeKeyClient, channel.nodeKeyClient)) {
-                iterator.remove();
-                channelList.add(channel);
-                return;
+
+        synchronized (channelList) {
+            Iterator<Channel> iterator = channelList.iterator();
+            while (iterator.hasNext()) {
+                Channel c = iterator.next();
+                if (Arrays.equals(c.nodeKeyClient, channel.nodeKeyClient)) {
+                    iterator.remove();
+                    channelList.add(channel);
+                    return;
+                }
             }
+            throw new RuntimeException("Not able to find channel in list, not updated..");
         }
-        throw new RuntimeException("Not able to find channel in list, not updated..");
     }
 
     @Override
     public List<Channel> getOpenChannel () {
-        channelList = channelList.stream().filter(channel -> channel.isReady).collect(Collectors.toList());
-        return channelList;
+        synchronized (channelList) {
+            return channelList.stream().filter(channel -> channel.isReady).collect(Collectors.toList());
+        }
     }
 
     @Override
@@ -323,54 +339,64 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void updatePayment (PaymentWrapper paymentWrapper) {
-        for (PaymentWrapper p : payments) {
-            if (p.equals(paymentWrapper)) {
-                p.paymentData = paymentWrapper.paymentData;
-                p.receiver = paymentWrapper.receiver;
-                p.sender = paymentWrapper.sender;
-                p.statusReceiver = paymentWrapper.statusReceiver;
-                p.statusSender = paymentWrapper.statusSender;
+        synchronized (payments) {
+            for (PaymentWrapper p : payments) {
+                if (p.equals(paymentWrapper)) {
+                    p.paymentData = paymentWrapper.paymentData;
+                    p.receiver = paymentWrapper.receiver;
+                    p.sender = paymentWrapper.sender;
+                    p.statusReceiver = paymentWrapper.statusReceiver;
+                    p.statusSender = paymentWrapper.statusSender;
+                }
             }
         }
     }
 
     @Override
     public void updatePaymentSender (PaymentWrapper paymentWrapper) {
-        for (PaymentWrapper p : payments) {
-            if (p.equals(paymentWrapper)) {
-                p.paymentData = paymentWrapper.paymentData;
-                p.statusSender = paymentWrapper.statusSender;
+        synchronized (payments) {
+            for (PaymentWrapper p : payments) {
+                if (p.equals(paymentWrapper)) {
+                    p.paymentData = paymentWrapper.paymentData;
+                    p.statusSender = paymentWrapper.statusSender;
+                }
             }
         }
     }
 
     @Override
     public void updatePaymentReceiver (PaymentWrapper paymentWrapper) {
-        for (PaymentWrapper p : payments) {
-            if (p.equals(paymentWrapper)) {
-                p.paymentData = paymentWrapper.paymentData;
-                p.statusReceiver = paymentWrapper.statusReceiver;
+        synchronized (payments) {
+            for (PaymentWrapper p : payments) {
+                if (p.equals(paymentWrapper)) {
+                    p.paymentData = paymentWrapper.paymentData;
+                    p.statusReceiver = paymentWrapper.statusReceiver;
+                }
             }
         }
     }
 
     @Override
     public void updatePaymentAddReceiverAddress (PaymentSecret secret, byte[] receiver) {
-        for (PaymentWrapper p : payments) {
-            if (p.paymentData.secret.equals(secret)) {
-                p.receiver = receiver;
+        synchronized (payments) {
+            for (PaymentWrapper p : payments) {
+                if (p.paymentData.secret.equals(secret)) {
+                    p.receiver = receiver;
+                }
             }
         }
     }
 
     @Override
     public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
-        for (PaymentWrapper payment : payments) {
-            if (payment.paymentData.secret.equals(paymentSecret)) {
-                return payment;
+        synchronized (payments) {
+            for (PaymentWrapper payment : payments) {
+                if (payment.paymentData.secret.equals(paymentSecret)) {
+                    return payment;
+                }
             }
+            return null;
         }
-        return null;
     }
 
     @Override
