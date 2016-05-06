@@ -105,11 +105,10 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     }
 
     private void processMessageToBeEncrypted (Message message) {
+        EncryptedMessage encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         if (OUTPUT_MESSAGE) {
             System.out.println("O: " + node.host + " " + message + "[" + (encryptedMessage.payload.length / 1024) + "]");
         }
-
-        Message encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         executor.sendMessageUpwards(encryptedMessage);
     }
 
