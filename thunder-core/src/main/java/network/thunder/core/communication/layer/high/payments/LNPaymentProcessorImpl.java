@@ -233,17 +233,15 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageA (LNPaymentAMessage message) {
         if (status == SENT_A) {
             if (message.dice > latestDice) {
-                System.out.println(node.name + " DICE HIGHER...");
                 weStartedExchange = false;
                 currentTaskStarted = System.currentTimeMillis();
                 abortCurrentTask();
             } else {
-                System.out.println(node.name + " Ignoring because we had higher dice..");
                 return;
             }
         } else if (status != IDLE) {
-            System.out.println(node.name + " WE ABORT BECAUSE OTHER PARTY SENT US A NEW REQUEST..");
-            abortCurrentTask();
+            // Ignore new request..
+            return;
         }
 
         weStartedExchange = false;
@@ -267,8 +265,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageC (LNPaymentCMessage message) {
         if ((weStartedExchange && status != SENT_C) || (!weStartedExchange && status != SENT_B)) {
             //TODO ERROR
-            System.out.println(node.name + " ERROR READ MESSAGE C");
-
         } else {
             paymentLogic.checkMessageIncoming(message);
             setStatus(RECEIVED_C);
@@ -283,7 +279,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageD (LNPaymentDMessage message) {
         if ((weStartedExchange && status != SENT_D) || (!weStartedExchange && status != SENT_C)) {
             //TODO ERROR
-            System.out.println(node.name + " ERROR READ MESSAGE D");
             return;
         } else {
             paymentLogic.checkMessageIncoming(message);
@@ -298,7 +293,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     public void testStatus (Status expected) {
         if (status != expected) {
-            throw new RuntimeException("Expected " + expected + ". Was: " + status);
+            throw new LNPaymentException("Expected " + expected + ". Was: " + status);
         }
     }
 
@@ -342,7 +337,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 }
             } else {
                 PaymentWrapper wrapper = new PaymentWrapper(node.pubKeyClient.getPubKey(), payment);
-                System.out.println(node.name + " addPayment: " + payment);
                 dbHandler.addPayment(wrapper);
             }
         }

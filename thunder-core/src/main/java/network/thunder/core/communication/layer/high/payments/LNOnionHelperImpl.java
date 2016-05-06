@@ -70,11 +70,6 @@ public class LNOnionHelperImpl implements LNOnionHelper {
 
     @Override
     public OnionObject createOnionObject (List<byte[]> nodeList, byte[] payload) {
-
-        System.out.println("createOnionObject");
-        for (byte[] b : nodeList) {
-            System.out.println(Tools.bytesToHex(b));
-        }
         if (nodeList.size() > OnionObject.MAX_HOPS) {
             throw new RuntimeException("Too many nodes in nodeList");
         }

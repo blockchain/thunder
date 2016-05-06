@@ -109,7 +109,7 @@ public class ChannelStatus implements Cloneable {
         return "ChannelStatus{" +
                 "amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
-                ", paymentList=" + listToString(paymentList) +
+                ", paymentList=" + paymentList.size() +
                 '}';
     }
 

@@ -137,10 +137,7 @@ public class RevocationHash {
     @Override
     public String toString () {
         return "RevocationHash{" +
-                "depth=" + depth +
-                ", child=" + child +
-                ", secret=" + Arrays.toString(secret) +
-                ", secretHash=" + Arrays.toString(secretHash) +
+                "" + Tools.bytesToHex(secretHash).substring(0, 6) + ".." +
                 '}';
     }
 }
