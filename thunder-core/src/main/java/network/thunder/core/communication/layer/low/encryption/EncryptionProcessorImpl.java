@@ -37,10 +37,16 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
 
     @Override
     public void onInboundMessage (Message message) {
-        if (encryptionKeyExchangeFinished()) {
-            processEncryptedMessage(message);
-        } else {
-            processEncryptionInitialMessage(message);
+        try {
+            if (encryptionKeyExchangeFinished()) {
+                processEncryptedMessage(message);
+            } else {
+                processEncryptionInitialMessage(message);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("EncryptionProcessorImpl.onInboundMessage closing connection..");
+            executor.closeConnection();
         }
     }
 
