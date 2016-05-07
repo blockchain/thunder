@@ -16,7 +16,6 @@ public class ECDH {
     static AlgorithmParameters parameters = null;
     static ECParameterSpec ecParameters = null;
     static KeyFactory kf = null;
-    static KeyAgreement aKeyAgree = null;
 
     static {
         try {
@@ -26,8 +25,6 @@ public class ECDH {
             parameters.init(new ECGenParameterSpec("secp256k1"));
             ecParameters = parameters.getParameterSpec(ECParameterSpec.class);
             kf = KeyFactory.getInstance("EC");
-            aKeyAgree = KeyAgreement.getInstance("ECDH");
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -49,6 +46,7 @@ public class ECDH {
             JCEECPrivateKey ecPrivKey = new JCEECPrivateKey(privateKey);
             JCEECPublicKey ecPubKey = new JCEECPublicKey(publicKey);
 
+            KeyAgreement aKeyAgree = KeyAgreement.getInstance("ECDH");
             aKeyAgree.init(ecPrivKey);
             aKeyAgree.doPhase(ecPubKey, true);
 
