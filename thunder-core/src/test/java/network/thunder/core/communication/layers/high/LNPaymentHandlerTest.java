@@ -95,14 +95,16 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void exchangeWithDelayShouldRestart () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
+        LNPaymentProcessor.TIMEOUT_NEGOTIATION = 500;
+
         processor12.makePayment(getMockPaymentData());
-        Thread.sleep(2000);
+        Thread.sleep(100);
 
         TestTools.exchangeMessages(channel12, channel21);
         TestTools.exchangeMessages(channel21, channel12);
         Message message = (Message) channel12.readOutbound();
 
-        Thread.sleep(LNPaymentProcessor.TIMEOUT_NEGOTIATION + 5000);
+        Thread.sleep((long) (LNPaymentProcessor.TIMEOUT_NEGOTIATION * 1.5));
 
         System.out.println(message);
 
@@ -136,11 +138,8 @@ public class LNPaymentHandlerTest {
         Thread.sleep(500);
 
         TestTools.exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
-        TestTools.exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
-        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
-        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
-        TestTools.exchangeMessages(channel21, channel12, LNPaymentDMessage.class);
-        TestTools.exchangeMessages(channel12, channel21, LNPaymentDMessage.class);
+        //Other node should ignore this new exchange
+        assertNull(channel12.readOutbound());
 
         after();
     }

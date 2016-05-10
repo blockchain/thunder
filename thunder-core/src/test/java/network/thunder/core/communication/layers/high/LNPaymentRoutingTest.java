@@ -32,6 +32,7 @@ import static org.junit.Assert.assertNull;
 
 public class LNPaymentRoutingTest {
 
+    public static final int TIME_TO_WAIT_FOR_FULL_EXCHANGE = 600;
     EmbeddedChannel channel12;
     EmbeddedChannel channel21;
     EmbeddedChannel channel23;
@@ -115,7 +116,7 @@ public class LNPaymentRoutingTest {
         connectChannel(channel12, channel21);
         connectChannel(channel23, channel32);
 
-        Thread.sleep(3000);
+        Thread.sleep(TIME_TO_WAIT_FOR_FULL_EXCHANGE);
 
         ChannelStatus status12 = processor12.getStatusTemp();
         ChannelStatus status21 = processor21.getStatusTemp();
@@ -152,7 +153,7 @@ public class LNPaymentRoutingTest {
         connectChannel(channel12, channel21);
         connectChannel(channel23, channel32);
 
-        Thread.sleep(3000);
+        Thread.sleep(TIME_TO_WAIT_FOR_FULL_EXCHANGE);
         testUnchangedChannelAmounts();
         after();
     }
@@ -176,7 +177,7 @@ public class LNPaymentRoutingTest {
         connectChannel(channel12, channel21);
         connectChannel(channel23, channel32);
 
-        Thread.sleep(3000);
+        Thread.sleep(TIME_TO_WAIT_FOR_FULL_EXCHANGE);
         testUnchangedChannelAmounts();
         after();
     }
@@ -198,7 +199,7 @@ public class LNPaymentRoutingTest {
         connectChannel(channel12, channel21);
         connectChannel(channel23, channel32);
 
-        Thread.sleep(3000);
+        Thread.sleep(TIME_TO_WAIT_FOR_FULL_EXCHANGE);
         testUnchangedChannelAmounts();
         after();
     }
@@ -231,7 +232,7 @@ public class LNPaymentRoutingTest {
         connectChannel(channel12, channel21);
         connectChannel(channel23, channel32);
 
-        Thread.sleep(3000);
+        Thread.sleep(TIME_TO_WAIT_FOR_FULL_EXCHANGE);
 
         testUnchangedChannelAmounts(doubleAmount, doubleAmount, normalAmount, normalAmount);
         after();
