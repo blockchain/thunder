@@ -232,7 +232,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         this.channelOpenListener = callback;
 
         prepareOpenChannel();
-        this.establishProgress.channel = new Channel();
         this.establishProgress.channel.channelStatus.amountServer = getAmountForNewChannel();
         this.establishProgress.channel.channelStatus.amountClient = getAmountForNewChannel();
         this.establishProgress.channel.channelStatus.feePerByte = 3;

@@ -101,7 +101,6 @@ public class Channel {
 
     public boolean requestedClose;
 
-
     public List<TransactionSignature> closingSignatures;
 
     public void setNodeKeyClient (byte[] nodeKeyClient) {
@@ -138,12 +137,12 @@ public class Channel {
         return anchorTx;
     }
 
-    public void addAnchorOutputToAnchor() {
+    public void addAnchorOutputToAnchor () {
         List<TransactionOutput> outputList = new ArrayList<>();
         outputList.add(new TransactionOutput(
                 Constants.getNetwork(),
                 null,
-                Coin.valueOf(channelStatus.amountClient+ channelStatus.amountServer),
+                Coin.valueOf(channelStatus.amountClient + channelStatus.amountServer),
                 getAnchorScript().getProgram()));
 
         outputList.addAll(anchorTx.getOutputs());
@@ -171,8 +170,6 @@ public class Channel {
         anchorTxHash = anchorTx.getHash();
     }
 
-
-
     //region Script Getter
     public Script getAnchorScriptOutput () {
         return ScriptTools.getAnchorOutputScriptP2SH(getKeyClient(), getKeyServer());
@@ -184,8 +181,6 @@ public class Channel {
         keyServer = new ECKey();
         channelStatus = new ChannelStatus();
         anchorTxHash = Sha256Hash.wrap(Tools.getRandomByte(32));
-
-        System.out.println("keyServer = " + keyServer);
 
         masterPrivateKeyServer = Tools.getRandomByte(20);
     }
@@ -215,7 +210,6 @@ public class Channel {
     }
 
     //region Getter Setter
-
 
     public int getChannelTxVersion () {
         return channelTxVersion;
@@ -272,7 +266,6 @@ public class Channel {
     public void setMasterPrivateKeyServer (byte[] masterPrivateKeyServer) {
         this.masterPrivateKeyServer = masterPrivateKeyServer;
     }
-
 
     public Phase getPhase () {
         return phase;
