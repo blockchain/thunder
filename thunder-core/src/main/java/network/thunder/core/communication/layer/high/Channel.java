@@ -182,9 +182,10 @@ public class Channel {
 
     public Channel () {
         keyServer = new ECKey();
-
         channelStatus = new ChannelStatus();
         anchorTxHash = Sha256Hash.wrap(Tools.getRandomByte(32));
+
+        System.out.println("keyServer = " + keyServer);
 
         masterPrivateKeyServer = Tools.getRandomByte(20);
     }

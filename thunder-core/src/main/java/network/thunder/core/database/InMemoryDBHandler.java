@@ -255,12 +255,11 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void updateChannel (Channel channel) {
-
         synchronized (channelList) {
             Iterator<Channel> iterator = channelList.iterator();
             while (iterator.hasNext()) {
                 Channel c = iterator.next();
-                if (Arrays.equals(c.nodeKeyClient, channel.nodeKeyClient)) {
+                if (c.getHash().equals(channel.getHash())) {
                     iterator.remove();
                     channelList.add(channel);
                     return;
