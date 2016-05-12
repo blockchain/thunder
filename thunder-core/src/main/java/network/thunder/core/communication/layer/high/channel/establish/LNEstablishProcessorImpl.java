@@ -128,7 +128,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class LNEstablishProcessorImpl extends LNEstablishProcessor implements ChannelOpener {
-    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.5;
+    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.25;
 
     WalletHelper walletHelper;
     LNEstablishMessageFactory messageFactory;
@@ -414,8 +414,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private long getAmountForNewChannel () {
-//        return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
-        return 10000;
+        return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
     }
 
     private synchronized void startScheduledBroadcasting () {
