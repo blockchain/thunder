@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.Transaction.SigHash;
@@ -105,15 +106,16 @@ public class Tools {
     }
 
     public static List<TransactionSignature> getChannelSignatures (Channel channel, Transaction transaction) {
-        TransactionSignature signature1 = Tools.getSignature(transaction, 0,
-                channel.getAnchorScript(transaction.getInput(0).getOutpoint().getHash()).getProgram(), channel.keyServer);
-        TransactionSignature signature2 = Tools.getSignature(transaction, 1,
-                channel.getAnchorScript(transaction.getInput(1).getOutpoint().getHash()).getProgram(), channel.keyServer);
+        //TODO only one anchor allowed for now
+        TransactionSignature signature1 = Tools.getSignature(
+                transaction,
+                0,
+                ScriptTools.getAnchorOutputScript(channel.keyClient, channel.keyServer).getProgram(),
+                channel.keyServer);
 
         List<TransactionSignature> channelSignatures = new ArrayList<>();
 
         channelSignatures.add(signature1);
-        channelSignatures.add(signature2);
 
         return channelSignatures;
     }
@@ -380,12 +382,16 @@ public class Tools {
 
     public static TransactionSignature getSignature (Transaction transactionToSign, int index, byte[] outputToSpend, ECKey key) {
         Sha256Hash hash = transactionToSign.hashForSignature(index, outputToSpend, SigHash.ALL, false);
-        ECDSASignature signature = key.sign(hash).toCanonicalised();
-        return new TransactionSignature(signature, SigHash.ALL, false);
+        TransactionSignature signature = new TransactionSignature(key.sign(hash).toCanonicalised(), SigHash.ALL, false);
+        return signature;
     }
 
     public static long getTransactionFees (int size) {
         return (long) (size * Constants.FEE_PER_BYTE);
+    }
+
+    public static long getTransactionFees (int size, float feePerByte) {
+        return (long) (size * feePerByte);
     }
 
     public static long getTransactionFees (int inputs, int outputs) {
@@ -394,6 +400,39 @@ public class Tools {
 		 */
         int size = inputs * 180 + (outputs - 1) * 34 + 144 + 10 + 40;
         return Tools.getTransactionFees(size);
+    }
+
+    public static long getTransactionFees (int inputs, int outputs, float feePerByte) {
+        /*
+         * One output will pay to multi sig, 144 bytes
+		 */
+        int size = inputs * 180 + (outputs - 1) * 34 + 144 + 10 + 40;
+        return Tools.getTransactionFees(size, feePerByte);
+    }
+
+    public static boolean checkIfExistingInOutPutsAreEqual (Transaction o, Transaction n) {
+        try {
+            for (int i = 0; i < o.getOutputs().size(); ++i) {
+                TransactionOutput out1 = o.getOutput(i);
+                TransactionOutput out2 = n.getOutput(i);
+                if (!out1.equals(out2)) {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < o.getInputs().size(); ++i) {
+                TransactionInput in1 = o.getInput(i);
+                TransactionInput in2 = n.getInput(i);
+                if (!in1.equals(in2)) {
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            //Could be out of bounds..
+            return false;
+        }
+
+        return true;
     }
 
     public static byte[] hashSecret (byte[] secret) {

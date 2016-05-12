@@ -80,7 +80,7 @@ public class ChannelInfoController {
 
         labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
 
-        txOpen.setText(Tools.bytesToHex(channel.anchorTransactionServer.bitcoinSerialize()));
+        txOpen.setText(Tools.bytesToHex(channel.anchorTx.bitcoinSerialize()));
 
     }
 

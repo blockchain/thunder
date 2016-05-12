@@ -25,7 +25,7 @@ public class ReceiveMoneyBlockchainController {
 
     @FXML
     void initialize () {
-        textfieldAmount.setText(Main.bitcoin.wallet().currentReceiveAddress().toString());
+        textfieldAmount.setText(Main.wallet.currentReceiveAddress().toString());
 
     }
 }

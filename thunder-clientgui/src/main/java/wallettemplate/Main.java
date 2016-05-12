@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -15,10 +14,9 @@ import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.wallet.MockWallet;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.script.Script;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
@@ -27,6 +25,8 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static wallettemplate.utils.GuiUtils.*;
 
@@ -38,8 +38,6 @@ import static wallettemplate.utils.GuiUtils.*;
 public class Main extends Application {
     public static final String APP_NAME = "ThunderWallet";
 
-    public static NetworkParameters params = TestNet3Params.get();
-    public static WalletAppKit bitcoin;
     public static Main instance;
     public static Wallet wallet;
 
@@ -53,8 +51,10 @@ public class Main extends Application {
     public NotificationBarPane notificationBar;
     public Stage mainWindow;
 
-    public static int CLIENTID = 2;
+    public static int CLIENTID = 1;
     public static String REQUEST;
+
+    public static WalletAppKit walletAppKit;
 
     @Override
     public void start (Stage mainWindow) throws Exception {
@@ -73,7 +73,59 @@ public class Main extends Application {
         //Initiate the ThunderContext with a ServerObject
         //For now create a new node key every time. Want to read it from disk here once we have a storage engine
         node.init();
-        wallet = new MockWallet(Constants.getNetwork());
+
+        //TODO move somewhere more central..
+        if (Constants.USE_MOCK_BLOCKCHAIN) {
+            wallet = new MockWallet(Constants.getNetwork());
+        } else {
+            walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), "wallet_" + CLIENTID);
+            walletAppKit.startAsync().awaitRunning();
+            wallet = walletAppKit.wallet();
+            wallet.allowSpendingUnconfirmedTransactions();
+            wallet.reset();
+            wallet.addEventListener(new WalletEventListener() {
+                @Override
+                public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                    System.out.println("wallet = " + wallet);
+                    System.out.println("tx = " + tx);
+                    System.out.println("prevBalance = " + prevBalance);
+                    System.out.println("newBalance = " + newBalance);
+                }
+
+                @Override
+                public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                    System.out.println("wallet = " + wallet);
+                    System.out.println("tx = " + tx);
+                    System.out.println("prevBalance = " + prevBalance);
+                    System.out.println("newBalance = " + newBalance);
+                }
+
+                @Override
+                public void onReorganize (Wallet wallet) {
+
+                }
+
+                @Override
+                public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
+
+                }
+
+                @Override
+                public void onWalletChanged (Wallet wallet) {
+                }
+
+                @Override
+                public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+
+                }
+
+                @Override
+                public void onKeysAdded (List<ECKey> keys) {
+
+                }
+            });
+        }
+        System.out.println(wallet);
         thunderContext = new ThunderContext(wallet, dbHandler, node);
 
         mainWindow.show();
@@ -105,7 +157,6 @@ public class Main extends Application {
         scene.getStylesheets().add(getClass().getResource("wallet.css").toString());
         uiStack.getChildren().add(notificationBar);
         mainWindow.setScene(scene);
-        scene.getAccelerators().put(KeyCombination.valueOf("Shortcut+F"), () -> bitcoin.peerGroup().getDownloadPeer().close());
     }
 
     private Node stopClickPane = new Pane();
@@ -221,6 +272,15 @@ public class Main extends Application {
 
     @Override
     public void stop () throws Exception {
+
+        try {
+            if (walletAppKit != null) {
+                walletAppKit.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.
         Runtime.getRuntime().exit(0);
     }

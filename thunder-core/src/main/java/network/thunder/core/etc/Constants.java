@@ -27,6 +27,8 @@ public class Constants {
         return TestNet3Params.get();
     }
 
+    public static boolean USE_MOCK_BLOCKCHAIN = true;
+
     public static final int STANDARD_PORT = 2204;
     public static final int ESCAPE_REVOCATION_TIME = 24 * 60 * 60 / 10 * 60; //In blocks..
 

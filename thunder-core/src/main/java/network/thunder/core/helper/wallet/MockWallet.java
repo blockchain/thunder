@@ -17,8 +17,6 @@ import java.util.stream.Collectors;
 
 public class MockWallet extends Wallet {
 
-    public static boolean USE_REAL_TRANSACTION = false;
-
     List<ECKey> keyList = new ArrayList<>();
     List<TransactionOutput> outputs = new ArrayList<>();
 
@@ -29,6 +27,7 @@ public class MockWallet extends Wallet {
     public MockWallet (NetworkParameters params, int totalOutputs) {
         super(params);
         //
+
         Random random = new Random();
 
         for (int i = 1; i < 101; i++) {
@@ -40,23 +39,15 @@ public class MockWallet extends Wallet {
             ECKey k = new ECKey(new BigInteger(h), null, true);
             keyList.add(k);
 
-            if (!USE_REAL_TRANSACTION) {
-                transaction.addInput(Sha256Hash.wrap(h), 0, Tools.getDummyScript());
+            transaction.addInput(Sha256Hash.wrap(h), 0, Tools.getDummyScript());
 
-                TransactionOutput a = new TransactionOutput(Constants.getNetwork(), transaction, Coin.valueOf(1000000), k.toAddress(Constants.getNetwork()));
-                transaction.addOutput(a);
+            TransactionOutput a = new TransactionOutput(Constants.getNetwork(), transaction, Coin.valueOf(1000000), k.toAddress(Constants.getNetwork()));
+            transaction.addOutput(a);
 
-                outputs.add(a);
-            }
+            outputs.add(a);
+
         }
 
-        //If you want to test on testnet send to one of addresses of the keys above and add the raw tx here using
-        //http://tbtc.blockr.io/api/v1/tx/raw/b9d8ce4e23caa339365e8a7280915dfde1b679c6e157b222ff5e527f2f0dd23d
-        if (USE_REAL_TRANSACTION) {
-            Transaction t = new Transaction(Constants.getNetwork(), Tools.hexStringToByteArray
-                    ("0100000001c82e9ddb4cd1c54507f9c169fa7a989eb769f96cf5418bedc99f873b9b040fc4010000006a47304402206265f65016c51b7f6f51da74570bec59f7e8b1df00a3ccaf07985b29bb3a731102205baa0bea677aad450e708d3f25016f2ef8bba66f7e8664ea53cc5137e868c7270121036ea96c418eae7c6a1af51eb3c5ddd86abe1f810ee3a66fa10733d3d69b6af19dffffffff02102700000000000017a91494fc79ff226c6eee8b9e96abd5beb4cb0d34427087b06e5c00000000001976a914651dba4d544bdf48be9698eee840a6bb3a49092788ac00000000"));
-            outputs.add(t.getOutput(1));
-        }
     }
 
     public MockWallet (Context context) {

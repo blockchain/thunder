@@ -19,6 +19,7 @@ import javafx.util.StringConverter;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
+import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -270,11 +271,11 @@ public class MainController {
         blockchainTxList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<Transaction>() {
             @Override
             public String toString (Transaction tx) {
-                Coin value = tx.getValue(Main.bitcoin.wallet());
+                Coin value = tx.getValue(Main.wallet);
                 if (value.isPositive()) {
                     return tx.getConfidence().getDepthInBlocks() + " Incoming payment of " + MonetaryFormat.BTC.format(value);
                 } else if (value.isNegative()) {
-                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Main.params);
+                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork());
                     if (address == null) {
                         return tx.getConfidence().getDepthInBlocks() + " Outbound payment to ThunderChannel of " + value.toFriendlyString().substring(1);
                     }
@@ -291,11 +292,11 @@ public class MainController {
         blockchainTxList.setCellFactory(param -> new TextFieldListCell(new StringConverter<Transaction>() {
             @Override
             public String toString (Transaction tx) {
-                Coin value = tx.getValue(Main.bitcoin.wallet());
+                Coin value = tx.getValue(Main.wallet);
                 if (value.isPositive()) {
                     return tx.getConfidence().getDepthInBlocks() + " Incoming payment of " + MonetaryFormat.BTC.format(value);
                 } else if (value.isNegative()) {
-                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Main.params);
+                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork());
                     if (address == null) {
                         return tx.getConfidence().getDepthInBlocks() + " Outbound payment to ThunderChannel of " + value.toFriendlyString().substring
                                 (1);

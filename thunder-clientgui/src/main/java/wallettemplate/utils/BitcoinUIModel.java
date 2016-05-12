@@ -12,9 +12,8 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventListener;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.DownloadProgressTracker;
+import org.bitcoinj.core.*;
+import org.bitcoinj.script.Script;
 import wallettemplate.Main;
 
 import java.util.Arrays;
@@ -44,7 +43,7 @@ public class BitcoinUIModel {
     public static SimpleDoubleProperty syncProgress = new SimpleDoubleProperty(-1);
     private ProgressBarUpdater syncProgressUpdater = new ProgressBarUpdater();
 
-    public ObservableList<Node> transactions = FXCollections.observableArrayList();
+    public ObservableList<Transaction> transactions = FXCollections.observableArrayList();
 
     public BitcoinUIModel () {
     }
@@ -64,6 +63,42 @@ public class BitcoinUIModel {
                         }
                     }
                 }).start();
+            }
+        });
+        Main.wallet.addEventListener(new WalletEventListener() {
+            @Override
+            public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                update();
+            }
+
+            @Override
+            public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                update();
+            }
+
+            @Override
+            public void onReorganize (Wallet wallet) {
+
+            }
+
+            @Override
+            public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
+                update();
+            }
+
+            @Override
+            public void onWalletChanged (Wallet wallet) {
+                update();
+            }
+
+            @Override
+            public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+
+            }
+
+            @Override
+            public void onKeysAdded (List<ECKey> keys) {
+
             }
         });
     }
@@ -130,6 +165,13 @@ public class BitcoinUIModel {
             balance.set(Main.wallet.getBalance());
 
             channelList.setAll(items7);
+
+            ObservableList<Transaction> tx = FXCollections.observableArrayList();
+            for (Transaction t : Main.wallet.getTransactionsByTime()) {
+                tx.add(t);
+            }
+            transactions.setAll(tx);
+
         });
     }
 
