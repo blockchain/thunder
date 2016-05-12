@@ -23,14 +23,12 @@ public class ScriptToolsTest {
     byte[] revocationServer = Tools.hexStringToByteArray("E3411336485A2E167EC4CB8BE4A8C75E19255CB0");
     byte[] revocationClient = Tools.hexStringToByteArray("E65AA748832A949DDF1854E6206620F07F8C49ED");
 
-    NetworkParameters params = NetworkParameters.testNet3();
-
     @Before
     public void setup () throws NoSuchAlgorithmException {
-        Context.getOrCreate(params);
+        Context.getOrCreate(Constants.getNetwork());
 
-        transactionOutput = new Transaction(params);
-        transactionInput = new Transaction(params);
+        transactionOutput = new Transaction(Constants.getNetwork());
+        transactionInput = new Transaction(Constants.getNetwork());
     }
 
     @Test
