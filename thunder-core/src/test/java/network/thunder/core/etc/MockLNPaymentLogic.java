@@ -1,9 +1,13 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.payments.messages.*;
-import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.ChannelStatus;
+import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
+import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
+import network.thunder.core.communication.layer.high.payments.messages.*;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;
@@ -17,6 +21,11 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
 
     public MockLNPaymentLogic (LNPaymentMessageFactory messageFactory) {
         this.messageFactory = messageFactory;
+    }
+
+    @Override
+    public ChannelSignatures getSignatureObject (Channel channel, Transaction channelTransaction) {
+        return null;
     }
 
     @Override
@@ -37,6 +46,17 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
         if (message instanceof LNPaymentAMessage) {
             update = ((LNPaymentAMessage) message).channelStatus.getCloneReversed();
         }
+    }
+
+    @Override
+    public Transaction getChannelTransaction (TransactionOutPoint anchor, ChannelStatus channelStatus, ECKey client, ECKey server) {
+        return null;
+    }
+
+
+    @Override
+    public void checkSignatures (ECKey keyServer, ECKey keyClient, ChannelSignatures channelSignatures, Transaction channelTransaction, ChannelStatus status) {
+
     }
 
     public void readMessageOutbound (LNPayment message) {

@@ -10,10 +10,12 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.ChannelOpener;
 import network.thunder.core.communication.layer.high.channel.establish.messages.*;
+import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
+import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
@@ -23,7 +25,6 @@ import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.Transaction;
-import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -43,21 +44,91 @@ import java.util.concurrent.TimeUnit;
  *  - Add various changes to the channel status / updates to the database
  *  - Reload a half-done channel from database if the connection breaks down
  *
- * Currently we are exchanging 4 messages,
+ * Currently we are exchanging 8 messages in total,
  *
  *      Alice           Bob
  *
  *        A     ->
+ *              <-       A
+ *        B     ->
  *              <-       B
  *        C     ->
+ *              <-       C
+ *          <broadcast>
+ *          <wait conf>
+ *        D     ->
  *              <-       D
  *
- * whereas receiving message C or D completes the process of creating the channel.
  *
- * Upon completion, we broadcast the transaction to the p2p network and listen for sufficient confirmations.
+ * ------------------------
+ *  A:
+ *  channelKeyServer;
+ *  amountClient;
+ *  amountServer;
+ *  anchorTransaction;
+ *  addressBytes;
+ *  minConfirmationAnchor;
+ *
+ *   * Data about the first commitment to be able to refund if necessary
+ *  revocationHash;
+ *  feePerByte;
+ *  csvDelay;
+ * ------------------------
+ *  B:
+ *  channelKeyServer;
+ *  amountClient;
+ *  amountServer;
+ *  anchorTransaction;
+ *  addressBytes;
+ *  minConfirmationAnchor;
+ *
+ *   * Data about the first commitment to be able to refund if necessary
+ *  revocationHash;
+ *  feePerByte;
+ *  csvDelay;
+ * -----------------------
+ *  A:
+ *  signatureCommitA
+ * -----------------------
+ *  B:
+ *  signatureCommitB
+ * -----------------------
+ *  A:
+ *  signatureAnchorA
+ * -----------------------
+ *  B:
+ *  signatureAnchorB
+ * -----------------------
+ * TODO: Finish here..
+ * -------------------
+ *  anchorUnsignedA
+ *  In:
+ *  txInA1
+ *  txInA2
+ *  […]
+ *
+ *  Out:
+ *  2-of-2
+ *  Change A
+ * -------------------
+ *  anchorUnsignedB
+ *  In:
+ *  txInA1
+ *  txInA2
+ *  […]
+ *  txInB1
+ *  txInB2
+ *  […]
+ *
+ *  Out:
+ *  2-of-2
+ *  Change A
+ *  Change B
+ * --------------------
  */
+
 public class LNEstablishProcessorImpl extends LNEstablishProcessor implements ChannelOpener {
-    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
+    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.5;
 
     WalletHelper walletHelper;
     LNEstablishMessageFactory messageFactory;
@@ -68,14 +139,14 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     ServerObject serverObject;
     BlockchainHelper blockchainHelper;
     ChannelManager channelManager;
+    LNPaymentLogic paymentLogic;
 
     MessageExecutor messageExecutor;
 
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private boolean startedPeriodicBroadcasting = false;
 
-    public Channel channel;
-    int status = 0;
+    public EstablishProgress establishProgress;
 
     ChannelOpenListener channelOpenListener;
 
@@ -89,6 +160,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         this.serverObject = contextFactory.getServerSettings();
         this.blockchainHelper = contextFactory.getBlockchainHelper();
         this.channelManager = contextFactory.getChannelManager();
+        this.paymentLogic = contextFactory.getLNPaymentLogic();
     }
 
     @Override
@@ -98,7 +170,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         } catch (Exception e) {
             e.printStackTrace();
             messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
-            node.resultCallback.execute(new ChannelCreatedResult(channel));
+            node.resultCallback.execute(new ChannelCreatedResult(establishProgress.channel));
             throw e;
         }
     }
@@ -136,16 +208,21 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void consumeMessage (Message message) {
-        if (message instanceof LNEstablishAMessage) {
-            processMessageA(message);
-        } else if (message instanceof LNEstablishBMessage) {
-            processMessageB(message);
-        } else if (message instanceof LNEstablishCMessage) {
-            processMessageC(message);
-        } else if (message instanceof LNEstablishDMessage) {
-            processMessageD(message);
-        } else {
-            throw new UnsupportedOperationException("Don't know this LNEstablish Message: " + message);
+        try {
+            if (message instanceof LNEstablishAMessage) {
+                processMessageA((LNEstablishAMessage) message);
+            } else if (message instanceof LNEstablishBMessage) {
+                processMessageB((LNEstablishBMessage) message);
+            } else if (message instanceof LNEstablishCMessage) {
+                processMessageC((LNEstablishCMessage) message);
+            } else if (message instanceof LNEstablishDMessage) {
+                processMessageD(message);
+            } else {
+                throw new UnsupportedOperationException("Don't know this LNEstablish Message: " + message);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            messageExecutor.closeConnection();
         }
     }
 
@@ -153,47 +230,116 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     public void openChannel (Channel channel, ChannelOpenListener callback) {
         //TODO take values from channel object to choose opening values
         this.channelOpenListener = callback;
+
+        prepareOpenChannel();
+        this.establishProgress.channel = new Channel();
+        this.establishProgress.channel.channelStatus.amountServer = getAmountForNewChannel();
+        this.establishProgress.channel.channelStatus.amountClient = getAmountForNewChannel();
+        this.establishProgress.channel.channelStatus.feePerByte = 3;
+        this.establishProgress.weStartedExchange = true;
         sendEstablishMessageA();
     }
 
-    private void processMessageA (Message message) {
-        checkStatus(0);
-        LNEstablish m = (LNEstablish) message;
-        prepareNewChannel();
-        m.saveToChannel(channel);
-        sendEstablishMessageB();
+    private void prepareOpenChannel () {
+        this.establishProgress = new EstablishProgress();
+        this.establishProgress.channel = new Channel();
     }
 
-    private void processMessageB (Message message) {
-        checkStatus(2);
-        LNEstablish m = (LNEstablish) message;
-        m.saveToChannel(channel);
-        sendEstablishMessageC();
+    private void processMessageA (LNEstablishAMessage message) {
+        //Received a fresh request to open a new channel
+        //TODO make sure we don't overwrite anything important here..
+        if (this.establishProgress == null) {
+            prepareOpenChannel();
+            this.establishProgress.weStartedExchange = false;
+        }
+        if (testProgressReceivingMessageAmount(0)) {
+            //TODO test for validity of establish settings
+            //TODO test if inputs are paying adequate fees and are paying from SegWit outputs
+            this.establishProgress.channel.nodeKeyClient = node.pubKeyClient.getPubKey();
+            message.saveToChannel(establishProgress.channel);
+            establishProgress.messages.add(message);
+            if (establishProgress.weStartedExchange) {
+                establishProgress.channel.addAnchorOutputToAnchor();
+                sendEstablishMessageB();
+            } else {
+                sendEstablishMessageA();
+            }
+        } else {
+            throw new LNEstablishException("LNEstablishProcessorImpl.processMessageA error");
+        }
     }
 
-    private void processMessageC (Message message) {
-        checkStatus(3);
-        LNEstablish m = (LNEstablish) message;
-        m.saveToChannel(channel);
-        channel.verifyEscapeSignatures();
-        sendEstablishMessageD();
-        onChannelEstablished();
+    private void processMessageB (LNEstablishBMessage message) {
+        if (testProgressReceivingMessageAmount(2)) {
+            if (!establishProgress.weStartedExchange) {
+                establishProgress.channel.addAnchorOutputToAnchor();
+            }
+
+            message.saveToChannel(establishProgress.channel);
+
+            Transaction channelTransaction = paymentLogic.getChannelTransaction(
+                    establishProgress.channel.anchorTx.getOutput(0).getOutPointFor(),
+                    establishProgress.channel.channelStatus,
+                    establishProgress.channel.keyClient,
+                    establishProgress.channel.keyServer
+            );
+
+            paymentLogic.checkSignatures(
+                    establishProgress.channel.keyServer,
+                    establishProgress.channel.keyClient,
+                    establishProgress.channel.channelSignatures,
+                    channelTransaction,
+                    establishProgress.channel.channelStatus
+
+            );
+
+            establishProgress.messages.add(message);
+            if (establishProgress.weStartedExchange) {
+                sendEstablishMessageC();
+            } else {
+                sendEstablishMessageB();
+            }
+        } else {
+            throw new LNEstablishException("LNEstablishProcessorImpl.processMessageB error");
+        }
     }
 
+    private void processMessageC (LNEstablishCMessage message) {
+
+        if (testProgressReceivingMessageAmount(4)) {
+            message.saveToChannel(establishProgress.channel);
+            establishProgress.messages.add(message);
+
+            //TODO obviously we should check if the anchor signatures are correct
+            if (establishProgress.weStartedExchange) {
+                onChannelEstablished();
+            } else {
+                sendEstablishMessageC();
+                onChannelEstablished();
+            }
+        } else {
+            throw new LNEstablishException("LNEstablishProcessorImpl.processMessageC error");
+        }
+    }
+
+    //TODO: Send MessageD once we have enough confirmations
     private void processMessageD (Message message) {
-        checkStatus(4);
-        LNEstablish m = (LNEstablish) message;
-        m.saveToChannel(channel);
-        channel.verifyEscapeSignatures();
-        onChannelEstablished();
+
+    }
+
+    private boolean testProgressReceivingMessageAmount (int amount) {
+        return (establishProgress.weStartedExchange && establishProgress.messages.size() == (amount + 1))
+                || (!establishProgress.weStartedExchange && establishProgress.messages.size() == amount);
     }
 
     private void onChannelEstablished () {
-        channel.isReady = true;
-        dbHandler.saveChannel(channel);
+        establishProgress.channel.anchorTxHash = establishProgress.channel.anchorTx.getHash();
+        establishProgress.channel.isReady = true;
+        dbHandler.saveChannel(establishProgress.channel);
+        blockchainHelper.broadcastTransaction(establishProgress.channel.anchorTx);
+
 //        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
         this.onEnoughConfirmations();
-        blockchainHelper.broadcastTransaction(channel.getAnchorTransactionServer());
 
         if (channelOpenListener != null) {
             channelOpenListener.onStart(new SuccessResult());
@@ -201,10 +347,9 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void onEnoughConfirmations () {
-        channel.initiateChannelStatus(serverObject.configuration);
-        dbHandler.updateChannel(channel);
+        dbHandler.updateChannel(establishProgress.channel);
         sendNextLayerActiveIfOpenChannelExists();
-        eventHelper.onChannelOpened(channel);
+        eventHelper.onChannelOpened(establishProgress.channel);
 
         if (channelOpenListener != null) {
             channelOpenListener.onFinished(new SuccessResult());
@@ -212,53 +357,42 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void sendEstablishMessageA () {
-        prepareNewChannel();
-        Message message = messageFactory.getEstablishMessageA(channel);
+        establishProgress.channel.getAnchorTransactionServer(walletHelper);
+        establishProgress.channel.channelStatus.revocationHashServer = dbHandler.createRevocationHash(establishProgress.channel);
+        establishProgress.channel.channelStatus.addressServer = walletHelper.fetchAddress();
+        LNEstablish message = messageFactory.getEstablishMessageA(establishProgress.channel);
+        establishProgress.messages.add(message);
         messageExecutor.sendMessageUpwards(message);
-        status = 2;
     }
 
     private void sendEstablishMessageB () {
-        Transaction anchor = channel.getAnchorTransactionServer(walletHelper);
-        Message message = messageFactory.getEstablishMessageB(channel, anchor);
+
+        Transaction channelTransaction = paymentLogic.getChannelTransaction(
+                establishProgress.channel.anchorTx.getOutput(0).getOutPointFor(),
+                establishProgress.channel.channelStatus.getCloneReversed(),
+                establishProgress.channel.keyServer,
+                establishProgress.channel.keyClient
+        );
+
+        establishProgress.channel.channelSignatures = paymentLogic.getSignatureObject(establishProgress.channel, channelTransaction);
+
+        LNEstablish message = messageFactory.getEstablishMessageB(establishProgress.channel.channelSignatures.channelSignatures.get(0));
+        establishProgress.messages.add(message);
         messageExecutor.sendMessageUpwards(message);
-        status = 3;
     }
 
     private void sendEstablishMessageC () {
-        Transaction anchor = channel.getAnchorTransactionServer(walletHelper);
-        Transaction escape = channel.getEscapeTransactionClient();
-        Transaction fastEscape = channel.getFastEscapeTransactionClient();
+        Transaction anchorTx = establishProgress.channel.anchorTx;
+        anchorTx = walletHelper.signTransaction(anchorTx);
+        establishProgress.channel.anchorTx = anchorTx;
 
-        TransactionSignature escapeSig = Tools.getSignature(escape, 0, channel.getScriptAnchorOutputClient().getProgram(), channel.getKeyServerA());
-        TransactionSignature fastEscapeSig = Tools.getSignature(fastEscape, 0, channel.getScriptAnchorOutputClient().getProgram(), channel
-                .getKeyServerA());
-
-        Message message = messageFactory.getEstablishMessageC(anchor, escapeSig, fastEscapeSig);
+        LNEstablish message = messageFactory.getEstablishMessageC(anchorTx);
+        establishProgress.messages.add(message);
         messageExecutor.sendMessageUpwards(message);
-
-        status = 4;
-    }
-
-    private void sendEstablishMessageD () {
-        Transaction escape = channel.getEscapeTransactionClient();
-        Transaction fastEscape = channel.getFastEscapeTransactionClient();
-        TransactionSignature escapeSig = Tools.getSignature(escape, 0, channel.getScriptAnchorOutputClient().getProgram(), channel.getKeyServerA());
-        TransactionSignature fastEscapeSig = Tools.getSignature(fastEscape, 0, channel.getScriptAnchorOutputClient().getProgram(), channel
-                .getKeyServerA());
-
-        Message message = messageFactory.getEstablishMessageD(escapeSig, fastEscapeSig);
-        messageExecutor.sendMessageUpwards(message);
-        status = 5;
-    }
-
-    private void prepareNewChannel () {
-        channel = new Channel(node.pubKeyClient.getPubKey(), serverObject.pubKeyServer, getAmountForNewChannel());
-        channel.addressServer = walletHelper.fetchAddress();
-        status = 1;
     }
 
     private void broadcastChannelObject () {
+        Channel channel = establishProgress.channel;
         if (channel == null) {
             return;
         }
@@ -266,13 +400,9 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         channelObject.pubkeyB = node.pubKeyClient.getPubKey();
         channelObject.pubkeyA1 = channel.keyServer.getPubKey();
-        channelObject.pubkeyA2 = channel.keyServerA.getPubKey();
         channelObject.pubkeyB1 = channel.keyClient.getPubKey();
-        channelObject.pubkeyB2 = channel.keyClientA.getPubKey();
         channelObject.timestamp = Tools.currentTime();
-        channelObject.secretAHash = channel.anchorSecretHashServer;
-        channelObject.secretBHash = channel.anchorSecretHashClient;
-        channelObject.txidAnchor = channel.anchorTxHashServer.getBytes();
+        channelObject.txidAnchor = channel.anchorTxHash.getBytes();
 
         //TODO fill in some usable data into ChannelStatusObject
         ChannelStatusObject statusObject = new ChannelStatusObject();
@@ -285,14 +415,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private long getAmountForNewChannel () {
-        return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
-    }
-
-    private void checkStatus (int expected) {
-        if (status != expected) {
-            messageExecutor.closeConnection();
-            System.out.println("Status not correct.. Is: " + status + " Expected: " + expected);
-        }
+//        return (long) (walletHelper.getSpendableAmount() * PERCENTAGE_OF_FUNDS_PER_CHANNEL);
+        return 10000;
     }
 
     private synchronized void startScheduledBroadcasting () {

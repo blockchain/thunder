@@ -21,8 +21,6 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
         Channel channel = new Channel();
         channel.id = id;
         channel.channelStatus = new ChannelStatus();
-        channel.amountServer = INITIAL_AMOUNT_CHANNEL;
-        channel.amountClient = INITIAL_AMOUNT_CHANNEL;
         channel.channelStatus.amountServer = INITIAL_AMOUNT_CHANNEL;
         channel.channelStatus.amountClient = INITIAL_AMOUNT_CHANNEL;
         return channel;
