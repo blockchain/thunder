@@ -1,26 +1,33 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
 import com.google.common.base.Preconditions;
+import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
+import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LNPaymentCMessage implements LNPayment {
-    public byte[] newCommitSignature1;
-    public byte[] newCommitSignature2;
+    public List<byte[]> channelSignatures;
+    public List<byte[]> paymentSignatures;
 
-    public List<byte[]> newPaymentSignatures;
+    public LNPaymentCMessage (ChannelSignatures channelSignatures) {
+        this.channelSignatures = channelSignatures.channelSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
+        this.paymentSignatures = channelSignatures.paymentSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
+    }
 
-    public LNPaymentCMessage (byte[] newCommitSignature1, byte[] newCommitSignature2, List<byte[]> newPaymentSignatures) {
-        this.newCommitSignature1 = newCommitSignature1;
-        this.newCommitSignature2 = newCommitSignature2;
-        this.newPaymentSignatures = newPaymentSignatures;
+    public ChannelSignatures getChannelSignatures () {
+        ChannelSignatures signatures = new ChannelSignatures();
+        signatures.paymentSignatures = paymentSignatures.stream().map(o -> TransactionSignature.decodeFromBitcoin(o, true)).collect(Collectors.toList());
+        signatures.channelSignatures = channelSignatures.stream().map(o -> TransactionSignature.decodeFromBitcoin(o, true)).collect(Collectors.toList());
+
+        return signatures;
     }
 
     @Override
     public void verify () {
-        Preconditions.checkNotNull(newCommitSignature1);
-        Preconditions.checkNotNull(newCommitSignature2);
-        Preconditions.checkNotNull(newPaymentSignatures);
+        Preconditions.checkNotNull(channelSignatures);
+        Preconditions.checkNotNull(paymentSignatures);
     }
 
     @Override
