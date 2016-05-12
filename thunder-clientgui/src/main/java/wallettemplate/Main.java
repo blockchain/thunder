@@ -125,6 +125,7 @@ public class Main extends Application {
 
                 }
             });
+            System.out.println(wallet.getKeyChainSeed());
         }
         System.out.println(wallet);
         thunderContext = new ThunderContext(wallet, dbHandler, node);

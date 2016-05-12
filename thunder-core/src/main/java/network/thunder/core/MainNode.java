@@ -119,6 +119,7 @@ public class MainNode {
             wallet.allowSpendingUnconfirmedTransactions();
             wallet.reset();
             System.out.println("wallet = " + wallet);
+            System.out.println("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
             wallet.addEventListener(new WalletEventListener() {
                 @Override
                 public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
