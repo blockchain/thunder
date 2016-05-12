@@ -54,6 +54,7 @@ public class MainNode {
             configuration.hostnameServer = getExternalIP();
             ECKey key = new ECKey();
             configuration.serverKey = Tools.bytesToHex(key.getPrivKeyBytes());
+            // TODO: Verify that the public key corresponds to the private key when loading config from file
             configuration.publicKey = key.getPublicKeyAsHex();
             newConfiguration = true;
             askForHostname(configuration);

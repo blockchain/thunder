@@ -391,10 +391,10 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void broadcastChannelObject () {
-        Channel channel = establishProgress.channel;
-        if (channel == null) {
+        if (establishProgress == null || establishProgress.channel == null) {
             return;
         }
+        Channel channel = establishProgress.channel;
         PubkeyChannelObject channelObject = new PubkeyChannelObject();
         channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         channelObject.pubkeyB = node.pubKeyClient.getPubKey();
