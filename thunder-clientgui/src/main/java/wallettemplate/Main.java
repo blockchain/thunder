@@ -78,6 +78,7 @@ public class Main extends Application {
         if (Constants.USE_MOCK_BLOCKCHAIN) {
             wallet = new MockWallet(Constants.getNetwork());
         } else {
+            System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
             walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), "wallet_" + CLIENTID);
             walletAppKit.startAsync().awaitRunning();
             wallet = walletAppKit.wallet();
