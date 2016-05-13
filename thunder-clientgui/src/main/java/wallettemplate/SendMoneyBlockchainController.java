@@ -54,6 +54,7 @@ public class SendMoneyBlockchainController {
                 req = Wallet.SendRequest.to(destination, amount);
             }
             req.ensureMinRequiredFee = true;
+            req.feePerKb = Coin.valueOf(5000);
             req.aesKey = aesKey;
             sendResult = Main.wallet.sendCoins(req);
 
