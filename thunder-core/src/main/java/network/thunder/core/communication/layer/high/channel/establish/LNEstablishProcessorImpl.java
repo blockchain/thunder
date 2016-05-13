@@ -128,7 +128,7 @@ import java.util.concurrent.TimeUnit;
  */
 
 public class LNEstablishProcessorImpl extends LNEstablishProcessor implements ChannelOpener {
-    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.25;
+    public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
 
     WalletHelper walletHelper;
     LNEstablishMessageFactory messageFactory;
