@@ -12,17 +12,17 @@ Donations: `13KBW65G6WZxSJZYrbQQRLC6LWE6hJ8mof`
 - [X] Encryption
 - [X] Authentication
 - [X] Channel Opening Process
-- [X] Payment Debate 
+- [X] Payment Debate
 - [X] Relaying Payment
 - [X] Settling Payment
 - [X] Peer Seeding
 - [X] Providing new Peers with Topology
 - [X] Basic Gossip Protocol
-- [X] Interface for Connecting into Wallet Software    
-- [X] Basic Blockchain Watching Capability    
-- [X] Closing a Channel    
-- [ ] Hardening against various DDoS attacks   
-- [ ] Backing Database Implementation (currently only in memory)    
+- [X] Interface for Connecting into Wallet Software
+- [X] Basic Blockchain Watching Capability
+- [X] Closing a Channel
+- [ ] Hardening against various DDoS attacks
+- [ ] Backing Database Implementation (currently only in memory)
 - [ ] Restoring state after restart - cheking old TX for cheating
 - [ ] Claiming funds after counterparty cheated
 
@@ -31,7 +31,7 @@ Donations: `13KBW65G6WZxSJZYrbQQRLC6LWE6hJ8mof`
 
 ### Prerequisites
 
-You need 
+You need
 ```
 JDK 1.8+
 Maven
@@ -40,11 +40,11 @@ to build both the node and the wallet software.
 
 ### Installation
 
-Executing 
+Executing
 ```
 ./build.sh
 ```
-will run the tests and create the executables. 
+will run the tests and create the executables.
 
 ### Running
 
@@ -65,12 +65,12 @@ Running
 ```
 java -jar wallet.jar
 ```
-will start up the wallet. It will ask for known nodes and get a topology of the network. The user can then chose a node to form a channel with and make and receive payments. 
+will start up the wallet. It will ask for known nodes and get a topology of the network. The user can then chose a node to form a channel with and make and receive payments.
 
 
 ## Architecture
 
-thunder.network uses netty as the underlying networking library. There are several layers for encryption, establishing a channel and making payments. 
+thunder.network uses netty as the underlying networking library. There are several layers for encryption, establishing a channel and making payments.
 
 Additional features will generally live inside their own layer, decoupled from the other layers.
 
@@ -97,7 +97,7 @@ Furthermore all routes are onion-encrypted, meaning that for each node in the ro
 
 ### Anchor
 
-Payment channels are using a 2-of-2 multisig transaction as an anchor. They do so by handing back and forth an unsigned transaction, such that they both can add in- and outputs to fund the channel. They then create the first channel transaction without any included payments that also serves as a refund. Only after exchanging and checking the signatures for the channel transaction they exchange the signatures for the actual anchor and broadcast it to the network. 
+Payment channels are using a 2-of-2 multisig transaction as an anchor. They do so by handing back and forth an unsigned transaction, such that they both can add in- and outputs to fund the channel. They then create the first channel transaction without any included payments that also serves as a refund. Only after exchanging and checking the signatures for the channel transaction they exchange the signatures for the actual anchor and broadcast it to the network.
 
 For this to work out, Segregated Witness is mandatory, as it is impossible to create the channel transaction without knowing the signatures of the parent transaction with plain transactions. Furthermore the risk of malleability means that one party can hold the other parties funds hostage.
 
@@ -108,9 +108,9 @@ As this is still a prototype, various optimizations are left open for now, as th
 
 ## Contributing
 
-There is always something to do! 
-Feel free to look through the open Issues or look for TODOS in the code. They are well maintained and usually still open. 
-If you want to create a PR, it would be great if you could respect the code style convention of this project. It's easiest if you just use intelliJ and import the [code style settings](CodeStyle.jar) and follow [this tutorial](http://stackoverflow.com/a/5581992) to setup automatic reformatting on save. 
+There is always something to do!
+Feel free to look through the open Issues or look for TODOS in the code. They are well maintained and usually still open.
+If you want to create a PR, it would be great if you could respect the code style convention of this project. It's easiest if you just use intelliJ and import the [code style settings](CodeStyle.jar) and follow [this tutorial](http://stackoverflow.com/a/5581992) to setup automatic reformatting on save.
 
 ## Resources
 
