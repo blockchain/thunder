@@ -97,8 +97,9 @@ Furthermore all routes are onion-encrypted, meaning that for each node in the ro
 
 ### Anchor
 
-The channel-establish process is due to a rework. It currently uses the anchor-escape-fastescape mechanism described in the deployable-lightning paper. However, it has some downsides and is not necessary anymore once SegWit is deployed.
-Both parties will likely create the funding transaction together, sending a half-signed tx back and forth, with one party broadcasting it to the network. Because transaction malleability is non-existent, this party cannot hold the other parties funds hostage.
+Payment channels are using a 2-of-2 multisig transaction as an anchor. They do so by handing back and forth an unsigned transaction, such that they both can add in- and outputs to fund the channel. They then create the first channel transaction without any included payments that also serves as a refund. Only after exchanging and checking the signatures for the channel transaction they exchange the signatures for the actual anchor and broadcast it to the network. 
+
+For this to work out, Segregated Witness is mandatory, as it is impossible to create the channel transaction without knowing the signatures of the parent transaction with plain transactions. Furthermore the risk of malleability means that one party can hold the other parties funds hostage.
 
 ### Optimizations
 
