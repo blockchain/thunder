@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/matsjj/thundernetwork.svg?branch=master)](https://travis-ci.org/matsjj/thundernetwork)
 ![Wallet Screenshot](docs/screenshot.png)
-Client/server implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
+Wallet / Node implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
 
 This is software in alpha status, don't even think about using it in production with real bitcoin.
 
@@ -104,6 +104,12 @@ Both parties will likely create the funding transaction together, sending a half
 
 As this is still a prototype, various optimizations are left open for now, as they would hinder active development. For example, JSON was chosen to serialize messages, as Gson allows for very prototype-friendly development, even though it increases message size 3-5 fold.
 
+
+## Contributing
+
+There is always something to do! 
+Feel free to look through the open Issues or look for TODOS in the code. They are well maintained and usually still open. 
+If you want to create a PR, it would be great if you could respect the code style convention of this project. It's easiest if you just use intelliJ and import the [code style settings](CodeStyle.jar) and follow [this tutorial](http://stackoverflow.com/a/5581992) to setup automatic reformatting on save. 
 
 ## Resources
 
