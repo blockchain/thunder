@@ -228,6 +228,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     @Override
     public void openChannel (Channel channel, ChannelOpenListener callback) {
+        //Only support one channel per connection for now..
+        if(dbHandler.getOpenChannel(node.pubKeyClient).size() > 0) {
+            System.out.println("LNEstablishProcessorImpl.openChannel - already connected!");
+            callback.onSuccess.execute();
+            return;
+        }
         //TODO take values from channel object to choose opening values
         this.channelOpenListener = callback;
 
