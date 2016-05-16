@@ -4,9 +4,9 @@
 ![Wallet Screenshot](docs/screenshot.png)
 Wallet / Node implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
 
-This is software in alpha status, don't even think about using it in production with real bitcoin.
+This is software in alpha status, don't even think about using it in production with real bitcoin. Current release is meant for testing, review, and building real world expeirence with the general technology. 
 
-Donations: `13KBW65G6WZxSJZYrbQQRLC6LWE6hJ8mof`
+To learn more, visit www.blockchain.com/thunder 
 
 ## Feature List
 - [X] Encryption
