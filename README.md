@@ -4,7 +4,7 @@
 ![Wallet Screenshot](docs/screenshot.png)
 Wallet / Node implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
 
-This is software in alpha status, don't even think about using it in production with real bitcoin. Current release is meant for testing, review, and building real world expeirence with the general technology. 
+This is software in alpha status, don't even think about using it in production with real bitcoin. Current release is meant for testing, review, and building real world experience with the general technology. 
 
 To learn more, visit www.blockchain.com/thunder 
 
@@ -76,14 +76,14 @@ Additional features will generally live inside their own layer, decoupled from t
 
 ### Outlook
 
-thunder.network uses a commitment-transaction design that needs both [CSV](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki) and [Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki) to be completed. Otherwise the payments are not enforcable on the blockchain and are bad promises at best.
+thunder.network uses a commitment-transaction design that needs both [CSV](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki) and [Segregated Witness](https://github.com/bitcoin/bips/blob/master/bip-0141.mediawiki) to be completed. Otherwise the payments are not enforceable on the blockchain and are bad promises at best.
 
 
 ### Dual-TX Approach
 
-thunder.network implements a commit-transaction design where each payment pays to a 2-of-2 multisig + R || TIMEOUT first. Both parties then create an additional revocable transaction paying to the correct receiver. While this adds additional complexity and makes on-chain resolvement more expensive, it allows for decoupling the revocation delay from the refund timespan, which otherwise would not be possible.
+thunder.network implements a commit-transaction design where each payment pays to a 2-of-2 multisig + R || TIMEOUT first. Both parties then create an additional revocable transaction paying to the correct receiver. While this adds additional complexity and makes on-chain resolution more expensive, it allows for decoupling the revocation delay from the refund timespan, which otherwise would not be possible.
 
-In the diagram below, A is receiving a payment from B. If he wants to accept the payment, he has to produce R within 5 days, otherwise the payment is not enforcable. Regardless of that, B can always claim even that payment for another 30d if A cheated and broadcasted a revoked transaction.
+In the diagram below, A is receiving a payment from B. If he wants to accept the payment, he has to produce R within 5 days, otherwise the payment is not enforceable. Regardless of that, B can always claim even that payment for another 30d if A cheated and broadcasted a revoked transaction.
 
 ![Dual TX Commitment Design](docs/dual-tx-diagram.png)
 
