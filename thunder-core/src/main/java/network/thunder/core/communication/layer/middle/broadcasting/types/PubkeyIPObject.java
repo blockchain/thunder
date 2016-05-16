@@ -123,7 +123,7 @@ public class PubkeyIPObject extends P2PDataObject {
     public boolean isSimilarObject (P2PDataObject object) {
         if (object instanceof PubkeyIPObject) {
             PubkeyIPObject channel = (PubkeyIPObject) object;
-            boolean equals = channel.hostname.equals(this.hostname);
+            boolean equals = channel.hostname.equals(this.hostname) && channel.port == this.port;
             return equals;
         }
         return false;
