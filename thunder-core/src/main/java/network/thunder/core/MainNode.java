@@ -236,20 +236,21 @@ public class MainNode {
                 return null;
             } else if (s.equals("")) {
                 return nodeList;
+            } else if (s.equals(server.pubKeyServer.getPublicKeyAsHex())) {
+                System.out.println("You cannot connect to yourself..");
+            } else if (nodeList.contains(s)) {
+                System.out.println("Pubkey already added to the list..");
             } else {
-
-                ECKey key = null;
+                ECKey key;
                 try {
                     key = ECKey.fromPublicOnly(Tools.hexStringToByteArray(s));
                 } catch (Exception e) {
+                    System.out.println("Invalid pubkey..");
+                    continue;
                 }
 
-                if (key == null) {
-                    System.out.println("Invalid pubkey..");
-                } else {
-                    System.out.println(key.getPublicKeyAsHex() + " added to list..");
-                    nodeList.add(s);
-                }
+                System.out.println(key.getPublicKeyAsHex() + " added to list..");
+                nodeList.add(s);
             }
 
         }
