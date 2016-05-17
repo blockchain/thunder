@@ -95,7 +95,7 @@ public class ChannelBlockchainWatcher extends BlockchainWatcher {
                 return true;
             }
             if (!confirmed) {
-                if (block.getTransactions().contains(tx)) {
+                if (block != null && block.getTransactions() != null && block.getTransactions().contains(tx)) {
                     confirmed = true;
                 }
             }
