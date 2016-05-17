@@ -16,10 +16,8 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     List<PaymentWrapper> payments = new ArrayList<>();
     List<PaymentSecret> secrets = new ArrayList<>();
 
-    @Override
     public Channel getChannel (int id) {
         Channel channel = new Channel();
-        channel.id = id;
         channel.channelStatus = new ChannelStatus();
         channel.channelStatus.amountServer = INITIAL_AMOUNT_CHANNEL;
         channel.channelStatus.amountClient = INITIAL_AMOUNT_CHANNEL;

@@ -86,7 +86,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
         int index = 2;
         for (Transaction t : paymentTransactions) {
-            TransactionSignature sig = Tools.getSignature(t, 0, channelTransaction.getOutput(index).getScriptBytes(), channel.getKeyServer());
+            TransactionSignature sig = Tools.getSignature(t, 0, channelTransaction.getOutput(index).getScriptBytes(), channel.keyServer);
             signatureList.add(sig);
             index++;
         }
@@ -141,7 +141,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
         int index = 2;
         for (Transaction t : paymentTransactions) {
-            TransactionSignature sig = Tools.getSignature(t, 0, getClientTransaction().getOutput(index).getScriptBytes(), channel.getKeyServer());
+            TransactionSignature sig = Tools.getSignature(t, 0, getClientTransaction().getOutput(index).getScriptBytes(), channel.keyServer);
             signatureList.add(sig);
             index++;
         }

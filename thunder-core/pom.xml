@@ -177,6 +177,14 @@
             <version>${kotlin.version}</version>
         </dependency>
 
+        <!-- http://mvnrepository.com/artifact/org.hibernate/hibernate-core -->
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-core</artifactId>
+            <version>5.0.0.Final</version>
+        </dependency>
+
+
 
     </dependencies>
 

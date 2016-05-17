@@ -209,17 +209,6 @@ public class InMemoryDBHandler implements DBHandler {
         return true;
     }
 
-    @Override
-    public Channel getChannel (int id) {
-        synchronized (channelList) {
-            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
-            if (optional.isPresent()) {
-                return optional.get();
-            } else {
-                throw new RuntimeException("Channel not found..");
-            }
-        }
-    }
 
     @Override
     public Channel getChannel (Sha256Hash hash) {
@@ -249,11 +238,9 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public int saveChannel (Channel channel) {
+    public void saveChannel (Channel channel) {
         synchronized (channelList) {
-            channel.id = this.channelList.size();
             this.channelList.add(channel);
-            return channel.id;
         }
     }
 

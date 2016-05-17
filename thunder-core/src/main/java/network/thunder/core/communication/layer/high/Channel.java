@@ -29,21 +29,26 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 
+import javax.persistence.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 public class Channel {
 
-    public int id;
-    public byte[] nodeKeyClient;
+    @Id
     private Sha256Hash hash;
+
+    public byte[] nodeKeyClient;
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
      */
-    public ECKey keyClient;
-    public ECKey keyServer;
+    @OneToOne(fetch = FetchType.EAGER)
+    public transient ECKey keyClient;
+    @OneToOne(fetch = FetchType.EAGER)
+    public transient ECKey keyServer;
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
@@ -74,11 +79,14 @@ public class Channel {
      * While this might not be completely necessary, it allows for efficient lookup in case anything goes wrong and we need it.
      */
     public Sha256Hash anchorTxHash;
+
     public Transaction anchorTx;
-    public List<TransactionSignature> anchorSignature;
     public int minConfirmationAnchor;
 
+    @Embedded
     public ChannelStatus channelStatus;
+
+    @Embedded
     public ChannelSignatures channelSignatures = new ChannelSignatures();
     /*
      * Upcounting version number to keep track which revocation-hash is used with which payments.
@@ -91,6 +99,7 @@ public class Channel {
      *
      * These are necessary, as we save the state back to the database after each communication.
      */
+    @Enumerated
     public Phase phase;
     /*
      * Determines if the channel is ready to make/receive payments.
@@ -101,6 +110,7 @@ public class Channel {
 
     public boolean requestedClose;
 
+    @OneToMany(targetEntity = Channel.class, mappedBy = "hash", fetch = FetchType.EAGER)
     public List<TransactionSignature> closingSignatures;
 
     public void setNodeKeyClient (byte[] nodeKeyClient) {
@@ -171,8 +181,9 @@ public class Channel {
     }
 
     //region Script Getter
+    @Transient
     public Script getAnchorScriptOutput () {
-        return ScriptTools.getAnchorOutputScriptP2SH(getKeyClient(), getKeyServer());
+        return ScriptTools.getAnchorOutputScriptP2SH(keyClient, keyServer);
     }
 
     //endregion
@@ -190,7 +201,7 @@ public class Channel {
         channelStatus.amountClient = amount;
         channelStatus.amountServer = amount;
         nodeKeyClient = nodeId;
-        setIsReady(false);
+        isReady = false;
     }
 
     public void retrieveDataFromOtherChannel (Channel channel) {
@@ -207,172 +218,6 @@ public class Channel {
         return "Channel{" +
                 "channelStatus=" + channelStatus +
                 '}';
-    }
-
-    //region Getter Setter
-
-    public int getChannelTxVersion () {
-        return channelTxVersion;
-    }
-
-    public void setChannelTxVersion (int channelTxVersion) {
-        this.channelTxVersion = channelTxVersion;
-    }
-
-    public int getClientChainDepth () {
-        return clientChainDepth;
-    }
-
-    public void setClientChainDepth (int clientChainDepth) {
-        this.clientChainDepth = clientChainDepth;
-    }
-
-    public int getId () {
-        return id;
-    }
-
-    public void setId (int id) {
-        this.id = id;
-    }
-
-    public ECKey getKeyClient () {
-        return keyClient;
-    }
-
-    public void setKeyClient (ECKey keyClient) {
-        this.keyClient = keyClient;
-    }
-
-    public ECKey getKeyServer () {
-        return keyServer;
-    }
-
-    public void setKeyServer (ECKey keyServer) {
-        this.keyServer = keyServer;
-    }
-
-    public byte[] getMasterPrivateKeyClient () {
-        return masterPrivateKeyClient;
-    }
-
-    public void setMasterPrivateKeyClient (byte[] masterPrivateKeyClient) {
-        this.masterPrivateKeyClient = masterPrivateKeyClient;
-    }
-
-    public byte[] getMasterPrivateKeyServer () {
-        return masterPrivateKeyServer;
-    }
-
-    public void setMasterPrivateKeyServer (byte[] masterPrivateKeyServer) {
-        this.masterPrivateKeyServer = masterPrivateKeyServer;
-    }
-
-    public Phase getPhase () {
-        return phase;
-    }
-
-    public void setPhase (Phase phase) {
-        this.phase = phase;
-    }
-
-    public int getServerChainChild () {
-        return serverChainChild;
-    }
-
-    public void setServerChainChild (int serverChainChild) {
-        this.serverChainChild = serverChainChild;
-    }
-
-    public int getServerChainDepth () {
-        return serverChainDepth;
-    }
-
-    public void setServerChainDepth (int serverChainDepth) {
-        this.serverChainDepth = serverChainDepth;
-    }
-
-//    /**
-//     * New master key.
-//     *
-//     * @param masterKey the master key
-//     * @throws Exception the exception
-//     */
-//    public void newMasterKey (RevocationHash masterKey) throws Exception {
-//        if (getMasterPrivateKeyClient() != null) {
-//            /*
-//             * Make sure the old masterPrivateKey is a child of this one..
-//			 */
-
-//            DeterministicKey key = DeterministicKey.deserializeB58(masterKey.privateKey, Constants.getNetwork());
-//            DeterministicHierarchy hierachy = new DeterministicHierarchy(key);
-
-//            List<ChildNumber> childList = HashDerivation.getChildList(getMasterChainDepth() - masterKey.depth);
-//            DeterministicKey keyDerived = hierachy.get(childList, true, true);
-
-//            if (!HashDerivation.compareDeterministicKeys(keyDerived, getMasterPrivateKeyClient())) {
-//                throw new Exception("The new masterPrivateKey is not a parent of the one we have..");
-//            }
-//        }
-
-    /**
-     * Gets the timestamp force close.
-     *
-     * @return the timestamp force close
-     */
-    public int getTimestampForceClose () {
-        return timestampForceClose;
-    }
-//        setMasterPrivateKeyClient(masterKey.getSecretAsString());
-//        setMasterChainDepth(masterKey.getDepth());
-//    }
-
-    /**
-     * Sets the timestamp force close.
-     *
-     * @param timestampForceClose the new timestamp force close
-     */
-    public void setTimestampForceClose (int timestampForceClose) {
-        this.timestampForceClose = timestampForceClose;
-    }
-
-    /**
-     * Gets the timestamp open.
-     *
-     * @return the timestamp open
-     */
-    public int getTimestampOpen () {
-        return timestampOpen;
-    }
-
-    /**
-     * Sets the timestamp open.
-     *
-     * @param timestampOpen the new timestamp open
-     */
-    public void setTimestampOpen (int timestampOpen) {
-        this.timestampOpen = timestampOpen;
-    }
-
-    /**
-     * Checks if is ready.
-     *
-     * @return true, if is ready
-     */
-    public boolean isReady () {
-        return isReady;
-    }
-
-    /**
-     * Sets the ready.
-     *
-     * @param isReady the new ready
-     */
-    public void setReady (boolean isReady) {
-        this.isReady = isReady;
-    }
-
-    public void setIsReady (boolean isReady) {
-        this.isReady = isReady;
     }
 
     public enum Phase {
@@ -396,6 +241,4 @@ public class Channel {
         }
 
     }
-
-    //endregion
 }

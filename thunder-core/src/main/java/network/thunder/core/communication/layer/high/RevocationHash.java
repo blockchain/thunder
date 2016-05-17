@@ -35,6 +35,9 @@ public class RevocationHash {
     private byte[] secret;
     private byte[] secretHash;
 
+    public RevocationHash () {
+    }
+
     public RevocationHash (int depth, int child, byte[] secret, byte[] secretHash) {
         this.depth = depth;
         this.child = child;

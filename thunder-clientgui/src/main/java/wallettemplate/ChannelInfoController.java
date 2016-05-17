@@ -6,12 +6,8 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.HBox;
-import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.etc.Tools;
-import org.bitcoinj.core.Coin;
 
 import java.sql.SQLException;
-import java.util.Date;
 
 public class ChannelInfoController {
 
@@ -72,15 +68,15 @@ public class ChannelInfoController {
         assert txRevoke != null : "fx:id=\"txRevoke\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert cancelBtn != null : "fx:id=\"cancelBtn\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert cancelBtn1 != null : "fx:id=\"cancelBtn1\" was not injected: check your FXML file 'channel_info.fxml'.";
-
-        Channel channel = Main.dbHandler.getChannel(0);
-
-        balanceClient.setText(Coin.valueOf(channel.channelStatus.amountClient).toFriendlyString());
-        balanceServer.setText(Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString());
-
-        labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
-
-        txOpen.setText(Tools.bytesToHex(channel.anchorTx.bitcoinSerialize()));
+//
+//        Channel channel = Main.dbHandler.getChannel(new ECKey()).get(0);
+//
+//        balanceClient.setText(Coin.valueOf(channel.channelStatus.amountClient).toFriendlyString());
+//        balanceServer.setText(Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString());
+//
+//        labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
+//
+//        txOpen.setText(Tools.bytesToHex(channel.anchorTx.bitcoinSerialize()));
 
     }
 

@@ -4,6 +4,10 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import org.bitcoinj.core.Address;
 
+import javax.persistence.FetchType;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -12,22 +16,28 @@ public class ChannelStatus implements Cloneable {
     public long amountClient;
     public long amountServer;
 
+    @OneToMany(targetEntity = Channel.class, mappedBy = "hash", fetch = FetchType.EAGER)
     public List<PaymentData> paymentList = new ArrayList<>();
 
     public int feePerByte;
     public long csvDelay;
 
+    @OneToOne(fetch = FetchType.EAGER)
     public RevocationHash revocationHashClient;
+    @OneToOne(fetch = FetchType.EAGER)
     public RevocationHash revocationHashServer;
 
-    public Address addressClient;
-    public Address addressServer;
+    @OneToOne(fetch = FetchType.EAGER)
+    transient public Address addressClient;
+    @OneToOne(fetch = FetchType.EAGER)
+    transient public Address addressServer;
 
     @Override
     protected Object clone () throws CloneNotSupportedException {
         return super.clone();
     }
 
+    @Transient
     public ChannelStatus getClone () {
         try {
             ChannelStatus status = (ChannelStatus) this.clone();
@@ -38,6 +48,7 @@ public class ChannelStatus implements Cloneable {
         }
     }
 
+    @Transient
     public ChannelStatus getCloneReversed () {
         ChannelStatus status = getClone();
 

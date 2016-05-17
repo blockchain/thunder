@@ -74,10 +74,6 @@ public class DBHandlerMock implements DBHandler {
         return true;
     }
 
-    @Override
-    public Channel getChannel (int id) {
-        return null;
-    }
 
     @Override
     public Channel getChannel (Sha256Hash hash) {
@@ -95,8 +91,7 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public int saveChannel (Channel channel) {
-        return 0;
+    public void saveChannel (Channel channel) {
     }
 
     @Override

@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.wallet.MockWallet;
@@ -42,7 +42,7 @@ public class Main extends Application {
     public static Wallet wallet;
 
     public static ThunderContext thunderContext;
-    public static DBHandler dbHandler = new InMemoryDBHandler();
+    public static DBHandler dbHandler = new HibernateDBHandler();
     public static ServerObject node = new ServerObject();
 
     private StackPane uiStack;

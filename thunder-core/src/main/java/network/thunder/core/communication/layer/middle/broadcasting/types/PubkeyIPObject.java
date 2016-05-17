@@ -4,6 +4,8 @@ import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.crypto.CryptoTools;
 import org.bitcoinj.core.ECKey;
 
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
@@ -11,7 +13,7 @@ import java.security.NoSuchProviderException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
-
+@Entity
 public class PubkeyIPObject extends P2PDataObject {
     public String hostname;
     public int port;
@@ -70,6 +72,7 @@ public class PubkeyIPObject extends P2PDataObject {
         return Arrays.equals(pubkey, ipObject.pubkey);
     }
 
+    @Transient
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
@@ -90,6 +93,7 @@ public class PubkeyIPObject extends P2PDataObject {
         return timestamp;
     }
 
+    @Transient
     @Override
     public long getHashAsLong () {
         ByteBuffer byteBuffer = ByteBuffer.allocate(8);

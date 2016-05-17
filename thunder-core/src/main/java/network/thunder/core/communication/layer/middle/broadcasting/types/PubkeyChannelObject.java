@@ -2,11 +2,12 @@ package network.thunder.core.communication.layer.middle.broadcasting.types;
 
 import network.thunder.core.etc.Tools;
 
+import javax.persistence.Entity;
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
-
+@Entity
 public class PubkeyChannelObject extends P2PDataObject {
 
     public byte[] pubkeyB;

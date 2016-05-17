@@ -2,11 +2,14 @@ package network.thunder.core.communication.layer.middle.broadcasting.types;
 
 import network.thunder.core.etc.Tools;
 
+import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
 
+@Entity
 public class ChannelStatusObject extends P2PDataObject {
 
     public byte[] pubkeyA;
@@ -52,6 +55,7 @@ public class ChannelStatusObject extends P2PDataObject {
         return obj;
     }
 
+    @Transient
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
