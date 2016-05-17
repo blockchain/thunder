@@ -59,7 +59,7 @@ public class MockWallet extends Wallet {
     }
 
     public MockWallet (Context context, KeyChainGroup keyChainGroup) {
-        super(context, keyChainGroup);
+        super(Constants.getNetwork(), keyChainGroup);
     }
 
     @Override
