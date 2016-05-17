@@ -280,6 +280,10 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
                 establishProgress.channel.addAnchorOutputToAnchor();
             }
 
+            if(!Tools.testTransactionInputsForSegWit(establishProgress.channel.anchorTx, blockchainHelper)) {
+                throw new LNEstablishException("Transaction could not positively be tested for SegWit inputs..");
+            }
+
             message.saveToChannel(establishProgress.channel);
 
             Transaction channelTransaction = paymentLogic.getChannelTransaction(

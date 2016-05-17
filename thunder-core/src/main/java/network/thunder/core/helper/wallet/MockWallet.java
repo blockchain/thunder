@@ -89,14 +89,10 @@ public class MockWallet extends Wallet {
         });
         wtx.getTransaction().getOutputs().forEach(transactionOutput ->
         {
-            Address address = transactionOutput.getAddressFromP2PKHScript(Constants.getNetwork());
-            if (address != null) {
-                if (keyList.stream().anyMatch(
-                        ecKey -> ecKey.toAddress(Constants.getNetwork()).equals(address))) {
-                    outputs.add(transactionOutput);
-                }
-            } else {
-
+            Address address = new Address(params, transactionOutput.getScriptPubKey().getChunks().get(1).data);
+            if (keyList.stream().anyMatch(
+                    ecKey -> ecKey.toAddress(Constants.getNetwork()).equals(address))) {
+                outputs.add(transactionOutput);
             }
 
         });

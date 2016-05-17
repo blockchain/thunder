@@ -6,7 +6,10 @@ import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.etc.TransactionWitnessMutable;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.TransactionWitness;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
@@ -143,6 +146,29 @@ public class ScriptTools {
 
     public static Script getAnchorOutputScriptP2SH (ECKey keyClient, ECKey keyServer) {
         return ScriptBuilder.createP2SHOutputScript(getAnchorOutputScript(keyClient, keyServer));
+    }
+
+    public static Script getAnchorOutputScriptSegWit (ECKey keyClient, ECKey keyServer) {
+        return getSegWitOutput(getAnchorOutputScript(keyClient, keyServer));
+    }
+
+    public static Script getSegWitOutput (Script input) {
+        byte[] program = Sha256Hash.hash(input.getProgram());
+        ScriptBuilder builder = new ScriptBuilder();
+        builder.smallNum(0);
+        builder.data(program);
+        return builder.build();
+    }
+
+    public static TransactionWitness getWitness (Script input, Script output) {
+        List<ScriptChunk> inputChunks = input.getChunks();
+        List<ScriptChunk> outputChunks = output.getChunks();
+        TransactionWitnessMutable transactionWitness = new TransactionWitnessMutable(inputChunks.size() + 1);
+        for (int i = 0; i < inputChunks.size(); ++i) {
+            transactionWitness.set(i, inputChunks.get(i).data);
+        }
+        transactionWitness.set(transactionWitness.getPushCount(), output.getProgram());
+        return transactionWitness;
     }
 
     /*

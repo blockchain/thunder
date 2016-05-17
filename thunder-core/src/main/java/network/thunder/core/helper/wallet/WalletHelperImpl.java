@@ -2,9 +2,9 @@ package network.thunder.core.helper.wallet;
 
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.etc.TransactionWitnessMutable;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.ScriptBuilder;
 
 import java.util.*;
 
@@ -114,19 +114,17 @@ public class WalletHelperImpl implements WalletHelper {
                     wallet.calculateAllSpendCandidates().stream().filter(out -> input.getOutpoint().equals(out.getOutPointFor())).findAny();
             if (optional.isPresent()) {
                 TransactionOutput output = optional.get();
-                Address address = output.getAddressFromP2PKHScript(Constants.getNetwork());
+                Address address = new Address(Constants.getNetwork(), output.getScriptPubKey().getChunks().get(1).data);
 
                 //Only sign P2PKH and only those that we possess the key for..
-                if (address != null) {
-                    ECKey key = wallet.findKeyFromPubHash(address.getHash160());
-                    if (key != null) {
-                        TransactionSignature sig = Tools.getSignature(transaction, i, output, key);
-                        byte[] s = sig.encodeToBitcoin();
-                        ScriptBuilder builder = new ScriptBuilder();
-                        builder.data(s);
-                        builder.data(key.getPubKey());
-                        transaction.getInput(i).setScriptSig(builder.build());
-                    }
+                ECKey key = wallet.findKeyFromPubHash(address.getHash160());
+                if (key != null) {
+                    TransactionSignature sig = Tools.getSignature(transaction, i, output, key);
+                    byte[] s = sig.encodeToBitcoin();
+                    TransactionWitnessMutable witness = new TransactionWitnessMutable(2);
+                    witness.set(0, sig.encodeToBitcoin());
+                    witness.set(1, key.getPubKey());
+                    transaction.setWitness(i, witness);
                 }
             }
         }

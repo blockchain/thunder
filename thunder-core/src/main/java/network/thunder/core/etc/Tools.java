@@ -23,13 +23,14 @@ import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.helper.ScriptTools;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.ECKey.ECDSASignature;
 import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.script.ScriptChunk;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.*;
@@ -44,6 +45,33 @@ import java.util.*;
 public class Tools {
 
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
+
+    public static boolean testTransactionInputsForSegWit (Transaction transaction, BlockchainHelper blockchainHelper) {
+        for (TransactionInput input : transaction.getInputs()) {
+            TransactionOutPoint outpoint = input.getOutpoint();
+            Transaction t = blockchainHelper.getTransaction(outpoint.getHash());
+            Script s = t.getOutput(outpoint.getIndex()).getScriptPubKey();
+
+            //We only accept true SegWit outputs, that is nested BIP16 P2SH aren't considered.
+            List<ScriptChunk> chunks = s.getChunks();
+
+            ScriptChunk version = chunks.get(0);
+            ScriptChunk program = chunks.get(1);
+            if (chunks.size() == 2) {
+                if (version.isPushData()) {
+                    if (version.decodeOpN() < 16) {
+                        if (program.isPushData()) {
+                            if (program.data.length == 20 || program.data.length == 32) {
+                                continue;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        return true;
+    }
 
     public static int getRandom (int min, int max) {
         return new Random().nextInt(max + 1 - min) + min;
@@ -110,7 +138,7 @@ public class Tools {
         TransactionSignature signature1 = Tools.getSignature(
                 transaction,
                 0,
-                ScriptTools.getAnchorOutputScript(channel.keyClient, channel.keyServer).getProgram(),
+                channel.anchorTx.getOutput(0),
                 channel.keyServer);
 
         List<TransactionSignature> channelSignatures = new ArrayList<>();
@@ -377,11 +405,7 @@ public class Tools {
     }
 
     public static TransactionSignature getSignature (Transaction transactionToSign, int index, TransactionOutput outputToSpend, ECKey key) {
-        return getSignature(transactionToSign, index, outputToSpend.getScriptBytes(), key);
-    }
-
-    public static TransactionSignature getSignature (Transaction transactionToSign, int index, byte[] outputToSpend, ECKey key) {
-        Sha256Hash hash = transactionToSign.hashForSignature(index, outputToSpend, SigHash.ALL, false);
+        Sha256Hash hash = transactionToSign.hashForSignatureWitness(index, outputToSpend.getScriptPubKey(), outputToSpend.getValue(), SigHash.ALL, false);
         TransactionSignature signature = new TransactionSignature(key.sign(hash).toCanonicalised(), SigHash.ALL, false);
         return signature;
     }
