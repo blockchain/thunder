@@ -6,7 +6,6 @@ import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import org.bitcoinj.core.ECKey;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -33,7 +32,7 @@ public class FullCommTest {
      */
     //TODO Add payments to the test
     //TODO Add syncing to the test
-    @Test
+//    @Test
     public void totalTest () throws InterruptedException {
         List<NodeWrapper> nodeList = setupNodes();
         setupSeedNode(nodeList);

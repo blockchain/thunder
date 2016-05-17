@@ -1,6 +1,6 @@
 # thundernetwork
 
-[![Build Status](https://travis-ci.org/matsjj/thundernetwork.svg?branch=master)](https://travis-ci.org/matsjj/thundernetwork)
+[![Build Status](https://travis-ci.org/blockchain/thunder.svg?branch=master)](https://travis-ci.org/blockchain/thunder)
 ![Wallet Screenshot](docs/screenshot.png)
 Wallet / Node implementation of the [lightning.network](http://lightning.network/) P2P protocol. The lightning.network enables Off-Chain Bitcoin Payment Channels using smart contracts.
 
