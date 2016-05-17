@@ -98,39 +98,43 @@ public class InMemoryDBHandler implements DBHandler {
                 continue;
             }
 
-            Iterator<P2PDataObject> iterator2 = totalList.iterator();
-            while (iterator2.hasNext() && !deleted) {
-                P2PDataObject object2 = iterator2.next();
-                if (object1.isSimilarObject(object2)) {
+            synchronized (totalList) {
+                Iterator<P2PDataObject> iterator2 = totalList.iterator();
+                while (iterator2.hasNext() && !deleted) {
+                    P2PDataObject object2 = iterator2.next();
+                    if (object1.isSimilarObject(object2)) {
 
-                    if (object1.getTimestamp() <= object2.getTimestamp()) {
-                        iterator1.remove();
-                    } else {
-                        iterator2.remove();
-                        for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
-                            fragmentToListMap.get(i).remove(object2);
+                        if (object1.getTimestamp() <= object2.getTimestamp()) {
+                            iterator1.remove();
+                        } else {
+                            iterator2.remove();
+                            for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
+                                fragmentToListMap.get(i).remove(object2);
+                            }
+                            pubkeyIPList.remove(object2);
+                            pubkeyChannelList.remove(object2);
+                            channelStatusList.remove(object2);
                         }
-                        pubkeyIPList.remove(object2);
-                        pubkeyChannelList.remove(object2);
-                        channelStatusList.remove(object2);
+                        deleted = true;
                     }
-                    deleted = true;
                 }
             }
         }
 
-        Iterator<P2PDataObject> iterator2 = totalList.iterator();
-        while (iterator2.hasNext()) {
-            P2PDataObject object2 = iterator2.next();
-            int timestamp = object2.getTimestamp();
-            if (timestamp != 0 && Tools.currentTime() - timestamp > P2PDataObject.MAXIMUM_AGE_SYNC_DATA) {
-                iterator2.remove();
-                for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
-                    fragmentToListMap.get(i).remove(object2);
+        synchronized (totalList) {
+            Iterator<P2PDataObject> iterator2 = totalList.iterator();
+            while (iterator2.hasNext()) {
+                P2PDataObject object2 = iterator2.next();
+                int timestamp = object2.getTimestamp();
+                if (timestamp != 0 && Tools.currentTime() - timestamp > P2PDataObject.MAXIMUM_AGE_SYNC_DATA) {
+                    iterator2.remove();
+                    for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
+                        fragmentToListMap.get(i).remove(object2);
+                    }
+                    pubkeyIPList.remove(object2);
+                    pubkeyChannelList.remove(object2);
+                    channelStatusList.remove(object2);
                 }
-                pubkeyIPList.remove(object2);
-                pubkeyChannelList.remove(object2);
-                channelStatusList.remove(object2);
             }
         }
 
