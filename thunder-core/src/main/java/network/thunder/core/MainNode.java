@@ -113,7 +113,7 @@ public class MainNode {
         } else {
             //TODO somehow allow sending money out of the node again..
             System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
-            WalletAppKit walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), new String("node_"));
+            WalletAppKit walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), "node_");
             walletAppKit.startAsync().awaitRunning();
             Wallet wallet = walletAppKit.wallet();
             wallet.allowSpendingUnconfirmedTransactions();

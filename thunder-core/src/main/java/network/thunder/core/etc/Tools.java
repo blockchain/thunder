@@ -201,7 +201,7 @@ public class Tools {
      */
     //	http://java-performance.info/base64-encoding-and-decoding-performance/
     public static String byteToString (byte[] array) {
-        return new String(Base64.encode(array));
+        return Base64.encode(array);
     }
 
     /**
