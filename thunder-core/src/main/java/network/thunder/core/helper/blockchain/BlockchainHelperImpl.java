@@ -40,7 +40,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
     BlockExplorer blockExplorer = new BlockExplorer();
 
-    Boolean initialized = new Boolean(false);
+    Boolean initialized = Boolean.FALSE;
     Wallet wallet;
 
     public BlockchainHelperImpl () {
