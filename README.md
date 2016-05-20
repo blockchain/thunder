@@ -40,6 +40,8 @@ to build both the node and the wallet software.
 
 ### Installation
 
+Install Java 8 JDK (Unix machines: and OpenJFX) before proceeding.
+
 Executing
 ```
 ./build.sh
