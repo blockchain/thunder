@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class ToolsTest {
 
@@ -24,6 +26,37 @@ public class ToolsTest {
         Transaction appliedTransaction = Tools.applyBIP69(shuffledTransaction);
 
         assertEquals(correctTransaction.getHash(), appliedTransaction.getHash());
+
+    }
+
+    @Test
+    public void testIntToBool () {
+        assertEquals(Tools.intToBool(1), true);
+        assertEquals(Tools.intToBool(0), false);
+        assertEquals(Tools.intToBool(2), true);
+        assertEquals(Tools.intToBool(3), true);
+    }
+
+    @Test
+    public void testBoolToInt () {
+        assertEquals(Tools.boolToInt(true), 1);
+        assertEquals(Tools.boolToInt(false), 0);
+    }
+
+    @Test
+    public void hexStringToByteArray () {
+        assertArrayEquals(Tools.hexStringToByteArray("010a"), new byte[]{(byte) 1, (byte) 10});
+        assertArrayEquals(Tools.hexStringToByteArray("0001"), new byte[]{(byte) 0, (byte) 1});
+        assertArrayEquals(Tools.hexStringToByteArray("ac de"), new byte[]{(byte) 0xac, (byte) 0xde});
+
+        boolean hasThrown = false;
+        try {
+            Tools.hexStringToByteArray("a");
+        } catch (IllegalArgumentException e) {
+            hasThrown = true;
+        }
+
+        assertTrue(hasThrown);
 
     }
 

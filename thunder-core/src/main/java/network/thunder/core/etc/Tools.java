@@ -169,11 +169,7 @@ public class Tools {
      * @return the int
      */
     public static int boolToInt (boolean bool) {
-        int a = 0;
-        if (bool) {
-            a = 1;
-        }
-        return a;
+        return bool ? 1 : 0;
     }
 
     public static <T extends Object> T getRandomItemFromList (List<T> list) {
@@ -506,8 +502,13 @@ public class Tools {
     }
 
     public static byte[] hexStringToByteArray (String s) {
-        s = s.replaceAll(" ", "").toLowerCase();
+        s = s.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         int len = s.length();
+
+        if (len % 2 != 0) {
+            throw new IllegalArgumentException("Uneven hexadecimal string");
+        }
+
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
             data[i / 2] = (byte) ((Character.digit(s.charAt(i), 16) << 4) + Character.digit(s.charAt(i + 1), 16));
@@ -516,11 +517,7 @@ public class Tools {
     }
 
     public static boolean intToBool (int i) {
-        boolean a = true;
-        if (i == 0) {
-            a = false;
-        }
-        return a;
+        return !(i == 0);
     }
 
     public static Transaction setTransactionLockTime (Transaction transaction, int locktime) {
