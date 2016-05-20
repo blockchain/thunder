@@ -70,6 +70,8 @@ public class HttpClient implements HttpClientInterface {
             }
         } else if (requestMethod.equals("POST")) {
             url = new URL(BASE_URL + resource);
+        } else {
+            throw new APIException("Unsupported HTTP method: " + requestMethod);
         }
 
         HttpURLConnection conn = null;
@@ -97,10 +99,12 @@ public class HttpClient implements HttpClientInterface {
             ioException = e;
         } finally {
             try {
-                if (apiException != null) {
-                    conn.getErrorStream().close();
+                if (conn != null) {
+                    if (apiException != null) {
+                        conn.getErrorStream().close();
+                    }
+                    conn.getInputStream().close();
                 }
-                conn.getInputStream().close();
             } catch (Exception ex) {
             }
 
