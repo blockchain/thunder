@@ -2,56 +2,83 @@ package network.thunder.core.communication.layer.high.channel.establish.messages
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.processor.exceptions.LNEstablishException;
 import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
 
 public class LNEstablishAMessage implements LNEstablish {
-    public byte[] pubKeyEscape;
-    public byte[] pubKeyFastEscape;
-    public byte[] secretHashFastEscape;
-    public byte[] revocationHash;
-    public long clientAmount;
-    public long serverAmount;
+    //Data about the anchor
+    public byte[] channelKeyServer;
+    public long amountClient;
+    public long amountServer;
+    public byte[] anchorTransaction;
     public byte[] addressBytes;
+    public int minConfirmationAnchor;
 
-    public LNEstablishAMessage (byte[] pubKeyEscape, byte[] pubKeyFastEscape, byte[] secretHashFastEscape, byte[] revocationHash, long clientAmount, long
-            serverAmount, Address address) {
-        this.pubKeyEscape = pubKeyEscape;
-        this.pubKeyFastEscape = pubKeyFastEscape;
-        this.secretHashFastEscape = secretHashFastEscape;
+    //Data about the first commitment to be able to refund if necessary
+    public RevocationHash revocationHash;
+    public int feePerByte;
+    public long csvDelay;
+
+    public LNEstablishAMessage (ECKey channelKeyServer, Transaction anchor, RevocationHash revocationHash, long clientAmount, long
+            serverAmount, int minConfirmationAnchor, Address address, int feePerByte, long csvDelay) {
+        this.channelKeyServer = channelKeyServer.getPubKey();
+        this.minConfirmationAnchor = minConfirmationAnchor;
+        this.anchorTransaction = anchor.bitcoinSerialize();
         this.revocationHash = revocationHash;
-        this.clientAmount = clientAmount;
-        this.serverAmount = serverAmount;
+        this.amountClient = clientAmount;
+        this.amountServer = serverAmount;
         this.addressBytes = address.getHash160();
+        this.feePerByte = feePerByte;
+        this.csvDelay = csvDelay;
     }
 
     @Override
-    public void saveToChannel (Channel channel) {
-        channel.setInitialAmountServer(this.clientAmount);
-        channel.setAmountServer(this.clientAmount);
-        channel.setInitialAmountClient(this.serverAmount);
-        channel.setAmountClient(this.serverAmount);
-        channel.setKeyClient(ECKey.fromPublicOnly(this.pubKeyEscape));
-        channel.setKeyClientA(ECKey.fromPublicOnly(this.pubKeyFastEscape));
-        channel.setAnchorSecretHashClient(this.secretHashFastEscape);
-        channel.setAnchorRevocationHashClient(this.revocationHash);
-        channel.addressClient = new Address(Constants.getNetwork(), addressBytes);
+    public Channel saveToChannel (Channel channel) {
+        try {
+            Transaction newAnchorTx = new Transaction(Constants.getNetwork(), anchorTransaction);
+
+            if(channel.anchorTx != null) {
+                if(Tools.checkIfExistingInOutPutsAreEqual(channel.anchorTx, newAnchorTx)) {
+                    throw new LNEstablishException("Our in/outputs of the anchor has been changed..");
+                }
+            }
+
+            //Don't allow changing the values for now, symmetric messages are easy to implement though
+            if(channel.channelStatus.amountServer == 0 || channel.channelStatus.amountClient == 0) {
+                channel.channelStatus.amountClient = amountClient;
+                channel.channelStatus.amountServer = amountServer;
+            }
+
+            channel.keyClient = ECKey.fromPublicOnly(channelKeyServer);
+            channel.anchorTx = newAnchorTx;
+            channel.channelStatus.addressClient = new Address(Constants.getNetwork(), addressBytes);
+            channel.channelStatus.revocationHashClient = revocationHash;
+            channel.channelStatus.csvDelay = csvDelay;
+            channel.channelStatus.feePerByte = feePerByte;
+            channel.minConfirmationAnchor = minConfirmationAnchor;
+            return channel;
+        } catch(Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void verify () {
-        Preconditions.checkNotNull(pubKeyEscape);
-        Preconditions.checkNotNull(pubKeyFastEscape);
-        Preconditions.checkNotNull(secretHashFastEscape);
+        Preconditions.checkNotNull(addressBytes);
+        Preconditions.checkNotNull(anchorTransaction);
         Preconditions.checkNotNull(revocationHash);
     }
 
     @Override
     public String toString () {
         return "LNEstablishAMessage{" +
-                "serverAmount=" + serverAmount +
-                ", clientAmount=" + clientAmount +
+                "amountServer=" + amountServer +
+                ", amountClient=" + amountClient +
                 '}';
     }
 }

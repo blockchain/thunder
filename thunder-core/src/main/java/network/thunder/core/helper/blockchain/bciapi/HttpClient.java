@@ -143,7 +143,7 @@ public class HttpClient implements HttpClientInterface {
         BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
         StringBuilder responseStringBuilder = new StringBuilder();
-        String line = "";
+        String line;
 
         while ((line = reader.readLine()) != null) {
             responseStringBuilder.append(line);

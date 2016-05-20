@@ -26,8 +26,8 @@ public class LNPaymentAMessage implements LNPayment {
 
     @Override
     public String toString () {
-        return "LNPaymentAMessage{" +
-                "channelUpdate=" + channelStatus +
+        return "LNPaymentAMessage{dice=" + dice + ", " +
+                "channelUpdate=" + (channelStatus.newPayments.size() + channelStatus.redeemedPayments.size() + channelStatus.refundedPayments.size()) +
                 '}';
     }
 }

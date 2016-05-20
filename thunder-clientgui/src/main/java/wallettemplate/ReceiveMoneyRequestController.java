@@ -15,14 +15,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.PaymentRequest;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.ByteArrayInputStream;
-import java.nio.ByteBuffer;
 import java.util.ResourceBundle;
 
 public class ReceiveMoneyRequestController {
@@ -58,8 +57,6 @@ public class ReceiveMoneyRequestController {
         overlayUI.done();
     }
 
-    PaymentSecret secret = null;
-
     @FXML
     void initialize () {
         assert topHBox != null : "fx:id=\"topHBox\" was not injected: check your FXML file 'receive_money_request.fxml'.";
@@ -78,20 +75,14 @@ public class ReceiveMoneyRequestController {
 
     public void update () {
 
-        System.out.println(Tools.bytesToHex(Main.node.pubKeyServer.getPubKey()));
-
-        if (secret == null) {
-            secret = new PaymentSecret(Tools.getRandomByte(20));
-            Main.dbHandler.addPaymentSecret(secret);
-            System.out.println("HASH: " + Tools.bytesToHex(secret.hash));
-        }
+        PaymentRequest paymentRequest = Main.thunderContext.receivePayment(getAmount());
 
         try {
 
-            byte[] payload = getPayload();
+            byte[] payload = paymentRequest.getPayload();
 
             FieldAddress.setText(Tools.bytesToHex(payload));
-            FieldHash.setText(Tools.bytesToHex(secret.hash));
+            FieldHash.setText(Tools.bytesToHex(paymentRequest.paymentSecret.hash));
 
             System.out.println(Tools.bytesToHex(payload));
 
@@ -114,17 +105,6 @@ public class ReceiveMoneyRequestController {
             e.printStackTrace();
         }
 
-    }
-
-    public byte[] getPayload () {
-
-        ByteBuffer buffer = ByteBuffer.allocate(33 + 8 + 20);
-
-        buffer.putLong(getAmount());
-        buffer.put(secret.hash);
-        buffer.put(Main.node.pubKeyServer.getPubKey());
-
-        return buffer.array();
     }
 
     private long getAmount () {

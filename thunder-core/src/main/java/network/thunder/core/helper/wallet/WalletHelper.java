@@ -6,7 +6,9 @@ import org.bitcoinj.core.Transaction;
 public interface WalletHelper {
     long getSpendableAmount ();
 
-    Transaction completeInputs (Transaction transaction);
+    Transaction addInputs (Transaction transaction, long value, float feePerByte);
+
+    Transaction signTransaction(Transaction transaction);
 
     Address fetchAddress ();
 }

@@ -6,10 +6,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptBuilder;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class WalletHelperImpl implements WalletHelper {
     final static int TIME_LOCK_IN_SECONDS = 60;
@@ -27,8 +24,13 @@ public class WalletHelperImpl implements WalletHelper {
     }
 
     @Override
-    public Transaction completeInputs (Transaction transaction) {
-        return addOutAndInputs(transaction);
+    public Transaction addInputs (Transaction transaction, long value, float feePerByte) {
+        return addOutAndInputs(transaction, value, feePerByte);
+    }
+
+    @Override
+    public Transaction signTransaction (Transaction transaction) {
+        return signTransaction(transaction, wallet);
     }
 
     @Override
@@ -36,15 +38,40 @@ public class WalletHelperImpl implements WalletHelper {
         return wallet.freshReceiveAddress();
     }
 
-    private Transaction addOutAndInputs (Transaction transaction) {
+    private Transaction addOutAndInputs (Transaction transaction, long value, float feePerByte) {
 
         long totalInput = 0;
-        long value = Tools.getCoinValueFromOutput(transaction.getOutputs());
-        long neededAmount = value + Tools.getTransactionFees(20, 2);
+        long neededAmount = value + Tools.getTransactionFees(20, 20, feePerByte); //TODO obviously a hack, either use bitcoinj or make it smarter
 
-        List<TransactionOutput> outputList = new ArrayList<>();
         List<TransactionOutput> spendable = getUnlockedOutputs();
+        List<TransactionOutput> outputList = addInputs(totalInput, neededAmount, spendable);
+        totalInput = Tools.getCoinValueFromOutput(outputList);
 
+        if (totalInput < neededAmount) {
+            /*
+             * Not enough outputs in total to pay for the channel..
+             */
+            throw new RuntimeException("Wallet Balance not sufficient. " + totalInput + "<" + neededAmount); //TODO
+        } else {
+
+            //Fee calculation still not perfect, since both nodes that sign it run it, so fees for inputs are paid twice
+            long actualFee = Tools.getTransactionFees(outputList.size(), 3, feePerByte);
+            transaction.addOutput(Coin.valueOf(totalInput - value - actualFee), wallet.freshReceiveAddress());
+
+            for (TransactionOutput o : outputList) {
+                transaction.addInput(o);
+            }
+
+            for (TransactionOutput output : outputList) {
+                lockOutput(output);
+            }
+        }
+
+        return transaction;
+    }
+
+    private static List<TransactionOutput> addInputs (long totalInput, long neededAmount, List<TransactionOutput> spendable) {
+        List<TransactionOutput> outputList = new ArrayList<>();
         for (TransactionOutput o : spendable) {
             if (o.getValue().value > neededAmount) {
                 /*
@@ -53,6 +80,7 @@ public class WalletHelperImpl implements WalletHelper {
                  */
                 outputList.add(o);
                 totalInput += o.getValue().value;
+                break;
 
             }
         }
@@ -68,41 +96,40 @@ public class WalletHelperImpl implements WalletHelper {
                 outputList.add(o);
             }
         }
-
         if (totalInput < neededAmount) {
             /*
              * Not enough outputs in total to pay for the channel..
              */
             throw new RuntimeException("Wallet Balance not sufficient. " + totalInput + "<" + neededAmount); //TODO
-        } else {
+        }
+        return outputList;
+    }
 
-            transaction.addOutput(Coin.valueOf(totalInput - value - Tools.getTransactionFees(2, 2)), wallet.freshReceiveAddress());
+    private static Transaction signTransaction (Transaction transaction, Wallet wallet) {
+        //TODO: Currently only working if we have P2PKH outputs in our wallet
+        int j = 0;
+        for (int i = 0; i < transaction.getInputs().size(); ++i) {
+            TransactionInput input = transaction.getInput(i);
+            Optional<TransactionOutput> optional =
+                    wallet.calculateAllSpendCandidates().stream().filter(out -> input.getOutpoint().equals(out.getOutPointFor())).findAny();
+            if (optional.isPresent()) {
+                TransactionOutput output = optional.get();
+                Address address = output.getAddressFromP2PKHScript(Constants.getNetwork());
 
-            for (TransactionOutput o : outputList) {
-                transaction.addInput(o);
-            }
-
-            /*
-             * Sign all of our inputs..
-             */
-            int j = 0;
-            for (int i = 0; i < outputList.size(); i++) {
-                TransactionOutput o = outputList.get(i);
-                ECKey key = wallet.findKeyFromPubHash(o.getAddressFromP2PKHScript(Constants.getNetwork()).getHash160());
-                TransactionSignature sig = Tools.getSignature(transaction, i, o, key);
-                byte[] s = sig.encodeToBitcoin();
-                ScriptBuilder builder = new ScriptBuilder();
-                builder.data(s);
-                builder.data(key.getPubKey());
-                transaction.getInput(i).setScriptSig(builder.build());
-                //TODO: Currently only working if we have P2PKH outputs in our wallet
-            }
-
-            for (TransactionOutput output : outputList) {
-                lockOutput(output);
+                //Only sign P2PKH and only those that we possess the key for..
+                if (address != null) {
+                    ECKey key = wallet.findKeyFromPubHash(address.getHash160());
+                    if (key != null) {
+                        TransactionSignature sig = Tools.getSignature(transaction, i, output, key);
+                        byte[] s = sig.encodeToBitcoin();
+                        ScriptBuilder builder = new ScriptBuilder();
+                        builder.data(s);
+                        builder.data(key.getPubKey());
+                        transaction.getInput(i).setScriptSig(builder.build());
+                    }
+                }
             }
         }
-
         return transaction;
     }
 

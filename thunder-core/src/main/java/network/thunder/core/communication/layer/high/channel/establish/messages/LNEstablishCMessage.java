@@ -2,40 +2,29 @@ package network.thunder.core.communication.layer.high.channel.establish.messages
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.high.Channel;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.crypto.TransactionSignature;
-
-import java.util.Arrays;
+import network.thunder.core.etc.Constants;
+import org.bitcoinj.core.Transaction;
 
 public class LNEstablishCMessage implements LNEstablish {
-    public byte[] signatureEscape;
-    public byte[] signatureFastEscape;
-    public byte[] anchorHash;
+    public byte[] anchorSigned;
 
-    public LNEstablishCMessage (byte[] signatureEscape, byte[] signatureFastEscape, byte[] anchorHash) {
-        this.signatureEscape = signatureEscape;
-        this.signatureFastEscape = signatureFastEscape;
-        this.anchorHash = anchorHash;
+    public LNEstablishCMessage (Transaction transaction) {
+        this.anchorSigned = transaction.bitcoinSerialize();
     }
 
     @Override
-    public void saveToChannel (Channel channel) {
-        channel.setAnchorTxHashClient(Sha256Hash.wrap(this.anchorHash));
-        channel.setEscapeTxSig(TransactionSignature.decodeFromBitcoin(this.signatureEscape, true));
-        channel.setFastEscapeTxSig(TransactionSignature.decodeFromBitcoin(this.signatureFastEscape, true));
+    public Channel saveToChannel (Channel channel) {
+        channel.anchorTx = new Transaction(Constants.getNetwork(), anchorSigned);
+        return channel;
     }
 
     @Override
     public void verify () {
-        Preconditions.checkNotNull(signatureEscape);
-        Preconditions.checkNotNull(signatureFastEscape);
-        Preconditions.checkNotNull(anchorHash);
+        Preconditions.checkNotNull(anchorSigned);
     }
 
     @Override
     public String toString () {
-        return "LNEstablishCMessage{" +
-                "anchorHash=" + Arrays.toString(anchorHash) +
-                '}';
+        return "LNEstablishCMessage";
     }
 }

@@ -10,46 +10,38 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
     @Override
     public LNEstablishAMessage getEstablishMessageA (Channel channel) {
         LNEstablishAMessage message = new LNEstablishAMessage(
-                channel.getKeyServer().getPubKey(),
-                channel.getKeyServerA().getPubKey(),
-                channel.getAnchorSecretHashServer(),
-                channel.getAnchorRevocationHashServer(),
-                channel.getInitialAmountClient(),
-                channel.getInitialAmountServer(),
-                channel.addressServer);
+                channel.keyServer,
+                channel.anchorTx,
+                channel.channelStatus.revocationHashServer,
+                channel.channelStatus.amountClient,
+                channel.channelStatus.amountServer,
+                0,  //TODO add some reasonable minConfirmations
+                channel.channelStatus.addressServer,
+                channel.channelStatus.feePerByte,
+                channel.channelStatus.csvDelay);
         return message;
     }
 
     @Override
-    public LNEstablishBMessage getEstablishMessageB (Channel channel, Transaction anchor) {
+    public LNEstablishBMessage getEstablishMessageB (TransactionSignature channelSignature) {
         LNEstablishBMessage message = new LNEstablishBMessage(
-                channel.getKeyServer().getPubKey(),
-                channel.getKeyServerA().getPubKey(),
-                channel.getAnchorSecretHashServer(),
-                channel.getAnchorRevocationHashServer(),
-                anchor.getHash().getBytes(),
-                channel.getInitialAmountServer(),
-                channel.addressServer
+                channelSignature
         );
 
         return message;
     }
 
     @Override
-    public LNEstablishCMessage getEstablishMessageC (Transaction anchor, TransactionSignature escapeSignature, TransactionSignature escapeFastSignature) {
+    public LNEstablishCMessage getEstablishMessageC (Transaction transaction) {
         LNEstablishCMessage message = new LNEstablishCMessage(
-                escapeSignature.encodeToBitcoin(),
-                escapeFastSignature.encodeToBitcoin(),
-                anchor.getHash().getBytes());
+                transaction
+        );
         return message;
     }
 
     @Override
-    public LNEstablishDMessage getEstablishMessageD (TransactionSignature escapeSignature, TransactionSignature escapeFastSignature) {
-        LNEstablishDMessage message = new LNEstablishDMessage(
-                escapeSignature.encodeToBitcoin(),
-                escapeFastSignature.encodeToBitcoin()
-        );
+    public LNEstablishDMessage getEstablishMessageD () {
+        LNEstablishDMessage message = new LNEstablishDMessage();
         return message;
     }
 

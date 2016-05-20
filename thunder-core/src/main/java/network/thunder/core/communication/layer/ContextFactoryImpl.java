@@ -38,7 +38,9 @@ import network.thunder.core.communication.layer.middle.peerseed.PeerSeedProcesso
 import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactory;
 import network.thunder.core.communication.layer.middle.peerseed.messages.PeerSeedMessageFactoryImpl;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
+import network.thunder.core.helper.blockchain.BlockchainHelperImpl;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
@@ -79,7 +81,12 @@ public class ContextFactoryImpl implements ContextFactory {
         this.syncHelper = new SynchronizationHelper(dbHandler);
 
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
-        this.blockchainHelper = new MockBlockchainHelper(wallet);
+
+        if(Constants.USE_MOCK_BLOCKCHAIN) {
+            this.blockchainHelper = new MockBlockchainHelper(wallet);
+        } else {
+            this.blockchainHelper = new BlockchainHelperImpl(wallet);
+        }
 
         ConnectionManagerImpl connectionManager = new ConnectionManagerImpl(this, dbHandler);
         this.connectionManager = connectionManager;

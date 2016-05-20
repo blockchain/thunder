@@ -10,6 +10,7 @@ import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.PaymentRequest;
 import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
@@ -115,6 +116,16 @@ public class ThunderContext {
         } catch (Exception e) {
             resultCallback.execute(new FailureResult(e.getMessage()));
         }
+    }
+
+    public PaymentRequest receivePayment (long amount) {
+        PaymentSecret secret = new PaymentSecret(Tools.getRandomByte(20));
+        dbHandler.addPaymentSecret(secret);
+        PaymentRequest paymentRequest = new PaymentRequest();
+        paymentRequest.amount = amount;
+        paymentRequest.paymentSecret = secret;
+        paymentRequest.pubkey = node.pubKeyServer.getPubKey();
+        return paymentRequest;
     }
 
     public void closeChannel (Channel channel, ResultCommand resultCommand) {

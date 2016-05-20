@@ -23,6 +23,7 @@ import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.wallet.MockWallet;
+import org.bitcoinj.core.Address;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -72,6 +73,14 @@ public class LNCloseHandlerTest {
 
         channel1 = new Channel();
         channel2 = new Channel();
+
+        channel1.channelStatus.amountServer = 11000;
+        channel1.channelStatus.amountClient = 9000;
+        channel2.channelStatus.amountServer = 9000;
+        channel2.channelStatus.amountClient = 11000;
+
+        channel1.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel2.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
 
         channel1.nodeKeyClient = node1.pubKeyClient.getPubKey();
         channel2.nodeKeyClient = node2.pubKeyClient.getPubKey();
@@ -126,7 +135,7 @@ public class LNCloseHandlerTest {
     public void shouldFailSignatureTwo () {
 //        channelManager.closeChannel(channel1, new NullResultCommand());
         LNCloseAMessage message = (LNCloseAMessage) embeddedChannel1.readOutbound();
-        Tools.copyRandomByteInByteArray(message.signatureList.get(1), 30, 2);
+        Tools.copyRandomByteInByteArray(message.signatureList.get(0), 30, 2);
         embeddedChannel2.writeInbound(message);
         after();
     }

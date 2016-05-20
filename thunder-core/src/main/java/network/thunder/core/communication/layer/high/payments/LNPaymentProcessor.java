@@ -3,7 +3,7 @@ package network.thunder.core.communication.layer.high.payments;
 import network.thunder.core.communication.layer.Processor;
 
 public abstract class LNPaymentProcessor extends Processor {
-    public final static int TIMEOUT_NEGOTIATION = 10 * 1000;
+    public static int TIMEOUT_NEGOTIATION = 15 * 1000;
 
     public abstract boolean connectsToNodeId (byte[] nodeId);
 

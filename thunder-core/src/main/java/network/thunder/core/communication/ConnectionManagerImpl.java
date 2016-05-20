@@ -45,6 +45,7 @@ import static network.thunder.core.communication.processor.ConnectionIntent.*;
 public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
     public final static int CHANNELS_TO_OPEN = 5;
     public final static int MINIMUM_AMOUNT_OF_IPS = 5;
+    public final static int MINIMUM_AMOUNT_NODES_FETCH_IPS_FROM = 5;
 
     Set<NodeKey> connectedNodes = Sets.newConcurrentHashSet();
     Set<NodeKey> currentlyConnecting = Sets.newConcurrentHashSet();
@@ -76,7 +77,9 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
         //Check if there is already an open connection and close it..
         if (connectedNodes.contains(node)) {
             //closeConnection will automatically call onDisconnected..
-            closeConnection(node);
+            //TODO not viable currently, as an incoming requests completely interrupts any outgoing connection
+            //Can uncomment it again when we join connections based on nodekey
+            //closeConnection(node);
         }
 
         //Add the new connection to the pool..
@@ -200,14 +203,13 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 ClientObject client = ipObjectToNode(randomNode, GET_IPS);
                 client.resultCallback = new NullResultCommand();
                 connect(client, new ConnectionListener());
+                Thread.sleep(300);
                 alreadyFetched.add(randomNode);
-
                 ipList = dbHandler.getIPObjects();
-                Thread.sleep(100);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        } while (ipList.size() < MINIMUM_AMOUNT_OF_IPS);
+        } while (ipList.size() < MINIMUM_AMOUNT_OF_IPS || alreadyFetched.size() < MINIMUM_AMOUNT_NODES_FETCH_IPS_FROM);
         ipList = dbHandler.getIPObjects();
 
         if (ipList.size() > 0) {

@@ -4,6 +4,7 @@ import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
+import network.thunder.core.etc.Tools;
 
 public class QueueElementPayment extends QueueElement {
 
@@ -17,6 +18,8 @@ public class QueueElementPayment extends QueueElement {
     public ChannelUpdate produceNewChannelStatus (ChannelStatus channel, ChannelUpdate channelUpdate, LNPaymentHelper paymentHelper) {
         ChannelStatus status = channel.getClone();
         ChannelUpdate update = channelUpdate.getClone();
+
+        this.paymentData.timestampOpen = Tools.currentTime();
 
         update.newPayments.add(this.paymentData);
 

@@ -73,7 +73,9 @@ public class LNEventHelperImpl implements LNEventHelper {
 
     @Override
     public void onPaymentExchangeDone () {
-
+        for (LNEventListener listener : listeners) {
+            listener.onPaymentExchangeDone();
+        }
     }
 
     @Override

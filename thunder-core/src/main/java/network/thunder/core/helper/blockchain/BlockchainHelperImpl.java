@@ -1,7 +1,7 @@
 package network.thunder.core.helper.blockchain;
 
-import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
 import network.thunder.core.etc.Constants;
+import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
 import org.bitcoinj.core.*;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
@@ -9,6 +9,7 @@ import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.WalletTransaction;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -39,20 +40,30 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
     BlockExplorer blockExplorer = new BlockExplorer();
 
-    Boolean initialized = new Boolean(false);
+    Boolean initialized = Boolean.FALSE;
+    Wallet wallet;
 
     public BlockchainHelperImpl () {
         init();
     }
 
+    public BlockchainHelperImpl (Wallet wallet) {
+        init();
+        this.wallet = wallet;
+    }
+
     @Override
     public boolean broadcastTransaction (Transaction tx) {
+        System.out.println("Broadcast transaction: ");
+        System.out.println(tx);
         try {
             TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
             broadcast.future().get(10, TimeUnit.SECONDS);
+            System.out.println(tx.getHash() + " broadcasted successfully!");
+            wallet.addWalletTransaction(new WalletTransaction(WalletTransaction.Pool.PENDING, tx));
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("e.getMessage() = " + e.getMessage());
         }
         return false;
     }
@@ -103,11 +114,8 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
                     registerShutdownHook();
 
-                    System.out.println("Download BlockHeaders..");
                     final DownloadProgressTracker listener = new DownloadProgressTracker();
                     peerGroup.startBlockChainDownload(listener);
-                    listener.await();
-                    System.out.println("Download BlockHeaders done..");
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);

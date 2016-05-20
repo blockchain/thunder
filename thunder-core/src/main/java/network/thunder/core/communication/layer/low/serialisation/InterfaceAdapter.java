@@ -6,11 +6,15 @@ import java.lang.reflect.Type;
 
 public class InterfaceAdapter <T> implements JsonSerializer<T>, JsonDeserializer<T> {
 
+    Gson gson = new GsonBuilder()
+            .registerTypeHierarchyAdapter(byte[].class, new MessageSerializerImpl.ByteArrayToBase64TypeAdapter())
+            .create();
+
     @Override
     public JsonElement serialize (T object, Type interfaceType, JsonSerializationContext context) {
         final JsonObject wrapper = new JsonObject();
         wrapper.addProperty("type", object.getClass().getName());
-        wrapper.add("data", new Gson().toJsonTree(object));
+        wrapper.add("data", gson.toJsonTree(object));
         return wrapper;
     }
 

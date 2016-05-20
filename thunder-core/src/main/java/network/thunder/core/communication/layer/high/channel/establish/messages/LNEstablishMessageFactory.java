@@ -8,9 +8,9 @@ import org.bitcoinj.crypto.TransactionSignature;
 public interface LNEstablishMessageFactory extends MessageFactory {
     LNEstablishAMessage getEstablishMessageA (Channel channel);
 
-    LNEstablishBMessage getEstablishMessageB (Channel channel, Transaction anchor);
+    LNEstablishBMessage getEstablishMessageB (TransactionSignature channelSignature);
 
-    LNEstablishCMessage getEstablishMessageC (Transaction anchor, TransactionSignature escapeSignature, TransactionSignature escapeFastSignature);
+    LNEstablishCMessage getEstablishMessageC (Transaction transaction);
 
-    LNEstablishDMessage getEstablishMessageD (TransactionSignature escapeSignature, TransactionSignature escapeFastSignature);
+    LNEstablishDMessage getEstablishMessageD ();
 }

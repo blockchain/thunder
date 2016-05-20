@@ -13,12 +13,15 @@ import network.thunder.core.communication.processor.exceptions.LNPaymentExceptio
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.LNPaymentDBHandlerMock;
 import network.thunder.core.etc.Tools;
+import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Context;
+import org.bitcoinj.core.Sha256Hash;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.Collections;
 
 public class LNPaymentLogicImplTest {
 
@@ -55,8 +58,8 @@ public class LNPaymentLogicImplTest {
         messageFactory1 = new LNPaymentMessageFactoryImpl(dbHandler1);
         messageFactory2 = new LNPaymentMessageFactoryImpl(dbHandler2);
 
-        channel1 = new Channel();
-        channel2 = new Channel();
+        channel1 = getMockChannel();
+        channel2 = getMockChannel();
 
 //        channel1.channelStatus.applyConfiguration(configuration);
 //        channel2.channelStatus.applyConfiguration(configuration);
@@ -115,29 +118,10 @@ public class LNPaymentLogicImplTest {
         exchangeMessage(messageB, paymentLogic1);
 
         LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
-        messageC1.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature1, 60, 2);
+        messageC1.channelSignatures = Collections.singletonList(Tools.copyRandomByteInByteArray(messageC1.channelSignatures.get(0), 60, 2));
         exchangeMessage(messageC1, paymentLogic2);
     }
 
-    @Test(expected = LNPaymentException.class)
-    public void partyASendsWrongSignatureTwo () {
-        PaymentData paymentData = getMockPaymentData();
-        QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
-
-        ChannelUpdate update = new ChannelUpdate();
-        update.applyConfiguration(configuration);
-        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
-
-        LNPayment messageA = paymentLogic1.getAMessage(update);
-        exchangeMessage(messageA, paymentLogic2);
-
-        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
-        exchangeMessage(messageB, paymentLogic1);
-
-        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
-        messageC1.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC1.newCommitSignature2, 60, 2);
-        exchangeMessage(messageC1, paymentLogic2);
-    }
 
     @Test(expected = LNPaymentException.class)
     public void partyBSendsWrongSignatureOne () {
@@ -158,32 +142,10 @@ public class LNPaymentLogicImplTest {
         exchangeMessage(messageC1, paymentLogic2);
 
         LNPaymentCMessage messageC2 = paymentLogic2.getCMessage();
-        messageC2.newCommitSignature1 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature1, 60, 2);
+        messageC2.channelSignatures = Collections.singletonList(Tools.copyRandomByteInByteArray(messageC2.channelSignatures.get(0), 60, 2));
         exchangeMessage(messageC1, paymentLogic1);
     }
 
-    @Test(expected = LNPaymentException.class)
-    public void partyBSendsWrongSignatureTwo () {
-        PaymentData paymentData = getMockPaymentData();
-        QueueElementPayment elementPayment = new QueueElementPayment(paymentData);
-
-        ChannelUpdate update = new ChannelUpdate();
-        update.applyConfiguration(configuration);
-        update = elementPayment.produceNewChannelStatus(channel1.channelStatus, update, null);
-
-        LNPayment messageA = paymentLogic1.getAMessage(update);
-        exchangeMessage(messageA, paymentLogic2);
-
-        LNPaymentBMessage messageB = paymentLogic2.getBMessage();
-        exchangeMessage(messageB, paymentLogic1);
-
-        LNPaymentCMessage messageC1 = paymentLogic1.getCMessage();
-        exchangeMessage(messageC1, paymentLogic2);
-
-        LNPaymentCMessage messageC2 = paymentLogic2.getCMessage();
-        messageC2.newCommitSignature2 = Tools.copyRandomByteInByteArray(messageC2.newCommitSignature2, 60, 2);
-        exchangeMessage(messageC1, paymentLogic1);
-    }
 
     private void exchangeMessage (LNPayment message, LNPaymentLogic receiver) {
         receiver.checkMessageIncoming(message);
@@ -191,10 +153,23 @@ public class LNPaymentLogicImplTest {
 
     private PaymentData getMockPaymentData () {
         PaymentData paymentData = new PaymentData();
+        paymentData.amount = 1;
+        paymentData.sending = true;
         paymentData.secret = new PaymentSecret(Tools.getRandomByte(20));
         paymentData.timestampOpen = Tools.currentTime();
         paymentData.timestampRefund = Tools.currentTime() + 10 * configuration.DEFAULT_REFUND_DELAY * configuration.DEFAULT_OVERLAY_REFUND;
         paymentData.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
         return paymentData;
+    }
+
+    private static Channel getMockChannel() {
+        Channel channel = new Channel();
+
+        channel.anchorTxHash = Sha256Hash.wrap(Tools.getRandomByte(32));
+        channel.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel.channelStatus.amountClient = 10000;
+        channel.channelStatus.amountServer = 10000;
+
+        return channel;
     }
 }

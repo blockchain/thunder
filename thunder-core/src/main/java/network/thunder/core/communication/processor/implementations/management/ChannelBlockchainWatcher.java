@@ -37,7 +37,7 @@ public class ChannelBlockchainWatcher extends BlockchainWatcher {
     @Override
     public void start () {
 
-        Transaction tx = blockchainHelper.getTransaction(channel.anchorTxHashClient);
+        Transaction tx = blockchainHelper.getTransaction(channel.anchorTxHash);
         if (tx != null) {
             int depth = tx.getConfidence().getDepthInBlocks();
             if (depth > 0) {
@@ -52,7 +52,7 @@ public class ChannelBlockchainWatcher extends BlockchainWatcher {
                 if (stopped) {
                     return true;
                 } else {
-                    return channel.getAnchorTxHashClient().equals(tx.getHash());
+                    return channel.anchorTxHash.equals(tx.getHash());
                 }
             }
 
@@ -73,8 +73,7 @@ public class ChannelBlockchainWatcher extends BlockchainWatcher {
                     return true;
                 }
                 for (TransactionInput input : tx.getInputs()) {
-                    if (input.getOutpoint().getHash().equals(channel.anchorTxHashClient) ||
-                            input.getOutpoint().getHash().equals(channel.anchorTxHashServer)) {
+                    if (input.getOutpoint().getHash().equals(channel.anchorTxHash)) {
                         return true;
                     }
                 }
@@ -96,7 +95,7 @@ public class ChannelBlockchainWatcher extends BlockchainWatcher {
                 return true;
             }
             if (!confirmed) {
-                if (block.getTransactions().contains(tx)) {
+                if (block.getTransactions() != null && block.getTransactions().contains(tx)) {
                     confirmed = true;
                 }
             }

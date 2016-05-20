@@ -158,7 +158,7 @@
                                     </textFill>
                                 </Label>
                                 <Label fx:id="blockchainBalance" layoutX="122.0" layoutY="44.0" prefHeight="30.0" prefWidth="207.0" text="0.00"
-                                       underline="false">
+                                       underline="false" visible="false">
                                     <font>
                                         <Font size="25.0"/>
                                     </font>
@@ -170,7 +170,7 @@
                         </AnchorPane>
                     </content>
                 </Tab>
-                <Tab disable="true" text="Blockchain">
+                <Tab text="Blockchain">
                     <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                             <children>
@@ -200,7 +200,7 @@
                                     </children>
                                 </HBox>
                                 <ListView fx:id="blockchainTxList" layoutY="66.0" opacity="0.7" prefHeight="365.0" prefWidth="800.0"/>
-                                <Label fx:id="balance" layoutX="112.0" layoutY="14.0" text="0.00" underline="false">
+                                <Label fx:id="balance" layoutX="112.0" layoutY="14.0" text="0.00" underline="false" AnchorPane.leftAnchor="120.0">
                                     <font>
                                         <Font size="25.0"/>
                                     </font>
@@ -208,7 +208,7 @@
                                         <Color blue="0.750" green="0.750" red="0.750" fx:id="x2"/>
                                     </textFill>
                                 </Label>
-                                <Label fx:id="balance1" layoutX="112.0" layoutY="36.0" text="0.00" underline="false">
+                                <Label fx:id="balance1" layoutX="112.0" layoutY="36.0" text="0.00" underline="false" visible="false">
                                     <font>
                                         <Font size="25.0"/>
                                     </font>

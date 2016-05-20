@@ -12,10 +12,12 @@ import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ResultCommandExt;
 import network.thunder.core.helper.wallet.MockWallet;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.core.*;
+import org.bitcoinj.kits.WalletAppKit;
+import org.bitcoinj.script.Script;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -52,6 +54,7 @@ public class MainNode {
             configuration.hostnameServer = getExternalIP();
             ECKey key = new ECKey();
             configuration.serverKey = Tools.bytesToHex(key.getPrivKeyBytes());
+            // TODO: Verify that the public key corresponds to the private key when loading config from file
             configuration.publicKey = key.getPublicKeyAsHex();
             newConfiguration = true;
             askForHostname(configuration);
@@ -65,9 +68,11 @@ public class MainNode {
 
         //Currently we are only using an in-memory implementation of the DBHandler and a Wallet that is not holding real bitcoin
         DBHandler dbHandler = new InMemoryDBHandler();
-        Wallet wallet = new MockWallet(Constants.getNetwork());
-        ThunderContext context = new ThunderContext(wallet, dbHandler, server);
 
+        //Setup bitcoin testnet wallet
+        Wallet wallet = setupWallet();
+
+        ThunderContext context = new ThunderContext(wallet, dbHandler, server);
 
         //Start listening on port specified in the configuration
         startListening(context);
@@ -102,6 +107,70 @@ public class MainNode {
         }
     }
 
+    static Wallet setupWallet () {
+        if (Constants.USE_MOCK_BLOCKCHAIN) {
+            return new MockWallet(Constants.getNetwork());
+        } else {
+            //TODO somehow allow sending money out of the node again..
+            System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
+            WalletAppKit walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), "node_");
+            walletAppKit.startAsync().awaitRunning();
+            Wallet wallet = walletAppKit.wallet();
+            wallet.allowSpendingUnconfirmedTransactions();
+            wallet.reset();
+            System.out.println("wallet = " + wallet);
+            System.out.println("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
+            wallet.addEventListener(new WalletEventListener() {
+                @Override
+                public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                    System.out.println("wallet = " + wallet);
+                    System.out.println("tx = " + tx);
+                }
+
+                @Override
+                public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
+                    System.out.println("wallet = " + wallet);
+                    System.out.println("tx = " + tx);
+                }
+
+                @Override
+                public void onReorganize (Wallet wallet) {
+
+                }
+
+                @Override
+                public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
+
+                }
+
+                @Override
+                public void onWalletChanged (Wallet wallet) {
+                }
+
+                @Override
+                public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
+
+                }
+
+                @Override
+                public void onKeysAdded (List<ECKey> keys) {
+
+                }
+            });
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                @Override
+                public void run () {
+                    try {
+                        walletAppKit.stopAsync().awaitTerminated();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }));
+            return wallet;
+        }
+    }
+
     static void writeConfigurationFile (Configuration configuration) throws IOException {
         Path file = Paths.get(CONFIG_FILE);
         String config = new GsonBuilder().setPrettyPrinting().create().toJson(configuration);
@@ -127,7 +196,7 @@ public class MainNode {
 
     static void buildPaymentChannels (ThunderContext context, Configuration configuration) {
         for (String s : configuration.nodesToBuildChannelWith) {
-            System.out.println("MainNode.buildPaymentChannels "+s);
+            System.out.println("MainNode.buildPaymentChannels " + s);
             ResultCommandExt buildChannelListener = new ResultCommandExt();
             byte[] nodeKey = Tools.hexStringToByteArray(s);
             context.openChannel(nodeKey, buildChannelListener);
@@ -167,20 +236,21 @@ public class MainNode {
                 return null;
             } else if (s.equals("")) {
                 return nodeList;
+            } else if (s.equals(server.pubKeyServer.getPublicKeyAsHex())) {
+                System.out.println("You cannot connect to yourself..");
+            } else if (nodeList.contains(s)) {
+                System.out.println("Pubkey already added to the list..");
             } else {
-
-                ECKey key = null;
+                ECKey key;
                 try {
                     key = ECKey.fromPublicOnly(Tools.hexStringToByteArray(s));
                 } catch (Exception e) {
+                    System.out.println("Invalid pubkey..");
+                    continue;
                 }
 
-                if (key == null) {
-                    System.out.println("Invalid pubkey..");
-                } else {
-                    System.out.println(key.getPublicKeyAsHex() + " added to list..");
-                    nodeList.add(s);
-                }
+                System.out.println(key.getPublicKeyAsHex() + " added to list..");
+                nodeList.add(s);
             }
 
         }

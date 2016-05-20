@@ -6,6 +6,7 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -19,6 +20,7 @@ import javafx.util.StringConverter;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
+import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -58,7 +60,7 @@ public class MainController {
     private Button sendMoneyOutBtn;
 
     @FXML
-    private ListView blockchainTxList;
+    private ListView<Transaction> blockchainTxList;
 
     @FXML
     private Label balance;
@@ -97,25 +99,25 @@ public class MainController {
     private Button syncButton;
 
     @FXML
-    private ListView nodesList;
+    private ListView<PubkeyIPObject> nodesList;
 
     @FXML
-    private ListView channelNetworkList;
+    private ListView<Node> channelNetworkList;
 
     @FXML
-    private ListView channelList;
+    private ListView<Channel> channelList;
 
     @FXML
-    private ListView thunderTxListIncluded;
+    private ListView<PaymentWrapper> thunderTxListIncluded;
 
     @FXML
-    private ListView thunderTxListSettled;
+    private ListView<Node> thunderTxListSettled;
 
     @FXML
-    private ListView thunderTxListOpen;
+    private ListView<Node> thunderTxListOpen;
 
     @FXML
-    private ListView thunderTxListRefunded;
+    private ListView<Node> thunderTxListRefunded;
 
     @FXML
     private Label thunderBalance;
@@ -270,11 +272,11 @@ public class MainController {
         blockchainTxList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<Transaction>() {
             @Override
             public String toString (Transaction tx) {
-                Coin value = tx.getValue(Main.bitcoin.wallet());
+                Coin value = tx.getValue(Main.wallet);
                 if (value.isPositive()) {
                     return tx.getConfidence().getDepthInBlocks() + " Incoming payment of " + MonetaryFormat.BTC.format(value);
                 } else if (value.isNegative()) {
-                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Main.params);
+                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork());
                     if (address == null) {
                         return tx.getConfidence().getDepthInBlocks() + " Outbound payment to ThunderChannel of " + value.toFriendlyString().substring(1);
                     }
@@ -291,11 +293,11 @@ public class MainController {
         blockchainTxList.setCellFactory(param -> new TextFieldListCell(new StringConverter<Transaction>() {
             @Override
             public String toString (Transaction tx) {
-                Coin value = tx.getValue(Main.bitcoin.wallet());
+                Coin value = tx.getValue(Main.wallet);
                 if (value.isPositive()) {
                     return tx.getConfidence().getDepthInBlocks() + " Incoming payment of " + MonetaryFormat.BTC.format(value);
                 } else if (value.isNegative()) {
-                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Main.params);
+                    Address address = tx.getOutput(0).getAddressFromP2PKHScript(Constants.getNetwork());
                     if (address == null) {
                         return tx.getConfidence().getDepthInBlocks() + " Outbound payment to ThunderChannel of " + value.toFriendlyString().substring
                                 (1);

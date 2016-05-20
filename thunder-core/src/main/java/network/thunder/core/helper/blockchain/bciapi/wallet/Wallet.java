@@ -98,7 +98,7 @@ public class Wallet {
      */
     public PaymentResponse sendMany (Map<String, Long> recipients, String fromAddress, Long fee, String note) throws APIException, IOException {
         Map<String, String> params = buildBasicRequest();
-        String method = null;
+        String method;
 
         if (recipients.size() == 1) {
             method = "payment";

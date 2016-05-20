@@ -17,6 +17,7 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.ScriptTools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -100,18 +101,15 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
     }
 
     public Transaction getClosingTransaction (ChannelStatus channelStatus, float feePerByte) {
-        ChannelStatus status = getChannelStatus(weRequestedClose ? channelStatus : channelStatus.getCloneReversed());
-
         //For the sake of privacy (and simplicity) we use lexicographically ordering here, as defined in BIP69
         Transaction transaction = new Transaction(Constants.getNetwork());
-        transaction.addInput(channel.anchorTxHashClient, 0, Tools.getDummyScript());
-        transaction.addInput(channel.anchorTxHashServer, 0, Tools.getDummyScript());
+        transaction.addInput(channel.anchorTxHash, 0, Tools.getDummyScript());
 
         //TODO deduct the transaction fee correctly from both amounts
         //TODO would be better to have another address on file that we can use here..
-        transaction.addOutput(Coin.valueOf(status.amountClient), channel.addressClient);
-        transaction.addOutput(Coin.valueOf(status.amountServer), channel.addressServer);
-
+        long feePerParty = (Tools.getTransactionFees(2, 2, feePerByte) / 2);
+        transaction.addOutput(Coin.valueOf(channelStatus.amountClient - feePerParty), channel.channelStatus.addressClient);
+        transaction.addOutput(Coin.valueOf(channelStatus.amountServer - feePerParty), channel.channelStatus.addressServer);
         return Tools.applyBIP69(transaction);
     }
 
@@ -216,11 +214,13 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
             sendCloseMessage(signatures);
             //Okay, so the other party sent us correct signatures to close down the channel..
         }
-        Script multiSig1 = Tools.getMultisigInputScript(message.getSignatureList().get(0), signatures.get(0));
-        Script multiSig2 = Tools.getMultisigInputScript(message.getSignatureList().get(1), signatures.get(1));
+        Script inputScript = ScriptTools.getCommitInputScript(
+                message.getSignatureList().get(0).encodeToBitcoin(),
+                signatures.get(0).encodeToBitcoin(),
+                channel.keyClient,
+                channel.keyServer);
 
-        transaction.getInput(0).setScriptSig(multiSig1);
-        transaction.getInput(1).setScriptSig(multiSig2);
+        transaction.getInput(0).setScriptSig(inputScript);
 
         blockchainHelper.broadcastTransaction(transaction);
         onChannelClose();
@@ -236,7 +236,10 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
             channelHashToClose = Sha256Hash.wrap(message.channelHash);
         }
         this.channel = getChannel();
-        ChannelStatus status = getChannelStatus(channel.channelStatus.getCloneReversed());
+        //TODO fix working out the correct reverse strategy for channels that still have payments included
+        //ChannelStatus status = getChannelStatus(channel.channelStatus.getCloneReversed()).getCloneReversed();
+        ChannelStatus status = channel.channelStatus;
+
         Transaction transaction = getClosingTransaction(status, message.feePerByte);
 
         List<TransactionSignature> signatureList = message.getSignatureList();
@@ -244,14 +247,12 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         int i = 0;
         for (TransactionSignature signature : signatureList) {
 
-            boolean correct = Tools.checkSignature(
-                    transaction, i, channel.getAnchorScript(transaction.getInput(i).getOutpoint().getHash()), channel.keyClient, signature);
-
+            boolean correct = Tools.checkSignature(transaction, i, ScriptTools.getAnchorOutputScript(channel.keyClient, channel.keyServer), channel.keyClient,
+                    signature);
             if (!correct) {
                 throw new LNCloseException("Signature is not correct..");
             }
             i++;
-
         }
     }
 

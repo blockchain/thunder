@@ -2,6 +2,8 @@ package network.thunder.core.helper.blockchain.bciapi;
 
 import com.google.gson.JsonObject;
 
+import java.util.Objects;
+
 /**
  * Represents a transaction output.
  */
@@ -21,7 +23,7 @@ public class Output {
         this.txIndex = txIndex;
         this.script = script;
         this.spent = spent;
-        if (address != "") {
+        if (!Objects.equals(address, "")) {
             spentToAddress = true;
         }
     }

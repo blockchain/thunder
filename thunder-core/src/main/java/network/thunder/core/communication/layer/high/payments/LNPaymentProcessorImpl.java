@@ -43,7 +43,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     Status status = IDLE;
 
-    BlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(1000);
+    BlockingDeque<QueueElement> queueList = new LinkedBlockingDeque<>(10000);
     List<QueueElement> currentQueueElement = new ArrayList<>();
 
     ChannelUpdate updateTemp;
@@ -88,7 +88,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 if (status == IDLE) {
 
                     currentQueueElement.add(element);
-                    while (queueList.size() > 0) {
+                    while (queueList.size() > 0 && currentQueueElement.size() < 50) {
                         currentQueueElement.add(queueList.poll());
                     }
 
@@ -114,7 +114,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         } else {
             //When we get here and Status is not IDLE, the other party started the exchange..
             long timeToFinish = TIMEOUT_NEGOTIATION - (System.currentTimeMillis() - currentTaskStarted);
-
             restartCountDown(timeToFinish);
             if (status != IDLE) {
                 //Other party started the exchange, but we hit the timeout for negotiation. Just abort it on our side..
@@ -184,18 +183,16 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
         LNPaymentAMessage message = paymentLogic.getAMessage(updateTemp);
         latestDice = message.dice;
-        sendMessage(message);
-
         setStatus(SENT_A);
+        sendMessage(message);
     }
 
     private void sendMessageB () {
         testStatus(RECEIVED_A);
 
         LNPaymentBMessage message = paymentLogic.getBMessage();
-        sendMessage(message);
-
         setStatus(SENT_B);
+        sendMessage(message);
 
     }
 
@@ -207,9 +204,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         }
 
         LNPayment message = paymentLogic.getCMessage();
-        sendMessage(message);
-
         setStatus(SENT_C);
+        sendMessage(message);
     }
 
     private void sendMessageD () {
@@ -220,9 +216,8 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
         }
 
         LNPayment message = paymentLogic.getDMessage();
-        sendMessage(message);
-
         setStatus(SENT_D);
+        sendMessage(message);
 
         if (!weStartedExchange) {
             successCurrentTask();
@@ -233,17 +228,13 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageA (LNPaymentAMessage message) {
         if (status == SENT_A) {
             if (message.dice > latestDice) {
-                System.out.println(node.name + " DICE HIGHER...");
-                weStartedExchange = false;
-                currentTaskStarted = System.currentTimeMillis();
                 abortCurrentTask();
             } else {
-                System.out.println(node.name + " Ignoring because we had higher dice..");
                 return;
             }
         } else if (status != IDLE) {
-            System.out.println(node.name + " WE ABORT BECAUSE OTHER PARTY SENT US A NEW REQUEST..");
-            abortCurrentTask();
+            // Ignore new request..
+            return;
         }
 
         weStartedExchange = false;
@@ -267,8 +258,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageC (LNPaymentCMessage message) {
         if ((weStartedExchange && status != SENT_C) || (!weStartedExchange && status != SENT_B)) {
             //TODO ERROR
-            System.out.println(node.name + " ERROR READ MESSAGE C");
-
         } else {
             paymentLogic.checkMessageIncoming(message);
             setStatus(RECEIVED_C);
@@ -283,7 +272,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
     private void readMessageD (LNPaymentDMessage message) {
         if ((weStartedExchange && status != SENT_D) || (!weStartedExchange && status != SENT_C)) {
             //TODO ERROR
-            System.out.println(node.name + " ERROR READ MESSAGE D");
             return;
         } else {
             paymentLogic.checkMessageIncoming(message);
@@ -298,7 +286,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     public void testStatus (Status expected) {
         if (status != expected) {
-            throw new RuntimeException("Expected " + expected + ". Was: " + status);
+            throw new LNPaymentException("Expected " + expected + ". Was: " + status);
         }
     }
 
@@ -342,7 +330,6 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
                 }
             } else {
                 PaymentWrapper wrapper = new PaymentWrapper(node.pubKeyClient.getPubKey(), payment);
-                System.out.println(node.name + " addPayment: " + payment);
                 dbHandler.addPayment(wrapper);
             }
         }
@@ -367,6 +354,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
             }
             eventHelper.onPaymentCompleted(payment);
         }
+        eventHelper.onPaymentExchangeDone();
 
     }
 
@@ -388,7 +376,7 @@ public class LNPaymentProcessorImpl extends LNPaymentProcessor {
 
     }
 
-    private void sendMessage (Message message) {
+    private synchronized void sendMessage (Message message) {
         messageExecutor.sendMessageUpwards(message);
     }
 

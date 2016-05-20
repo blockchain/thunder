@@ -2,6 +2,7 @@ package network.thunder.core.communication.layer.high;
 
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
+import org.bitcoinj.core.Address;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -15,6 +16,12 @@ public class ChannelStatus implements Cloneable {
 
     public int feePerByte;
     public long csvDelay;
+
+    public RevocationHash revocationHashClient;
+    public RevocationHash revocationHashServer;
+
+    public Address addressClient;
+    public Address addressServer;
 
     @Override
     protected Object clone () throws CloneNotSupportedException {
@@ -34,9 +41,18 @@ public class ChannelStatus implements Cloneable {
     public ChannelStatus getCloneReversed () {
         ChannelStatus status = getClone();
 
-        long temp = status.amountServer;
+        long tempAmount = status.amountServer;
         status.amountServer = status.amountClient;
-        status.amountClient = temp;
+        status.amountClient = tempAmount;
+
+        RevocationHash tempRevocationHash = status.revocationHashServer;
+        status.revocationHashServer = status.revocationHashClient;
+        status.revocationHashClient = tempRevocationHash;
+
+        Address tempAddress = status.addressServer;
+        status.addressServer = status.addressClient;
+        status.addressClient = tempAddress;
+
         reverseSending(status.paymentList);
 
         return status;
@@ -109,7 +125,9 @@ public class ChannelStatus implements Cloneable {
         return "ChannelStatus{" +
                 "amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
-                ", paymentList=" + listToString(paymentList) +
+                ", addressServer=" + addressServer +
+                ", addressClient=" + addressClient +
+                ", paymentList=" + paymentList.size() +
                 '}';
     }
 

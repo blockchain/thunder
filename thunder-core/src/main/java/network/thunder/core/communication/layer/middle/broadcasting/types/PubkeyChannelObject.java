@@ -9,14 +9,10 @@ import java.util.Arrays;
 
 public class PubkeyChannelObject extends P2PDataObject {
 
-    public byte[] secretAHash;
-    public byte[] secretBHash;
     public byte[] pubkeyB;
     public byte[] pubkeyB1;
-    public byte[] pubkeyB2;
     public byte[] pubkeyA;
     public byte[] pubkeyA1;
-    public byte[] pubkeyA2;
     public byte[] txidAnchor;
     public byte[] signatureA;
     public byte[] signatureB;
@@ -27,12 +23,8 @@ public class PubkeyChannelObject extends P2PDataObject {
     }
 
     public PubkeyChannelObject (ResultSet set) throws SQLException {
-        this.secretAHash = set.getBytes("secret_a_hash");
-        this.secretBHash = set.getBytes("secret_b_hash");
         this.pubkeyB1 = set.getBytes("pubkey_b1");
-        this.pubkeyB2 = set.getBytes("pubkey_b2");
         this.pubkeyA1 = set.getBytes("pubkey_a1");
-        this.pubkeyA2 = set.getBytes("pubkey_a2");
         this.txidAnchor = set.getBytes("txid_anchor");
         this.signatureA = set.getBytes("signature_a");
         this.signatureB = set.getBytes("signature_b");
@@ -44,16 +36,12 @@ public class PubkeyChannelObject extends P2PDataObject {
     public static PubkeyChannelObject getRandomObject () {
         PubkeyChannelObject obj = new PubkeyChannelObject();
 
-        obj.secretAHash = Tools.getRandomByte(20);
-        obj.secretBHash = Tools.getRandomByte(20);
 
         obj.pubkeyB = Tools.getRandomByte(33);
         obj.pubkeyB1 = Tools.getRandomByte(33);
-        obj.pubkeyB2 = Tools.getRandomByte(33);
 
         obj.pubkeyA = Tools.getRandomByte(33);
         obj.pubkeyA1 = Tools.getRandomByte(33);
-        obj.pubkeyA2 = Tools.getRandomByte(33);
 
         obj.txidAnchor = Tools.getRandomByte(32);
 
@@ -68,18 +56,14 @@ public class PubkeyChannelObject extends P2PDataObject {
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + secretAHash.length + secretBHash.length + pubkeyB.length + pubkeyB1.length + pubkeyB2.length + pubkeyA
-                .length + pubkeyA1.length + pubkeyA2.length + txidAnchor.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + pubkeyB.length + pubkeyB1.length + pubkeyA
+                .length + pubkeyA1.length + txidAnchor.length);
 
         byteBuffer.putInt(timestamp);
-        byteBuffer.put(secretAHash);
-        byteBuffer.put(secretBHash);
         byteBuffer.put(pubkeyB);
         byteBuffer.put(pubkeyB1);
-        byteBuffer.put(pubkeyB2);
         byteBuffer.put(pubkeyA);
         byteBuffer.put(pubkeyA1);
-        byteBuffer.put(pubkeyA2);
         byteBuffer.put(txidAnchor);
 
         return byteBuffer.array();
@@ -132,19 +116,10 @@ public class PubkeyChannelObject extends P2PDataObject {
         if (timestamp != that.timestamp) {
             return false;
         }
-        if (!Arrays.equals(secretAHash, that.secretAHash)) {
-            return false;
-        }
-        if (!Arrays.equals(secretBHash, that.secretBHash)) {
-            return false;
-        }
         if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
             return false;
         }
         if (!Arrays.equals(pubkeyB1, that.pubkeyB1)) {
-            return false;
-        }
-        if (!Arrays.equals(pubkeyB2, that.pubkeyB2)) {
             return false;
         }
         if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
@@ -153,23 +128,16 @@ public class PubkeyChannelObject extends P2PDataObject {
         if (!Arrays.equals(pubkeyA1, that.pubkeyA1)) {
             return false;
         }
-        if (!Arrays.equals(pubkeyA2, that.pubkeyA2)) {
-            return false;
-        }
         return Arrays.equals(txidAnchor, that.txidAnchor);
 
     }
 
     @Override
     public int hashCode () {
-        int result = Arrays.hashCode(secretAHash);
-        result = 31 * result + Arrays.hashCode(secretBHash);
-        result = 31 * result + Arrays.hashCode(pubkeyB);
+        int result = Arrays.hashCode(pubkeyB);
         result = 31 * result + Arrays.hashCode(pubkeyB1);
-        result = 31 * result + Arrays.hashCode(pubkeyB2);
         result = 31 * result + Arrays.hashCode(pubkeyA);
         result = 31 * result + Arrays.hashCode(pubkeyA1);
-        result = 31 * result + Arrays.hashCode(pubkeyA2);
         result = 31 * result + Arrays.hashCode(txidAnchor);
         result = 31 * result + timestamp;
         return result;

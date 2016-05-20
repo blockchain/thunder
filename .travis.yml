@@ -6,7 +6,6 @@ before-install:
 - pip install --user codecov
 install: true
 script: 
-  - mysql -u root < thunder-core/build_database.sql 
   - mvn clean install
 notifications:
   slack:

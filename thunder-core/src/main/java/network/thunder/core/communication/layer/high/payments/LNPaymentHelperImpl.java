@@ -51,10 +51,8 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
             if (peeledOnion.isLastHop) {
                 PaymentSecret secret = dbHandler.getPaymentSecret(paymentData.secret);
                 if (secret == null) {
-                    System.out.println("Can't redeem payment - refund!");
                     processorSent.refundPayment(paymentData);
                 } else {
-                    System.out.println("Received money!");
                     processorSent.redeemPayment(secret);
                 }
 
@@ -97,8 +95,6 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
     }
 
     private boolean relayPaymentToCorrectProcessor (PaymentData paymentData, ECKey nextHop) {
-        System.out.println("Next Hop: " + nextHop);
-
         for (LNPaymentProcessor processor : processorList) {
             if (processor.connectsToNodeId(nextHop.getPubKey())) {
                 PaymentData copy = paymentData.cloneObject();
@@ -131,16 +127,11 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
     @Override
     public void paymentRedeemed (PaymentSecret paymentSecret) {
-        System.out.println("Payment redeemed: " + paymentSecret);
         byte[] sender = dbHandler.getSenderOfPayment(paymentSecret);
 
         if (isEmptyByte(sender)) {
-            System.out.println("Payment was redeemed: " + paymentSecret);
             return;
         } else {
-
-            System.out.println("Sender of payment: " + Tools.bytesToHex(sender));
-
             for (LNPaymentProcessor processor : processorList) {
                 if (processor.connectsToNodeId(sender)) {
                     processor.redeemPayment(paymentSecret);
@@ -165,7 +156,6 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
 
         for (LNPaymentProcessor processor : processorList) {
             if (processor.connectsToNodeId(sender)) {
-                System.out.println("refundPayment...");
                 processor.refundPayment(paymentData);
                 return;
             }

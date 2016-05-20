@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SeedNodes {
-    static List<PubkeyIPObject> ipList = new ArrayList<>();
+    public static List<PubkeyIPObject> ipList = new ArrayList<>();
     public static List<ClientObject> nodeList = new ArrayList<>();
 
     static {
@@ -20,16 +20,19 @@ public class SeedNodes {
         ipList.add(createIPObject("thunder-7.blockchain.info", "02a9a9cd8c420234f7945c558c13843b0e0a14cc1cd0314c6dcb073d564295540b"));
         ipList.add(createIPObject("thunder-8.blockchain.info", "0274a0705e85ebce156da4d0658f76f8d08edc809561ae7046311f2f9704012486"));
         ipList.add(createIPObject("thunder-9.blockchain.info", "03413a55bbfea121c7ddcd54cd9e52eed86d7b0252ef02dc0182dceef8c6c812e9"));
-
     }
 
-    private static PubkeyIPObject createIPObject (String hostname, String pubkey) {
+    public static PubkeyIPObject createIPObject (String hostname, String pubkey, int port) {
         PubkeyIPObject seed1 = new PubkeyIPObject();
         seed1.hostname = hostname;
         seed1.pubkey = Tools.hexStringToByteArray(pubkey);
         seed1.signature = new byte[1];
-        seed1.port = Constants.STANDARD_PORT;
+        seed1.port = port;
         return seed1;
+    }
+
+    public static PubkeyIPObject createIPObject (String hostname, String pubkey) {
+        return createIPObject(hostname, pubkey, Constants.STANDARD_PORT);
     }
 
     public static List<PubkeyIPObject> getSeedNodes () {
