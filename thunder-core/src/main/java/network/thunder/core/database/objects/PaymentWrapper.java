@@ -1,5 +1,6 @@
 package network.thunder.core.database.objects;
 
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 
 import static network.thunder.core.database.objects.PaymentStatus.EMBEDDED;
@@ -12,15 +13,30 @@ public class PaymentWrapper {
     public PaymentStatus statusSender;
     public PaymentStatus statusReceiver;
 
-    public byte[] sender;
-    public byte[] receiver;
+    public NodeKey sender;
+    public NodeKey receiver;
 
-    public PaymentWrapper (byte[] sender, PaymentData paymentData) {
+    public PaymentWrapper () {
+
+    }
+
+    public PaymentWrapper (NodeKey sender, PaymentData paymentData) {
         this.sender = sender;
         this.paymentData = paymentData;
 
         this.statusReceiver = EMBEDDED;
         this.statusSender = UNKNOWN;
+    }
+
+    @Override
+    public String toString () {
+        return "PaymentWrapper{" +
+                "paymentData=" + paymentData +
+                ", statusSender=" + statusSender +
+                ", statusReceiver=" + statusReceiver +
+                ", sender=" + sender +
+                ", receiver=" + receiver +
+                '}';
     }
 
     @Override

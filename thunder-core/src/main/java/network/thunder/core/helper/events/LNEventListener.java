@@ -1,6 +1,7 @@
 package network.thunder.core.helper.events;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -36,6 +37,10 @@ public abstract class LNEventListener {
     }
 
     public void onPaymentCompleted (PaymentData payment) {
+        onEvent();
+    }
+
+    public void onPaymentAdded (NodeKey nodeKey, PaymentData payment) {
         onEvent();
     }
 

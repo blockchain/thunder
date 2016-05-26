@@ -1,5 +1,6 @@
 package network.thunder.core.communication;
 
+import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 
 import java.util.Arrays;
@@ -13,6 +14,19 @@ public class NodeKey {
 
     public NodeKey (ECKey nodeKey) {
         this.nodeKey = nodeKey;
+    }
+
+    public byte[] getPubKey () {
+        return nodeKey.getPubKey();
+    }
+
+    public String getPubKeyHex () {
+        return Tools.bytesToHex(nodeKey.getPubKey());
+    }
+
+    @Override
+    public String toString () {
+        return getPubKeyHex().substring(0, 10);
     }
 
     @Override
@@ -33,5 +47,9 @@ public class NodeKey {
     @Override
     public int hashCode () {
         return nodeKey != null ? nodeKey.hashCode() : 0;
+    }
+
+    public static NodeKey wrap (ECKey key) {
+        return new NodeKey(key);
     }
 }

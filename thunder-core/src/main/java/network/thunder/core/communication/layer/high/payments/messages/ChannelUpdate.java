@@ -12,7 +12,7 @@ public class ChannelUpdate implements Cloneable {
     public List<PaymentData> redeemedPayments = new ArrayList<>();
 
     public int feePerByte;
-    public long csvDelay;
+    public int csvDelay;
 
     public void applyConfiguration (LNConfiguration configuration) {
         this.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;

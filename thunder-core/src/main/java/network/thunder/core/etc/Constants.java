@@ -28,6 +28,9 @@ public class Constants {
     }
 
     public static boolean USE_MOCK_BLOCKCHAIN = true;
+    public static int PAYMENT_TIMEOUT = 5;
+    public static long MESSAGE_RESEND_TIME = 15000;
+    public static int MAX_HTLC_PER_CHANNEL = 250;
 
     public static final int STANDARD_PORT = 2204;
     public static final int ESCAPE_REVOCATION_TIME = 24 * 60 * 60 / 10 * 60; //In blocks..

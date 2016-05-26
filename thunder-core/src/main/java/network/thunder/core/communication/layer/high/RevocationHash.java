@@ -21,39 +21,48 @@ package network.thunder.core.communication.layer.high;
 
 import network.thunder.core.etc.Tools;
 
+import java.nio.ByteBuffer;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Arrays;
+
+import static network.thunder.core.etc.Tools.hashSecret;
 
 /**
  * Class for revocation hash.
  * Even though it is in theory the same as a payment hash, we use a different class, to avoid confusion. (which would lead to a direct loss of funds..)
  */
 public class RevocationHash {
-    private int depth;
-    private int child;
-    private byte[] secret;
-    private byte[] secretHash;
+    public int index;
+    public byte[] secret;
+    public byte[] secretHash;
 
-    public RevocationHash (int depth, int child, byte[] secret, byte[] secretHash) {
-        this.depth = depth;
-        this.child = child;
+    public RevocationHash (int depth, byte[] secret, byte[] secretHash) {
+        this.index = depth;
         this.secret = secret;
         this.secretHash = secretHash;
     }
 
-    public RevocationHash (int depth, int child, byte[] secret) {
-        this.depth = depth;
-        this.child = child;
-        this.secret = secret;
-        this.secretHash = Tools.hashSecret(secret);
+    public RevocationHash (int index, byte[] seed) {
+        this.index = index;
+
+        //TODO implement shachain here
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + seed.length);
+        byteBuffer.putInt(index);
+        byteBuffer.put(seed);
+        this.secret = hashSecret(byteBuffer.array());
+        this.secretHash = hashSecret(this.secret);
+
     }
 
     public RevocationHash (ResultSet set) throws SQLException {
         this.secretHash = set.getBytes("secretHash");
         this.secret = set.getBytes("secret");
-        this.depth = set.getInt("depth");
-        this.child = set.getInt("child");
+        this.index = set.getInt("index");
+    }
+
+    public RevocationHash copy () {
+        return new RevocationHash(this.index, this.secret, this.secretHash);
     }
 
     /**
@@ -62,49 +71,12 @@ public class RevocationHash {
      * @return true, if successful
      */
     public boolean check () {
-        /*
-         * Child = 0 is - per convention - a new masterkey. We will check it later.
-		 */
-        if (child == 0) {
-            return true;
-        }
-
-        if (secret == null) {
-            return false;
-        }
-
-        return Arrays.equals(secretHash, Tools.hashSecret(secret));
-
-    }
-
-    public int getChild () {
-        return child;
-    }
-
-    public int getDepth () {
-        return depth;
-    }
-
-    /**
-     * The preimage corresponding to the hash.
-     * Losing it to the counterparty before the revocation may lead to loss of funds.
-     */
-
-    public byte[] getSecret () {
-        return secret;
-    }
-
-    /**
-     * The hash necessary for the transactions to be revocable.
-     */
-    public byte[] getSecretHash () {
-        return secretHash;
+        return secret != null && Arrays.equals(secretHash, hashSecret(secret));
     }
 
     @Override
     public int hashCode () {
-        int result = depth;
-        result = 31 * result + child;
+        int result = index;
         result = 31 * result + (secret != null ? Arrays.hashCode(secret) : 0);
         result = 31 * result + (secretHash != null ? Arrays.hashCode(secretHash) : 0);
         return result;
@@ -121,10 +93,7 @@ public class RevocationHash {
 
         RevocationHash that = (RevocationHash) o;
 
-        if (depth != that.depth) {
-            return false;
-        }
-        if (child != that.child) {
+        if (index != that.index) {
             return false;
         }
         if (!Arrays.equals(secret, that.secret)) {
@@ -136,7 +105,7 @@ public class RevocationHash {
 
     @Override
     public String toString () {
-        return "RevocationHash{" +
+        return "RevocationHash{" + index + ": " +
                 "" + Tools.bytesToHex(secretHash).substring(0, 6) + ".." +
                 '}';
     }

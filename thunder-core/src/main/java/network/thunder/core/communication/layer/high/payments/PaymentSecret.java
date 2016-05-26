@@ -61,6 +61,13 @@ public class PaymentSecret {
     }
 
     @Override
+    public String toString () {
+        return "PaymentSecret{" +
+                "hash=" + Tools.bytesToHex(hash).substring(0, 10) +
+                '}';
+    }
+
+    @Override
     public int hashCode () {
         return Arrays.hashCode(hash);
     }

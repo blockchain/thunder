@@ -1,17 +1,17 @@
 package network.thunder.core.communication.layer.high.payments;
 
 import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventHelper;
-import org.bitcoinj.core.ECKey;
+import network.thunder.core.helper.events.LNEventListener;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class LNPaymentHelperImpl implements LNPaymentHelper {
 
@@ -21,7 +21,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
     ServerObject serverObject;
     LNConfiguration configuration;
 
-    List<LNPaymentProcessor> processorList = new ArrayList<>();
+    Map<NodeKey, LNPaymentProcessor> processorList = new ConcurrentHashMap<>();
 
     public LNPaymentHelperImpl (ContextFactory contextFactory, DBHandler dbHandler) {
         this.onionHelper = contextFactory.getOnionHelper();
@@ -29,62 +29,87 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
         this.eventHelper = contextFactory.getEventHelper();
         this.serverObject = contextFactory.getServerSettings();
         configuration = serverObject.configuration;
-    }
 
-    @Override
-    public void addProcessor (LNPaymentProcessor processor) {
-        processorList.add(processor);
-    }
+        this.eventHelper.addListener(new LNEventListener() {
+            @Override
+            public void onPaymentAdded (NodeKey nodeKey, PaymentData payment) {
+                relayPayment(nodeKey, payment);
+            }
 
-    @Override
-    public void removeProcessor (LNPaymentProcessor processor) {
-        processorList.remove(processor);
-    }
-
-    @Override
-    public synchronized void relayPayment (LNPaymentProcessor processorSent, PaymentData paymentData) {
-        try {
-
-            PeeledOnion peeledOnion = getPeeledOnion(paymentData);
-            saveReceiverToDatabase(paymentData, peeledOnion);
-
-            if (peeledOnion.isLastHop) {
-                PaymentSecret secret = dbHandler.getPaymentSecret(paymentData.secret);
-                if (secret == null) {
-                    processorSent.refundPayment(paymentData);
-                } else {
-                    processorSent.redeemPayment(secret);
-                }
-
-            } else {
-                paymentData.onionObject = peeledOnion.onionObject;
-                ECKey nextHop = peeledOnion.nextHop;
-
-                if (!relayPaymentToCorrectProcessor(paymentData, nextHop)) {
-                    //TODO Can't connect the payment right now. Check the DB if we even have a channel with
-                    //          the next node, refund the payment back if we don't...
-                    System.out.println("Currently not connected with " + Tools.bytesToHex(nextHop.getPubKey()) + ". Refund...");
-                    processorSent.refundPayment(paymentData);
+            @Override
+            public void onPaymentCompleted (PaymentData payment) {
+                NodeKey senderOfPayment = dbHandler.getSenderOfPayment(payment.secret);
+                if (senderOfPayment != null) {
+                    pingProcessor(senderOfPayment);
                 }
             }
 
+            @Override
+            public void onPaymentRefunded (PaymentData payment) {
+                NodeKey senderOfPayment = dbHandler.getSenderOfPayment(payment.secret);
+                if (senderOfPayment != null) {
+                    pingProcessor(senderOfPayment);
+                } else {
+                    System.out.println("LNPaymentHelperImpl.onPaymentRefunded - we were the sender?");
+                }
+            }
+        });
+    }
+
+    @Override
+    public void addProcessor (NodeKey nodeKey, LNPaymentProcessor processor) {
+        processorList.put(nodeKey, processor);
+    }
+
+    @Override
+    public void removeProcessor (NodeKey nodeKey) {
+        processorList.remove(nodeKey);
+    }
+
+    private boolean pingProcessor (NodeKey nodeKey) {
+        LNPaymentProcessor processor = processorList.get(nodeKey);
+        if (processor != null) {
+            processor.ping();
+            return true;
+        }
+        return false;
+    }
+
+    public void relayPayment (NodeKey sender, PaymentData paymentData) {
+        try {
+            PeeledOnion peeledOnion = getPeeledOnion(paymentData);
+            if (peeledOnion.isLastHop) {
+                pingProcessor(sender);
+            } else {
+                paymentData.onionObject = peeledOnion.onionObject;
+                NodeKey receiver = peeledOnion.nextHop;
+                if (!pingProcessor(receiver)) {
+                    if (dbHandler.getOpenChannel(receiver).size() == 0) {
+                        //No payment channel with next hop, will just send back
+                        pingProcessor(sender);
+                    }
+                }
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            processorSent.refundPayment(paymentData);
+            LNPaymentProcessor senderProcessor = processorList.get(sender);
+            if (senderProcessor != null) {
+                senderProcessor.ping();
+            }
         }
-
     }
 
     @Override
     public void makePayment (PaymentData paymentData) {
         try {
             PeeledOnion peeledOnion = getPeeledOnion(paymentData);
-            saveReceiverToDatabase(paymentData, peeledOnion);
-
             paymentData.onionObject = peeledOnion.onionObject;
-            ECKey nextHop = peeledOnion.nextHop;
+            NodeKey nextHop = peeledOnion.nextHop;
 
-            if (!relayPaymentToCorrectProcessor(paymentData, nextHop)) {
+            if (processorList.containsKey(nextHop)) {
+                dbHandler.addPayment(nextHop, paymentData);
+                pingProcessor(nextHop);
+            } else {
                 throw new LNPaymentException("Not connected to next hop " + nextHop);
             }
 
@@ -94,78 +119,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
         }
     }
 
-    private boolean relayPaymentToCorrectProcessor (PaymentData paymentData, ECKey nextHop) {
-        for (LNPaymentProcessor processor : processorList) {
-            if (processor.connectsToNodeId(nextHop.getPubKey())) {
-                PaymentData copy = paymentData.cloneObject();
-                copy.sending = true;
-                copy.timestampOpen = Tools.currentTime();
-                copy.timestampRefund -= configuration.getTimeToReduceWhenRelayingPayment();
-                //Last check to see if there is sufficient refund time left..
-                if ((copy.timestampRefund - Tools.currentTime()) < (configuration.MIN_OVERLAY_REFUND * configuration.MIN_REFUND_DELAY)) {
-                    System.out.println("Not sufficient refund time left - refund!");
-                    return false;
-                }
-                processor.makePayment(copy);
-                return true;
-            }
-        }
-        return false;
-    }
-
     private PeeledOnion getPeeledOnion (PaymentData paymentData) {
         return onionHelper.loadMessage(serverObject.pubKeyServer, paymentData.onionObject);
-    }
-
-    private void saveReceiverToDatabase (PaymentData payment, PeeledOnion peeledOnion) {
-        if (peeledOnion.isLastHop) {
-            dbHandler.updatePaymentAddReceiverAddress(payment.secret, new byte[0]);
-        } else {
-            dbHandler.updatePaymentAddReceiverAddress(payment.secret, peeledOnion.nextHop.getPubKey());
-        }
-    }
-
-    @Override
-    public void paymentRedeemed (PaymentSecret paymentSecret) {
-        byte[] sender = dbHandler.getSenderOfPayment(paymentSecret);
-
-        if (isEmptyByte(sender)) {
-            return;
-        } else {
-            for (LNPaymentProcessor processor : processorList) {
-                if (processor.connectsToNodeId(sender)) {
-                    processor.redeemPayment(paymentSecret);
-                    return;
-                }
-            }
-            System.out.println("Aren't connected to redeem payment..");
-            //TODO sender of payment is offline right now - have to close channel if he does not come back online in time..
-            //TODO redeem payment from other party on blockchain if channel is closed already..
-        }
-    }
-
-    @Override
-    public void paymentRefunded (PaymentData paymentData) {
-
-        byte[] sender = dbHandler.getSenderOfPayment(paymentData.secret);
-
-        if (sender == null) {
-            System.out.println("Can't find sender when trying to refund..?");
-            //TODO ??? - this should not happen - but can't really resolve it either..
-        }
-
-        for (LNPaymentProcessor processor : processorList) {
-            if (processor.connectsToNodeId(sender)) {
-                processor.refundPayment(paymentData);
-                return;
-            }
-        }
-
-        //TODO sender of payment is offline right now - he will close the channel if we can't get back to him in time..
-
-    }
-
-    private static boolean isEmptyByte (byte[] bytes) {
-        return bytes.length == 0;
     }
 }

@@ -1,15 +1,11 @@
 package network.thunder.core.communication.layer.high.payments;
 
+import network.thunder.core.communication.NodeKey;
+
 public interface LNPaymentHelper {
-    void addProcessor (LNPaymentProcessor processor);
+    void addProcessor (NodeKey nodeKey, LNPaymentProcessor processor);
 
-    void removeProcessor (LNPaymentProcessor processor);
-
-    void relayPayment (LNPaymentProcessor paymentProcessor, PaymentData paymentData);
+    void removeProcessor (NodeKey nodeKey);
 
     void makePayment (PaymentData paymentData);
-
-    void paymentRedeemed (PaymentSecret paymentSecret);
-
-    void paymentRefunded (PaymentData paymentSecret);
 }

@@ -1,6 +1,8 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
-public class OnionObject implements LNPayment {
+import org.bitcoinj.core.Sha256Hash;
+
+public class OnionObject {
     public final static int MAX_HOPS = 10;
 
     public final static int KEY_LENGTH = 33;
@@ -15,7 +17,9 @@ public class OnionObject implements LNPayment {
     }
 
     @Override
-    public void verify () {
-
+    public String toString () {
+        return "OnionObject{" +
+                "data=" + Sha256Hash.of(data).toString() +
+                '}';
     }
 }

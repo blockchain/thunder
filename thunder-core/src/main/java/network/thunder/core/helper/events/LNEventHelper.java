@@ -1,6 +1,7 @@
 package network.thunder.core.helper.events;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -27,7 +28,9 @@ public interface LNEventHelper {
 
     void onPaymentRefunded (PaymentData payment);
 
-    void onPaymentCompleted (PaymentData payment);
+    void onPaymentRedeemed (PaymentData payment);
+
+    void onPaymentAdded (NodeKey nodeKey, PaymentData payment);
 
     void onPaymentExchangeDone ();
 

@@ -1,18 +1,36 @@
 package network.thunder.core.database;
 
+import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.layer.DIRECTION;
+import network.thunder.core.communication.layer.MessageWrapper;
+import network.thunder.core.communication.layer.high.AckableMessage;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.NumberedMessage;
 import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface DBHandler {
+
+    //Messages
+    List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c);
+    List<AckableMessage> getUnackedMessageList (NodeKey nodeKey);
+    NumberedMessage getMessageResponse (NodeKey nodeKey, long messageIdReceived);
+    void setMessageAcked (NodeKey nodeKey, long messageId);
+    void setMessageProcessed (NodeKey nodeKey, NumberedMessage message);
+    long lastProcessedMessaged (NodeKey nodeKey);
+    long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction);
+    void linkResponse (NodeKey nodeKey, long messageRequest, long messageResponse);
 
     //Syncing / Gossiping
     List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex);
@@ -25,55 +43,40 @@ public interface DBHandler {
     void syncDatalist (List<P2PDataObject> dataList);
 
     //Channels
-    void insertRevocationHash (RevocationHash hash);
-    RevocationHash createRevocationHash (Channel channel);
-    List<RevocationHash> getOldRevocationHashes (Channel channel);
-    boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList);
-
     Channel getChannel (int id);
     Channel getChannel (Sha256Hash hash);
 
-    List<Channel> getChannel (ECKey nodeKey);
-    List<Channel> getOpenChannel (ECKey nodeKey);
-
-    int saveChannel (Channel channel);
-
-    void updateChannel (Channel channel);
-
+    List<Channel> getChannel (NodeKey nodeKey);
+    List<Channel> getOpenChannel (NodeKey nodeKey);
     List<Channel> getOpenChannel ();
 
-    List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
+    void insertChannel (Channel channel);
+    void updateChannelStatus (@NotNull NodeKey nodeKey, @NotNull Sha256Hash channelHash, @NotNull ECKey keyServer,
+                              Channel channel, ChannelUpdate update, RevocationHash revocationHash, NumberedMessage request, NumberedMessage response);
 
+    List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
     List<ChannelStatusObject> getTopology ();
 
     //Payments
-    byte[] getSenderOfPayment (PaymentSecret paymentSecret);
+    List<PaymentData> lockPaymentsToBeRefunded (NodeKey nodeKey);
+    List<PaymentData> lockPaymentsToBeMade (NodeKey nodeKey);
+    List<PaymentData> lockPaymentsToBeRedeemed (NodeKey nodeKey);
 
-    byte[] getReceiverOfPayment (PaymentSecret paymentSecret);
+    void checkPaymentsList ();
+    void unlockPayments (NodeKey nodeKey, List<PaymentData> paymentList);
 
-    void addPayment (PaymentWrapper paymentWrapper);
+    NodeKey getSenderOfPayment (PaymentSecret paymentSecret);
 
+    void addPayment (NodeKey firstHop, PaymentData paymentWrapper);
     void updatePayment (PaymentWrapper paymentWrapper);
-
-    void updatePaymentSender (PaymentWrapper paymentWrapper);
-
-    void updatePaymentReceiver (PaymentWrapper paymentWrapper);
-
-    void updatePaymentAddReceiverAddress (PaymentSecret secret, byte[] receiver);
-
     PaymentWrapper getPayment (PaymentSecret paymentSecret);
-
-    void addPaymentSecret (PaymentSecret secret);
-
     PaymentSecret getPaymentSecret (PaymentSecret secret);
+    void addPaymentSecret (PaymentSecret secret);
 
     //GUI
     List<PaymentWrapper> getAllPayments ();
-
     List<PaymentWrapper> getOpenPayments ();
-
     List<PaymentWrapper> getRefundedPayments ();
-
     List<PaymentWrapper> getRedeemedPayments ();
 
 }
