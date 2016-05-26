@@ -23,18 +23,12 @@ public class PaymentData implements Cloneable {
 
     public boolean sending;
     public long amount;
-    public long fee;
 
     public PaymentSecret secret;
     public int timestampOpen;
     public int timestampRefund; //timestamp at which the other party will consider this payment refunded
-    public int csvDelay; //revocation delay for dual-tx
 
     public OnionObject onionObject;
-
-	/*
-     * TODO: We probably need further fields here, can't think of any now..
-	 */
 
     @Override
     public boolean equals (Object o) {
@@ -47,13 +41,18 @@ public class PaymentData implements Cloneable {
 
         PaymentData that = (PaymentData) o;
 
+        if (amount != that.amount) {
+            return false;
+        }
         return secret != null ? secret.equals(that.secret) : that.secret == null;
 
     }
 
     @Override
     public int hashCode () {
-        return secret != null ? secret.hashCode() : 0;
+        int result = (int) (amount ^ (amount >>> 32));
+        result = 31 * result + (secret != null ? secret.hashCode() : 0);
+        return result;
     }
 
     @Override
@@ -61,6 +60,7 @@ public class PaymentData implements Cloneable {
         return "PaymentData{" +
                 "sending=" + sending +
                 ", amount=" + amount +
+                ", onion=" + onionObject +
                 '}';
     }
 
@@ -70,11 +70,9 @@ public class PaymentData implements Cloneable {
         p.onionObject = onionObject;
         p.sending = sending;
         p.amount = amount;
-        p.csvDelay = csvDelay;
         p.timestampOpen = timestampOpen;
         p.timestampRefund = timestampRefund;
         p.secret = secret;
-        p.fee = fee;
         return p;
     }
 
