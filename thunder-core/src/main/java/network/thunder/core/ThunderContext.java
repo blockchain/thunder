@@ -1,6 +1,8 @@
 package network.thunder.core;
 
-import network.thunder.core.communication.*;
+import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.Channel;
@@ -94,23 +96,26 @@ public class ThunderContext {
             if (Arrays.equals(receiver, node.pubKeyServer.getPubKey())) {
                 throw new LNPaymentException("Can't send to yourself!");
             }
-            LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
+
             LNOnionHelper onionHelper = contextFactory.getOnionHelper();
             LNRoutingHelper routingHelper = contextFactory.getLNRoutingHelper();
 
             List<byte[]> route = routingHelper.getRoute(node.pubKeyServer.getPubKey(), receiver, 1000L, 1f, 1f, 1f);
+            if (route.size() == 0) {
+                throw new LNPaymentException("No route found..");
+            }
 
             OnionObject object = onionHelper.createOnionObject(route, null);
+
+            LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
 
             PaymentData paymentData = new PaymentData();
             paymentData.amount = amount;
             paymentData.onionObject = object;
-            paymentData.sending = true;
             paymentData.secret = secret;
             paymentData.timestampOpen = Tools.currentTime();
             paymentData.timestampRefund = Tools.currentTime() + route.size()
                     * configuration.MAX_REFUND_DELAY * configuration.MAX_OVERLAY_REFUND;
-            paymentData.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
 
             paymentHelper.makePayment(paymentData);
         } catch (Exception e) {

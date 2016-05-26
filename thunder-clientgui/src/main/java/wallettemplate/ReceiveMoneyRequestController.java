@@ -75,9 +75,13 @@ public class ReceiveMoneyRequestController {
 
     public void update () {
 
-        PaymentRequest paymentRequest = Main.thunderContext.receivePayment(getAmount());
+        if(amount.getText().equals("")) {
+            amount.setText("0");
+        }
+
 
         try {
+            PaymentRequest paymentRequest = Main.thunderContext.receivePayment(getAmount());
 
             byte[] payload = paymentRequest.getPayload();
 

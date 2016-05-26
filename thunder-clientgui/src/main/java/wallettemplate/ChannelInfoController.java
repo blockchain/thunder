@@ -78,7 +78,7 @@ public class ChannelInfoController {
         balanceClient.setText(Coin.valueOf(channel.channelStatus.amountClient).toFriendlyString());
         balanceServer.setText(Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString());
 
-        labelOpen.setText(new Date(((long) channel.getTimestampOpen()) * 1000).toString());
+        labelOpen.setText(new Date(((long) channel.timestampOpen) * 1000).toString());
 
         txOpen.setText(Tools.bytesToHex(channel.anchorTx.bitcoinSerialize()));
 
