@@ -119,7 +119,7 @@ public class GuiUtils {
         GaussianBlur blur = new GaussianBlur(0.0);
         node.setEffect(blur);
         Timeline timeline = new Timeline();
-        KeyValue kv = new KeyValue(blur.radiusProperty(), 10.0);
+        KeyValue kv = new KeyValue(blur.radiusProperty(), 0.0);
         KeyFrame kf = new KeyFrame(Duration.millis(UI_ANIMATION_TIME_MSEC), kv);
         timeline.getKeyFrames().add(kf);
         timeline.play();
