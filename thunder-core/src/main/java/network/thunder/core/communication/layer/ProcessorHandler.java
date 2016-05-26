@@ -3,7 +3,6 @@ package network.thunder.core.communication.layer;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import network.thunder.core.communication.processor.exceptions.LNException;
 
 public class ProcessorHandler extends ChannelDuplexHandler {
 
@@ -49,14 +48,9 @@ public class ProcessorHandler extends ChannelDuplexHandler {
                     messageExecutor.sendMessageDownwards(message);
                 }
             }
-        } catch (LNException e1) {
-            if (e1.shouldDisconnect()) {
-                ctx.close();
-            }
-            throw e1;
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
+        } catch (Exception e1) {
+            e1.printStackTrace();
+            ctx.close();
         }
     }
 
@@ -79,7 +73,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
 
         } catch (Exception e) {
             e.printStackTrace();
-            throw e;
+            ctx.close();
         }
     }
 
