@@ -21,7 +21,7 @@ public class ServerObject {
         init();
         this.portServer = node.port;
         this.hostServer = node.host;
-        this.pubKeyServer = node.pubKeyClient;
+        this.pubKeyServer = node.nodeKey.nodeKey;
     }
 
     public ServerObject () {

@@ -102,7 +102,7 @@ public class ChannelManagerImpl implements ChannelManager {
     @Override
     public void closeChannel (Channel channel, ResultCommand callback) {
 
-        NodeKey node = new NodeKey(channel.nodeKeyClient);
+        NodeKey node = channel.nodeKeyClient;
         ChannelCloser channelCloser = channelCloserMap.get(node);
 
         if (channelCloser != null) {
@@ -145,7 +145,7 @@ public class ChannelManagerImpl implements ChannelManager {
         //Do all kind of maintenance in here, like reconnecting to channels that disconnected..
         List<Channel> openChannel = dbHandler.getOpenChannel();
         for (Channel channel : openChannel) {
-            NodeKey node = new NodeKey(channel.nodeKeyClient);
+            NodeKey node = channel.nodeKeyClient;
             if (!connectionRegistry.isConnected(node)) {
                 connectionManager.connect(node, ConnectionIntent.MAINTAIN_CHANNEL, new ConnectionListener());
             }

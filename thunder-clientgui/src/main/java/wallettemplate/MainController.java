@@ -259,7 +259,7 @@ public class MainController {
             @Override
             public String toString (Channel channel) {
                 return Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString() +
-                        " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeKeyClient);
+                        " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeKeyClient.getPubKey());
             }
 
             @Override

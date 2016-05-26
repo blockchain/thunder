@@ -96,7 +96,7 @@ public class MainNode {
                 buildChannelListener.await(30, TimeUnit.SECONDS);
                 List<Channel> openChannel = dbHandler.getOpenChannel();
                 for (Channel channel : openChannel) {
-                    configuration.nodesToBuildChannelWith.add(Tools.bytesToHex(channel.nodeKeyClient));
+                    configuration.nodesToBuildChannelWith.add(channel.nodeKeyClient.getPubKeyHex());
                 }
                 writeConfigurationFile(configuration);
             } else {

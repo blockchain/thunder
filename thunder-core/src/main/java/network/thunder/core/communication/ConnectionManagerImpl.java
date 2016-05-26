@@ -18,7 +18,6 @@ import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.*;
 import network.thunder.core.helper.events.LNEventHelper;
-import org.bitcoinj.core.ECKey;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.util.ArrayList;
@@ -245,7 +244,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 System.out.println("BUILD CHANNEL WITH: " + randomNode);
 
                 ClientObject node = ipObjectToNode(randomNode, OPEN_CHANNEL);
-                channelManager.openChannel(new NodeKey(node.pubKeyClient), new ChannelOpenListener());
+                channelManager.openChannel(node.nodeKey, new ChannelOpenListener());
 
                 alreadyTried.add(randomNode);
 
@@ -313,7 +312,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
         ClientObject node = new ClientObject();
         node.isServer = false;
         node.intent = intent;
-        node.pubKeyClient = ECKey.fromPublicOnly(ipObject.pubkey);
+        node.nodeKey = new NodeKey(ipObject.pubkey);
         node.host = ipObject.hostname;
         node.port = ipObject.port;
         return node;

@@ -11,8 +11,9 @@ import network.thunder.core.communication.layer.high.channel.establish.LNEstabli
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactory;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactoryImpl;
 import network.thunder.core.communication.layer.high.payments.*;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactoryImpl;
+
+import network.thunder.core.communication.layer.low.ack.AckProcessor;
+import network.thunder.core.communication.layer.low.ack.AckProcessorImpl;
 import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessor;
 import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessorImpl;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
@@ -57,6 +58,7 @@ public class ContextFactoryImpl implements ContextFactory {
     WalletHelper walletHelper;
 
     LNPaymentHelper paymentHelper;
+    LNPaymentLogic paymentLogic;
 
     LNOnionHelper onionHelper = new LNOnionHelperImpl();
 
@@ -74,6 +76,7 @@ public class ContextFactoryImpl implements ContextFactory {
         this.eventHelper = eventHelper;
         this.walletHelper = new WalletHelperImpl(wallet);
 
+        this.paymentLogic = new LNPaymentLogicImpl();
         GossipSubjectImpl gossipSubject = new GossipSubjectImpl(dbHandler, eventHelper);
         this.gossipSubject = gossipSubject;
         this.broadcastHelper = gossipSubject;
@@ -82,7 +85,7 @@ public class ContextFactoryImpl implements ContextFactory {
 
         this.paymentHelper = new LNPaymentHelperImpl(this, dbHandler);
 
-        if(Constants.USE_MOCK_BLOCKCHAIN) {
+        if (Constants.USE_MOCK_BLOCKCHAIN) {
             this.blockchainHelper = new MockBlockchainHelper(wallet);
         } else {
             this.blockchainHelper = new BlockchainHelperImpl(wallet);
@@ -128,6 +131,11 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public GossipProcessor getGossipProcessor (ClientObject node) {
         return new GossipProcessorImpl(this, dbHandler, node);
+    }
+
+    @Override
+    public AckProcessor getAckProcessor (ClientObject node) {
+        return new AckProcessorImpl(this, dbHandler, node);
     }
 
     @Override
@@ -182,7 +190,7 @@ public class ContextFactoryImpl implements ContextFactory {
 
     @Override
     public LNPaymentLogic getLNPaymentLogic () {
-        return new LNPaymentLogicImpl(getLNPaymentMessageFactory(), dbHandler);
+        return paymentLogic;
     }
 
     @Override
@@ -218,11 +226,6 @@ public class ContextFactoryImpl implements ContextFactory {
     @Override
     public LNEstablishMessageFactory getLNEstablishMessageFactory () {
         return new LNEstablishMessageFactoryImpl();
-    }
-
-    @Override
-    public LNPaymentMessageFactory getLNPaymentMessageFactory () {
-        return new LNPaymentMessageFactoryImpl(dbHandler);
     }
 
     @Override

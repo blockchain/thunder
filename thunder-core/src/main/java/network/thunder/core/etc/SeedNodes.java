@@ -48,7 +48,7 @@ public class SeedNodes {
         PubkeyIPObject seed1 = new PubkeyIPObject();
         seed1.hostname = "localhost";
         seed1.port = Constants.STANDARD_PORT;
-        seed1.pubkey = node.pubKeyClient.getPubKey();
+        seed1.pubkey = node.nodeKey.getPubKey();
 
         ipList.clear();
 

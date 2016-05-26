@@ -1,6 +1,7 @@
 package network.thunder.core.communication.layer.low.authentication;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
@@ -50,7 +51,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         if (message instanceof Authentication) {
             processMessage(message);
         } else if (!authenticationExchangeFinished()) {
-            sendAuthenticatedErrorMessage("Not authenticated..");
+            throw new RuntimeException("Not authenticated..");
         } else {
             passMessageToNextLayer(message);
         }
@@ -63,7 +64,6 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         } else {
             throw new RuntimeException("Should not happen, which class is this? " + message);
         }
-
     }
 
     public boolean shouldSendAuthenticationFirst () {
@@ -79,7 +79,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
     public void processMessage (Message message) {
         if (authenticationExchangeFinished()) {
-            messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage("Already authenticated"));
+            throw new RuntimeException("Already authenticated");
 
         } else {
             processAuthenticationMessage(message);
@@ -103,7 +103,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
         } catch (Exception e) {
             e.printStackTrace();
-            messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
+            throw new RuntimeException(e);
         }
     }
 
@@ -135,25 +135,23 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             NoSuchAlgorithmException {
 
         ECKey ecKey = ECKey.fromPublicOnly(authentication.pubKeyServer);
-        if (node.pubKeyClient != null) {
+        if (node.nodeKey != null) {
             //Must be an outgoing connection, check if the nodeKey is what we expect it to be
-            if (!Arrays.equals(ecKey.getPubKey(), node.pubKeyClient.getPubKey())) {
+            if (!Arrays.equals(ecKey.getPubKey(), node.nodeKey.getPubKey())) {
                 //We connected to the wrong node?
-                System.out.println("Connected to wrong node? Expected: " + node.pubKeyClient.getPublicKeyAsHex() + ". Is: " + ecKey.getPublicKeyAsHex());
+                System.out.println("Connected to wrong node? Expected: " + node.nodeKey.getPubKeyHex() + ". Is: " + ecKey.getPublicKeyAsHex());
                 authenticationFailed();
             }
         }
 
-        node.pubKeyClient = ecKey;
-
-        ECKey pubKeyClient = node.pubKeyClient;
+        node.nodeKey = new NodeKey(ecKey);
         ECKey pubKeyTempServer = node.ephemeralKeyServer;
 
-        byte[] data = new byte[pubKeyClient.getPubKey().length + pubKeyTempServer.getPubKey().length];
-        System.arraycopy(pubKeyClient.getPubKey(), 0, data, 0, pubKeyClient.getPubKey().length);
-        System.arraycopy(pubKeyTempServer.getPubKey(), 0, data, pubKeyClient.getPubKey().length, pubKeyTempServer.getPubKey().length);
+        byte[] data = new byte[ecKey.getPubKey().length + pubKeyTempServer.getPubKey().length];
+        System.arraycopy(ecKey.getPubKey(), 0, data, 0, ecKey.getPubKey().length);
+        System.arraycopy(pubKeyTempServer.getPubKey(), 0, data, ecKey.getPubKey().length, pubKeyTempServer.getPubKey().length);
 
-        if (!CryptoTools.verifySignature(pubKeyClient, data, authentication.signature)) {
+        if (!CryptoTools.verifySignature(ecKey, data, authentication.signature)) {
             System.out.println("Node was not able to authenticate..");
             authenticationFailed();
         }
@@ -166,10 +164,6 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
 
     private boolean authenticationExchangeFinished () {
         return authFinished;
-    }
-
-    private void sendAuthenticatedErrorMessage (String error) {
-        messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(error));
     }
 
     private void passMessageToNextLayer (Message message) {

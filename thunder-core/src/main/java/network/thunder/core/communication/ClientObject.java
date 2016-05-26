@@ -15,8 +15,7 @@ import java.util.List;
 public class ClientObject {
     public boolean isServer;
 
-    //TODO transition to NodeKey.class
-    public ECKey pubKeyClient;
+    public NodeKey nodeKey;
 
     //Encryption keys
     public ECKey ephemeralKeyServer;
@@ -50,7 +49,7 @@ public class ClientObject {
         init();
         this.port = node.port;
         this.host = node.host;
-        this.pubKeyClient = node.pubKeyClient;
+        this.nodeKey = node.nodeKey;
         this.isServer = node.isServer;
         this.intent = node.intent;
         this.name = node.name;
@@ -64,12 +63,11 @@ public class ClientObject {
         init();
         this.host = node.hostServer;
         this.port = node.portServer;
-        this.pubKeyClient = node.pubKeyServer;
+        this.nodeKey = new NodeKey(node.pubKeyServer);
         this.isServer = false;
     }
 
     public void init () {
-        pubKeyClient = new ECKey();
         ephemeralKeyServer = new ECKey();
     }
 

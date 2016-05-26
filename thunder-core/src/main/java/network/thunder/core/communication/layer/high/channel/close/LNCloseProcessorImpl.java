@@ -1,7 +1,6 @@
 package network.thunder.core.communication.layer.high.channel.close;
 
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
@@ -33,7 +32,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_REQUESTED_CLIENT;
+import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSED;
 import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_REQUESTED_SERVER;
 
 public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelCloser {
@@ -84,7 +83,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         //We just refund all open receiving payments and settle all open sent payments, even though this will probably cost us money.
 
         //Rather use a copy here to not run into concurrency issues somewhere else..
-        ChannelStatus temp = channelStatus.getClone();
+        ChannelStatus temp = channelStatus.copy();
 
         long amountClient = temp.amountClient;
         long amountServer = temp.amountServer;
@@ -132,8 +131,13 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         isBlocked = true;
         weRequestedClose = true;
         channel.phase = CLOSE_REQUESTED_SERVER;
-        channel.isReady = false;
-        dbHandler.updateChannel(channel);
+
+        //TODO need to rework this the same as LNEstablishImpl
+        dbHandler.updateChannelStatus(
+                getNode(),
+                channel.getHash(),
+                serverObject.pubKeyServer,
+                channel, null, null, null, null);
 
         calculateAndSendCloseMessage();
 
@@ -186,7 +190,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         //TODO move obligation to save channel object in ChannelManagement
         //Need to also keep track of channels after reconnecting..
 
-        setNode(new NodeKey(node.pubKeyClient));
+        setNode(node.nodeKey);
         this.messageExecutor = messageExecutor;
         this.channelManager.addChannelCloser(getNode(), this);
         this.messageExecutor.sendNextLayerActive();
@@ -204,13 +208,18 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         List<TransactionSignature> signatures = getTransactionSignatures(transaction);
 
         isBlocked = true;
+        boolean sendSignaturesBack = channel.phase != CLOSE_REQUESTED_SERVER;
         Channel channel = getChannel();
-        channel.isReady = false;
         channel.closingSignatures = message.getSignatureList();
-        dbHandler.updateChannel(channel);
+        channel.phase = CLOSED;
 
-        if (channel.phase != CLOSE_REQUESTED_SERVER) {
-            channel.phase = CLOSE_REQUESTED_CLIENT;
+        dbHandler.updateChannelStatus(
+                getNode(),
+                channel.getHash(),
+                serverObject.pubKeyServer,
+                channel, null, null, null, null);
+
+        if (sendSignaturesBack) {
             sendCloseMessage(signatures);
             //Okay, so the other party sent us correct signatures to close down the channel..
         }
@@ -237,7 +246,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         }
         this.channel = getChannel();
         //TODO fix working out the correct reverse strategy for channels that still have payments included
-        //ChannelStatus status = getChannelStatus(channel.channelStatus.getCloneReversed()).getCloneReversed();
+        //ChannelStatus statusSender = getChannelStatus(channel.channelUpdate.reverse()).reverse();
         ChannelStatus status = channel.channelStatus;
 
         Transaction transaction = getClosingTransaction(status, message.feePerByte);

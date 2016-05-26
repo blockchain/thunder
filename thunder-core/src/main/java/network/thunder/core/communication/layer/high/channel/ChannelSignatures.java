@@ -16,4 +16,11 @@ public class ChannelSignatures {
 
     public ChannelSignatures () {
     }
+
+    public ChannelSignatures copy () {
+        ChannelSignatures c = new ChannelSignatures();
+        c.channelSignatures = new ArrayList<>(this.channelSignatures);
+        c.paymentSignatures = new ArrayList<>(this.paymentSignatures);
+        return c;
+    }
 }

@@ -10,7 +10,7 @@ import network.thunder.core.communication.layer.high.channel.close.messages.LNCl
 import network.thunder.core.communication.layer.high.channel.establish.LNEstablishProcessor;
 import network.thunder.core.communication.layer.high.channel.establish.messages.LNEstablishMessageFactory;
 import network.thunder.core.communication.layer.high.payments.*;
-import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
+import network.thunder.core.communication.layer.low.ack.AckProcessor;
 import network.thunder.core.communication.layer.low.authentication.AuthenticationProcessor;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
 import network.thunder.core.communication.layer.low.encryption.EncryptionProcessor;
@@ -44,6 +44,8 @@ public interface ContextFactory {
     SyncProcessor getSyncProcessor (ClientObject node);
 
     GossipProcessor getGossipProcessor (ClientObject node);
+
+    AckProcessor getAckProcessor (ClientObject node);
 
     LNEstablishProcessor getLNEstablishProcessor (ClientObject node);
 
@@ -80,8 +82,6 @@ public interface ContextFactory {
     GossipMessageFactory getGossipMessageFactory ();
 
     LNEstablishMessageFactory getLNEstablishMessageFactory ();
-
-    LNPaymentMessageFactory getLNPaymentMessageFactory ();
 
     LNCloseMessageFactory getLNCloseMessageFactory ();
 

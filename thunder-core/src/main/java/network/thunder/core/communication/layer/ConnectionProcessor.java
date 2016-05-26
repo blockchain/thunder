@@ -3,7 +3,6 @@ package network.thunder.core.communication.layer;
 import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.Connection;
 import network.thunder.core.communication.ConnectionRegistry;
-import network.thunder.core.communication.NodeKey;
 import network.thunder.core.helper.callback.Command;
 
 public class ConnectionProcessor extends AuthenticatedProcessor implements Connection {
@@ -21,7 +20,7 @@ public class ConnectionProcessor extends AuthenticatedProcessor implements Conne
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
         messageExecutor.sendNextLayerActive();
-        setNode(new NodeKey(node.pubKeyClient));
+        setNode(node.nodeKey);
         this.messageExecutor = messageExecutor;
         connectionRegistry.onConnected(getNode(), this);
         node.onConnectionComplete.stream().forEach(Command::execute);
