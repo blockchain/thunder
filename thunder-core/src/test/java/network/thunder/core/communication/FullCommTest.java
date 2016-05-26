@@ -79,10 +79,11 @@ public class FullCommTest {
             shouldConnected.stream()
                     .map(ByteBuffer::array)
                     .map(ECKey::fromPublicOnly)
+                    .map(NodeKey::new)
                     .forEach(pubkey -> actuallyConnected.addAll(
                             nodeWrapper.dbHandler.getOpenChannel(pubkey).
                                     stream()
-                                    .map(p -> p.nodeKeyClient)
+                                    .map(p -> p.nodeKeyClient.getPubKey())
                                     .map(ByteBuffer::wrap)
                                     .collect(Collectors.toList())));
 

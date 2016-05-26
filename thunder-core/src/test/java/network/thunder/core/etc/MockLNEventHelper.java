@@ -1,6 +1,7 @@
 package network.thunder.core.etc;
 
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -55,7 +56,12 @@ public class MockLNEventHelper implements LNEventHelper {
     }
 
     @Override
-    public void onPaymentCompleted (PaymentData payment) {
+    public void onPaymentRedeemed (PaymentData payment) {
+
+    }
+
+    @Override
+    public void onPaymentAdded (NodeKey nodeKey, PaymentData payment) {
 
     }
 

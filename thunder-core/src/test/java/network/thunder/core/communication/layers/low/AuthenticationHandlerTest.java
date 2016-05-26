@@ -1,18 +1,15 @@
 package network.thunder.core.communication.layers.low;
 
 import io.netty.channel.embedded.EmbeddedChannel;
+import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.ProcessorHandler;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessage;
-import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.communication.layer.FailureMessage;
 import network.thunder.core.etc.MockContextFactory;
-import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.helper.crypto.ECDH;
-import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.ServerObject;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,8 +35,6 @@ public class AuthenticationHandlerTest {
 
     ContextFactory contextFactory1;
     ContextFactory contextFactory2;
-
-    LNEventHelper eventHelper = new MockLNEventHelper();
 
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
@@ -116,7 +111,7 @@ public class AuthenticationHandlerTest {
     }
 
     @Test
-    public void shouldNotAllowMessagePassthrough () throws NoSuchProviderException, NoSuchAlgorithmException {
+    public void shouldNotAllowMessagePassthroughIn () throws NoSuchProviderException, NoSuchAlgorithmException {
         channel1.readOutbound();
 
         assertNull(channel1.readOutbound());
@@ -129,14 +124,28 @@ public class AuthenticationHandlerTest {
         channel1.writeInbound(randomDataMessage1);
         channel2.writeInbound(randomDataMessage2);
 
-        assertNull(channel1.readInbound());
-        assertNull(channel2.readInbound());
+        assertFalse(channel1.isOpen());
+        assertFalse(channel2.isOpen());
 
+        after();
+    }
+
+    @Test
+    public void shouldNotAllowMessagePassthroughOut () throws NoSuchProviderException, NoSuchAlgorithmException {
+        channel1.readOutbound();
+
+        assertNull(channel1.readOutbound());
+        assertNull(channel2.readOutbound());
+
+        RandomDataMessage randomDataMessage1 = new RandomDataMessage();
+        RandomDataMessage randomDataMessage2 = new RandomDataMessage();
+
+        //Should allow both directions now..
         channel1.writeOutbound(randomDataMessage1);
         channel2.writeOutbound(randomDataMessage2);
 
-        assertTrue(channel1.readOutbound() instanceof FailureMessage);
-        assertTrue(channel2.readOutbound() instanceof FailureMessage);
+        assertFalse(channel1.isOpen());
+        assertFalse(channel2.isOpen());
 
         after();
     }

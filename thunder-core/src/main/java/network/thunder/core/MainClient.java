@@ -98,7 +98,7 @@ public class MainClient {
         paymentData.onionObject = onionObject;
 
         LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
-        paymentHelper.relayPayment(null, paymentData);
+        paymentHelper.makePayment(paymentData);
 
         while (true) {
             Thread.sleep(100000);

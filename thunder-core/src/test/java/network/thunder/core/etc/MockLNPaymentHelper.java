@@ -1,23 +1,19 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.payments.LNPaymentHelper;
 import network.thunder.core.communication.layer.high.payments.LNPaymentProcessor;
-import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 
 public class MockLNPaymentHelper implements LNPaymentHelper {
+
     @Override
-    public void addProcessor (LNPaymentProcessor processor) {
+    public void addProcessor (NodeKey nodeKey, LNPaymentProcessor processor) {
 
     }
 
     @Override
-    public void removeProcessor (LNPaymentProcessor processor) {
-
-    }
-
-    @Override
-    public void relayPayment (LNPaymentProcessor paymentProcessor, PaymentData paymentData) {
+    public void removeProcessor (NodeKey nodeKey) {
 
     }
 
@@ -26,13 +22,4 @@ public class MockLNPaymentHelper implements LNPaymentHelper {
 
     }
 
-    @Override
-    public void paymentRedeemed (PaymentSecret paymentSecret) {
-
-    }
-
-    @Override
-    public void paymentRefunded (PaymentData paymentSecret) {
-
-    }
 }

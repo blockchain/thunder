@@ -3,7 +3,6 @@ package network.thunder.core.communication.layers.high;
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.ConnectionManager;
-import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
@@ -66,7 +65,7 @@ public class LNEstablishHandlerTest {
         channel1 = new EmbeddedChannel(new ProcessorHandler(processor1, "LNEstablish1"));
         channel2 = new EmbeddedChannel(new ProcessorHandler(processor2, "LNEstablish2"));
 
-        contextFactory1.getChannelManager().openChannel(new NodeKey(node1.pubKeyClient), new ChannelOpenListener());
+        contextFactory1.getChannelManager().openChannel(node1.nodeKey, new ChannelOpenListener());
 
         Message m = (Message) channel2.readOutbound();
         assertNull(m);

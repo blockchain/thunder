@@ -86,8 +86,6 @@ public class SyncHandlerTest {
         assertNull(channel1.readOutbound());
         assertNull(channel2.readOutbound());
 
-//        syncStructure1.saveFullSyncToDatabase();
-
         assertTrue(checkListsEqual(dbHandler1.channelStatusObjectArrayList, dbHandler2.channelStatusObjectArrayList));
         assertTrue(checkListsEqual(dbHandler1.pubkeyChannelObjectArrayList, dbHandler2.pubkeyChannelObjectArrayList));
         assertTrue(checkListsEqual(dbHandler1.pubkeyIPObjectArrayList, dbHandler2.pubkeyIPObjectArrayList));

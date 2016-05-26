@@ -16,7 +16,7 @@ public class RevocationHashTest {
         Random r = new Random();
         r.nextBytes(secret);
 
-        RevocationHash revocationHash = new RevocationHash(10, 10, secret, secret);
+        RevocationHash revocationHash = new RevocationHash(10, secret, secret);
         assertFalse(revocationHash.check());
     }
 
@@ -27,17 +27,7 @@ public class RevocationHashTest {
         r.nextBytes(secret);
         byte[] hash = Tools.hashSecret(secret);
 
-        RevocationHash revocationHash = new RevocationHash(10, 10, secret, hash);
-        assertTrue(revocationHash.check());
-    }
-
-    @Test
-    public void shouldPassBecauseOfNewMaster () throws Exception {
-        byte[] secret = new byte[20];
-        Random r = new Random();
-        r.nextBytes(secret);
-
-        RevocationHash revocationHash = new RevocationHash(0, 0, secret, secret);
+        RevocationHash revocationHash = new RevocationHash(10, secret, hash);
         assertTrue(revocationHash.check());
     }
 }

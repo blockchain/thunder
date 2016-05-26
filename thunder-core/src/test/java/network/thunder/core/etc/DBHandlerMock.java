@@ -1,8 +1,15 @@
 package network.thunder.core.etc;
 
+import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.layer.DIRECTION;
+import network.thunder.core.communication.layer.MessageWrapper;
+import network.thunder.core.communication.layer.high.AckableMessage;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.NumberedMessage;
 import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
@@ -10,10 +17,53 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class DBHandlerMock implements DBHandler {
+    @Override
+    public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c) {
+        return null;
+    }
+
+    @Override
+    public List<AckableMessage> getUnackedMessageList (NodeKey nodeKey) {
+        return null;
+    }
+
+    @Override
+    public AckableMessage getMessageResponse (NodeKey nodeKey, long messageIdReceived) {
+        return null;
+    }
+
+    @Override
+    public void setMessageAcked (NodeKey nodeKey, long messageId) {
+
+    }
+
+    @Override
+    public void setMessageProcessed (NodeKey nodeKey, NumberedMessage message) {
+
+    }
+
+
+    @Override
+    public long lastProcessedMessaged (NodeKey nodeKey) {
+        return 0;
+    }
+
+    @Override
+    public long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
+        return 0;
+    }
+
+
+    @Override
+    public void linkResponse (NodeKey nodeKey, long messageRequest, long messageResponse) {
+
+    }
+
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
         return null;
@@ -54,25 +104,6 @@ public class DBHandlerMock implements DBHandler {
 
     }
 
-    @Override
-    public void insertRevocationHash (RevocationHash hash) {
-
-    }
-
-    @Override
-    public RevocationHash createRevocationHash (Channel channel) {
-        return null;
-    }
-
-    @Override
-    public List<RevocationHash> getOldRevocationHashes (Channel channel) {
-        return null;
-    }
-
-    @Override
-    public boolean checkOldRevocationHashes (List<RevocationHash> revocationHashList) {
-        return true;
-    }
 
     @Override
     public Channel getChannel (int id) {
@@ -85,29 +116,30 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public List<Channel> getChannel (ECKey nodeKey) {
+    public List<Channel> getChannel (NodeKey nodeKey) {
         return null;
     }
 
     @Override
-    public List<Channel> getOpenChannel (ECKey nodeKey) {
+    public List<Channel> getOpenChannel (NodeKey nodeKey) {
         return null;
-    }
-
-    @Override
-    public int saveChannel (Channel channel) {
-        return 0;
-    }
-
-    @Override
-    public void updateChannel (Channel channel) {
-
     }
 
     @Override
     public List<Channel> getOpenChannel () {
         return null;
     }
+
+    @Override
+    public void insertChannel (Channel channel) {
+
+    }
+
+    @Override
+    public void updateChannelStatus (@NotNull NodeKey nodeKey, @NotNull Sha256Hash channelHash, @NotNull ECKey keyServer, Channel channel, ChannelUpdate update, RevocationHash revocationHash, NumberedMessage request, NumberedMessage response) {
+
+    }
+
 
     @Override
     public List<PubkeyIPObject> getIPObjectsWithActiveChannel () {
@@ -120,37 +152,42 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public byte[] getSenderOfPayment (PaymentSecret paymentSecret) {
-        return new byte[0];
+    public List<PaymentData> lockPaymentsToBeRefunded (NodeKey nodeKey) {
+        return null;
     }
 
     @Override
-    public byte[] getReceiverOfPayment (PaymentSecret paymentSecret) {
-        return new byte[0];
+    public List<PaymentData> lockPaymentsToBeMade (NodeKey nodeKey) {
+        return null;
     }
 
     @Override
-    public void addPayment (PaymentWrapper paymentWrapper) {
+    public List<PaymentData> lockPaymentsToBeRedeemed (NodeKey nodeKey) {
+        return null;
+    }
+
+    @Override
+    public void checkPaymentsList () {
+
+    }
+
+    @Override
+    public void unlockPayments (NodeKey nodeKey, List<PaymentData> paymentList) {
+
+    }
+
+    @Override
+    public NodeKey getSenderOfPayment (PaymentSecret paymentSecret) {
+        return null;
+    }
+
+    @Override
+    public void addPayment (NodeKey firstHop, PaymentData paymentWrapper) {
 
     }
 
     @Override
     public void updatePayment (PaymentWrapper paymentWrapper) {
-
-    }
-
-    @Override
-    public void updatePaymentSender (PaymentWrapper paymentWrapper) {
-
-    }
-
-    @Override
-    public void updatePaymentReceiver (PaymentWrapper paymentWrapper) {
-
-    }
-
-    @Override
-    public void updatePaymentAddReceiverAddress (PaymentSecret secret, byte[] receiver) {
 
     }
 
