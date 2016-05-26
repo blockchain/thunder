@@ -6,9 +6,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 import io.netty.handler.codec.LengthFieldPrepender;
 import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.layer.low.ping.PingHandler;
 import network.thunder.core.communication.layer.low.serialisation.ByteToMessageObjectHandler;
 import network.thunder.core.communication.layer.low.serialisation.MessageObjectToByteHandler;
-import network.thunder.core.communication.layer.low.ping.PingHandler;
 import network.thunder.core.communication.layer.low.serialisation.MessageSerializer;
 
 public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
@@ -32,7 +32,7 @@ public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
         if (serverMode) {
             node = new ClientObject();
             node.isServer = true;
-            node.pubKeyClient = null;
+            node.nodeKey = null;
         }
 //        ch.pipeline().addLast(new DumpHexHandler());
 
@@ -73,6 +73,8 @@ public class PipelineInitialiser extends ChannelInitializer<SocketChannel> {
 
         Processor lnCloseProcessor = contextFactory.getLNCloseProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnCloseProcessor, "LNClose"));
+
+        ch.pipeline().addLast(new ProcessorHandler(contextFactory.getAckProcessor(node), "Ack"));
 
         Processor lnPaymentProcessor = contextFactory.getLNPaymentProcessor(node);
         ch.pipeline().addLast(new ProcessorHandler(lnPaymentProcessor, "LNPayment"));
