@@ -1,12 +1,12 @@
 package network.thunder.core.communication.layer.high.channel.establish;
 
 import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.ChannelOpener;
 import network.thunder.core.communication.layer.high.channel.establish.messages.*;
@@ -20,16 +20,20 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.callback.ChannelOpenListener;
-import network.thunder.core.helper.callback.results.ChannelCreatedResult;
+import network.thunder.core.helper.callback.results.FailureResult;
 import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.Transaction;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import static network.thunder.core.communication.layer.high.Channel.Phase.ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION;
+import static network.thunder.core.communication.layer.high.Channel.Phase.OPEN;
 
 /*
  * Processor handling the creation of a channel.
@@ -41,7 +45,7 @@ import java.util.concurrent.TimeUnit;
  *    - The problem with it is that we need a way to determine the value of the UTXOs
  *  - Have a anchor_complete message
  *  - Check after X confirmation for an anchor_complete, close and free our anchor again
- *  - Add various changes to the channel status / updates to the database
+ *  - Add various changes to the channel statusSender / updates to the database
  *  - Reload a half-done channel from database if the connection breaks down
  *
  * Currently we are exchanging 8 messages in total,
@@ -169,8 +173,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
             consumeMessage(message);
         } catch (Exception e) {
             e.printStackTrace();
-            messageExecutor.sendMessageUpwards(messageFactory.getFailureMessage(e.getMessage()));
-            node.resultCallback.execute(new ChannelCreatedResult(establishProgress.channel));
+            node.resultCallback.execute(new FailureResult(e.getMessage()));
             throw e;
         }
     }
@@ -187,7 +190,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        setNode(new NodeKey(node.pubKeyClient));
+        setNode(node.nodeKey);
         this.messageExecutor = messageExecutor;
         channelManager.addChannelOpener(getNode(), this);
         sendNextLayerActiveIfOpenChannelExists();
@@ -200,7 +203,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void sendNextLayerActiveIfOpenChannelExists () {
-        List<Channel> openChannel = dbHandler.getOpenChannel(node.pubKeyClient);
+        List<Channel> openChannel = dbHandler.getOpenChannel(node.nodeKey);
         if (openChannel.size() > 0) {
             startScheduledBroadcasting();
             messageExecutor.sendNextLayerActive();
@@ -229,7 +232,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     @Override
     public void openChannel (Channel channel, ChannelOpenListener callback) {
         //Only support one channel per connection for now..
-        if(dbHandler.getOpenChannel(node.pubKeyClient).size() > 0) {
+        if (dbHandler.getOpenChannel(node.nodeKey).size() > 0) {
             System.out.println("LNEstablishProcessorImpl.openChannel - already connected!");
             callback.onSuccess.execute();
             return;
@@ -260,7 +263,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         if (testProgressReceivingMessageAmount(0)) {
             //TODO test for validity of establish settings
             //TODO test if inputs are paying adequate fees and are paying from SegWit outputs
-            this.establishProgress.channel.nodeKeyClient = node.pubKeyClient.getPubKey();
+            this.establishProgress.channel.nodeKeyClient = node.nodeKey;
             message.saveToChannel(establishProgress.channel);
             establishProgress.messages.add(message);
             if (establishProgress.weStartedExchange) {
@@ -294,6 +297,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
                     establishProgress.channel.keyClient,
                     establishProgress.channel.channelSignatures,
                     channelTransaction,
+                    Collections.emptyList(),
                     establishProgress.channel.channelStatus
 
             );
@@ -339,8 +343,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
     private void onChannelEstablished () {
         establishProgress.channel.anchorTxHash = establishProgress.channel.anchorTx.getHash();
-        establishProgress.channel.isReady = true;
-        dbHandler.saveChannel(establishProgress.channel);
+        establishProgress.channel.phase = ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION;
+        dbHandler.insertChannel(establishProgress.channel);
         blockchainHelper.broadcastTransaction(establishProgress.channel.anchorTx);
 
 //        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
@@ -352,7 +356,18 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void onEnoughConfirmations () {
-        dbHandler.updateChannel(establishProgress.channel);
+        establishProgress.channel.phase = OPEN;
+
+        dbHandler.updateChannelStatus(
+                getNode(),
+                establishProgress.channel.getHash(),
+                serverObject.pubKeyServer,
+                establishProgress.channel,
+                null,
+                null,
+                null,
+                null);
+
         sendNextLayerActiveIfOpenChannelExists();
         eventHelper.onChannelOpened(establishProgress.channel);
 
@@ -362,8 +377,10 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void sendEstablishMessageA () {
+        establishProgress.channel.masterPrivateKeyServer = Tools.getRandomByte(20);
         establishProgress.channel.getAnchorTransactionServer(walletHelper);
-        establishProgress.channel.channelStatus.revocationHashServer = dbHandler.createRevocationHash(establishProgress.channel);
+        establishProgress.channel.channelStatus.revoHashServerCurrent = new RevocationHash(0, establishProgress.channel.masterPrivateKeyServer);
+        establishProgress.channel.channelStatus.revoHashServerNext = new RevocationHash(1, establishProgress.channel.masterPrivateKeyServer);
         establishProgress.channel.channelStatus.addressServer = walletHelper.fetchAddress();
         LNEstablish message = messageFactory.getEstablishMessageA(establishProgress.channel);
         establishProgress.messages.add(message);
@@ -374,12 +391,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
         Transaction channelTransaction = paymentLogic.getChannelTransaction(
                 establishProgress.channel.anchorTx.getOutput(0).getOutPointFor(),
-                establishProgress.channel.channelStatus.getCloneReversed(),
+                establishProgress.channel.channelStatus.reverse(),
                 establishProgress.channel.keyServer,
                 establishProgress.channel.keyClient
         );
 
-        establishProgress.channel.channelSignatures = paymentLogic.getSignatureObject(establishProgress.channel, channelTransaction);
+        establishProgress.channel.channelSignatures = paymentLogic.getSignatureObject(establishProgress.channel, channelTransaction, Collections.emptyList());
 
         LNEstablish message = messageFactory.getEstablishMessageB(establishProgress.channel.channelSignatures.channelSignatures.get(0));
         establishProgress.messages.add(message);
@@ -403,7 +420,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         Channel channel = establishProgress.channel;
         PubkeyChannelObject channelObject = new PubkeyChannelObject();
         channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
-        channelObject.pubkeyB = node.pubKeyClient.getPubKey();
+        channelObject.pubkeyB = node.nodeKey.getPubKey();
         channelObject.pubkeyA1 = channel.keyServer.getPubKey();
         channelObject.pubkeyB1 = channel.keyClient.getPubKey();
         channelObject.timestamp = Tools.currentTime();
@@ -412,7 +429,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         //TODO fill in some usable data into ChannelStatusObject
         ChannelStatusObject statusObject = new ChannelStatusObject();
         statusObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
-        statusObject.pubkeyB = node.pubKeyClient.getPubKey();
+        statusObject.pubkeyB = node.nodeKey.getPubKey();
         statusObject.timestamp = Tools.currentTime();
 
         broadcastHelper.broadcastNewObject(channelObject);

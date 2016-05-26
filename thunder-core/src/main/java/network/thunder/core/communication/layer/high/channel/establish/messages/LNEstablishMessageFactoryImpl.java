@@ -12,7 +12,8 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
         LNEstablishAMessage message = new LNEstablishAMessage(
                 channel.keyServer,
                 channel.anchorTx,
-                channel.channelStatus.revocationHashServer,
+                channel.channelStatus.revoHashServerCurrent,
+                channel.channelStatus.revoHashServerNext,
                 channel.channelStatus.amountClient,
                 channel.channelStatus.amountServer,
                 0,  //TODO add some reasonable minConfirmations

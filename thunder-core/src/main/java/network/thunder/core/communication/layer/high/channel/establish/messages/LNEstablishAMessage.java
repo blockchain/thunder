@@ -21,20 +21,25 @@ public class LNEstablishAMessage implements LNEstablish {
 
     //Data about the first commitment to be able to refund if necessary
     public RevocationHash revocationHash;
+    public RevocationHash revocationHashNext;
     public int feePerByte;
-    public long csvDelay;
+    public int csvDelay;
 
-    public LNEstablishAMessage (ECKey channelKeyServer, Transaction anchor, RevocationHash revocationHash, long clientAmount, long
-            serverAmount, int minConfirmationAnchor, Address address, int feePerByte, long csvDelay) {
+    public LNEstablishAMessage (ECKey channelKeyServer, Transaction anchor, RevocationHash revocationHash, RevocationHash revocationHashNext, long clientAmount,
+                                long serverAmount, int minConfirmationAnchor, Address address, int feePerByte, int csvDelay) {
         this.channelKeyServer = channelKeyServer.getPubKey();
         this.minConfirmationAnchor = minConfirmationAnchor;
         this.anchorTransaction = anchor.bitcoinSerialize();
         this.revocationHash = revocationHash;
+        this.revocationHashNext = revocationHashNext;
         this.amountClient = clientAmount;
         this.amountServer = serverAmount;
         this.addressBytes = address.getHash160();
         this.feePerByte = feePerByte;
         this.csvDelay = csvDelay;
+
+        this.revocationHash.secret = null;
+        this.revocationHashNext.secret = null;
     }
 
     @Override
@@ -42,14 +47,14 @@ public class LNEstablishAMessage implements LNEstablish {
         try {
             Transaction newAnchorTx = new Transaction(Constants.getNetwork(), anchorTransaction);
 
-            if(channel.anchorTx != null) {
-                if(Tools.checkIfExistingInOutPutsAreEqual(channel.anchorTx, newAnchorTx)) {
+            if (channel.anchorTx != null) {
+                if (Tools.checkIfExistingInOutPutsAreEqual(channel.anchorTx, newAnchorTx)) {
                     throw new LNEstablishException("Our in/outputs of the anchor has been changed..");
                 }
             }
 
             //Don't allow changing the values for now, symmetric messages are easy to implement though
-            if(channel.channelStatus.amountServer == 0 || channel.channelStatus.amountClient == 0) {
+            if (channel.channelStatus.amountServer == 0 || channel.channelStatus.amountClient == 0) {
                 channel.channelStatus.amountClient = amountClient;
                 channel.channelStatus.amountServer = amountServer;
             }
@@ -57,12 +62,14 @@ public class LNEstablishAMessage implements LNEstablish {
             channel.keyClient = ECKey.fromPublicOnly(channelKeyServer);
             channel.anchorTx = newAnchorTx;
             channel.channelStatus.addressClient = new Address(Constants.getNetwork(), addressBytes);
-            channel.channelStatus.revocationHashClient = revocationHash;
+            channel.channelStatus.revoHashClientCurrent = revocationHash;
+            channel.channelStatus.revoHashClientNext = revocationHashNext;
             channel.channelStatus.csvDelay = csvDelay;
             channel.channelStatus.feePerByte = feePerByte;
             channel.minConfirmationAnchor = minConfirmationAnchor;
+            channel.shaChainDepth = 0;
             return channel;
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

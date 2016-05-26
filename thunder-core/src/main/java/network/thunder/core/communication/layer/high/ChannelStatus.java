@@ -8,46 +8,50 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class ChannelStatus implements Cloneable {
+public class ChannelStatus {
     public long amountClient;
     public long amountServer;
 
     public List<PaymentData> paymentList = new ArrayList<>();
 
     public int feePerByte;
-    public long csvDelay;
+    public int csvDelay;
 
-    public RevocationHash revocationHashClient;
-    public RevocationHash revocationHashServer;
+    public RevocationHash revoHashClientCurrent;
+    public RevocationHash revoHashServerCurrent;
+    public RevocationHash revoHashClientNext;
+    public RevocationHash revoHashServerNext;
 
     public Address addressClient;
     public Address addressServer;
 
-    @Override
-    protected Object clone () throws CloneNotSupportedException {
-        return super.clone();
+    public ChannelStatus copy () {
+        ChannelStatus status = new ChannelStatus();
+        status.amountClient = this.amountClient;
+        status.amountServer = this.amountServer;
+        status.feePerByte = this.feePerByte;
+        status.csvDelay = this.csvDelay;
+        status.addressClient = this.addressClient;
+        status.addressServer = this.addressServer;
+        status.revoHashClientCurrent = revoHashClientCurrent.copy();
+        status.revoHashClientNext = revoHashClientNext.copy();
+        status.revoHashServerCurrent = revoHashServerCurrent.copy();
+        status.revoHashServerNext = revoHashServerNext.copy();
+
+        status.paymentList = clonePaymentList(this.paymentList);
+        return status;
     }
 
-    public ChannelStatus getClone () {
-        try {
-            ChannelStatus status = (ChannelStatus) this.clone();
-            status.paymentList = clonePaymentList(this.paymentList);
-            return status;
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public ChannelStatus getCloneReversed () {
-        ChannelStatus status = getClone();
+    public ChannelStatus reverse () {
+        ChannelStatus status = copy();
 
         long tempAmount = status.amountServer;
         status.amountServer = status.amountClient;
         status.amountClient = tempAmount;
 
-        RevocationHash tempRevocationHash = status.revocationHashServer;
-        status.revocationHashServer = status.revocationHashClient;
-        status.revocationHashClient = tempRevocationHash;
+        RevocationHash tempRevocationHash = status.revoHashServerCurrent;
+        status.revoHashServerCurrent = status.revoHashClientCurrent;
+        status.revoHashClientCurrent = tempRevocationHash;
 
         Address tempAddress = status.addressServer;
         status.addressServer = status.addressClient;
@@ -100,6 +104,11 @@ public class ChannelStatus implements Cloneable {
         this.csvDelay = update.csvDelay;
     }
 
+    public void applyNextRevoHash () {
+        this.revoHashClientCurrent = this.revoHashClientNext;
+        this.revoHashServerCurrent = this.revoHashServerNext;
+    }
+
     private List<PaymentData> reverseSending (List<PaymentData> paymentDataList) {
         for (PaymentData payment : paymentDataList) {
             payment.sending = !payment.sending;
@@ -125,8 +134,8 @@ public class ChannelStatus implements Cloneable {
         return "ChannelStatus{" +
                 "amountClient=" + amountClient +
                 ", amountServer=" + amountServer +
-                ", addressServer=" + addressServer +
-                ", addressClient=" + addressClient +
+                ", revoServer=" + revoHashServerCurrent +
+                ", revoClient=" + revoHashClientCurrent +
                 ", paymentList=" + paymentList.size() +
                 '}';
     }
