@@ -3,14 +3,12 @@ package network.thunder.core.helper;
 import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.internal.LinkedTreeMap;
 import network.thunder.core.communication.layer.high.RevocationHash;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
-import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -65,9 +63,50 @@ public class ScriptTools {
     public static final byte[] COMMIT_INPUT_SCRIPT =
             Tools.hexStringToByteArray("00 FF FF FF");
 
-    public static final byte[] CHANNEL_TX_OUTPUT_REVOCATION = Tools.hexStringToByteArray("A9 FF 87 63 FF 67 FF B3 75  FF 68 AC");
-    public static final byte[] CHANNEL_TX_OUTPUT_PLAIN = Tools.hexStringToByteArray("FF AC");
+    /*
+     * Script for the balance of the channel going to the owner of the channel tx.
+     * The counterparty can claim these funds using a revocation hash.
+     *
+     * Arguments:
+     *      (1) revocation hash
+     *      (2) public key of party that can claim funds using revocation
+     *      (3) revocation delay
+     *      (4) public key of owner of that output
+     */
+    public static final byte[] CHANNEL_TX_OUTPUT_REVOCATION = scriptStringToByte(
+            "HASH160 FF EQUAL " +
+                    "IF" +
+                    "FF" +
+                    "ELSE" +
+                    "FF CSV DROP FF" +
+                    "ENDIF" +
+                    "CHECKSIG");
 
+    public static Script getChannelTxOutputRevocation (RevocationHash revocationHash, ECKey revocableKey, ECKey counterpartyKey, int revocationDelay) {
+        return produceScript(
+                CHANNEL_TX_OUTPUT_REVOCATION,
+                revocationHash.secretHash,
+                counterpartyKey.getPubKey(),
+                integerToByteArray(revocationDelay),
+                revocableKey.getPubKey());
+    }
+
+    /*
+     * Script for the sending part of a payment
+     * The payment goes to a 2-of-2 if
+     *      the CLTV timeout is over
+     * and to the counterparty if
+     *      it can provide the revocation hash
+     *      it can provide the payment secret
+     *
+     * Arguments:
+     *      (1) revocation hash
+     *      (2) payment hash
+     *      (3) public key of receiving party
+     *      (4) absolute payment timeout
+     *      (5) public key of receiving party
+     *      (6) public key of sending party
+     */
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE =
             scriptStringToByte(
                     "HASH160 DUP FF EQUAL SWAP FF EQUAL ADD " +
@@ -77,13 +116,19 @@ public class ScriptTools {
                             "FF CLTV DROP OP_2 FF FF OP_2 CHECKMULTISIG " +
                             "ENDIF");
 
-    public static Script getChannelTxOutputPaymentSending (ECKey keyServer, ECKey keyClient,
+    public static Script getChannelTxOutputPaymentSending (ECKey revocableKey, ECKey counterpartyKey,
                                                            RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE, revocationHash.getSecretHash(), secret.hash,
-                keyClient.getPubKey(), integerToByteArray(refundTimeout), keyServer.getPubKey(), keyClient.getPubKey());
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE, revocationHash.secretHash, secret.hash,
+                counterpartyKey.getPubKey(), integerToByteArray(refundTimeout), revocableKey.getPubKey(), counterpartyKey.getPubKey());
     }
 
     //TODO not very efficient yet with 3 times client pubkey...
+    //Script for the receiving part of a payment
+    //The payment goes to a 2-of-2 if
+    //      the receiver can provide the payment secret
+    //and to the counterparty if
+    //      it can provide the revocation hash
+    //      the CLTV timeout is over
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE =
             scriptStringToByte(
                     "HASH160 FF EQUAL " +
@@ -98,10 +143,10 @@ public class ScriptTools {
                             "ENDIF " +
                             "ENDIF ");
 
-    public static Script getChannelTxOutputPaymentReceiving (ECKey keyServer, ECKey keyClient,
+    public static Script getChannelTxOutputPaymentReceiving (ECKey revocableKey, ECKey counterpartyKey,
                                                              RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE, revocationHash.getSecretHash(), keyClient.getPubKey(),
-                secret.hash, keyServer.getPubKey(), keyClient.getPubKey(), integerToByteArray(refundTimeout), keyClient.getPubKey());
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE, revocationHash.secretHash, counterpartyKey.getPubKey(),
+                secret.hash, revocableKey.getPubKey(), counterpartyKey.getPubKey(), integerToByteArray(refundTimeout), counterpartyKey.getPubKey());
     }
 
     public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_TIMEOUT = scriptStringToByte("00 FF FF");
@@ -121,7 +166,7 @@ public class ScriptTools {
                             "ENDIF");
 
     public static Script getPaymentTxOutput (ECKey keyReceiver, ECKey keyRevocation, RevocationHash revocationHash, int revocationTimeout) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_TWO, revocationHash.getSecretHash(), keyRevocation.getPubKey(),
+        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_TWO, revocationHash.secretHash, keyRevocation.getPubKey(),
                 integerToByteArray(revocationTimeout), keyReceiver.getPubKey());
     }
 
@@ -163,24 +208,11 @@ public class ScriptTools {
         }
     }
 
-    public static Script getChannelTxOutputRevocation (@NotNull RevocationHash revocationHash, @NotNull ECKey keyServer, ECKey keyClient, int revocationDelay) {
-        return produceScript(CHANNEL_TX_OUTPUT_REVOCATION, revocationHash.getSecretHash(), keyClient.getPubKey(), integerToByteArray(revocationDelay),
-                keyServer.getPubKey());
-    }
-
-    public static Script getChannelTxOutputPlain (ECKey keyClient) {
-        return produceScript(CHANNEL_TX_OUTPUT_PLAIN, keyClient.getPubKey());
-    }
-
-    public static Script getChannelTxOutputSending (RevocationHash revocationHash, PaymentData paymentData, ECKey keyServer, ECKey keyClient) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING, paymentData.secret.hash, revocationHash.getSecretHash(), keyClient.getPubKey(),
-                integerToByteArray(paymentData.timestampRefund), integerToByteArray(paymentData.csvDelay), keyServer.getPubKey());
-    }
-
-    public static Script getChannelTxOutputReceiving (RevocationHash revocationHash, PaymentData paymentData, ECKey keyServer, ECKey keyClient) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING, paymentData.secret.hash, integerToByteArray(paymentData.csvDelay),
-                keyClient.getPubKey(), revocationHash.getSecretHash(), integerToByteArray(paymentData.timestampRefund), keyServer.getPubKey());
-    }
+    //Script for the encumbered change payment of the commitment
+    //The payment goes to the counterparty if
+    //      it can provide the revocation hash
+    //and to the owner of the commitment tx if
+    //      the revocation delay passed
 
     public static Script produceScript (byte[] template, byte[]... parameters) {
         try {
