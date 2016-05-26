@@ -4,14 +4,19 @@ import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
+import network.thunder.core.communication.layer.high.AckMessage;
+import network.thunder.core.communication.layer.high.NumberedMessage;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptedMessage;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionInitialMessage;
 import network.thunder.core.communication.layer.low.encryption.messages.EncryptionMessageFactory;
+import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.Gossip;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.crypto.ECDH;
 import org.bitcoinj.core.ECKey;
 
 public class EncryptionProcessorImpl extends EncryptionProcessor {
-    public static final boolean OUTPUT_MESSAGE = false;
+    public static final boolean OUTPUT_MESSAGE = true;
+    public static final boolean OUTPUT_GOSSIP = false;
     EncryptionMessageFactory messageFactory;
     MessageEncrypter messageEncrypter;
     ClientObject node;
@@ -86,14 +91,24 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     private void processMessageToBeDecrypted (EncryptedMessage message) {
         Message decryptedMessage = messageEncrypter.decrypt(message, node.ecdhKeySet);
         if (OUTPUT_MESSAGE) {
-            System.out.println("I: " + node.host + " " + decryptedMessage);
+            if (decryptedMessage instanceof Gossip) {
+                if (OUTPUT_GOSSIP) {
+                    System.out.println("I: " + getClientName() + " " + decryptedMessage);
+                }
+            } else {
+                System.out.println("I: " +
+                        getMessageNumber(decryptedMessage) + " " +
+                        getAckedMessageNumber(decryptedMessage) + " " +
+                        getClientName() + " " +
+                        decryptedMessage + "[" + (message.payload.length / 1024) + "]");
+            }
         }
         executor.sendMessageDownwards(decryptedMessage);
     }
 
     private void processEncryptionInitialMessage (Message message) {
         if (!(message instanceof EncryptionInitialMessage)) {
-            executor.sendMessageUpwards(messageFactory.getFailureMessage("Expecting EncryptionInitial Message.. " + message));
+            throw new RuntimeException("Expecting EncryptionInitial Message.. " + message);
         } else {
             EncryptionInitialMessage encryptionInitial = (EncryptionInitialMessage) message;
 
@@ -113,9 +128,56 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
     private void processMessageToBeEncrypted (Message message) {
         EncryptedMessage encryptedMessage = messageEncrypter.encrypt(message, node.ecdhKeySet);
         if (OUTPUT_MESSAGE) {
-            System.out.println("O: " + node.host + " " + message + "[" + (encryptedMessage.payload.length / 1024) + "]");
+            if (message instanceof Gossip) {
+                if (OUTPUT_GOSSIP) {
+                    System.out.println("O: " + getClientName() + " " + message + "[" + (encryptedMessage.payload.length / 1024) + "]");
+                }
+            } else {
+                System.out.println("O: " +
+                        System.currentTimeMillis() + " " +
+                        getMessageNumber(message) + " " +
+                        getAckedMessageNumber(message) + " " +
+                        getClientName() + " " +
+                        message + "[" + (encryptedMessage.payload.length / 1024) + "]");
+            }
         }
         executor.sendMessageUpwards(encryptedMessage);
+    }
+
+    private void logIncomingMessage(Message decryptedMessage, EncryptedMessage message) {
+        System.out.println("I: " +
+                getMessageNumber(decryptedMessage) + " " +
+                getAckedMessageNumber(decryptedMessage) + " " +
+                getClientName() + " " +
+                decryptedMessage + "[" + (message.payload.length / 1024) + "]");
+    }
+
+    private String getClientName () {
+        if (node.host == null) {
+            if (node.nodeKey != null) {
+                return Tools.bytesToHex(node.nodeKey.getPubKey()).substring(0, 8);
+            } else {
+                return null;
+            }
+        } else {
+            return node.host;
+        }
+    }
+
+    private static long getMessageNumber (Message m) {
+        if (m instanceof NumberedMessage) {
+            return ((NumberedMessage) m).getMessageNumber();
+        } else {
+            return -1;
+        }
+    }
+
+    private static long getAckedMessageNumber (Message m) {
+        if (m instanceof AckMessage) {
+            return ((AckMessage) m).getMessageNumberToAck();
+        } else {
+            return -1;
+        }
     }
 
 }

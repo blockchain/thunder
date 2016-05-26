@@ -22,6 +22,6 @@ public class LNException extends RuntimeException {
     }
 
     public boolean shouldDisconnect () {
-        return false;
+        return true;
     }
 }

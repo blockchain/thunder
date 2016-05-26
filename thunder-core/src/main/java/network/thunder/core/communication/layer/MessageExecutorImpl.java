@@ -25,7 +25,6 @@ public class MessageExecutorImpl implements MessageExecutor {
     @Override
     public void sendMessageUpwards (Message message) {
         context.writeAndFlush(message);
-
     }
 
     @Override
