@@ -33,10 +33,10 @@ public class ChannelStatus {
         status.csvDelay = this.csvDelay;
         status.addressClient = this.addressClient;
         status.addressServer = this.addressServer;
-        status.revoHashClientCurrent = revoHashClientCurrent.copy();
-        status.revoHashClientNext = revoHashClientNext.copy();
-        status.revoHashServerCurrent = revoHashServerCurrent.copy();
-        status.revoHashServerNext = revoHashServerNext.copy();
+        status.revoHashClientCurrent = revoHashClientCurrent == null ? null : revoHashClientCurrent.copy();
+        status.revoHashClientNext = revoHashClientNext == null ? null : revoHashClientNext.copy();
+        status.revoHashServerCurrent = revoHashServerCurrent == null ? null : revoHashServerCurrent.copy();
+        status.revoHashServerNext = revoHashServerNext == null ? null : revoHashServerNext.copy();
 
         status.paymentList = clonePaymentList(this.paymentList);
         return status;
