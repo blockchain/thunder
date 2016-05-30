@@ -74,12 +74,15 @@ public class RevocationHash {
         return secret != null && Arrays.equals(secretHash, hashSecret(secret));
     }
 
+    public RevocationHash (byte[] secretHash) {
+        this.secretHash = secretHash;
+    }
+
     @Override
-    public int hashCode () {
-        int result = index;
-        result = 31 * result + (secret != null ? Arrays.hashCode(secret) : 0);
-        result = 31 * result + (secretHash != null ? Arrays.hashCode(secretHash) : 0);
-        return result;
+    public String toString () {
+        return "R{" + index + ": " +
+                "<" + Tools.bytesToHex(secretHash).substring(0, 5)+">" +
+                '}';
     }
 
     @Override
@@ -93,20 +96,12 @@ public class RevocationHash {
 
         RevocationHash that = (RevocationHash) o;
 
-        if (index != that.index) {
-            return false;
-        }
-        if (!Arrays.equals(secret, that.secret)) {
-            return false;
-        }
         return Arrays.equals(secretHash, that.secretHash);
 
     }
 
     @Override
-    public String toString () {
-        return "RevocationHash{" + index + ": " +
-                "" + Tools.bytesToHex(secretHash).substring(0, 6) + ".." +
-                '}';
+    public int hashCode () {
+        return Arrays.hashCode(secretHash);
     }
 }

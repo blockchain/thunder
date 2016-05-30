@@ -9,27 +9,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LNPaymentBMessage extends LNPayment {
+public class LNPaymentBMessage extends LNPayment implements LNRevokeNewMessage, LNRevokeOldMessage, LNSignatureMessage {
 
-    public RevocationHash oldRevocation;
     public RevocationHash newRevocation;
+    public List<RevocationHash> oldRevocation;
 
     public List<byte[]> channelSignatures = new ArrayList<>();
     public List<byte[]> paymentSignatures = new ArrayList<>();
 
-    public LNPaymentBMessage (ChannelSignatures channelSignatures, RevocationHash oldRevocation, RevocationHash newRevocation) {
-        this.channelSignatures = channelSignatures.channelSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
-        this.paymentSignatures = channelSignatures.paymentSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
-
-        this.oldRevocation = oldRevocation;
-        this.newRevocation = newRevocation;
-    }
-
+    @Override
     public ChannelSignatures getChannelSignatures () {
         ChannelSignatures signatures = new ChannelSignatures();
         signatures.paymentSignatures = paymentSignatures.stream().map(o -> TransactionSignature.decodeFromBitcoin(o, true)).collect(Collectors.toList());
         signatures.channelSignatures = channelSignatures.stream().map(o -> TransactionSignature.decodeFromBitcoin(o, true)).collect(Collectors.toList());
         return signatures;
+    }
+
+    @Override
+    public void setChannelSignatures (ChannelSignatures channelSignatures) {
+        this.channelSignatures = channelSignatures.channelSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
+        this.paymentSignatures = channelSignatures.paymentSignatures.stream().map(TransactionSignature::encodeToBitcoin).collect(Collectors.toList());
+    }
+
+    @Override
+    public RevocationHash getNewRevocationHash () {
+        return newRevocation;
+    }
+
+    @Override
+    public List<RevocationHash> getOldRevocationHash () {
+        return oldRevocation;
+    }
+
+    @Override
+    public void setOldRevocationHash (List<RevocationHash> oldRevocationHash) {
+        this.oldRevocation = oldRevocationHash;
+    }
+
+    @Override
+    public void setNewRevocationHash (RevocationHash newRevocationHash) {
+        this.newRevocation = newRevocationHash;
     }
 
     @Override
@@ -42,6 +61,6 @@ public class LNPaymentBMessage extends LNPayment {
 
     @Override
     public String toString () {
-        return "LNPaymentBMessage{}";
+        return "LNPaymentBMessage{"+newRevocation+"}";
     }
 }

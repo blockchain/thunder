@@ -256,7 +256,8 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void updateChannelStatus (@NotNull NodeKey nodeKey, @NotNull Sha256Hash channelHash, @NotNull ECKey keyServer,
-                                     Channel channel, ChannelUpdate update, RevocationHash revocationHash, NumberedMessage request, NumberedMessage response) {
+                                     Channel channel, ChannelUpdate update, List<RevocationHash> revocationHash,
+                                     NumberedMessage request, NumberedMessage response) {
 
         if (request != null) {
             setMessageProcessed(nodeKey, request);
@@ -274,7 +275,7 @@ public class InMemoryDBHandler implements DBHandler {
                 revocationList = new ArrayList<>();
                 revocationHashListTheir.put(channelHash, revocationList);
             }
-            revocationList.add(revocationHash);
+            revocationList.addAll(revocationHash);
         }
         if (channel != null) {
             synchronized (channelList) {

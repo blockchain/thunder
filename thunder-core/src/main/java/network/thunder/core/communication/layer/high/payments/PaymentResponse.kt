@@ -8,6 +8,6 @@ import network.thunder.core.communication.layer.high.payments.messages.LNPayment
 data class PaymentResponse(
         val channel: Channel?,
         val update: ChannelUpdate?,
-        val revocationHash: RevocationHash?,
+        val revocationHash: List<RevocationHash>?,
         val messages: LNPayment?)
 

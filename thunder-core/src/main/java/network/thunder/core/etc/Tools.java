@@ -22,7 +22,10 @@ import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
+import network.thunder.core.communication.layer.DIRECTION;
+import network.thunder.core.communication.layer.MessageWrapper;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.ECKey.ECDSASignature;
@@ -50,10 +53,10 @@ public class Tools {
     }
 
     /**
-     * Get the method name for a depth in call stack. <br />
+     * Get the method name for a index in call stack. <br />
      * Utility function
      *
-     * @param depth depth in the call stack (0 means current method, 1 means call method, ...)
+     * @param depth index in the call stack (0 means current method, 1 means call method, ...)
      * @return method name
      */
     public static String getMethodName (final int depth) {
@@ -144,6 +147,24 @@ public class Tools {
             e.printStackTrace();
         }
         return qry;
+    }
+
+    public static void testMessageWrapper (List<MessageWrapper> messageList, Class c, int index, DIRECTION direction, boolean weStartedExchange) {
+        if (index >= messageList.size()) {
+            return;
+        }
+        MessageWrapper message = messageList.get(index);
+
+        if (!message.getMessage().getClass().equals(c)) {
+            throw new LNPaymentException("Wrong message type");
+        }
+        if (message.getDirection() == direction && weStartedExchange) {
+            return;
+        }
+        if (message.getDirection() != direction && !weStartedExchange) {
+            return;
+        }
+        throw new LNPaymentException("Wrong message order");
     }
 
     public static boolean arrayListContainsByteArray (ArrayList<byte[]> arrayList, byte[] bytes) {

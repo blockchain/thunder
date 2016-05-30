@@ -67,7 +67,7 @@ public class LNEstablishAMessage implements LNEstablish {
             channel.channelStatus.csvDelay = csvDelay;
             channel.channelStatus.feePerByte = feePerByte;
             channel.minConfirmationAnchor = minConfirmationAnchor;
-            channel.shaChainDepth = 0;
+            channel.shaChainDepthCurrent = 0;
             return channel;
         } catch (Exception e) {
             throw new RuntimeException(e);

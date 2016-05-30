@@ -58,7 +58,7 @@ public class TestTools {
         channel.channelStatus.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
         channel.channelStatus.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
         channel.masterPrivateKeyServer = Tools.getRandomByte(20);
-        channel.shaChainDepth = 1;
+        channel.shaChainDepthCurrent = 1;
         channel.channelStatus.revoHashServerCurrent = new RevocationHash(1, channel.masterPrivateKeyServer);
         channel.channelStatus.revoHashClientCurrent = new RevocationHash(1, Tools.getRandomByte(20));
 

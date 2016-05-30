@@ -30,13 +30,13 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         transaction.addInput(anchor.getHash(), anchor.getIndex(), Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0),
                 ScriptTools.getChannelTxOutputRevocation(
-                        channelStatus.revoHashServerCurrent,
+                        channelStatus.revoHashServerNext,
                         server,
                         client,
                         channelStatus.csvDelay));
 
         transaction.addOutput(Coin.valueOf(0), channelStatus.addressClient);
-        transaction = addPayments(transaction, channelStatus, channelStatus.revoHashServerCurrent, server, client);
+        transaction = addPayments(transaction, channelStatus, channelStatus.revoHashServerNext, server, client);
 
         //Missing two signatures, max 146B
         long fee = (long) Math.ceil((transaction.getMessageSize() + SIGNATURE_SIZE) * channelStatus.feePerByte / 2);
@@ -94,7 +94,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             transaction.addInput(parentTransactionHash, index, Tools.getDummyScript());
 
             Coin value = Coin.valueOf(payment.amount);
-            Script script = ScriptTools.getPaymentTxOutput(keyServer, keyClient, channelStatus.revoHashServerCurrent, channelStatus.csvDelay);
+            Script script = ScriptTools.getPaymentTxOutput(keyServer, keyClient, channelStatus.revoHashServerNext, channelStatus.csvDelay);
             transaction.addOutput(value, script);
 
             transactions.add(transaction);
@@ -110,11 +110,8 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         ChannelStatus oldStatus = channel.channelStatus;
         ChannelStatus newStatus = oldStatus.copy();
         newStatus.applyUpdate(channelUpdate);
-        newStatus.applyNextRevoHash();
 
-        System.out.println("Receiving update:");
-        System.out.println("Old statusSender: " + oldStatus);
-        System.out.println("New statusSender: " + newStatus);
+
 
         //Check if the update is allowed..
         checkPaymentsInNewStatus(oldStatus, channelUpdate);

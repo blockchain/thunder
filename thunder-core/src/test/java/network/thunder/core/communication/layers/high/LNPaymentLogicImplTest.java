@@ -84,7 +84,7 @@ public class LNPaymentLogicImplTest {
         assertEquals(
                 channelTransaction.getOutput(0).getScriptPubKey(),
                 ScriptTools.getChannelTxOutputRevocation(
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         channel1.keyServer,
                         channel1.keyClient,
                         channel1.channelStatus.csvDelay));
@@ -92,7 +92,7 @@ public class LNPaymentLogicImplTest {
         assertEquals(
                 channelTransaction.getOutput(0).getScriptPubKey(),
                 ScriptTools.getChannelTxOutputRevocation(
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         channel1.keyServer,
                         channel1.keyClient,
                         channel1.channelStatus.csvDelay));
@@ -124,7 +124,7 @@ public class LNPaymentLogicImplTest {
                 ScriptTools.getChannelTxOutputPaymentSending(
                         channel1.keyServer,
                         channel1.keyClient,
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         sending.secret,
                         sending.timestampRefund));
 
@@ -133,7 +133,7 @@ public class LNPaymentLogicImplTest {
                 ScriptTools.getChannelTxOutputPaymentReceiving(
                         channel1.keyServer,
                         channel1.keyClient,
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         receiving.secret,
                         receiving.timestampRefund));
     }
@@ -177,7 +177,7 @@ public class LNPaymentLogicImplTest {
                 ScriptTools.getPaymentTxOutput(
                         channel1.keyServer,
                         channel1.keyClient,
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         channel1.channelStatus.csvDelay));
 
         assertEquals(
@@ -185,7 +185,7 @@ public class LNPaymentLogicImplTest {
                 ScriptTools.getPaymentTxOutput(
                         channel1.keyServer,
                         channel1.keyClient,
-                        channel1.channelStatus.revoHashServerCurrent,
+                        channel1.channelStatus.revoHashServerNext,
                         channel1.channelStatus.csvDelay));
 
 

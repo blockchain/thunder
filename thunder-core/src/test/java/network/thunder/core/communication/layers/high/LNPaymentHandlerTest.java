@@ -19,6 +19,7 @@ import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.TestTools;
 import network.thunder.core.etc.Tools;
+import org.bitcoinj.core.ECKey;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -30,9 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static junit.framework.TestCase.assertFalse;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class LNPaymentHandlerTest {
 
@@ -55,6 +54,7 @@ public class LNPaymentHandlerTest {
     ContextFactory contextFactory21 = new MockContextFactory(serverObject2, dbHandler2);
 
     LNPaymentHelper paymentHelper1 = contextFactory12.getPaymentHelper();
+    LNPaymentHelper paymentHelper2 = contextFactory21.getPaymentHelper();
 
     Channel channel1 = TestTools.getMockChannel(new LNConfiguration());
     Channel channel2 = TestTools.getMockChannel(new LNConfiguration());
@@ -96,7 +96,7 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void fullExchange () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        PaymentData paymentData = getMockPaymentData();
+        PaymentData paymentData = getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer);
         dbHandler2.addPaymentSecret(paymentData.secret);
         paymentHelper1.makePayment(paymentData);
 
@@ -104,8 +104,6 @@ public class LNPaymentHandlerTest {
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
         TestTools.exchangeMessages(channel21, channel12, AckMessageImpl.class);
-
-        Thread.sleep(1000);
 
         TestTools.exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
@@ -128,11 +126,11 @@ public class LNPaymentHandlerTest {
 
     @Test
     public void fullExchangeWithAnotherPaymentMidway () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        paymentHelper1.makePayment(getMockPaymentData());
+        paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
         TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
-        paymentHelper1.makePayment(getMockPaymentData());
+        paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
         TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
 
         assertTrue(channel12.readOutbound() instanceof LNPaymentAMessage);
@@ -141,8 +139,45 @@ public class LNPaymentHandlerTest {
     }
 
     @Test
+    public void fullExchangeConflict () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
+        PaymentData payment1 = getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer);
+        PaymentData payment2 = getMockPaymentData(serverObject2.pubKeyServer, serverObject1.pubKeyServer);
+
+        paymentHelper1.makePayment(payment1);
+        paymentHelper2.makePayment(payment2);
+
+        dbHandler1.addPaymentSecret(payment2.secret);
+        dbHandler2.addPaymentSecret(payment1.secret);
+
+        LNPaymentAMessage messageA1 = (LNPaymentAMessage) channel12.readOutbound();
+        LNPaymentAMessage messageA2 = (LNPaymentAMessage) channel21.readOutbound();
+
+        channel21.writeInbound(messageA1);
+        channel12.writeInbound(messageA2);
+
+        if(messageA1.dice > messageA2.dice) {
+            EmbeddedChannel temp = channel12;
+            channel12 = channel21;
+            channel21 = temp;
+        }
+
+        TestTools.exchangeMessages(channel12, channel21, AckMessageImpl.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentCMessage.class);
+
+        TestTools.exchangeMessages(channel12, channel21, AckMessageImpl.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
+        TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
+        TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
+
+
+        after();
+    }
+
+    @Test
     public void sendWrongMessageShouldDisconnect () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
-        paymentHelper1.makePayment(getMockPaymentData());
+        paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
         LNPaymentAMessage messageA = (LNPaymentAMessage) channel12.readOutbound();
         channel21.writeInbound(messageA);
@@ -154,7 +189,7 @@ public class LNPaymentHandlerTest {
         after();
     }
 
-    public PaymentData getMockPaymentData () {
+    public PaymentData getMockPaymentData (ECKey key1, ECKey key2) {
         LNConfiguration configuration = new LNConfiguration();
         PaymentData paymentData = new PaymentData();
         paymentData.sending = true;
@@ -165,8 +200,8 @@ public class LNPaymentHandlerTest {
 
         LNOnionHelper onionHelper = new LNOnionHelperImpl();
         List<byte[]> route = new ArrayList<>();
-        route.add(serverObject1.pubKeyServer.getPubKey());
-        route.add(serverObject2.pubKeyServer.getPubKey());
+        route.add(key1.getPubKey());
+        route.add(key2.getPubKey());
 
         paymentData.onionObject = onionHelper.createOnionObject(route, null);
 

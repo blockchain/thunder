@@ -1,5 +1,6 @@
 package network.thunder.core.communication.layer.high;
 
+import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import org.bitcoinj.core.Address;
@@ -17,10 +18,19 @@ public class ChannelStatus {
     public int feePerByte;
     public int csvDelay;
 
+    //Various revocation hashes are stored here. They get swapped downwards after an exchange (Next->Current; NextNext->Next)
+    //Current revocation hash is the one that we have a current valid channel transaction with
     public RevocationHash revoHashClientCurrent;
     public RevocationHash revoHashServerCurrent;
+
+    //Next revocation hash is the hash used when creating a new channel transaction
     public RevocationHash revoHashClientNext;
     public RevocationHash revoHashServerNext;
+
+    //NextNext is the new hash exchanged on the begin of an exchange
+    //For now there is no need to store it in the database
+    transient public RevocationHash revoHashClientNextNext;
+    transient public RevocationHash revoHashServerNextNext;
 
     public Address addressClient;
     public Address addressServer;
@@ -35,8 +45,10 @@ public class ChannelStatus {
         status.addressServer = this.addressServer;
         status.revoHashClientCurrent = revoHashClientCurrent == null ? null : revoHashClientCurrent.copy();
         status.revoHashClientNext = revoHashClientNext == null ? null : revoHashClientNext.copy();
+        status.revoHashClientNextNext = revoHashClientNextNext == null ? null : revoHashClientNextNext.copy();
         status.revoHashServerCurrent = revoHashServerCurrent == null ? null : revoHashServerCurrent.copy();
         status.revoHashServerNext = revoHashServerNext == null ? null : revoHashServerNext.copy();
+        status.revoHashServerNextNext = revoHashServerNextNext == null ? null : revoHashServerNextNext.copy();
 
         status.paymentList = clonePaymentList(this.paymentList);
         return status;
@@ -52,6 +64,14 @@ public class ChannelStatus {
         RevocationHash tempRevocationHash = status.revoHashServerCurrent;
         status.revoHashServerCurrent = status.revoHashClientCurrent;
         status.revoHashClientCurrent = tempRevocationHash;
+
+        RevocationHash tempRevocationHashNext = status.revoHashServerNext;
+        status.revoHashServerNext = status.revoHashClientNext;
+        status.revoHashClientNext = tempRevocationHashNext;
+
+        RevocationHash tempRevocationHashNextNext = status.revoHashServerNextNext;
+        status.revoHashServerNextNext = status.revoHashClientNextNext;
+        status.revoHashClientNextNext = tempRevocationHashNextNext;
 
         Address tempAddress = status.addressServer;
         status.addressServer = status.addressClient;
@@ -105,8 +125,25 @@ public class ChannelStatus {
     }
 
     public void applyNextRevoHash () {
+        Preconditions.checkNotNull(this.revoHashClientNext);
+        Preconditions.checkNotNull(this.revoHashServerNext);
+
         this.revoHashClientCurrent = this.revoHashClientNext;
         this.revoHashServerCurrent = this.revoHashServerNext;
+
+        this.revoHashClientNext = null;
+        this.revoHashServerNext = null;
+    }
+
+    public void applyNextNextRevoHash () {
+        Preconditions.checkNotNull(this.revoHashClientNextNext);
+        Preconditions.checkNotNull(this.revoHashServerNextNext);
+
+        this.revoHashClientNext = this.revoHashClientNextNext;
+        this.revoHashServerNext = this.revoHashServerNextNext;
+
+        this.revoHashClientNextNext = null;
+        this.revoHashServerNextNext = null;
     }
 
     private List<PaymentData> reverseSending (List<PaymentData> paymentDataList) {
@@ -136,6 +173,8 @@ public class ChannelStatus {
                 ", amountServer=" + amountServer +
                 ", revoServer=" + revoHashServerCurrent +
                 ", revoClient=" + revoHashClientCurrent +
+                ", revoServerNext=" + revoHashServerNext +
+                ", revoClientNext=" + revoHashClientNext +
                 ", paymentList=" + paymentList.size() +
                 '}';
     }

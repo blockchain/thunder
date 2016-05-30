@@ -55,7 +55,7 @@ public class Channel {
      * When we open the channel we set the index to some high value and decrease it every X hours.
      * Whenever we commit to a new version of the channel, we use a new child derived from the index.
      */
-    public int shaChainDepth;
+    public int shaChainDepthCurrent;
 
     /*
      * Timestamps for the channel management.
@@ -101,7 +101,7 @@ public class Channel {
         channel.keyServer = this.keyServer;
         channel.nodeKeyClient = this.nodeKeyClient;
         channel.minConfirmationAnchor = this.minConfirmationAnchor;
-        channel.shaChainDepth = this.shaChainDepth;
+        channel.shaChainDepthCurrent = this.shaChainDepthCurrent;
         channel.timestampForceClose = this.timestampForceClose;
         channel.timestampOpen = this.timestampOpen;
         return channel;
