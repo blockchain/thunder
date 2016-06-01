@@ -17,6 +17,7 @@ import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.Wallet;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
@@ -84,46 +85,17 @@ public class Main extends Application {
             wallet = walletAppKit.wallet();
             wallet.allowSpendingUnconfirmedTransactions();
             wallet.reset();
-            wallet.addEventListener(new WalletEventListener() {
-                @Override
-                public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
-                    System.out.println("prevBalance = " + prevBalance);
-                    System.out.println("newBalance = " + newBalance);
-                }
-
-                @Override
-                public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
-                    System.out.println("prevBalance = " + prevBalance);
-                    System.out.println("newBalance = " + newBalance);
-                }
-
-                @Override
-                public void onReorganize (Wallet wallet) {
-
-                }
-
-                @Override
-                public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
-
-                }
-
-                @Override
-                public void onWalletChanged (Wallet wallet) {
-                }
-
-                @Override
-                public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-
-                }
-
-                @Override
-                public void onKeysAdded (List<ECKey> keys) {
-
-                }
+            wallet.addCoinsReceivedEventListener((Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) -> {
+                System.out.println("wallet = " + wallet);
+                System.out.println("tx = " + tx);
+                System.out.println("prevBalance = " + prevBalance);
+                System.out.println("newBalance = " + newBalance);
+            });
+            wallet.addCoinsSentEventListener((Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) -> {
+                System.out.println("wallet = " + wallet);
+                System.out.println("tx = " + tx);
+                System.out.println("prevBalance = " + prevBalance);
+                System.out.println("newBalance = " + newBalance);
             });
             System.out.println(wallet.getKeyChainSeed());
         }

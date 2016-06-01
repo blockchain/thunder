@@ -5,7 +5,7 @@ import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.helper.wallet.MockWallet;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 
 public class NodeWrapper {
     public ServerObject serverObject;

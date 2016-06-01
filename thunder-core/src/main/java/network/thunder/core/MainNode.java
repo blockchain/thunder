@@ -15,6 +15,7 @@ import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.Wallet;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -120,51 +121,19 @@ public class MainNode {
             wallet.reset();
             System.out.println("wallet = " + wallet);
             System.out.println("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
-            wallet.addEventListener(new WalletEventListener() {
-                @Override
-                public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
-                }
-
-                @Override
-                public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
-                }
-
-                @Override
-                public void onReorganize (Wallet wallet) {
-
-                }
-
-                @Override
-                public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
-
-                }
-
-                @Override
-                public void onWalletChanged (Wallet wallet) {
-                }
-
-                @Override
-                public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-
-                }
-
-                @Override
-                public void onKeysAdded (List<ECKey> keys) {
-
-                }
+            wallet.addCoinsReceivedEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> {
+                System.out.println("wallet = " + w);
+                System.out.println("tx = " + tx);
             });
-            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                @Override
-                public void run () {
-                    try {
-                        walletAppKit.stopAsync().awaitTerminated();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+            wallet.addCoinsSentEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> {
+                System.out.println("wallet = " + wallet);
+                System.out.println("tx = " + tx);
+            });
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                try {
+                    walletAppKit.stopAsync().awaitTerminated();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }));
             return wallet;

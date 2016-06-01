@@ -4,6 +4,7 @@ import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.wallet.KeyChainGroup;
+import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 
 import java.math.BigInteger;
@@ -59,7 +60,7 @@ public class MockWallet extends Wallet {
     }
 
     public MockWallet (Context context, KeyChainGroup keyChainGroup) {
-        super(context, keyChainGroup);
+        super(context.getParams(), keyChainGroup);
     }
 
     @Override

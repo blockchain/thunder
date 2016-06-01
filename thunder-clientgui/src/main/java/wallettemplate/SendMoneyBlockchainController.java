@@ -6,6 +6,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import network.thunder.core.etc.Constants;
 import org.bitcoinj.core.*;
+import org.bitcoinj.wallet.SendRequest;
+import org.bitcoinj.wallet.Wallet;
 import org.spongycastle.crypto.params.KeyParameter;
 import wallettemplate.controls.BitcoinAddressValidator;
 import wallettemplate.utils.TextFieldValidator;
@@ -47,11 +49,11 @@ public class SendMoneyBlockchainController {
         try {
             Coin amount = Coin.parseCoin(amountEdit.getText());
             Address destination = new Address(Constants.getNetwork(), address.getText());
-            Wallet.SendRequest req;
+            SendRequest req;
             if (amount.equals(Main.wallet.getBalance())) {
-                req = Wallet.SendRequest.emptyWallet(destination);
+                req = SendRequest.emptyWallet(destination);
             } else {
-                req = Wallet.SendRequest.to(destination, amount);
+                req = SendRequest.to(destination, amount);
             }
             req.ensureMinRequiredFee = true;
             req.feePerKb = Coin.valueOf(5000);

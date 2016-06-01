@@ -5,6 +5,7 @@ import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.ScriptBuilder;
+import org.bitcoinj.wallet.Wallet;
 
 import java.util.*;
 

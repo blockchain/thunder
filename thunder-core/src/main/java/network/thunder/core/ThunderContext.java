@@ -22,7 +22,7 @@ import network.thunder.core.helper.callback.results.Result;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.events.LNEventListener;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 
 import java.util.Arrays;

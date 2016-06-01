@@ -46,7 +46,7 @@ import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import network.thunder.core.helper.wallet.WalletHelperImpl;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 
 public class ContextFactoryImpl implements ContextFactory {
     DBHandler dbHandler;

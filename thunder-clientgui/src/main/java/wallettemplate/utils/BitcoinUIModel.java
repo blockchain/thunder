@@ -13,7 +13,9 @@ import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventListener;
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.Wallet;
 import wallettemplate.Main;
 
 import java.util.Arrays;
@@ -65,42 +67,10 @@ public class BitcoinUIModel {
                 }).start();
             }
         });
-        Main.wallet.addEventListener(new WalletEventListener() {
-            @Override
-            public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                update();
-            }
-
-            @Override
-            public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                update();
-            }
-
-            @Override
-            public void onReorganize (Wallet wallet) {
-
-            }
-
-            @Override
-            public void onTransactionConfidenceChanged (Wallet wallet, Transaction tx) {
-                update();
-            }
-
-            @Override
-            public void onWalletChanged (Wallet wallet) {
-                update();
-            }
-
-            @Override
-            public void onScriptsChanged (Wallet wallet, List<Script> scripts, boolean isAddingScripts) {
-
-            }
-
-            @Override
-            public void onKeysAdded (List<ECKey> keys) {
-
-            }
-        });
+        Main.wallet.addCoinsReceivedEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> update());
+        Main.wallet.addCoinsSentEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> update());
+        Main.wallet.addTransactionConfidenceEventListener((Wallet w, Transaction tx) -> update());
+        Main.wallet.addChangeEventListener((Wallet w) -> update());
     }
 
     public void update () {

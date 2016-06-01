@@ -5,7 +5,7 @@ import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.helper.wallet.MockWallet;
 import network.thunder.core.communication.ServerObject;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 
 public class MockContextFactory extends ContextFactoryImpl {
 

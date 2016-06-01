@@ -23,7 +23,7 @@ import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.Wallet;
+import org.bitcoinj.wallet.Wallet;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.IOException;

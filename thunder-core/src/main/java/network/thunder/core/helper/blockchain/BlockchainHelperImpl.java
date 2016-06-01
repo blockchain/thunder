@@ -1,14 +1,18 @@
 package network.thunder.core.helper.blockchain;
 
+import network.thunder.core.communication.layer.*;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
 import org.bitcoinj.core.*;
+import org.bitcoinj.core.Message;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.utils.Threading;
+import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 
 import javax.annotation.Nullable;
@@ -105,17 +109,43 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     blockChain = new BlockChain(Constants.getNetwork(), blockStore);
                     peerGroup = new PeerGroup(Constants.getNetwork(), blockChain);
                     peerGroup.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
-                    peerGroup.setDownloadTxDependencies(false);
+                    peerGroup.setDownloadTxDependencies(0);
                     peerGroup.setBloomFilteringEnabled(false);
                     // Setting to less than now - 1 block according to bitcoinj documentation
                     peerGroup.setFastCatchupTimeSecs(System.currentTimeMillis() / 1000 - 7200);
                     peerGroup.start();
-                    peerGroup.addEventListener(new EventListener(), Threading.SAME_THREAD);
+                    peerGroup.addPreMessageReceivedEventListener((Peer peer, Message m) -> {
+                        if (m instanceof Block || m instanceof Transaction) {
+                            if (processedMessages.add(m.getHash())) {
+                                poolExecutor.submit((Runnable) () -> {
+                                    if (m instanceof Block) {
+                                        Iterator<OnBlockCommand> iterator = blockListener.iterator();
+                                        while (iterator.hasNext()) {
+                                            OnBlockCommand onBlockCommand = iterator.next();
+                                            if (onBlockCommand.execute((Block) m)) {
+                                                iterator.remove();
+                                            }
+                                        }
+                                    } else {
+                                        Transaction transaction = (Transaction) m;
+                                        Iterator<OnTxCommand> iterator = txListener.iterator();
+                                        while (iterator.hasNext()) {
+                                            OnTxCommand onTxCommand = iterator.next();
+                                            if (onTxCommand.compare(transaction)) {
+                                                onTxCommand.execute(transaction);
+                                                iterator.remove();
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+                        }
+                        return m;
+                    });
 
                     registerShutdownHook();
 
-                    final DownloadProgressTracker listener = new DownloadProgressTracker();
-                    peerGroup.startBlockChainDownload(listener);
+                    peerGroup.startBlockChainDownload(new DownloadProgressTracker());
 
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -140,70 +170,4 @@ public class BlockchainHelperImpl implements BlockchainHelper {
         blockStore.close();
     }
 
-    class EventListener implements PeerEventListener {
-
-        @Override
-        public void onPeersDiscovered (Set<PeerAddress> peerAddresses) {
-
-        }
-
-        @Override
-        public void onBlocksDownloaded (Peer peer, Block block, @Nullable FilteredBlock filteredBlock, int blocksLeft) {
-
-        }
-
-        @Override
-        public void onChainDownloadStarted (Peer peer, int blocksLeft) {
-
-        }
-
-        @Override
-        public void onPeerConnected (Peer peer, int peerCount) {
-        }
-
-        @Override
-        public void onPeerDisconnected (Peer peer, int peerCount) {
-
-        }
-
-        @Override
-        public Message onPreMessageReceived (Peer peer, Message m) {
-            if (m instanceof Block || m instanceof Transaction) {
-                if (processedMessages.add(m.getHash())) {
-                    poolExecutor.submit((Runnable) () -> {
-                        if (m instanceof Block) {
-                            Iterator<OnBlockCommand> iterator = blockListener.iterator();
-                            while (iterator.hasNext()) {
-                                OnBlockCommand onBlockCommand = iterator.next();
-                                if (onBlockCommand.execute((Block) m)) {
-                                    iterator.remove();
-                                }
-                            }
-                        } else {
-                            Transaction transaction = (Transaction) m;
-                            Iterator<OnTxCommand> iterator = txListener.iterator();
-                            while (iterator.hasNext()) {
-                                OnTxCommand onTxCommand = iterator.next();
-                                if (onTxCommand.compare(transaction)) {
-                                    onTxCommand.execute(transaction);
-                                    iterator.remove();
-                                }
-                            }
-                        }
-                    });
-                }
-            }
-            return m;
-        }
-
-        @Override
-        public void onTransaction (Peer peer, Transaction t) {
-        }
-
-        @Nullable
-        @Override
-        public List<Message> getData (Peer peer, GetDataMessage m) {
-            return null;
-        }
-    }
 }

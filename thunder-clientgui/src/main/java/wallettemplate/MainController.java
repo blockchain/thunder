@@ -25,7 +25,7 @@ import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import org.bitcoinj.core.Address;
 import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.DownloadProgressTracker;
+import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.fxmisc.easybind.EasyBind;
