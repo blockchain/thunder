@@ -107,8 +107,8 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     peerGroup.addPeerDiscovery(new DnsDiscovery(Constants.getNetwork()));
                     peerGroup.setDownloadTxDependencies(false);
                     peerGroup.setBloomFilteringEnabled(false);
-
-                    peerGroup.setFastCatchupTimeSecs(System.currentTimeMillis());
+                    // Setting to less than now - 1 block according to bitcoinj documentation
+                    peerGroup.setFastCatchupTimeSecs(System.currentTimeMillis() / 1000 - 7200);
                     peerGroup.start();
                     peerGroup.addEventListener(new EventListener(), Threading.SAME_THREAD);
 
