@@ -211,23 +211,23 @@ public class Channel {
     }
 
     public enum Phase {
-        NEUTRAL("0"),
-        OPEN("1"),
-        ESTABLISH_REQUESTED("11"),
-        ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION("12"),
-        PAYMENT_REQUESTED("21"),
-        UPDATE_REQUESTED("31"),
-        CLOSE_REQUESTED_CLIENT("52"),
-        CLOSE_REQUESTED_SERVER("53"),
-        CLOSED("50");
+        NEUTRAL(0),
+        OPEN(1),
+        ESTABLISH_REQUESTED(11),
+        ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION(12),
+        PAYMENT_REQUESTED(21),
+        UPDATE_REQUESTED(31),
+        CLOSE_REQUESTED_CLIENT(52),
+        CLOSE_REQUESTED_SERVER(53),
+        CLOSED(50);
 
-        private String value;
+        private int value;
 
-        Phase (String value) {
+        Phase (int value) {
             this.value = value;
         }
 
-        public String getValue () {
+        public int getValue () {
             return value;
         }
 
