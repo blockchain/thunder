@@ -88,7 +88,6 @@ public class Channel {
         channel.channelSignatures = this.channelSignatures.copy();
         channel.channelStatus = this.channelStatus.copy();
 
-        channel.timestampOpen = this.timestampOpen;
         channel.masterPrivateKeyServer = this.masterPrivateKeyServer;
         channel.masterPrivateKeyClient = this.masterPrivateKeyClient;
         channel.phase = this.phase;
