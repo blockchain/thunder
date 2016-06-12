@@ -64,7 +64,7 @@ class AckProcessorImplTest {
     fun shouldResendAllMessageAfterTimeout() {
         dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
         dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
-        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
+        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 2).toLong())
         assertEquals(1L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
     }
@@ -76,7 +76,7 @@ class AckProcessorImplTest {
         channel1.writeInbound(AckMessageImpl(1))
         println(1)
         println(" aa " + Constants.MESSAGE_RESEND_TIME)
-        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.1).toLong())
+        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 2).toLong())
         println(2)
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
         assertNull(channel1.readOutbound())
@@ -88,7 +88,7 @@ class AckProcessorImplTest {
         dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
         channel1.writeInbound(AckMessageImpl(1))
         channel1.writeInbound(AckMessageImpl(2))
-        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
+        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 2).toLong())
         assertNull(channel1.readOutbound())
     }
 

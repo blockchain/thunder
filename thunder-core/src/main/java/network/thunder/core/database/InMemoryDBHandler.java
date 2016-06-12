@@ -407,7 +407,12 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @NotNull
-    private static List<PaymentData> getPaymentDatas (NodeKey nodeKey, List<PaymentWrapper> payments, boolean sender, PaymentStatus searchFor, PaymentStatus
+    private static List<PaymentData> getPaymentDatas (
+            NodeKey nodeKey,
+            List<PaymentWrapper> payments,
+            boolean sender,
+            PaymentStatus searchFor,
+            PaymentStatus
             replaceWith) {
         List<PaymentData> paymentList = new ArrayList<>();
         for (PaymentWrapper p : payments) {
