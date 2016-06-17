@@ -100,6 +100,7 @@ public class LNPaymentHandlerTest {
         dbHandler2.addPaymentSecret(paymentData.secret);
         paymentHelper1.makePayment(paymentData);
 
+        Thread.sleep(100);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
@@ -127,6 +128,7 @@ public class LNPaymentHandlerTest {
     @Test
     public void fullExchangeWithAnotherPaymentMidway () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
+        Thread.sleep(100);
 
         TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
@@ -149,6 +151,7 @@ public class LNPaymentHandlerTest {
         dbHandler1.addPaymentSecret(payment2.secret);
         dbHandler2.addPaymentSecret(payment1.secret);
 
+        Thread.sleep(100);
         LNPaymentAMessage messageA1 = (LNPaymentAMessage) channel12.readOutbound();
         LNPaymentAMessage messageA2 = (LNPaymentAMessage) channel21.readOutbound();
 
@@ -179,6 +182,7 @@ public class LNPaymentHandlerTest {
     public void sendWrongMessageShouldDisconnect () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
+        Thread.sleep(100);
         LNPaymentAMessage messageA = (LNPaymentAMessage) channel12.readOutbound();
         channel21.writeInbound(messageA);
         LNPaymentBMessage messageB = (LNPaymentBMessage) channel21.readOutbound();
