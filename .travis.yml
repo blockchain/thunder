@@ -1,14 +1,11 @@
 language: java
+
 jdk:
-- oraclejdk8
-before-install:
-- echo before-install
-- pip install --user codecov
-install: true
-script: 
-  - mvn clean install
+  - oraclejdk8
+
 notifications:
   slack:
     secure: "H6eYpuLQatCsKXkgQisjVAx33BiZbA9FZ6KVrdYttjEpaNCH7yZu1/4jcWsLbjwyWi6xbbUYMIYtrjkXbgavFVlhiJ5yAD1KpeVdtMytW1W67oCXGGbG5keHVAXkzxExAQdHzSaoLhERdh0i+STePZu4SuK/ZzmGlfVNZ+pr1EuTdJJ/3Qz1D8nR7Xa+DIW+KZGu4iSRqwQwanl/shhyKZWRkqAB/GTJbeGVMB6Fyogi5xI/YXzFovQaqIcF0zcag0Sv7ja8XiCIlAahkYCAT82wdfM5Fg9VHjVAnUnsFhoADRS2OWr4684rZxBy/lox7RugKRQMUS4J3f2vT9MHN3hvGyfkCAsDxZ/c8lMZIPqv3pUtc4G0S73oTOzslLbGxsZT01nprVg6ZPSYHdpl7/TOfd+71Fr5sd2PnZZH7qGFWkmbDzYuMoGXwML7TV7II84sB9qhq4F8zTNrGdSxsCx1Xcb1nq+pRest7tN3wuRkP6rwIub9jClea4XJb8jOZZ+q5eTT8eBmEkUJGsrMgn2Ynz3he3CbXFVJfoCLfuvxjtTrDNIaZEaQDnkP6iN+wMF2b1JEBOQI+hStNE7/PNQTe+12FL5vrW1r9ocGyeps92xBopohS3Pd0rcgfKKRhm3EHUI2/1WBXlPQLY5ImLLfNYhNKho8mGbuS1DbysQ="
-after_sucess:
-- codecov
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
