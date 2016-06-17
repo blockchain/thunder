@@ -29,7 +29,19 @@ public class TestTools {
     }
 
     public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to, Class expectedMessage) {
-        Object message = from.readOutbound();
+        Object message = null;
+        for (Integer i = 0; i < 600; i++) {
+            message = from.readOutbound();
+            if (message == null) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                break;
+            }
+        }
         assertThat(message, instanceOf(expectedMessage));
         if (message != null) {
             to.writeInbound(message);

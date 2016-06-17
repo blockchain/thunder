@@ -13,7 +13,7 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.etc.Configuration;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
@@ -54,7 +54,7 @@ public class MainClient {
             nodesToBuildChannelWith.add(Tools.hexStringToByteArray(s));
         }
 
-        DBHandler dbHandler = new InMemoryDBHandler();
+        DBHandler dbHandler = new HibernateHandler();
         Wallet wallet = new MockWallet(Constants.getNetwork());
 
         LNEventHelper eventHelper = new LNEventHelperImpl();

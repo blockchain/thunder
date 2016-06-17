@@ -10,10 +10,11 @@ import network.thunder.core.communication.layer.high.AckMessageImpl
 import network.thunder.core.communication.layer.high.AckableMessage
 import network.thunder.core.communication.layer.low.ack.AckProcessorImpl
 import network.thunder.core.database.DBHandler
-import network.thunder.core.database.InMemoryDBHandler
+import network.thunder.core.database.HibernateHandler
 import network.thunder.core.etc.Constants
 import network.thunder.core.helper.events.LNEventHelperImpl
 import network.thunder.core.helper.wallet.MockWallet
+import org.hibernate.Hibernate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -29,8 +30,8 @@ class AckProcessorImplTest {
     val node1 = ClientObject(serverObject2)
     val node2 = ClientObject(serverObject1)
 
-    val dbHandler1: DBHandler = InMemoryDBHandler()
-    val dbHandler2: DBHandler = InMemoryDBHandler()
+    val dbHandler1: DBHandler = HibernateHandler()
+    val dbHandler2: DBHandler = HibernateHandler()
 
     val contextFactory1 = ContextFactoryImpl(serverObject1, dbHandler1, MockWallet(Constants.getNetwork()), LNEventHelperImpl());
     val contextFactory2 = ContextFactoryImpl(serverObject2, dbHandler2, MockWallet(Constants.getNetwork()), LNEventHelperImpl());
@@ -64,7 +65,7 @@ class AckProcessorImplTest {
     fun shouldResendAllMessageAfterTimeout() {
         dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
         dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
-        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
+        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 2).toLong())
         assertEquals(1L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
     }
@@ -76,7 +77,7 @@ class AckProcessorImplTest {
         channel1.writeInbound(AckMessageImpl(1))
         println(1)
         println(" aa " + Constants.MESSAGE_RESEND_TIME)
-        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.1).toLong())
+        Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
         println(2)
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
         assertNull(channel1.readOutbound())

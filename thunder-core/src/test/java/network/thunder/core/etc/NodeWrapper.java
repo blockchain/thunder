@@ -3,7 +3,7 @@ package network.thunder.core.etc;
 import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.wallet.Wallet;
 
@@ -20,7 +20,7 @@ public class NodeWrapper {
 
         this.wallet = new MockWallet(Constants.getNetwork());
 
-        this.dbHandler = new InMemoryDBHandler();
+        this.dbHandler = new HibernateHandler();
 
         this.thunderContext = new ThunderContext(wallet, dbHandler, serverObject);
     }

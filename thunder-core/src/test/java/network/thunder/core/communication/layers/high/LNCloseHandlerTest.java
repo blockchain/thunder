@@ -13,7 +13,7 @@ import network.thunder.core.communication.layer.high.channel.close.messages.LNCl
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.MockBroadcastHelper;
 import network.thunder.core.etc.MockLNEventHelper;
@@ -53,8 +53,8 @@ public class LNCloseHandlerTest {
     LNCloseProcessorImpl processor1;
     LNCloseProcessorImpl processor2;
 
-    DBHandler dbHandler1 = new InMemoryDBHandler();
-    DBHandler dbHandler2 = new InMemoryDBHandler();
+    DBHandler dbHandler1 = new HibernateHandler();
+    DBHandler dbHandler2 = new HibernateHandler();
 
     MockBlockchainHelper mockBlockchainHelper = new MockBlockchainHelper();
     MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();
@@ -99,6 +99,7 @@ public class LNCloseHandlerTest {
         m = (Message) embeddedChannel1.readOutbound();
         assertNull(m);
 
+        java.lang.System.out.println(channel1);
         contextFactory1.getChannelManager().closeChannel(channel1, new NullResultCommand());
     }
 

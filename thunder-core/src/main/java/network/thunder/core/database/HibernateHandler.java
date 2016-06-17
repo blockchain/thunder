@@ -3,7 +3,10 @@ package network.thunder.core.database;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
-import network.thunder.core.communication.layer.high.*;
+import network.thunder.core.communication.layer.high.AckableMessage;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.NumberedMessage;
+import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
 import network.thunder.core.communication.layer.high.payments.LNOnionHelperImpl;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
@@ -14,12 +17,17 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Channe
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.hibernate.*;
 import network.thunder.core.database.objects.PaymentStatus;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.ByteBuffer;
@@ -27,18 +35,10 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static network.thunder.core.communication.layer.DIRECTION.RECEIVED;
-import static network.thunder.core.communication.layer.DIRECTION.SENT;
 import static network.thunder.core.communication.layer.high.Channel.Phase.OPEN;
 import static network.thunder.core.database.objects.PaymentStatus.*;
 
-public class InMemoryDBHandler implements DBHandler {
-    public final List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
-
-    public final List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
-    public List<PubkeyChannelObject> pubkeyChannelList = Collections.synchronizedList(new ArrayList<>());
-    public List<ChannelStatusObject> channelStatusList = Collections.synchronizedList(new ArrayList<>());
-
+public class HibernateHandler implements DBHandler {
     public Map<Integer, List<P2PDataObject>> fragmentToListMap = new HashMap<>();
 
     public final List<P2PDataObject> totalList = Collections.synchronizedList(new ArrayList<>());
@@ -57,8 +57,30 @@ public class InMemoryDBHandler implements DBHandler {
     Map<NodeKey, List<AckableMessage>> unAckedMessageMap = new ConcurrentHashMap<>();
 
     LNOnionHelper onionHelper = new LNOnionHelperImpl();
+    private SessionFactory sessionFactory;
 
-    public InMemoryDBHandler () {
+    public HibernateHandler () {
+        Properties properties = new Properties();
+        properties.put("hibernate.connection.driver_class", "org.h2.Driver");
+        properties.put("hibernate.connection.url", "jdbc:h2:mem:");
+        properties.put("hibernate.connection.pool_size", 1);
+        properties.put("hibernate.dialect", "org.hibernate.dialect.H2Dialect");
+        properties.put("hibernate.cache.provider_class", "org.hibernate.cache.internal.NoCacheProvider");
+        properties.put("hibernate.hbm2ddl.auto", "create-drop");
+        properties.put("hibernate.show_sql", "true");
+
+        Configuration configuration = new Configuration();
+
+        configuration
+                .addAnnotatedClass(ChannelEntity.class)
+                .addAnnotatedClass(HibernateSignature.class)
+                .addAnnotatedClass(PaymentDataEntity.class)
+                .addAnnotatedClass(PubkeyChannelObjectEntity.class)
+                .addAnnotatedClass(PubkeyIPObjectEntity.class)
+                .addProperties(properties);
+
+        sessionFactory = configuration.buildSessionFactory();
+
         for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
             fragmentToListMap.put(i, Collections.synchronizedList(new ArrayList<>()));
         }
@@ -71,7 +93,16 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<PubkeyIPObject> getIPObjects () {
-        return new ArrayList<>(pubkeyIPList);
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        List<PubkeyIPObject> pubkeyIPObjects = session
+                .createQuery("from PubkeyIPObject", PubkeyIPObjectEntity.class)
+                .list().stream()
+                .map(PubkeyIPObjectEntity::toPubkeyIPObject)
+                .collect(Collectors.toList());
+        tx.commit();
+        session.close();
+        return pubkeyIPObjects;
     }
 
     @Override
@@ -88,24 +119,40 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public PubkeyIPObject getIPObject (byte[] nodeKey) {
-        for (PubkeyIPObject p : pubkeyIPList) {
-            if (Arrays.equals(p.pubkey, nodeKey)) {
-                return p;
-            }
-        }
-        return null;
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        PubkeyIPObject pubkeyIPObject = session
+                .createQuery(
+                        "from PubkeyIPObject " +
+                                "where pubkey = :pubkey",
+                        PubkeyIPObjectEntity.class)
+                .setParameter("pubkey", nodeKey)
+                .list().stream()
+                .map(PubkeyIPObjectEntity::toPubkeyIPObject)
+                .findFirst().orElse(null);
+        tx.commit();
+        session.close();
+        return pubkeyIPObject;
     }
 
     @Override
     public void invalidateP2PObject (P2PDataObject ipObject) {
         //TODO with a real database, we rather want to invalidate them, rather then just deleting these..
         synchronized (totalList) {
+            Session session = sessionFactory.openSession();
+            Transaction tx = session.beginTransaction();
             totalList.remove(ipObject);
-        }
-        if (ipObject instanceof PubkeyIPObject) {
-            synchronized (pubkeyIPList) {
-                pubkeyIPList.remove(ipObject);
+            if (ipObject instanceof PubkeyIPObject) {
+                session
+                        .createQuery(
+                                "delete PubkeyIPObject " +
+                                        "where hostname = :hostname and port = :port")
+                        .setParameter("hostname", ((PubkeyIPObject) ipObject).hostname)
+                        .setParameter("port", ((PubkeyIPObject) ipObject).port)
+                        .executeUpdate();
             }
+            tx.commit();
+            session.close();
         }
         //TODO implement other objects
     }
@@ -113,6 +160,7 @@ public class InMemoryDBHandler implements DBHandler {
     @Override
     public synchronized void syncDatalist (List<P2PDataObject> dataList) {
         Iterator<P2PDataObject> iterator1 = dataList.iterator();
+
         while (iterator1.hasNext()) {
             boolean deleted = false;
             P2PDataObject object1 = iterator1.next();
@@ -123,6 +171,8 @@ public class InMemoryDBHandler implements DBHandler {
             }
 
             synchronized (totalList) {
+                Session session = sessionFactory.openSession();
+                Transaction tx = session.beginTransaction();
                 Iterator<P2PDataObject> iterator2 = totalList.iterator();
                 while (iterator2.hasNext() && !deleted) {
                     P2PDataObject object2 = iterator2.next();
@@ -135,17 +185,46 @@ public class InMemoryDBHandler implements DBHandler {
                             for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
                                 fragmentToListMap.get(i).remove(object2);
                             }
-                            pubkeyIPList.remove(object2);
-                            pubkeyChannelList.remove(object2);
-                            channelStatusList.remove(object2);
+                            if (object2 instanceof PubkeyIPObject) {
+                                session
+                                        .createQuery(
+                                                "delete PubkeyIPObject " +
+                                                        "where hostname = :hostname and port = :port")
+                                        .setParameter("hostname", ((PubkeyIPObject) object2).hostname)
+                                        .setParameter("port", ((PubkeyIPObject) object2).port)
+                                        .executeUpdate();
+                            }
+                            if (object2 instanceof PubkeyChannelObject) {
+                                session
+                                        .createQuery(
+                                                "delete PubkeyChannelObject " +
+                                                        "where (pubkeyA = :pubkeyA and pubkeyB = :pubkeyB) " +
+                                                        "or (pubkeyA = :pubkeyB and pubkeyB = :pubkeyA)")
+                                        .setParameter("pubkeyA", ((PubkeyChannelObject) object2).pubkeyB)
+                                        .setParameter("pubkeyB", ((PubkeyChannelObject) object2).pubkeyB)
+                                        .executeUpdate();
+                            }
+                            if (object2 instanceof ChannelStatusObject) {
+                                session
+                                        .createQuery(
+                                                "delete ChannelStatusObject " +
+                                                        "where pubkeyA = :pubkeyA and pubkeyB = :pubkeyB")
+                                        .setParameter("pubkeyA", ((ChannelStatusObject) object2).pubkeyA)
+                                        .setParameter("pubkeyB", ((ChannelStatusObject) object2).pubkeyB)
+                                        .executeUpdate();
+                            }
                         }
                         deleted = true;
                     }
                 }
+                tx.commit();
+                session.close();
             }
         }
 
         synchronized (totalList) {
+            Session session = sessionFactory.openSession();
+            Transaction tx = session.beginTransaction();
             Iterator<P2PDataObject> iterator2 = totalList.iterator();
             while (iterator2.hasNext()) {
                 P2PDataObject object2 = iterator2.next();
@@ -155,45 +234,94 @@ public class InMemoryDBHandler implements DBHandler {
                     for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
                         fragmentToListMap.get(i).remove(object2);
                     }
-                    pubkeyIPList.remove(object2);
-                    pubkeyChannelList.remove(object2);
-                    channelStatusList.remove(object2);
+                    if (object2 instanceof PubkeyIPObject) {
+                        session
+                                .createQuery(
+                                        "delete PubkeyIPObject " +
+                                                "where hostname = :hostname and port = :port")
+                                .setParameter("hostname", ((PubkeyIPObject) object2).hostname)
+                                .setParameter("port", ((PubkeyIPObject) object2).port)
+                                .executeUpdate();
+                    }
+                    if (object2 instanceof PubkeyChannelObject) {
+                        session
+                                .createQuery(
+                                        "delete PubkeyChannelObject " +
+                                                "where (pubkeyA = :pubkeyA and pubkeyB = :pubkeyB) " +
+                                                "or (pubkeyA = :pubkeyB and pubkeyB = :pubkeyA)")
+                                .setParameter("pubkeyA", ((PubkeyChannelObject) object2).pubkeyA)
+                                .setParameter("pubkeyB", ((PubkeyChannelObject) object2).pubkeyB)
+                                .executeUpdate();
+                    }
+                    if (object2 instanceof ChannelStatusObject) {
+                        session
+                                .createQuery(
+                                        "delete ChannelStatusObject " +
+                                                "where pubkeyA = :pubkeyA and pubkeyB = :pubkeyB")
+                                .setParameter("pubkeyA", ((ChannelStatusObject) object2).pubkeyA)
+                                .setParameter("pubkeyB", ((ChannelStatusObject) object2).pubkeyB)
+                                .executeUpdate();
+                    }
                 }
             }
+            tx.commit();
+            session.close();
         }
 
         for (P2PDataObject obj : dataList) {
             fragmentToListMap.get(obj.getFragmentIndex()).add(obj);
             if (obj instanceof PubkeyIPObject) {
-                if (!pubkeyIPList.contains(obj)) {
-                    pubkeyIPList.add((PubkeyIPObject) obj);
+                Session session = sessionFactory.openSession();
+                Transaction tx = session.beginTransaction();
+                Boolean found = session
+                        .createQuery(
+                                "from PubkeyIPObject " +
+                                        "where hostname = :hostname " +
+                                        "and port = :port",
+                                PubkeyIPObjectEntity.class)
+                        .setParameter("hostname", ((PubkeyIPObject) obj).hostname)
+                        .setParameter("port", ((PubkeyIPObject) obj).port)
+                        .list().stream().findFirst().isPresent();
+                if (!found) {
+                    session.save(new PubkeyIPObjectEntity((PubkeyIPObject) obj));
                 }
+                tx.commit();
+                session.close();
             } else if (obj instanceof PubkeyChannelObject) {
-                if (!pubkeyChannelList.contains(obj)) {
-                    pubkeyChannelList.add((PubkeyChannelObject) obj);
+                Session session = sessionFactory.openSession();
+                Transaction tx = session.beginTransaction();
+                Boolean found = session
+                        .createQuery(
+                                "from PubkeyChannelObject " +
+                                        "where (pubkeyA = :pubkeyA and pubkeyB = :pubkeyB) " +
+                                        "or (pubkeyA = :pubkeyB and pubkeyB = :pubkeyA)",
+                                PubkeyChannelObjectEntity.class)
+                        .setParameter("pubkeyA", ((PubkeyChannelObject) obj).pubkeyA)
+                        .setParameter("pubkeyB", ((PubkeyChannelObject) obj).pubkeyB)
+                        .list().stream().findFirst().isPresent();
+                if (!found) {
+                    session.save(new PubkeyChannelObjectEntity((PubkeyChannelObject) obj));
                 }
+                tx.commit();
+                session.close();
             } else if (obj instanceof ChannelStatusObject) {
-
                 ChannelStatusObject temp = (ChannelStatusObject) obj;
-                boolean found = false;
-                for (ChannelStatusObject object : channelStatusList) {
-                    if (Arrays.equals(object.pubkeyA, temp.pubkeyA) && Arrays.equals(object.pubkeyB, temp.pubkeyB)) {
-                        found = true;
-                        break;
-                    }
-
-                    if (Arrays.equals(object.pubkeyB, temp.pubkeyA) && Arrays.equals(object.pubkeyA, temp.pubkeyB)) {
-                        found = true;
-                        break;
-                    }
+                Session session = sessionFactory.openSession();
+                Transaction tx = session.beginTransaction();
+                Boolean found = session
+                        .createQuery(
+                                "from ChannelStatusObject " +
+                                        "where (pubkeyA = :pubkeyA and pubkeyB = :pubkeyB) " +
+                                        "or (pubkeyA = :pubkeyB and pubkeyB = :pubkeyA)",
+                                ChannelStatusObjectEntity.class)
+                        .setParameter("pubkeyA", temp.pubkeyA)
+                        .setParameter("pubkeyB", temp.pubkeyB)
+                        .list().stream().findFirst().isPresent();
+                if (!found) {
+                    session.save(new ChannelStatusObjectEntity(temp));
                 }
-                if (found) {
-                    continue;
-                }
-
-                if (!channelStatusList.contains(obj)) {
-                    channelStatusList.add((ChannelStatusObject) obj);
-                }
+                tx.commit();
+                session.close();
             }
             List<P2PDataObject> list = getSyncDataByFragmentIndex(obj.getFragmentIndex());
             if (!list.contains(obj)) {
@@ -206,52 +334,98 @@ public class InMemoryDBHandler implements DBHandler {
             }
             knownObjects.add(ByteBuffer.wrap(obj.getHash()));
         }
+
     }
 
     @Override
     public Channel getChannel (int id) {
-        synchronized (channelList) {
-            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
-            if (optional.isPresent()) {
-                return optional.get();
-            } else {
-                throw new RuntimeException("Channel not found..");
-            }
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        Optional<Channel> optional = session
+                .byId(ChannelEntity.class)
+                .loadOptional(id)
+                .map(ChannelEntity::toChannel);
+        tx.commit();
+        session.close();
+        if (optional.isPresent()) {
+            return optional.get();
+        } else {
+            throw new RuntimeException("Channel not found..");
         }
     }
 
     @Override
     public Channel getChannel (Sha256Hash hash) {
-        synchronized (channelList) {
-            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.getHash().equals(hash)).findAny();
-            if (optional.isPresent()) {
-                return optional.get();
-            } else {
-                throw new RuntimeException("Channel not found..");
-            }
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        Optional<Channel> channel = session
+                .createQuery(
+                        "from Channel c " +
+                                "left join fetch c.signatures " +
+                                "left join fetch c.paymentList " +
+                                "where c.hash = :hash",
+                        ChannelEntity.class)
+                .setParameter("hash", hash)
+                .list().stream().findFirst().map(ChannelEntity::toChannel);
+        tx.commit();
+        session.close();
+        if (channel.isPresent()) {
+            return channel.get();
+        } else {
+            throw new RuntimeException("Channel not found..");
         }
     }
 
     @Override
     public List<Channel> getChannel (NodeKey nodeKey) {
-        synchronized (channelList) {
-            return channelList.stream().filter(channel1 -> channel1.nodeKeyClient.equals(nodeKey)).collect(Collectors.toList());
-        }
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        List<Channel> channels = session
+                .createQuery(
+                        "from Channel c " +
+                                "left join fetch c.signatures " +
+                                "left join fetch c.paymentList " +
+                                "where c.nodeKeyClient = :nodeKey",
+                        ChannelEntity.class)
+                .setParameter("nodeKey", nodeKey)
+                .list().stream()
+                .map(ChannelEntity::toChannel)
+                .collect(Collectors.toList());
+        tx.commit();
+        session.close();
+        return channels;
     }
 
     @Override
     public List<Channel> getOpenChannel (NodeKey nodeKey) {
-        synchronized (channelList) {
-            return getChannel(nodeKey).stream().filter(channel -> channel.phase == OPEN).collect(Collectors.toList());
-        }
-
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        List<Channel> channels = session
+                .createQuery(
+                        "from Channel c " +
+                                "left join fetch c.signatures " +
+                                "left join fetch c.paymentList " +
+                                "where c.nodeKeyClient = :nodeKey " +
+                                "and c.phase = :phase",
+                        ChannelEntity.class)
+                .setParameter("nodeKey", nodeKey)
+                .setParameter("phase", OPEN)
+                .list().stream()
+                .map(ChannelEntity::toChannel)
+                .collect(Collectors.toList());
+        tx.commit();
+        session.close();
+        return channels;
     }
 
     @Override
     public void insertChannel (Channel channel) {
-        synchronized (channelList) {
-            this.channelList.add(channel);
-        }
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        ChannelEntity channelEntity = new ChannelEntity(channel);
+        session.persist(channelEntity);
+        tx.commit();
+        session.close();
     }
 
     @Override
@@ -263,7 +437,7 @@ public class InMemoryDBHandler implements DBHandler {
             setMessageProcessed(nodeKey, request);
         }
         if (response != null) {
-            long messageId = saveMessage(nodeKey, response, SENT);
+            long messageId = saveMessage(nodeKey, response, DIRECTION.SENT);
             response.setMessageNumber(messageId);
             if (request != null) {
                 linkResponse(nodeKey, request.getMessageNumber(), response.getMessageNumber());
@@ -278,21 +452,28 @@ public class InMemoryDBHandler implements DBHandler {
             revocationList.addAll(revocationHash);
         }
         if (channel != null) {
-            synchronized (channelList) {
-                Iterator<Channel> iterator = channelList.iterator();
-                boolean updated = false;
-                while (iterator.hasNext()) {
-                    Channel c = iterator.next();
-                    if (c.getHash().equals(channel.getHash())) {
-                        iterator.remove();
-                        channelList.add(channel);
-                        updated = true;
-                        break;
-                    }
-                }
-                if (!updated) {
-                    throw new RuntimeException("Not able to find channel in list, not updated..");
-                }
+            Session session = sessionFactory.openSession();
+            Transaction tx = session.beginTransaction();
+            List<ChannelEntity> channels = session
+                    .createQuery(
+                            "from Channel c " +
+                                    "left join fetch c.signatures " +
+                                    "left join fetch c.paymentList " +
+                                    "where c.hash = :hash",
+                            ChannelEntity.class)
+                    .setParameter("hash", channel.getHash())
+                    .list();
+            int result = channels.size();
+            channels.forEach(session::delete);
+            if (result == 0) {
+                tx.rollback();
+                session.close();
+                throw new RuntimeException("Not able to find channel in list, not updated..");
+            } else {
+                ChannelEntity channelEntity = new ChannelEntity(channel);
+                session.persist(channelEntity);
+                tx.commit();
+                session.close();
             }
         }
         synchronized (payments) {
@@ -323,7 +504,7 @@ public class InMemoryDBHandler implements DBHandler {
                                 paymentWrapper.receiver = nextHop;
                                 payment.onionObject = onion.onionObject;
                             } else {
-                                System.out.println("InMemoryDBHandler.updateChannelStatus to be refunded?");
+                                System.out.println("HibernateHandler.updateChannelStatus to be refunded?");
                                 paymentWrapper.statusSender = TO_BE_REFUNDED;
                             }
                         }
@@ -407,7 +588,12 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @NotNull
-    private static List<PaymentData> getPaymentDatas (NodeKey nodeKey, List<PaymentWrapper> payments, boolean sender, PaymentStatus searchFor, PaymentStatus
+    private static List<PaymentData> getPaymentDatas (
+            NodeKey nodeKey,
+            List<PaymentWrapper> payments,
+            boolean sender,
+            PaymentStatus searchFor,
+            PaymentStatus
             replaceWith) {
         List<PaymentData> paymentList = new ArrayList<>();
         for (PaymentWrapper p : payments) {
@@ -468,9 +654,22 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public List<Channel> getOpenChannel () {
-        synchronized (channelList) {
-            return channelList.stream().filter(channel -> channel.phase == OPEN).collect(Collectors.toList());
-        }
+        Session session = sessionFactory.openSession();
+        Transaction tx = session.beginTransaction();
+        List<Channel> channels = session
+                .createQuery(
+                        "from Channel c " +
+                                "left join fetch c.signatures " +
+                                "left join fetch c.paymentList " +
+                                "where c.phase = :phase",
+                        ChannelEntity.class)
+                .setParameter("phase", OPEN)
+                .list().stream()
+                .map(ChannelEntity::toChannel)
+                .collect(Collectors.toList());
+        tx.commit();
+        session.close();
+        return channels;
     }
 
     @Override
@@ -489,7 +688,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void setMessageProcessed (NodeKey nodeKey, NumberedMessage message) {
-        saveMessage(nodeKey, message, RECEIVED);
+        saveMessage(nodeKey, message, DIRECTION.RECEIVED);
     }
 
     @Override
@@ -497,7 +696,7 @@ public class InMemoryDBHandler implements DBHandler {
         List<MessageWrapper> messageWrappers = messageList.get(nodeKey);
         if (messageWrappers != null) {
             Optional<Long> o = messageWrappers.stream()
-                    .filter(w -> w.getDirection() == RECEIVED)
+                    .filter(w -> w.getDirection() == DIRECTION.RECEIVED)
                     .filter(w -> w.getMessage() instanceof NumberedMessage)
                     .map(MessageWrapper::getMessage)
                     .map(m -> (NumberedMessage) m)
@@ -513,7 +712,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public synchronized long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
-        if (direction == SENT) {
+        if (direction == DIRECTION.SENT) {
             Long i = messageCountList.get(nodeKey);
             if (i == null) {
                 i = 1L;

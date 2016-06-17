@@ -52,4 +52,6 @@ public class NodeKey {
     public static NodeKey wrap (ECKey key) {
         return new NodeKey(key);
     }
+
+    public ECKey unwrap() { return nodeKey; }
 }

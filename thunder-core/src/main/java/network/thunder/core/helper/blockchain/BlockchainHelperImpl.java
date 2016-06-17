@@ -117,7 +117,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                     peerGroup.addPreMessageReceivedEventListener((Peer peer, Message m) -> {
                         if (m instanceof Block || m instanceof Transaction) {
                             if (processedMessages.add(m.getHash())) {
-                                poolExecutor.submit((Runnable) () -> {
+                                poolExecutor.submit(() -> {
                                     if (m instanceof Block) {
                                         Iterator<OnBlockCommand> iterator = blockListener.iterator();
                                         while (iterator.hasNext()) {

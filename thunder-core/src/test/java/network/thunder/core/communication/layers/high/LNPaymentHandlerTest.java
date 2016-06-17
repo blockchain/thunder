@@ -15,7 +15,7 @@ import network.thunder.core.communication.layer.high.payments.messages.LNPayment
 import network.thunder.core.communication.layer.high.payments.messages.LNPaymentBMessage;
 import network.thunder.core.communication.layer.high.payments.messages.LNPaymentCMessage;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.TestTools;
 import network.thunder.core.etc.Tools;
@@ -38,29 +38,47 @@ public class LNPaymentHandlerTest {
     EmbeddedChannel channel12;
     EmbeddedChannel channel21;
 
-    ServerObject serverObject1 = new ServerObject();
-    ServerObject serverObject2 = new ServerObject();
+    ServerObject serverObject1;
+    ServerObject serverObject2;
 
-    ClientObject node1 = new ClientObject(serverObject2);
-    ClientObject node2 = new ClientObject(serverObject1);
+    ClientObject node1;
+    ClientObject node2;
 
     LNPaymentProcessorImpl processor12;
     LNPaymentProcessorImpl processor21;
 
-    DBHandler dbHandler1 = new InMemoryDBHandler();
-    DBHandler dbHandler2 = new InMemoryDBHandler();
+    DBHandler dbHandler1;
+    DBHandler dbHandler2;
 
-    ContextFactory contextFactory12 = new MockContextFactory(serverObject1, dbHandler1);
-    ContextFactory contextFactory21 = new MockContextFactory(serverObject2, dbHandler2);
+    ContextFactory contextFactory12;
+    ContextFactory contextFactory21;
 
-    LNPaymentHelper paymentHelper1 = contextFactory12.getPaymentHelper();
-    LNPaymentHelper paymentHelper2 = contextFactory21.getPaymentHelper();
+    LNPaymentHelper paymentHelper1;
+    LNPaymentHelper paymentHelper2;
 
-    Channel channel1 = TestTools.getMockChannel(new LNConfiguration());
-    Channel channel2 = TestTools.getMockChannel(new LNConfiguration());
+    Channel channel1;
+    Channel channel2;
 
     @Before
     public void prepare () throws PropertyVetoException, SQLException {
+        serverObject1 = new ServerObject();
+        serverObject2 = new ServerObject();
+
+        node1 = new ClientObject(serverObject2);
+        node2 = new ClientObject(serverObject1);
+
+        dbHandler1 = new HibernateHandler();
+        dbHandler2 = new HibernateHandler();
+
+        contextFactory12 = new MockContextFactory(serverObject1, dbHandler1);
+        contextFactory21 = new MockContextFactory(serverObject2, dbHandler2);
+
+        paymentHelper1 = contextFactory12.getPaymentHelper();
+        paymentHelper2 = contextFactory21.getPaymentHelper();
+
+        channel1 = TestTools.getMockChannel(new LNConfiguration());
+        channel2 = TestTools.getMockChannel(new LNConfiguration());
+
         node1.isServer = false;
         node2.isServer = true;
 
@@ -100,6 +118,7 @@ public class LNPaymentHandlerTest {
         dbHandler2.addPaymentSecret(paymentData.secret);
         paymentHelper1.makePayment(paymentData);
 
+        Thread.sleep(100);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
@@ -127,6 +146,7 @@ public class LNPaymentHandlerTest {
     @Test
     public void fullExchangeWithAnotherPaymentMidway () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
+        Thread.sleep(100);
 
         TestTools.exchangeMessages(channel12, channel21, LNPaymentAMessage.class);
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
@@ -149,6 +169,7 @@ public class LNPaymentHandlerTest {
         dbHandler1.addPaymentSecret(payment2.secret);
         dbHandler2.addPaymentSecret(payment1.secret);
 
+        Thread.sleep(100);
         LNPaymentAMessage messageA1 = (LNPaymentAMessage) channel12.readOutbound();
         LNPaymentAMessage messageA2 = (LNPaymentAMessage) channel21.readOutbound();
 
@@ -179,8 +200,10 @@ public class LNPaymentHandlerTest {
     public void sendWrongMessageShouldDisconnect () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
+        Thread.sleep(100);
         LNPaymentAMessage messageA = (LNPaymentAMessage) channel12.readOutbound();
         channel21.writeInbound(messageA);
+        Thread.sleep(100);
         LNPaymentBMessage messageB = (LNPaymentBMessage) channel21.readOutbound();
         channel21.writeInbound(messageB);
 

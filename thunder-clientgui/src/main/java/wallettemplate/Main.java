@@ -10,13 +10,12 @@ import javafx.stage.Stage;
 import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
@@ -26,7 +25,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static wallettemplate.utils.GuiUtils.*;
@@ -43,7 +41,7 @@ public class Main extends Application {
     public static Wallet wallet;
 
     public static ThunderContext thunderContext;
-    public static DBHandler dbHandler = new InMemoryDBHandler();
+    public static DBHandler dbHandler = new HibernateHandler();
     public static ServerObject node = new ServerObject();
 
     private StackPane uiStack;

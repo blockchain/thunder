@@ -70,11 +70,6 @@
                         <goals>
                             <goal>compile</goal>
                         </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <source>src/main/java</source>
-                            </sourceDirs>
-                        </configuration>
                     </execution>
                     <execution>
                         <id>test-compile</id>
@@ -82,11 +77,6 @@
                         <goals>
                             <goal>test-compile</goal>
                         </goals>
-                        <configuration>
-                            <sourceDirs>
-                                <source>src/test/java</source>
-                            </sourceDirs>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -177,6 +167,18 @@
             <version>${kotlin.version}</version>
         </dependency>
 
+        <dependency>
+           <groupId>org.hibernate</groupId>
+           <artifactId>hibernate-core</artifactId>
+           <version>5.2.0.Final</version>
+        </dependency>
+
+        <!-- http://mvnrepository.com/artifact/org.hsqldb/hsqldb -->
+        <dependency>
+           <groupId>org.hsqldb</groupId>
+           <artifactId>hsqldb</artifactId>
+           <version>2.3.3</version>
+        </dependency>
 
     </dependencies>
 

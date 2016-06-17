@@ -12,7 +12,7 @@ import network.thunder.core.communication.layer.high.channel.establish.LNEstabli
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.HibernateHandler;
 import network.thunder.core.etc.*;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
@@ -44,8 +44,8 @@ public class LNEstablishHandlerTest {
     LNEstablishProcessorImpl processor1;
     LNEstablishProcessorImpl processor2;
 
-    DBHandler dbHandler1 = new InMemoryDBHandler();
-    DBHandler dbHandler2 = new InMemoryDBHandler();
+    DBHandler dbHandler1 = new HibernateHandler();
+    DBHandler dbHandler2 = new HibernateHandler();
 
     MockBlockchainHelper mockBlockchainHelper = new MockBlockchainHelper();
     MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();
