@@ -18,6 +18,7 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.TransactionOutPoint;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.ScriptBuilder;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -83,19 +84,21 @@ public class LNPaymentLogicImplTest {
 
         assertEquals(
                 channelTransaction.getOutput(0).getScriptPubKey(),
-                ScriptTools.getChannelTxOutputRevocation(
-                        channel1.channelStatus.revoHashServerNext,
-                        channel1.keyServer,
-                        channel1.keyClient,
-                        channel1.channelStatus.csvDelay));
+                ScriptBuilder.createP2SHOutputScript(
+                        ScriptTools.getChannelTxOutputRevocation(
+                                channel1.channelStatus.revoHashServerNext,
+                                channel1.keyServer,
+                                channel1.keyClient,
+                                channel1.channelStatus.csvDelay)));
 
         assertEquals(
                 channelTransaction.getOutput(0).getScriptPubKey(),
-                ScriptTools.getChannelTxOutputRevocation(
-                        channel1.channelStatus.revoHashServerNext,
-                        channel1.keyServer,
-                        channel1.keyClient,
-                        channel1.channelStatus.csvDelay));
+                ScriptBuilder.createP2SHOutputScript(
+                        ScriptTools.getChannelTxOutputRevocation(
+                                channel1.channelStatus.revoHashServerNext,
+                                channel1.keyServer,
+                                channel1.keyClient,
+                                channel1.channelStatus.csvDelay)));
 
         assertEquals(
                 channelTransaction.getOutput(1).getAddressFromP2PKHScript(Constants.getNetwork()),
@@ -121,21 +124,23 @@ public class LNPaymentLogicImplTest {
 
         assertEquals(
                 channelTransaction.getOutput(2).getScriptPubKey(),
-                ScriptTools.getChannelTxOutputPaymentSending(
-                        channel1.keyServer,
-                        channel1.keyClient,
-                        channel1.channelStatus.revoHashServerNext,
-                        sending.secret,
-                        sending.timestampRefund));
+                ScriptBuilder.createP2SHOutputScript(
+                        ScriptTools.getChannelTxOutputPaymentSending(
+                                channel1.keyServer,
+                                channel1.keyClient,
+                                channel1.channelStatus.revoHashServerNext,
+                                sending.secret,
+                                sending.timestampRefund)));
 
         assertEquals(
                 channelTransaction.getOutput(3).getScriptPubKey(),
-                ScriptTools.getChannelTxOutputPaymentReceiving(
-                        channel1.keyServer,
-                        channel1.keyClient,
-                        channel1.channelStatus.revoHashServerNext,
-                        receiving.secret,
-                        receiving.timestampRefund));
+                ScriptBuilder.createP2SHOutputScript(
+                        ScriptTools.getChannelTxOutputPaymentReceiving(
+                                channel1.keyServer,
+                                channel1.keyClient,
+                                channel1.channelStatus.revoHashServerNext,
+                                receiving.secret,
+                                receiving.timestampRefund)));
     }
 
     @Test
@@ -153,7 +158,6 @@ public class LNPaymentLogicImplTest {
                 channel1.channelStatus,
                 channel1.keyServer,
                 channel1.keyClient);
-
 
         assertEquals(2, paymentTransactions.size());
 
@@ -187,7 +191,6 @@ public class LNPaymentLogicImplTest {
                         channel1.keyClient,
                         channel1.channelStatus.revoHashServerNext,
                         channel1.channelStatus.csvDelay));
-
 
     }
 
@@ -280,7 +283,7 @@ public class LNPaymentLogicImplTest {
 
         ChannelSignatures channelSignatures = paymentLogic.getSignatureObject(channel1, channelTransaction, paymentTransactions);
 
-        TransactionSignature invalidSig = TestTools.corruptSignature( channelSignatures.channelSignatures.get(0));
+        TransactionSignature invalidSig = TestTools.corruptSignature(channelSignatures.channelSignatures.get(0));
         channelSignatures.channelSignatures.set(0, invalidSig);
 
         paymentLogic.checkSignatures(
@@ -310,7 +313,7 @@ public class LNPaymentLogicImplTest {
 
         ChannelSignatures channelSignatures = paymentLogic.getSignatureObject(channel1, channelTransaction, paymentTransactions);
 
-        TransactionSignature invalidSig = TestTools.corruptSignature( channelSignatures.paymentSignatures.get(0));
+        TransactionSignature invalidSig = TestTools.corruptSignature(channelSignatures.paymentSignatures.get(0));
         channelSignatures.paymentSignatures.set(0, invalidSig);
 
         paymentLogic.checkSignatures(
@@ -332,7 +335,7 @@ public class LNPaymentLogicImplTest {
         return payment;
     }
 
-    private void addPaymentsToChannel() {
+    private void addPaymentsToChannel () {
         channel1.channelStatus.paymentList.add(sending);
         channel1.channelStatus.paymentList.add(receiving);
         channel1.channelStatus.amountServer -= sending.amount;

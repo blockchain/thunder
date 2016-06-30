@@ -14,6 +14,7 @@ import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.script.ScriptBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,11 +30,12 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         Transaction transaction = new Transaction(Constants.getNetwork());
         transaction.addInput(anchor.getHash(), anchor.getIndex(), Tools.getDummyScript());
         transaction.addOutput(Coin.valueOf(0),
-                ScriptTools.getChannelTxOutputRevocation(
-                        channelStatus.revoHashServerNext,
-                        server,
-                        client,
-                        channelStatus.csvDelay));
+                ScriptBuilder.createP2SHOutputScript(
+                        ScriptTools.getChannelTxOutputRevocation(
+                                channelStatus.revoHashServerNext,
+                                server,
+                                client,
+                                channelStatus.csvDelay)));
 
         transaction.addOutput(Coin.valueOf(0), channelStatus.addressClient);
         transaction = addPayments(transaction, channelStatus, channelStatus.revoHashServerNext, server, client);
@@ -58,7 +60,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             } else {
                 script = ScriptTools.getChannelTxOutputPaymentReceiving(keyServer, keyClient, revocationHash, payment.secret, payment.timestampRefund);
             }
-            transaction.addOutput(value, script);
+            transaction.addOutput(value, ScriptBuilder.createP2SHOutputScript(script));
         }
         return transaction;
     }
@@ -110,8 +112,6 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         ChannelStatus oldStatus = channel.channelStatus;
         ChannelStatus newStatus = oldStatus.copy();
         newStatus.applyUpdate(channelUpdate);
-
-
 
         //Check if the update is allowed..
         checkPaymentsInNewStatus(oldStatus, channelUpdate);
