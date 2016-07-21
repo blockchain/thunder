@@ -74,13 +74,13 @@ public class LNCloseHandlerTest {
         channel1 = new Channel();
         channel2 = new Channel();
 
-        channel1.channelStatus.amountServer = 11000;
-        channel1.channelStatus.amountClient = 9000;
-        channel2.channelStatus.amountServer = 9000;
-        channel2.channelStatus.amountClient = 11000;
+        channel1.amountServer = 11000;
+        channel1.amountClient = 9000;
+        channel2.amountServer = 9000;
+        channel2.amountClient = 11000;
 
-        channel1.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
-        channel2.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel1.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel2.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
 
         channel1.nodeKeyClient = node1.nodeKey;
         channel2.nodeKeyClient = node2.nodeKey;

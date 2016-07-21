@@ -255,7 +255,7 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public void updateChannelStatus (@NotNull NodeKey nodeKey, @NotNull Sha256Hash channelHash, @NotNull ECKey keyServer,
+    public void updateChannelStatus (NodeKey nodeKey, @NotNull Sha256Hash channelHash, ECKey keyServer,
                                      Channel channel, ChannelUpdate update, List<RevocationHash> revocationHash,
                                      NumberedMessage request, NumberedMessage response) {
 
@@ -369,6 +369,20 @@ public class InMemoryDBHandler implements DBHandler {
                 unlockPayments(nodeKey, payments.stream().map(p -> p.paymentData).collect(Collectors.toList()));
             }
         }
+    }
+
+    @Override
+    public void updateChannel (Channel channel) {
+
+    }
+
+    @Override
+    public RevocationHash retrieveRevocationHash (Sha256Hash channelHash, int shaChainDepth) {
+        return revocationHashListTheir.get(channelHash)
+                .stream()
+                .filter(revocationHash -> revocationHash.index == shaChainDepth)
+                .findAny()
+                .get();
     }
 
     @Override

@@ -12,14 +12,14 @@ public class LNEstablishMessageFactoryImpl extends MesssageFactoryImpl implement
         LNEstablishAMessage message = new LNEstablishAMessage(
                 channel.keyServer,
                 channel.anchorTx,
-                channel.channelStatus.revoHashServerCurrent,
-                channel.channelStatus.revoHashServerNext,
-                channel.channelStatus.amountClient,
-                channel.channelStatus.amountServer,
+                channel.revoHashServerCurrent,
+                channel.revoHashServerNext,
+                channel.amountClient,
+                channel.amountServer,
                 0,  //TODO add some reasonable minConfirmations
-                channel.channelStatus.addressServer,
-                channel.channelStatus.feePerByte,
-                channel.channelStatus.csvDelay);
+                channel.addressServer,
+                channel.feePerByte,
+                channel.csvDelay);
         return message;
     }
 

@@ -108,13 +108,13 @@ public class Tools {
         return sortedTransaction;
     }
 
-    public static List<TransactionSignature> getChannelSignatures (Channel channel, Transaction transaction) {
+    public static List<TransactionSignature> getChannelSignatures (Channel channel, ECKey keyToSign, Transaction transaction) {
         //TODO only one anchor allowed for now
         TransactionSignature signature1 = Tools.getSignature(
                 transaction,
                 0,
                 ScriptTools.getAnchorOutputScript(channel.keyClient, channel.keyServer).getProgram(),
-                channel.keyServer);
+                keyToSign);
 
         List<TransactionSignature> channelSignatures = new ArrayList<>();
 

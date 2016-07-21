@@ -6,7 +6,6 @@ import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.channel.ChannelCloser;
 import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.close.messages.LNClose;
@@ -69,7 +68,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         this.channelManager = contextFactory.getChannelManager();
     }
 
-    public static ChannelStatus getChannelStatus (ChannelStatus channelStatus) {
+    public static Channel getChannelStatus (Channel channelStatus) {
         //We don't want any open payments showing up in the closing transaction.
         //This means we deliberately give up any payments that are still open.
         //The underlying control is responsible to display a warning about it to the user.
@@ -83,7 +82,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         //We just refund all open receiving payments and settle all open sent payments, even though this will probably cost us money.
 
         //Rather use a copy here to not run into concurrency issues somewhere else..
-        ChannelStatus temp = channelStatus.copy();
+        Channel temp = channelStatus.copy();
 
         long amountClient = temp.amountClient;
         long amountServer = temp.amountServer;
@@ -99,7 +98,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         return temp;
     }
 
-    public Transaction getClosingTransaction (ChannelStatus channelStatus, float feePerByte) {
+    public Transaction getClosingTransaction (Channel channelStatus, float feePerByte) {
         //For the sake of privacy (and simplicity) we use lexicographically ordering here, as defined in BIP69
         Transaction transaction = new Transaction(Constants.getNetwork());
         transaction.addInput(channel.anchorTxHash, 0, Tools.getDummyScript());
@@ -107,8 +106,8 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         //TODO deduct the transaction fee correctly from both amounts
         //TODO would be better to have another address on file that we can use here..
         long feePerParty = (Tools.getTransactionFees(2, 2, feePerByte) / 2);
-        transaction.addOutput(Coin.valueOf(channelStatus.amountClient - feePerParty), channel.channelStatus.addressClient);
-        transaction.addOutput(Coin.valueOf(channelStatus.amountServer - feePerParty), channel.channelStatus.addressServer);
+        transaction.addOutput(Coin.valueOf(channelStatus.amountClient - feePerParty), channel.addressClient);
+        transaction.addOutput(Coin.valueOf(channelStatus.amountServer - feePerParty), channel.addressServer);
         return Tools.applyBIP69(transaction);
     }
 
@@ -118,7 +117,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
     }
 
     private List<TransactionSignature> getTransactionSignatures (Transaction transaction) {
-        return Tools.getChannelSignatures(channel, transaction);
+        return Tools.getChannelSignatures(channel, channel.keyServer, transaction);
     }
 
     @Override
@@ -147,7 +146,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
 
     private void calculateAndSendCloseMessage () {
         Channel channel = getChannel();
-        ChannelStatus closingStatus = getChannelStatus(channel.channelStatus);
+        Channel closingStatus = getChannelStatus(channel);
 
         //This gets called as well when the connection breaks down and we connect back to the other party
         //For now we take it that we may negotiate a close with a different fee
@@ -204,7 +203,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
 
     private void processChannelClose (LNCloseAMessage message) {
         checkClosingMessage(message);
-        Transaction transaction = getClosingTransaction(channel.channelStatus, message.feePerByte);
+        Transaction transaction = getClosingTransaction(channel, message.feePerByte);
         List<TransactionSignature> signatures = getTransactionSignatures(transaction);
 
         isBlocked = true;
@@ -247,7 +246,7 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
         this.channel = getChannel();
         //TODO fix working out the correct reverse strategy for channels that still have payments included
         //ChannelStatus statusSender = getChannelStatus(channel.channelUpdate.reverse()).reverse();
-        ChannelStatus status = channel.channelStatus;
+        Channel status = channel;
 
         Transaction transaction = getClosingTransaction(status, message.feePerByte);
 

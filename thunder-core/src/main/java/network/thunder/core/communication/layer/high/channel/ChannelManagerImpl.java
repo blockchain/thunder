@@ -110,7 +110,6 @@ public class ChannelManagerImpl implements ChannelManager {
         } else {
             //TODO we currently aren't connected with a node that we have a channel open. We have a worker thread that automatically tries to
             //reconnect, so don't have to call connect here, but should somehow mark this channel as to-be-closed..
-            System.out.println("channelCloser = " + channelCloser);
         }
     }
 

@@ -72,7 +72,13 @@ public class PaymentData implements Cloneable {
         p.amount = amount;
         p.timestampOpen = timestampOpen;
         p.timestampRefund = timestampRefund;
-        p.secret = secret;
+        p.secret = secret.copy();
+        return p;
+    }
+
+    public PaymentData reverse () {
+        PaymentData p = this.cloneObject();
+        p.sending = !p.sending;
         return p;
     }
 

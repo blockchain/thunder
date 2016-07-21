@@ -4,11 +4,17 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.Coin;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
+import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
+import org.bitcoinj.script.Script;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -52,22 +58,92 @@ public class TestTools {
 
         channel.anchorTx = anchor;
         channel.anchorTxHash = anchor.getHash();
-        channel.channelStatus.amountClient = 1100000;
-        channel.channelStatus.amountServer = 900000;
+        channel.amountClient = 1100000;
+        channel.amountServer = 900000;
 
-        channel.channelStatus.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
-        channel.channelStatus.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
+        channel.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
+        channel.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
         channel.masterPrivateKeyServer = Tools.getRandomByte(20);
         channel.shaChainDepthCurrent = 1;
-        channel.channelStatus.revoHashServerCurrent = new RevocationHash(1, channel.masterPrivateKeyServer);
-        channel.channelStatus.revoHashClientCurrent = new RevocationHash(1, Tools.getRandomByte(20));
+        channel.revoHashServerCurrent = new RevocationHash(1, channel.masterPrivateKeyServer);
+        channel.revoHashClientCurrent = new RevocationHash(1, Tools.getRandomByte(20));
 
-        channel.channelStatus.revoHashServerNext = new RevocationHash(2, channel.masterPrivateKeyServer);
-        channel.channelStatus.revoHashClientNext = new RevocationHash(2, Tools.getRandomByte(20));
+        channel.revoHashServerNext = new RevocationHash(2, channel.masterPrivateKeyServer);
+        channel.revoHashClientNext = new RevocationHash(2, Tools.getRandomByte(20));
 
-        channel.channelStatus.addressClient = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
-        channel.channelStatus.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel.revoHashServerNextNext = new RevocationHash(3, channel.masterPrivateKeyServer);
+        channel.revoHashClientNextNext = new RevocationHash(3, Tools.getRandomByte(20));
+
+        channel.addressClient = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
+        channel.addressServer = new Address(Constants.getNetwork(), Tools.getRandomByte(20));
 
         return channel;
+    }
+
+    public static ChannelStatusObject getRandomObject () {
+        ChannelStatusObject obj = new ChannelStatusObject();
+
+        obj.pubkeyA = Tools.getRandomByte(33);
+        obj.pubkeyB = Tools.getRandomByte(33);
+
+        obj.infoA = Tools.getRandomByte(60);
+        obj.infoB = Tools.getRandomByte(60);
+
+        obj.timestamp = Tools.currentTime();
+
+        obj.signatureA = Tools.getRandomByte(65);
+        obj.signatureB = Tools.getRandomByte(65);
+
+        obj.feeA = new Fee(1, 1);
+        obj.feeB = new Fee(1, 1);
+
+        return obj;
+    }
+
+    @NotNull
+    public static Set<Script.VerifyFlag> getVerifyFlags () {
+        Set<Script.VerifyFlag> flags = new HashSet<>();
+        flags.add(Script.VerifyFlag.CHECKLOCKTIMEVERIFY);
+        flags.add(Script.VerifyFlag.CLEANSTACK);
+        flags.add(Script.VerifyFlag.DERSIG);
+        flags.add(Script.VerifyFlag.LOW_S);
+        flags.add(Script.VerifyFlag.MINIMALDATA);
+        flags.add(Script.VerifyFlag.NULLDUMMY);
+        flags.add(Script.VerifyFlag.P2SH);
+        flags.add(Script.VerifyFlag.SIGPUSHONLY);
+        flags.add(Script.VerifyFlag.STRICTENC);
+        return flags;
+    }
+
+    public static LNConfiguration getZeroFeeConfiguration () {
+        LNConfiguration configuration = new LNConfiguration();
+        configuration.DEFAULT_FEE_PER_BYTE = 0;
+        configuration.DEFAULT_FEE_PER_BYTE_CLOSING = 0;
+        configuration.MIN_FEE_PER_BYTE = 0;
+        configuration.MIN_FEE_PER_BYTE_CLOSING = 0;
+        configuration.MAX_FEE_PER_BYTE = 0;
+        configuration.MAX_FEE_PER_BYTE_CLOSING = 0;
+        return configuration;
+    }
+
+    public static List<ChannelStatusObject> translateECKeyToRoute (List<ECKey> keyList) {
+        List<ChannelStatusObject> list = new ArrayList<>();
+        List<ECKey> route = new ArrayList<>(keyList);
+        ECKey keyOne = route.remove(0);
+
+        for (ECKey key : route) {
+            ChannelStatusObject object = new ChannelStatusObject();
+            object.minTimeout = 30;
+            object.feeA = new Fee(1, 100);
+            object.feeB = new Fee(1, 100);
+            object.latency = 1;
+            object.pubkeyA = keyOne.getPubKey();
+            object.pubkeyB = key.getPubKey();
+            list.add(object);
+
+            keyOne = key;
+        }
+
+        return list;
     }
 }

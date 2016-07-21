@@ -20,6 +20,10 @@ public class NodeKey {
         return nodeKey.getPubKey();
     }
 
+    public ECKey getECKey () {
+        return nodeKey;
+    }
+
     public String getPubKeyHex () {
         return Tools.bytesToHex(nodeKey.getPubKey());
     }

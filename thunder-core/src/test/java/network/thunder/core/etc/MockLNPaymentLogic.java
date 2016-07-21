@@ -2,10 +2,12 @@ package network.thunder.core.etc;
 
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
 import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
-import network.thunder.core.communication.layer.high.payments.messages.*;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
+import network.thunder.core.communication.layer.high.payments.messages.LNPayment;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentAMessage;
+import network.thunder.core.communication.layer.high.payments.messages.LNPaymentMessageFactory;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
@@ -15,7 +17,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import java.util.List;
 
 public class MockLNPaymentLogic implements LNPaymentLogic {
-    ChannelStatus status;
+    Channel status;
     ChannelUpdate update;
     Channel channel;
 
@@ -25,8 +27,6 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
         this.messageFactory = messageFactory;
     }
 
-
-
     public List<TransactionSignature> getChannelSignatures () {
         return null;
     }
@@ -35,19 +35,8 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
         return null;
     }
 
-
     @Override
-    public Transaction getChannelTransaction (TransactionOutPoint anchor, ChannelStatus channelStatus, ECKey client, ECKey server) {
-        return null;
-    }
-
-    @Override
-    public ChannelSignatures getSignatureObject (Channel channel, Transaction channelTransaction, List<Transaction> paymentTransactions) {
-        return null;
-    }
-
-    @Override
-    public List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, ChannelStatus channelStatus, ECKey keyServer, ECKey keyClient) {
+    public ChannelSignatures getSignatureObject (Channel channel, ECKey keyToSign, Transaction channelTransaction, List<Transaction> paymentTransactions) {
         return null;
     }
 
@@ -57,9 +46,18 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     }
 
     @Override
-    public void checkSignatures (ECKey keyServer, ECKey keyClient, ChannelSignatures channelSignatures, Transaction channelTransaction, List<Transaction>
-            paymentTransactions, ChannelStatus status) {
+    public Transaction getChannelTransaction (TransactionOutPoint anchor, Channel channel) {
+        return null;
+    }
 
+    @Override
+    public Transaction getSignedChannelTransaction (Channel channel) {
+        return null;
+    }
+
+    @Override
+    public List<Transaction> getSignedPaymentTransactions (Channel channel) {
+        return null;
     }
 
     @Override
@@ -73,6 +71,11 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
     }
 
     @Override
+    public List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, Channel channel) {
+        return null;
+    }
+
+    @Override
     public List<Transaction> getPaymentTransactions (Channel channel, SIDE side) {
         return null;
     }
@@ -82,13 +85,15 @@ public class MockLNPaymentLogic implements LNPaymentLogic {
 
     }
 
+    @Override
+    public void checkSignatures (Channel channel, ECKey keyToVerify, ChannelSignatures channelSignatures, Transaction channelTransaction, List<Transaction> paymentTransactions) {
+
+    }
+
     public void readMessageOutbound (LNPayment message) {
         if (message instanceof LNPaymentAMessage) {
             update = ((LNPaymentAMessage) message).channelUpdate;
         }
     }
-
-
-
 
 }

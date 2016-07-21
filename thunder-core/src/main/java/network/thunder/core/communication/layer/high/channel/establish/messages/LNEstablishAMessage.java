@@ -54,20 +54,20 @@ public class LNEstablishAMessage implements LNEstablish {
             }
 
             //Don't allow changing the values for now, symmetric messages are easy to implement though
-            if (channel.channelStatus.amountServer == 0 || channel.channelStatus.amountClient == 0) {
-                channel.channelStatus.amountClient = amountClient;
-                channel.channelStatus.amountServer = amountServer;
+            if (channel.amountServer == 0 || channel.amountClient == 0) {
+                channel.amountClient = amountClient;
+                channel.amountServer = amountServer;
             }
 
             channel.keyClient = ECKey.fromPublicOnly(channelKeyServer);
             channel.anchorTx = newAnchorTx;
-            channel.channelStatus.addressClient = new Address(Constants.getNetwork(), addressBytes);
-            channel.channelStatus.revoHashClientCurrent = revocationHash;
-            channel.channelStatus.revoHashClientNext = revocationHashNext;
-            channel.channelStatus.csvDelay = csvDelay;
-            channel.channelStatus.feePerByte = feePerByte;
-            channel.minConfirmationAnchor = minConfirmationAnchor;
+            channel.addressClient = new Address(Constants.getNetwork(), addressBytes);
+            channel.revoHashClientCurrent = revocationHash;
+            channel.revoHashClientNext = revocationHashNext;
             channel.shaChainDepthCurrent = 0;
+            channel.csvDelay = csvDelay;
+            channel.feePerByte = feePerByte;
+            channel.minConfirmationAnchor = minConfirmationAnchor;
             return channel;
         } catch (Exception e) {
             throw new RuntimeException(e);

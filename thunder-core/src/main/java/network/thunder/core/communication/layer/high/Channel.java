@@ -18,9 +18,12 @@
  */
 package network.thunder.core.communication.layer.high;
 
+import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.ScriptTools;
@@ -28,11 +31,12 @@ import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Channel {
 
@@ -45,6 +49,10 @@ public class Channel {
      */
     public ECKey keyClient;
     public ECKey keyServer;
+
+    public int csvDelay;
+
+
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
@@ -71,9 +79,34 @@ public class Channel {
     public Sha256Hash anchorTxHash;
     public Transaction anchorTx;
     public int minConfirmationAnchor;
+    public Transaction spendingTx;
 
-    public ChannelStatus channelStatus;
     public ChannelSignatures channelSignatures = new ChannelSignatures();
+
+    public long amountClient;
+    public long amountServer;
+
+    public List<PaymentData> paymentList = new ArrayList<>();
+
+    public int feePerByte;
+
+    //Various revocation hashes are stored here. They get swapped downwards after an exchange (Next->Current; NextNext->Next)
+    //Current revocation hash is the one that we have a current valid channel transaction with
+    public RevocationHash revoHashClientCurrent;
+    public RevocationHash revoHashServerCurrent;
+
+    //Next revocation hash is the hash used when creating a new channel transaction
+    public RevocationHash revoHashClientNext;
+    public RevocationHash revoHashServerNext;
+
+    //NextNext is the new hash exchanged on the begin of an exchange
+    //For now there is no need to store it in the database
+    transient public RevocationHash revoHashClientNextNext;
+    transient public RevocationHash revoHashServerNextNext;
+
+    public Address addressClient;
+    public Address addressServer;
+
     /*
      * Enum to mark the different phases.
      *
@@ -86,12 +119,11 @@ public class Channel {
     public Channel copy () {
         Channel channel = new Channel();
         channel.channelSignatures = this.channelSignatures.copy();
-        channel.channelStatus = this.channelStatus.copy();
 
         channel.masterPrivateKeyServer = this.masterPrivateKeyServer;
         channel.masterPrivateKeyClient = this.masterPrivateKeyClient;
         channel.phase = this.phase;
-        channel.anchorTx = new Transaction(Constants.getNetwork(), this.anchorTx.bitcoinSerialize());
+        channel.anchorTx = this.anchorTx == null ? null : new Transaction(Constants.getNetwork(), this.anchorTx.bitcoinSerialize());
         channel.anchorTxHash = this.anchorTxHash;
         channel.closingSignatures = closingSignatures == null ? null : new ArrayList<>(this.closingSignatures);
         channel.hash = this.hash;
@@ -103,7 +135,141 @@ public class Channel {
         channel.shaChainDepthCurrent = this.shaChainDepthCurrent;
         channel.timestampForceClose = this.timestampForceClose;
         channel.timestampOpen = this.timestampOpen;
+
+        channel.amountClient = this.amountClient;
+        channel.amountServer = this.amountServer;
+        channel.feePerByte = this.feePerByte;
+        channel.csvDelay = this.csvDelay;
+        channel.addressClient = this.addressClient;
+        channel.addressServer = this.addressServer;
+        channel.shaChainDepthCurrent = this.shaChainDepthCurrent;
+        channel.revoHashClientCurrent = revoHashClientCurrent == null ? null : revoHashClientCurrent.copy();
+        channel.revoHashClientNext = revoHashClientNext == null ? null : revoHashClientNext.copy();
+        channel.revoHashClientNextNext = revoHashClientNextNext == null ? null : revoHashClientNextNext.copy();
+        channel.revoHashServerCurrent = revoHashServerCurrent == null ? null : revoHashServerCurrent.copy();
+        channel.revoHashServerNext = revoHashServerNext == null ? null : revoHashServerNext.copy();
+        channel.revoHashServerNextNext = revoHashServerNextNext == null ? null : revoHashServerNextNext.copy();
+
+        channel.paymentList = new ArrayList<>(this.paymentList.stream().map(PaymentData::cloneObject).collect(Collectors.toList()));
+
+
         return channel;
+    }
+
+    public Channel reverse () {
+        Channel channel = copy();
+
+        ECKey tempKey = channel.keyServer;
+        channel.keyServer = channel.keyClient;
+        channel.keyClient = tempKey;
+
+        long tempAmount = channel.amountServer;
+        channel.amountServer = channel.amountClient;
+        channel.amountClient = tempAmount;
+
+        RevocationHash tempRevocationHash = channel.revoHashServerCurrent;
+        channel.revoHashServerCurrent = channel.revoHashClientCurrent;
+        channel.revoHashClientCurrent = tempRevocationHash;
+
+        RevocationHash tempRevocationHashNext = channel.revoHashServerNext;
+        channel.revoHashServerNext = channel.revoHashClientNext;
+        channel.revoHashClientNext = tempRevocationHashNext;
+
+        RevocationHash tempRevocationHashNextNext = channel.revoHashServerNextNext;
+        channel.revoHashServerNextNext = channel.revoHashClientNextNext;
+        channel.revoHashClientNextNext = tempRevocationHashNextNext;
+
+        Address tempAddress = channel.addressServer;
+        channel.addressServer = channel.addressClient;
+        channel.addressClient = tempAddress;
+
+        reverseSending(channel.paymentList);
+
+        return channel;
+    }
+
+    private List<PaymentData> reverseSending (List<PaymentData> paymentDataList) {
+        for (PaymentData payment : paymentDataList) {
+            payment.sending = !payment.sending;
+        }
+        return paymentDataList;
+    }
+
+    public void applyUpdate (ChannelUpdate update) {
+        for (PaymentData refund : update.refundedPayments) {
+            if (refund.sending) {
+                amountServer += refund.amount;
+            } else {
+                amountClient += refund.amount;
+            }
+        }
+        for (PaymentData redeem : update.redeemedPayments) {
+            if (redeem.sending) {
+                amountClient += redeem.amount;
+            } else {
+                amountServer += redeem.amount;
+            }
+        }
+        for (PaymentData payment : update.newPayments) {
+            if (payment.sending) {
+                amountServer -= payment.amount;
+            } else {
+                amountClient -= payment.amount;
+            }
+        }
+
+        List<PaymentData> removedPayments = new ArrayList<>();
+        removedPayments.addAll(update.redeemedPayments);
+        removedPayments.addAll(update.refundedPayments);
+
+        paymentList.addAll(update.newPayments);
+        Iterator<PaymentData> iterator = paymentList.iterator();
+        while (iterator.hasNext()) {
+            PaymentData paymentData = iterator.next();
+
+            if (removedPayments.contains(paymentData)) {
+                removedPayments.remove(paymentData);
+                iterator.remove();
+            }
+        }
+
+        this.feePerByte = update.feePerByte;
+        this.csvDelay = update.csvDelay;
+    }
+
+    public void applyNextRevoHash () {
+        Preconditions.checkNotNull(this.revoHashClientNext);
+        Preconditions.checkNotNull(this.revoHashServerNext);
+
+        this.revoHashClientCurrent = this.revoHashClientNext;
+        this.revoHashServerCurrent = this.revoHashServerNext;
+
+        this.revoHashClientNext = null;
+        this.revoHashServerNext = null;
+    }
+
+    public void applyNextNextRevoHash () {
+        Preconditions.checkNotNull(this.revoHashClientNextNext);
+        Preconditions.checkNotNull(this.revoHashServerNextNext);
+
+        this.revoHashClientNext = this.revoHashClientNextNext;
+        this.revoHashServerNext = this.revoHashServerNextNext;
+
+        this.revoHashClientNextNext = null;
+        this.revoHashServerNextNext = null;
+    }
+
+    @Override
+    public String toString () {
+        return "Channel{" +
+                "amountClient=" + amountClient +
+                ", amountServer=" + amountServer +
+                ", revoServer=" + revoHashServerCurrent +
+                ", revoClient=" + revoHashClientCurrent +
+                ", revoServerNext=" + revoHashServerNext +
+                ", revoClientNext=" + revoHashClientNext +
+                ", paymentList=" + paymentList.size() +
+                '}';
     }
 
     public Script getAnchorScript () {
@@ -141,7 +307,7 @@ public class Channel {
         outputList.add(new TransactionOutput(
                 Constants.getNetwork(),
                 null,
-                Coin.valueOf(channelStatus.amountClient + channelStatus.amountServer),
+                Coin.valueOf(amountClient + amountServer),
                 getAnchorScript().getProgram()));
 
         outputList.addAll(anchorTx.getOutputs());
@@ -155,16 +321,16 @@ public class Channel {
     }
 
     public void fillAnchorTransactionWithoutSignatures (WalletHelper walletHelper) {
-        long totalAmount = channelStatus.amountServer + channelStatus.amountClient;
+        long totalAmount = amountServer + amountClient;
 
         if (anchorTx == null) {
             Script anchorScriptServer = getAnchorScriptOutput();
-            Script anchorScriptServerP2SH = ScriptBuilder.createP2SHOutputScript(anchorScriptServer);
+            Script anchorScriptServerP2SH = ScriptTools.scriptToP2SH(anchorScriptServer);
             anchorTx = new Transaction(Constants.getNetwork());
             anchorTx.addOutput(Coin.valueOf(totalAmount), anchorScriptServerP2SH);
         }
 
-        anchorTx = walletHelper.addInputs(anchorTx, channelStatus.amountServer, channelStatus.feePerByte);
+        anchorTx = walletHelper.addInputs(anchorTx, amountServer, feePerByte);
 
         anchorTxHash = anchorTx.getHash();
     }
@@ -178,7 +344,6 @@ public class Channel {
 
     public Channel () {
         keyServer = new ECKey();
-        channelStatus = new ChannelStatus();
         anchorTxHash = Sha256Hash.wrap(Tools.getRandomByte(32));
 
         masterPrivateKeyServer = Tools.getRandomByte(20);
@@ -186,27 +351,21 @@ public class Channel {
 
     public Channel (byte[] nodeId, long amount) {
         this();
-        channelStatus.amountClient = amount;
-        channelStatus.amountServer = amount;
+        amountClient = amount;
+        amountServer = amount;
         nodeKeyClient = new NodeKey(nodeId);
     }
 
     public void retrieveDataFromOtherChannel (Channel channel) {
-        keyClient = channel.keyServer;
-        channelStatus.addressClient = channel.channelStatus.addressServer;
-        channelStatus.revoHashClientCurrent = channel.channelStatus.revoHashServerCurrent;
-        channelStatus.revoHashClientNext = channel.channelStatus.revoHashServerNext;
+        keyClient = ECKey.fromPublicOnly(channel.keyServer.getPubKey());
+        addressClient = channel.addressServer;
+        revoHashClientCurrent = channel.revoHashServerCurrent;
+        revoHashClientNext = channel.revoHashServerNext;
+        revoHashClientNextNext = channel.revoHashServerNextNext;
         anchorTx = channel.anchorTx;
         anchorTxHash = channel.anchorTxHash;
 
         masterPrivateKeyClient = channel.masterPrivateKeyServer;
-    }
-
-    @Override
-    public String toString () {
-        return "Channel{" +
-                "channelStatus=" + channelStatus +
-                '}';
     }
 
     public enum Phase {
@@ -214,10 +373,9 @@ public class Channel {
         OPEN(1),
         ESTABLISH_REQUESTED(11),
         ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION(12),
-        PAYMENT_REQUESTED(21),
-        UPDATE_REQUESTED(31),
         CLOSE_REQUESTED_CLIENT(52),
         CLOSE_REQUESTED_SERVER(53),
+        CLOSE_ON_CHAIN(54),
         CLOSED(50);
 
         private int value;

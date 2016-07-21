@@ -3,7 +3,6 @@ package network.thunder.core.etc;
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.database.InMemoryDBHandler;
 
 import java.util.ArrayList;
@@ -18,9 +17,8 @@ public class LNPaymentDBHandlerMock extends InMemoryDBHandler {
     public Channel getChannel (int id) {
         Channel channel = new Channel();
         channel.id = id;
-        channel.channelStatus = new ChannelStatus();
-        channel.channelStatus.amountServer = INITIAL_AMOUNT_CHANNEL;
-        channel.channelStatus.amountClient = INITIAL_AMOUNT_CHANNEL;
+        channel.amountServer = INITIAL_AMOUNT_CHANNEL;
+        channel.amountClient = INITIAL_AMOUNT_CHANNEL;
         return channel;
     }
 

@@ -31,7 +31,7 @@ public class SyncDBHandlerMock extends DBHandlerMock {
             PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
             PubkeyIPObject pubkeyIPObject2 = PubkeyIPObject.getRandomObject();
-            ChannelStatusObject channelStatusObject = ChannelStatusObject.getRandomObject();
+            ChannelStatusObject channelStatusObject = TestTools.getRandomObject();
 
             pubkeyIPObject1.pubkey = pubkeyChannelObject.pubkeyA;
             pubkeyIPObject2.pubkey = pubkeyChannelObject.pubkeyB;

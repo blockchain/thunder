@@ -140,6 +140,10 @@ public class DBHandlerMock implements DBHandler {
 
     }
 
+    @Override
+    public void updateChannel (Channel channel) {
+
+    }
 
 
     @Override

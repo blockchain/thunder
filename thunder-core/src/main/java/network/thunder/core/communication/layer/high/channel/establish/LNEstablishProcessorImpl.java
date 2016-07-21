@@ -241,9 +241,9 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         this.channelOpenListener = callback;
 
         prepareOpenChannel();
-        this.establishProgress.channel.channelStatus.amountServer = getAmountForNewChannel();
-        this.establishProgress.channel.channelStatus.amountClient = getAmountForNewChannel();
-        this.establishProgress.channel.channelStatus.feePerByte = 3;
+        this.establishProgress.channel.amountServer = getAmountForNewChannel();
+        this.establishProgress.channel.amountClient = getAmountForNewChannel();
+        this.establishProgress.channel.feePerByte = 3;
         this.establishProgress.weStartedExchange = true;
         sendEstablishMessageA();
     }
@@ -287,20 +287,15 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
             Transaction channelTransaction = paymentLogic.getChannelTransaction(
                     establishProgress.channel.anchorTx.getOutput(0).getOutPointFor(),
-                    establishProgress.channel.channelStatus,
-                    establishProgress.channel.keyClient,
-                    establishProgress.channel.keyServer
+                    establishProgress.channel
             );
 
             paymentLogic.checkSignatures(
-                    establishProgress.channel.keyServer,
-                    establishProgress.channel.keyClient,
+                    establishProgress.channel, establishProgress.channel.keyClient,
                     establishProgress.channel.channelSignatures,
                     channelTransaction,
-                    Collections.emptyList(),
-                    establishProgress.channel.channelStatus
 
-            );
+                    Collections.emptyList());
 
             establishProgress.messages.add(message);
             if (establishProgress.weStartedExchange) {
@@ -379,9 +374,9 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     private void sendEstablishMessageA () {
         establishProgress.channel.masterPrivateKeyServer = Tools.getRandomByte(20);
         establishProgress.channel.getAnchorTransactionServer(walletHelper);
-        establishProgress.channel.channelStatus.revoHashServerCurrent = new RevocationHash(0, establishProgress.channel.masterPrivateKeyServer);
-        establishProgress.channel.channelStatus.revoHashServerNext = new RevocationHash(1, establishProgress.channel.masterPrivateKeyServer);
-        establishProgress.channel.channelStatus.addressServer = walletHelper.fetchAddress();
+        establishProgress.channel.revoHashServerCurrent = new RevocationHash(0, establishProgress.channel.masterPrivateKeyServer);
+        establishProgress.channel.revoHashServerNext = new RevocationHash(1, establishProgress.channel.masterPrivateKeyServer);
+        establishProgress.channel.addressServer = walletHelper.fetchAddress();
         LNEstablish message = messageFactory.getEstablishMessageA(establishProgress.channel);
         establishProgress.messages.add(message);
         messageExecutor.sendMessageUpwards(message);
@@ -391,12 +386,14 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
 
         Transaction channelTransaction = paymentLogic.getChannelTransaction(
                 establishProgress.channel.anchorTx.getOutput(0).getOutPointFor(),
-                establishProgress.channel.channelStatus.reverse(),
-                establishProgress.channel.keyServer,
-                establishProgress.channel.keyClient
+                establishProgress.channel.reverse()
         );
 
-        establishProgress.channel.channelSignatures = paymentLogic.getSignatureObject(establishProgress.channel, channelTransaction, Collections.emptyList());
+        establishProgress.channel.channelSignatures =
+                paymentLogic.getSignatureObject(
+                        establishProgress.channel, establishProgress.channel.keyServer,
+                        channelTransaction,
+                        Collections.emptyList());
 
         LNEstablish message = messageFactory.getEstablishMessageB(establishProgress.channel.channelSignatures.channelSignatures.get(0));
         establishProgress.messages.add(message);

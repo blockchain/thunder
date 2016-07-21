@@ -258,7 +258,7 @@ public class MainController {
         channelList.setCellFactory(param1 -> new TextFieldListCell(new StringConverter<Channel>() {
             @Override
             public String toString (Channel channel) {
-                return Coin.valueOf(channel.channelStatus.amountServer).toFriendlyString() +
+                return Coin.valueOf(channel.amountServer).toFriendlyString() +
                         " with " + model.getHostname(Main.dbHandler.getIPObjects(), channel.nodeKeyClient.getPubKey());
             }
 

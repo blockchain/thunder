@@ -69,8 +69,8 @@ public class LNPaymentHandlerTest {
 
         channel1.retrieveDataFromOtherChannel(channel2);
         channel2.retrieveDataFromOtherChannel(channel1);
-        channel2.channelStatus.amountServer = channel1.channelStatus.amountClient;
-        channel2.channelStatus.amountClient = channel1.channelStatus.amountServer;
+        channel2.amountServer = channel1.amountClient;
+        channel2.amountClient = channel1.amountServer;
 
         dbHandler1.insertChannel(channel1);
         dbHandler2.insertChannel(channel2);
@@ -116,10 +116,10 @@ public class LNPaymentHandlerTest {
         Channel channel1After = dbHandler1.getChannel(channel1.getHash());
         Channel channel2After = dbHandler2.getChannel(channel2.getHash());
 
-        assertEquals(channel1.channelStatus.amountServer - paymentData.amount, channel1After.channelStatus.amountServer);
-        assertEquals(channel1.channelStatus.amountClient + paymentData.amount, channel1After.channelStatus.amountClient);
-        assertEquals(channel2.channelStatus.amountServer + paymentData.amount, channel2After.channelStatus.amountServer);
-        assertEquals(channel2.channelStatus.amountClient - paymentData.amount, channel2After.channelStatus.amountClient);
+        assertEquals(channel1.amountServer - paymentData.amount, channel1After.amountServer);
+        assertEquals(channel1.amountClient + paymentData.amount, channel1After.amountClient);
+        assertEquals(channel2.amountServer + paymentData.amount, channel2After.amountServer);
+        assertEquals(channel2.amountClient - paymentData.amount, channel2After.amountClient);
 
         after();
     }
@@ -155,7 +155,7 @@ public class LNPaymentHandlerTest {
         channel21.writeInbound(messageA1);
         channel12.writeInbound(messageA2);
 
-        if(messageA1.dice > messageA2.dice) {
+        if (messageA1.dice > messageA2.dice) {
             EmbeddedChannel temp = channel12;
             channel12 = channel21;
             channel21 = temp;
@@ -171,7 +171,6 @@ public class LNPaymentHandlerTest {
         TestTools.exchangeMessages(channel21, channel12, LNPaymentBMessage.class);
         TestTools.exchangeMessages(channel12, channel21, LNPaymentCMessage.class);
 
-
         after();
     }
 
@@ -179,6 +178,7 @@ public class LNPaymentHandlerTest {
     public void sendWrongMessageShouldDisconnect () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
+        Thread.sleep(100);
         LNPaymentAMessage messageA = (LNPaymentAMessage) channel12.readOutbound();
         channel21.writeInbound(messageA);
         LNPaymentBMessage messageB = (LNPaymentBMessage) channel21.readOutbound();

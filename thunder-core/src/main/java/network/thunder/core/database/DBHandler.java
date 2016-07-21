@@ -51,7 +51,7 @@ public interface DBHandler {
     List<Channel> getOpenChannel ();
 
     void insertChannel (Channel channel);
-    void updateChannelStatus (@NotNull NodeKey nodeKey, @NotNull Sha256Hash channelHash, @NotNull ECKey keyServer,
+    void updateChannelStatus (NodeKey nodeKey, @NotNull Sha256Hash channelHash, ECKey keyServer,
                               Channel channel, ChannelUpdate update, List<RevocationHash> revocationHash, NumberedMessage request, NumberedMessage response);
 
     List<PubkeyIPObject> getIPObjectsWithActiveChannel ();

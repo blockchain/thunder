@@ -2,8 +2,6 @@ package network.thunder.core.communication.layer.high.payments;
 
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.communication.layer.high.ChannelStatus;
-import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
@@ -14,66 +12,68 @@ import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.bitcoinj.script.ScriptBuilder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import static network.thunder.core.communication.layer.high.payments.LNPaymentLogic.SIDE.*;
+import static network.thunder.core.communication.layer.high.payments.LNPaymentLogic.SIDE.CLIENT;
+import static network.thunder.core.communication.layer.high.payments.LNPaymentLogic.SIDE.SERVER;
 
 public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     public static final int SIGNATURE_SIZE = 146;
 
     @Override
-    public Transaction getChannelTransaction (TransactionOutPoint anchor, ChannelStatus channelStatus, ECKey client, ECKey server) {
+    public Transaction getChannelTransaction (TransactionOutPoint anchor, Channel channel) {
         Transaction transaction = new Transaction(Constants.getNetwork());
         transaction.addInput(anchor.getHash(), anchor.getIndex(), Tools.getDummyScript());
-        transaction.addOutput(Coin.valueOf(0),
-                ScriptBuilder.createP2SHOutputScript(
-                        ScriptTools.getChannelTxOutputRevocation(
-                                channelStatus.revoHashServerNext,
-                                server,
-                                client,
-                                channelStatus.csvDelay)));
 
-        transaction.addOutput(Coin.valueOf(0), channelStatus.addressClient);
-        transaction = addPayments(transaction, channelStatus, channelStatus.revoHashServerNext, server, client);
+        transaction.addOutput(Coin.valueOf(0),
+                ScriptTools.scriptToP2SH(
+                        ScriptTools.getChannelTxOutputRevocation(
+                                channel.revoHashServerNext,
+                                channel.keyServer,
+                                channel.keyClient,
+                                channel.csvDelay)));
+
+        transaction.addOutput(Coin.valueOf(0), channel.addressClient);
+        transaction = addPayments(transaction, channel);
+        transaction.addOutput(Coin.ZERO, ScriptTools.getVersionReturnScript(channel.revoHashServerNext.index));
 
         //Missing two signatures, max 146B
-        long fee = (long) Math.ceil((transaction.getMessageSize() + SIGNATURE_SIZE) * channelStatus.feePerByte / 2);
-        transaction.getOutput(0).setValue(Coin.valueOf(channelStatus.amountClient - fee));
-        transaction.getOutput(1).setValue(Coin.valueOf(channelStatus.amountServer - fee));
+        long fee = (long) Math.ceil((transaction.getMessageSize() + SIGNATURE_SIZE) * channel.feePerByte / 2);
+        transaction.getOutput(0).setValue(Coin.valueOf(channel.amountServer - fee));
+        transaction.getOutput(1).setValue(Coin.valueOf(channel.amountClient - fee));
 
         return transaction;
     }
 
     private static Transaction addPayments
-            (Transaction transaction, ChannelStatus channelStatus, RevocationHash revocationHash, ECKey keyServer, ECKey keyClient) {
+            (Transaction transaction, Channel channelStatus) {
         Iterable<PaymentData> allPayments = new ArrayList<>(channelStatus.paymentList);
 
         for (PaymentData payment : allPayments) {
             Coin value = Coin.valueOf(payment.amount);
-            Script script;
-            if (payment.sending) {
-                script = ScriptTools.getChannelTxOutputPaymentSending(keyServer, keyClient, revocationHash, payment.secret, payment.timestampRefund);
-            } else {
-                script = ScriptTools.getChannelTxOutputPaymentReceiving(keyServer, keyClient, revocationHash, payment.secret, payment.timestampRefund);
-            }
-            transaction.addOutput(value, ScriptBuilder.createP2SHOutputScript(script));
+            Script script = ScriptTools.getChannelTxOutputPayment(channelStatus, payment);
+            transaction.addOutput(value, ScriptTools.scriptToP2SH(script));
         }
         return transaction;
     }
 
     @Override
-    public ChannelSignatures getSignatureObject (Channel channel, Transaction channelTransaction, List<Transaction> paymentTransactions) {
+    public ChannelSignatures getSignatureObject (Channel channel, ECKey keyToSign, Transaction channelTransaction, List<Transaction> paymentTransactions) {
         ChannelSignatures channelSignatures = new ChannelSignatures();
-        channelSignatures.channelSignatures = Tools.getChannelSignatures(channel, channelTransaction);
+        channelSignatures.channelSignatures = Tools.getChannelSignatures(channel, keyToSign, channelTransaction);
         List<TransactionSignature> signatureList = new ArrayList<>();
 
-        int index = 2;
+        int index = 0;
         for (Transaction t : paymentTransactions) {
-            TransactionSignature sig = Tools.getSignature(t, 0, channelTransaction.getOutput(index).getScriptBytes(), channel.keyServer);
+            PaymentData paymentData = channel.paymentList.get(index).cloneObject();
+            Script script = ScriptTools.getChannelTxOutputPayment(channel, paymentData);
+
+            TransactionSignature sig = Tools.getSignature(t, 0, script.getProgram(), keyToSign);
+
             signatureList.add(sig);
             index++;
         }
@@ -83,9 +83,9 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     }
 
     @Override
-    public List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, ChannelStatus channelStatus, ECKey keyServer, ECKey keyClient) {
+    public List<Transaction> getPaymentTransactions (Sha256Hash parentTransactionHash, Channel channel) {
 
-        List<PaymentData> allPayments = new ArrayList<>(channelStatus.paymentList);
+        List<PaymentData> allPayments = new ArrayList<>(channel.paymentList);
         List<Transaction> transactions = new ArrayList<>(allPayments.size());
 
         int index = 2;
@@ -96,8 +96,11 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             transaction.addInput(parentTransactionHash, index, Tools.getDummyScript());
 
             Coin value = Coin.valueOf(payment.amount);
-            Script script = ScriptTools.getPaymentTxOutput(keyServer, keyClient, channelStatus.revoHashServerNext, channelStatus.csvDelay);
-            transaction.addOutput(value, script);
+            Script script = ScriptTools.getPaymentTxOutput(channel.keyServer, channel.keyClient, channel.revoHashServerNext, channel.csvDelay);
+            transaction.addOutput(value, ScriptTools.scriptToP2SH(script));
+            if (payment.sending) {
+                Tools.setTransactionLockTime(transaction, payment.timestampRefund);
+            }
 
             transactions.add(transaction);
             index++;
@@ -109,8 +112,8 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     @Override
     public void checkUpdate (LNConfiguration configuration, Channel channel, ChannelUpdate channelUpdate) {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
-        ChannelStatus oldStatus = channel.channelStatus;
-        ChannelStatus newStatus = oldStatus.copy();
+        Channel oldStatus = channel;
+        Channel newStatus = oldStatus.copy();
         newStatus.applyUpdate(channelUpdate);
 
         //Check if the update is allowed..
@@ -147,16 +150,20 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     @Override
     public void checkSignatures
-            (ECKey keyServer, ECKey keyClient, ChannelSignatures channelSignatures, Transaction channelTransaction, List<Transaction> paymentTransactions,
-             ChannelStatus status) {
+            (Channel channel, ECKey keyToVerify, ChannelSignatures channelSignatures, Transaction channelTransaction, List<Transaction> paymentTransactions) {
 
-        Sha256Hash hash1 = channelTransaction.hashForSignature(0, ScriptTools.getAnchorOutputScript(keyClient, keyServer), Transaction.SigHash.ALL, false);
+        Sha256Hash hash1 = channelTransaction.hashForSignature(
+                0,
+                ScriptTools.getAnchorOutputScript(channel.keyClient, channel.keyServer),
+                Transaction.SigHash.ALL,
+                false);
+
         //We only have one anchor for now..
-        if (!keyClient.verify(hash1, channelSignatures.channelSignatures.get(0))) {
+        if (!keyToVerify.verify(hash1, channelSignatures.channelSignatures.get(0))) {
             throw new LNPaymentException("Anchor signature is not correct..");
         }
 
-        List<PaymentData> allPayments = new ArrayList<>(status.paymentList);
+        List<PaymentData> allPayments = new ArrayList<>(channel.paymentList);
 
         if (allPayments.size() != channelSignatures.paymentSignatures.size()) {
             throw new LNPaymentException("Size of payment signature list is incorrect");
@@ -164,15 +171,40 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
         for (int i = 0; i < allPayments.size(); ++i) {
             Transaction transaction = paymentTransactions.get(i);
+            PaymentData paymentData = allPayments.get(i);
+
             TransactionSignature signature = channelSignatures.paymentSignatures.get(i);
-            Script scriptPubKey = channelTransaction.getOutput(i + 2).getScriptPubKey();
+            Script scriptPubKey = ScriptTools.getChannelTxOutputPayment(channel, paymentData);
 
             Sha256Hash hash = transaction.hashForSignature(0, scriptPubKey, Transaction.SigHash.ALL, false);
 
-            if (!keyClient.verify(hash, signature)) {
+            if (!keyToVerify.verify(hash, signature)) {
                 throw new LNPaymentException("Payment Signature " + i + "  is not correct..");
             }
         }
+    }
+
+    @Override
+    public Transaction getSignedChannelTransaction (Channel channel) {
+        Transaction transaction = this.getChannelTransaction(channel, SERVER);
+
+        ChannelSignatures theirSignatures = channel.channelSignatures;
+        ChannelSignatures ourSignatures = this.getSignatureObject(channel, channel.keyServer, transaction, Collections.emptyList());
+
+        Script inputScript = ScriptTools.getCommitInputScript(
+                theirSignatures.channelSignatures.get(0).encodeToBitcoin(),
+                ourSignatures.channelSignatures.get(0).encodeToBitcoin(),
+                channel.keyClient,
+                channel.keyServer);
+
+        transaction.getInput(0).setScriptSig(inputScript);
+
+        return transaction;
+    }
+
+    @Override
+    public List<Transaction> getSignedPaymentTransactions (Channel channel) {
+        return null;
     }
 
     @Override
@@ -180,15 +212,11 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         if (side == SERVER) {
             return this.getChannelTransaction(
                     new TransactionOutPoint(Constants.getNetwork(), 0, channel.anchorTxHash),
-                    channel.channelStatus,
-                    channel.keyClient,
-                    channel.keyServer);
+                    channel);
         } else {
             return this.getChannelTransaction(
                     new TransactionOutPoint(Constants.getNetwork(), 0, channel.anchorTxHash),
-                    channel.channelStatus.reverse(),
-                    channel.keyServer,
-                    channel.keyClient);
+                    channel.reverse());
         }
     }
 
@@ -196,7 +224,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
     public ChannelSignatures getSignatureObject (Channel channel) {
         Transaction channelTx = getChannelTransaction(channel, CLIENT);
         List<Transaction> paymentTx = getPaymentTransactions(channel, CLIENT);
-        return getSignatureObject(channel, channelTx, paymentTx);
+        return getSignatureObject(channel.reverse(), channel.keyServer, channelTx, paymentTx);
     }
 
     @Override
@@ -205,15 +233,11 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         if (side == SERVER) {
             return this.getPaymentTransactions(
                     channelTx.getHash(),
-                    channel.channelStatus,
-                    channel.keyServer,
-                    channel.keyClient);
+                    channel);
         } else {
             return this.getPaymentTransactions(
                     channelTx.getHash(),
-                    channel.channelStatus.reverse(),
-                    channel.keyClient,
-                    channel.keyServer);
+                    channel.reverse());
         }
     }
 
@@ -224,24 +248,20 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
         if (side == SERVER) {
             this.checkSignatures(
-                    channel.keyServer,
-                    channel.keyClient,
+                    channel, channel.keyClient,
                     channelSignatures,
                     channelTx,
-                    paymentTx,
-                    channel.channelStatus);
+                    paymentTx);
         } else {
             this.checkSignatures(
-                    channel.keyClient,
-                    channel.keyServer,
+                    channel.reverse(), channel.keyServer,
                     channelSignatures,
                     channelTx,
-                    paymentTx,
-                    channel.channelStatus.reverse());
+                    paymentTx);
         }
     }
 
-    private static void checkPaymentsInNewStatus (ChannelStatus oldStatus, ChannelUpdate channelUpdate) {
+    private static void checkPaymentsInNewStatus (Channel oldStatus, ChannelUpdate channelUpdate) {
 
         oldStatus = oldStatus.copy();
         channelUpdate = channelUpdate.getClone();
@@ -257,7 +277,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
 
     private static void checkRefundedPayments (ChannelUpdate newStatus) {
         for (PaymentData paymentData : newStatus.refundedPayments) {
-            //We reversed the ChannelStatus, so if we are receiving, he is sending
+            //We reversed the Channel, so if we are receiving, he is sending
             if (!paymentData.sending) {
                 throw new LNPaymentException("Trying to refund a sent payment");
             }

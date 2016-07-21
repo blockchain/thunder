@@ -12,9 +12,10 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventListener;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
 import wallettemplate.Main;
 
@@ -127,7 +128,7 @@ public class BitcoinUIModel {
             long totalAmount = 0;
             ObservableList<Channel> items7 = FXCollections.observableArrayList();
             for (Channel p : openChannel) {
-                totalAmount += p.channelStatus.amountServer;
+                totalAmount += p.amountServer;
                 items7.add(p);
             }
 

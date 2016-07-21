@@ -25,5 +25,4 @@ public interface ChannelManager {
     void removeChannelOpener (NodeKey node);
     void addChannelCloser (NodeKey node, ChannelCloser channelCloser);
     void removeChannelCloser (NodeKey node);
-
 }

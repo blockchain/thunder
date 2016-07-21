@@ -45,6 +45,10 @@ public class PaymentSecret {
         return Arrays.equals(this.hash, Tools.hashSecret(secret));
     }
 
+    public PaymentSecret copy () {
+        return new PaymentSecret(this.secret, this.hash);
+    }
+
     @Override
     public boolean equals (Object o) {
         if (this == o) {

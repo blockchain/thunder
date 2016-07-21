@@ -179,7 +179,7 @@ class LNPaymentProcessorImpl(
 
         //TODO once we have multiple channels, we have to separate refunds/redemptions to their respective channels
 
-        if (state.channel.channelStatus.paymentList.size > Constants.MAX_HTLC_PER_CHANNEL
+        if (state.channel.paymentList.size > Constants.MAX_HTLC_PER_CHANNEL
                 && paymentsRedeem.size == 0 && paymentsRefund.size == 0) {
             return null;
         }
@@ -199,8 +199,8 @@ class LNPaymentProcessorImpl(
                        paymentsRedeem: List<PaymentData>): LNPaymentAMessage {
 
         //Let's add all redeems and refunds first, since they will always succeed
-        val channel = state.channel
-        val statusTemp = channel.channelStatus.copy()
+        var channel = state.channel
+        val statusTemp = channel.copy()
         val update = ChannelUpdate()
         update.applyConfiguration(serverObject.configuration)
         for (data in paymentsRefund) {
@@ -231,21 +231,21 @@ class LNPaymentProcessorImpl(
                 statusTemp.amountServer -= data.amount
                 update.newPayments.add(data)
             }
-            if (update.newPayments.size + channel.channelStatus.paymentList.size > Constants.MAX_HTLC_PER_CHANNEL) {
+            if (update.newPayments.size + channel.paymentList.size > Constants.MAX_HTLC_PER_CHANNEL) {
                 break;
             }
         }
-        val status = channel.channelStatus.copy()
-        val statusT = channel.channelStatus.copy()
+        val status = channel.copy()
+        val statusT = channel.copy()
         status.applyUpdate(update)
         statusT.applyUpdate(update)
         statusT.applyNextRevoHash()
 
         println("Sending update: ")
-        println("Old statusSender: " + state.channel.channelStatus)
+        println("Old statusSender: " + state.channel)
         println("New statusSender: " + statusT)
 
-        channel.channelStatus = status
+        channel = status
 
         val message = LNPaymentAMessage(update)
         addSignatureToMessage(channel, message)
@@ -280,8 +280,8 @@ class LNPaymentProcessorImpl(
         paymentLogic.checkUpdate(serverObject.configuration, state.channel, message.channelUpdate.cloneReversed)
 
         println("Receiving update:")
-        println("Old statusSender: " + state.channel.channelStatus)
-        println("New statusSender: " + channel.channelStatus)
+        println("Old statusSender: " + state.channel)
+        println("New statusSender: " + channel)
 
         checkNewRevocationMessage(channel, message)
         checkSignatureMessage(channel, message)
@@ -309,8 +309,8 @@ class LNPaymentProcessorImpl(
 
         channel = applyUpdates(state, listOf(MessageWrapper(message, direction = RECEIVED), MessageWrapper(outboundMessage, direction = SENT)))
 
-        channel.channelStatus.applyNextRevoHash()
-        channel.channelStatus.applyNextNextRevoHash()
+        channel.applyNextRevoHash()
+        channel.applyNextNextRevoHash()
         return PaymentResponse(channel, messageA.channelUpdate, message.oldRevocation, outboundMessage)
     }
 
@@ -322,32 +322,32 @@ class LNPaymentProcessorImpl(
 
         checkOldRevocationMessage(channel, message, state.channel)
 
-        channel.channelStatus.applyNextRevoHash()
-        channel.channelStatus.applyNextNextRevoHash()
+        channel.applyNextRevoHash()
+        channel.applyNextNextRevoHash()
 
         return PaymentResponse(channel, messageA.channelUpdate.cloneReversed, message.oldRevocation, null)
     }
 
     fun addNewRevocationToMessage(channel: Channel, message: LNRevokeNewMessage) {
-        val newRevocation = RevocationHash(channel.channelStatus.revoHashServerNext.index + 1, channel.masterPrivateKeyServer)
+        val newRevocation = RevocationHash(channel.revoHashServerNext.index + 1, channel.masterPrivateKeyServer)
         newRevocation.secret = null //IMPORTANT: remove your secret before sending it
         message.newRevocationHash = newRevocation
     }
 
     fun checkNewRevocationMessage(channel: Channel, message: LNRevokeNewMessage) {
-        val current = channel.channelStatus.revoHashServerNext.index
+        val current = channel.revoHashServerNext.index
         if (message.newRevocationHash.index != current + 1) {
             throw LNPaymentException("New revocation hash does not append chain. New: ${message.newRevocationHash.index}. Current: ${current}")
         }
     }
 
     fun addOldRevocationToMessage(channel: Channel, message: LNRevokeOldMessage) {
-        message.oldRevocationHash = (channel.shaChainDepthCurrent..channel.channelStatus.revoHashServerNext.index - 1).
+        message.oldRevocationHash = (channel.shaChainDepthCurrent..channel.revoHashServerNext.index - 1).
                 map { RevocationHash(it, channel.masterPrivateKeyServer) }
     }
 
     fun checkOldRevocationMessage(channel: Channel, message: LNRevokeOldMessage, oldChannel: Channel) {
-        val currentRevocation = channel.channelStatus.revoHashClientCurrent
+        val currentRevocation = channel.revoHashClientCurrent
         val currentRevocationReceived = message.oldRevocationHash.first()
 
         if (!currentRevocationReceived.check() || currentRevocation != currentRevocationReceived) {
@@ -355,7 +355,7 @@ class LNPaymentProcessorImpl(
         }
 
         if (message.oldRevocationHash.size > 1) {
-            val intermediateRevocation = oldChannel.channelStatus.revoHashClientNext
+            val intermediateRevocation = oldChannel.revoHashClientNext
             val intermediateRevocationReceived = message.oldRevocationHash.last()
 
             if (!intermediateRevocationReceived.check() || intermediateRevocation != intermediateRevocationReceived) {
@@ -405,13 +405,13 @@ class LNPaymentProcessorImpl(
 
             if (message is LNRevokeNewMessage) {
                 if (messageWrapper.direction == RECEIVED) {
-                    channel.channelStatus.revoHashClientNextNext = message.newRevocationHash
+                    channel.revoHashClientNextNext = message.newRevocationHash
                 } else {
-                    channel.channelStatus.revoHashServerNextNext = message.newRevocationHash
+                    channel.revoHashServerNextNext = message.newRevocationHash
                 }
             }
             if (countA == 2) {
-                channel.channelStatus.applyNextNextRevoHash()
+                channel.applyNextNextRevoHash()
             }
 
             if (message is LNRevokeOldMessage && messageWrapper.direction == SENT) {
@@ -428,13 +428,13 @@ class LNPaymentProcessorImpl(
 
         if (messageA.message is LNPaymentAMessage) {
             if (messageA.direction == RECEIVED) {
-                channel.channelStatus.applyUpdate(messageA.message.channelUpdate.cloneReversed)
+                channel.applyUpdate(messageA.message.channelUpdate.cloneReversed)
             } else {
-                channel.channelStatus.applyUpdate(messageA.message.channelUpdate)
+                channel.applyUpdate(messageA.message.channelUpdate)
             }
         }
 
-        channel.timestampForceClose = channel.channelStatus.paymentList.map { it.timestampRefund }.min() ?: 0
+        channel.timestampForceClose = channel.paymentList.map { it.timestampRefund }.min() ?: 0
 
         return channel
     }
@@ -498,3 +498,4 @@ class LNPaymentProcessorImpl(
         return false
     }
 }
+
