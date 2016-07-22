@@ -109,5 +109,10 @@
             <artifactId>httpclient</artifactId>
             <version>4.5</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.0.33.Final</version>
+        </dependency>
     </dependencies>
 </project>
