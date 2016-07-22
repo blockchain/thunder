@@ -17,14 +17,14 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     List<ByteBuffer> nodes = new ArrayList<>();
     Map<ByteBuffer, List<ChannelStatusObject>> network = new HashMap<>();
 
-    public HashMap<ByteBuffer, Double> latencyTo = new HashMap<>();
-    public HashMap<ByteBuffer, Double> costTo = new HashMap<>();
-    HashMap<ByteBuffer, Double> distancesTo = new HashMap<>();
+    Map<ByteBuffer, Double> latencyTo = new HashMap<>();
+    Map<ByteBuffer, Double> costTo = new HashMap<>();
+    Map<ByteBuffer, Double> distancesTo = new HashMap<>();
 
-    HashMap<ByteBuffer, Boolean> onQueue = new HashMap<>();
-    ArrayList<ByteBuffer> queue = new ArrayList<>();
+    Map<ByteBuffer, Boolean> onQueue = new HashMap<>();
+    List<ByteBuffer> queue = new ArrayList<>();
 
-    HashMap<ByteBuffer, List<ChannelStatusObject>> routeList = new HashMap<>();
+    Map<ByteBuffer, List<ChannelStatusObject>> routeList = new HashMap<>();
 
     public LNRoutingHelperImpl (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -41,7 +41,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
     private long amount;
 
     @Override
-    public List<byte[]> getRoute (byte[] source, byte[] destination, long amount, float weightPrivacy, float weightCost, float weightLatency) {
+    public List<ChannelStatusObject> getRoute (byte[] source, byte[] destination, long amount, float weightPrivacy, float weightCost, float weightLatency) {
 
         List<ChannelStatusObject> channelList = dbHandler.getTopology();
         for (ChannelStatusObject channel : channelList) {
@@ -119,27 +119,21 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
             double balance = amount - costTo.get(node);
 
             double distanceT = distancesTo.get(otherNode);
-//            double distanceC = distancesTo.get(node) + channel.getWeight(node, otherNode, (long) balance, weightPrivacy, weightLatency, weightCost);
             double distanceC = distancesTo.get(node) + channel.getWeight(otherNode.array(), weightPrivacy, weightLatency, weightCost);
 
             if (distanceT > distanceC) {
                 distancesTo.put(otherNode, distanceC);
-                costTo.put(otherNode, costTo.get(node) + channel.getFee(otherNode.array()));
+                costTo.put(otherNode, costTo.get(node) + channel.getFee(otherNode.array()).fix); //TODO use percentage fee as well
                 latencyTo.put(otherNode, latencyTo.get(node) + channel.latency);
 
                 List<ChannelStatusObject> currentRoute = new ArrayList<>(routeList.get(node));
                 currentRoute.add(channel);
                 routeList.put(otherNode, currentRoute);
-
-//				edgesTo.put(e, network.getEdge(node, e));
-//				routeList.put(e, this.pathToAsNodeList(e));
-
                 if (!onQueue.get(otherNode)) {
                     queue.add(otherNode);
                     onQueue.put(otherNode, Boolean.TRUE);
                 }
             }
-            //			if(cost++ % )
             //TODO: Cycle detection..
 
         }
@@ -165,7 +159,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
         return distancesTo.get(ByteBuffer.wrap(v));
     }
 
-    public List<byte[]> pathTo (ByteBuffer v) {
+    public List<ChannelStatusObject> pathTo (ByteBuffer v) {
         if (hasNegativeCycle()) {
             throw new UnsupportedOperationException("Negative cost cycle exists");
         }
@@ -175,14 +169,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 
         List<byte[]> path = new ArrayList<>();
         path.add(source.array());
-        ByteBuffer lastNode = source;
-        List<ChannelStatusObject> channelStatusObjects = routeList.get(v);
-        for (ChannelStatusObject channel : routeList.get(v)) {
-            lastNode = ByteBuffer.wrap(channel.getOtherNode(lastNode.array()));
-            path.add(lastNode.array());
-        }
-
-        return path;
+        return routeList.get(v);
     }
 
     public ByteBuffer getOtherNode (ChannelStatusObject channelStatusObject, ByteBuffer node) {

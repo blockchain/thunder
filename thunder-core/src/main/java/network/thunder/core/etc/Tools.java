@@ -18,13 +18,17 @@
  */
 package network.thunder.core.etc;
 
+import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.Gson;
 import com.sun.org.apache.xml.internal.security.exceptions.Base64DecodingException;
 import com.sun.org.apache.xml.internal.security.utils.Base64;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.helper.ScriptTools;
 import org.bitcoinj.core.*;
@@ -50,6 +54,44 @@ public class Tools {
 
     public static int getRandom (int min, int max) {
         return new Random().nextInt(max + 1 - min) + min;
+    }
+
+    public static long calculateFee (long paymentAmount, List<Fee> feeList) {
+        long totalFee = 0;
+        for (Fee fee : feeList) {
+            totalFee += fee.calculateFee(paymentAmount);
+        }
+        return totalFee;
+    }
+
+    public static int byteArrayToInt (byte[] array) {
+        ByteBuffer b = ByteBuffer.allocate(4);
+        b.put(array);
+        b.flip();
+        return b.getInt();
+    }
+
+    public static List<Fee> getFeeList (List<ChannelStatusObject> route, NodeKey lastNode) {
+        List<ChannelStatusObject> routeInv = Lists.reverse(route);
+        List<Fee> feeList = new ArrayList<>();
+        byte[] t = lastNode.getPubKey();
+        for (ChannelStatusObject o : routeInv) {
+            feeList.add(o.getFee(t));
+            t = o.getOtherNode(t);
+        }
+        return Lists.reverse(feeList);
+    }
+
+    public static List<byte[]> getRoute (List<ChannelStatusObject> route, NodeKey lastNode) {
+        List<ChannelStatusObject> routeInv = Lists.reverse(route);
+        List<byte[]> routeStraightened = new ArrayList<>();
+        byte[] t = lastNode.getPubKey();
+        routeStraightened.add(t);
+        for (ChannelStatusObject o : routeInv) {
+            t = o.getOtherNode(t);
+            routeStraightened.add(t);
+        }
+        return Lists.reverse(routeStraightened);
     }
 
     /**

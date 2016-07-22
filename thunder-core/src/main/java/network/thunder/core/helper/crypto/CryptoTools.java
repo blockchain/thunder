@@ -15,7 +15,6 @@ import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
 public class CryptoTools {
-
     public static byte[] addHMAC (byte[] data, byte[] keyBytes) throws NoSuchAlgorithmException, InvalidKeyException {
         SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "HmacSHA1");
         Mac mac = Mac.getInstance("HmacSHA1");

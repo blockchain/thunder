@@ -3,8 +3,6 @@ package network.thunder.core.communication.layer.middle.broadcasting.types;
 import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 
 public class ChannelStatusObject extends P2PDataObject {
@@ -13,9 +11,12 @@ public class ChannelStatusObject extends P2PDataObject {
     public byte[] pubkeyB;
     public byte[] infoA;
     public byte[] infoB;
+
     public int latency;
-    public int feeA;
-    public int feeB;
+    public short minTimeout;
+
+    public Fee feeA;
+    public Fee feeB;
 
     public byte[] signatureA;
     public byte[] signatureB;
@@ -25,44 +26,20 @@ public class ChannelStatusObject extends P2PDataObject {
     public ChannelStatusObject () {
     }
 
-    public ChannelStatusObject (ResultSet set) throws SQLException {
-        this.pubkeyA = set.getBytes("nodes_a_table.pubkey");
-        this.pubkeyB = set.getBytes("nodes_b_table.pubkey");
-        this.infoA = set.getBytes("info_a");
-        this.infoB = set.getBytes("info_b");
-        this.signatureA = set.getBytes("signature_a");
-        this.signatureB = set.getBytes("signature_b");
-        this.timestamp = set.getInt("timestamp");
-    }
-
-    public static ChannelStatusObject getRandomObject () {
-        ChannelStatusObject obj = new ChannelStatusObject();
-
-        obj.pubkeyA = Tools.getRandomByte(33);
-        obj.pubkeyB = Tools.getRandomByte(33);
-
-        obj.infoA = Tools.getRandomByte(60);
-        obj.infoB = Tools.getRandomByte(60);
-
-        obj.timestamp = Tools.currentTime();
-
-        obj.signatureA = Tools.getRandomByte(65);
-        obj.signatureB = Tools.getRandomByte(65);
-
-        return obj;
-    }
-
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + pubkeyA.length + pubkeyB.length + 4 + 4 + 4);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + pubkeyA.length + pubkeyB.length + 4 + 4 + 4 + 4 + 4 + 4);
 
         byteBuffer.putInt(timestamp);
         byteBuffer.put(pubkeyA);
         byteBuffer.put(pubkeyB);
         byteBuffer.putInt(latency);
-        byteBuffer.putInt(feeA);
-        byteBuffer.putInt(feeB);
+        byteBuffer.putInt(feeA.fix);
+        byteBuffer.putInt(feeB.perc);
+        byteBuffer.putInt(feeA.fix);
+        byteBuffer.putInt(feeB.perc);
+        byteBuffer.putInt(minTimeout);
 
         return byteBuffer.array();
     }
@@ -72,7 +49,7 @@ public class ChannelStatusObject extends P2PDataObject {
         return timestamp;
     }
 
-    public int getFee (byte[] array) {
+    public Fee getFee (byte[] array) {
         if (Arrays.equals(array, pubkeyA)) {
             return feeA;
         } else {
@@ -163,8 +140,8 @@ public class ChannelStatusObject extends P2PDataObject {
         result = 31 * result + Arrays.hashCode(infoA);
         result = 31 * result + Arrays.hashCode(infoB);
         result = 31 * result + latency;
-        result = 31 * result + feeA;
-        result = 31 * result + feeB;
+        result = 31 * result + feeA.fix;
+        result = 31 * result + feeB.fix;
         result = 31 * result + timestamp;
         return result;
     }

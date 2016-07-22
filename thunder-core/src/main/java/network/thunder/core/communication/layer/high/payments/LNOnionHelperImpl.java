@@ -1,13 +1,22 @@
 package network.thunder.core.communication.layer.high.payments;
 
+import com.google.common.collect.Lists;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
 import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
+import network.thunder.core.communication.layer.high.payments.messages.DecryptedReceiverObject;
+import network.thunder.core.communication.layer.high.payments.messages.EncryptedReceiverObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.crypto.CryptoTools;
 import network.thunder.core.helper.crypto.ECDH;
 import network.thunder.core.helper.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Sha256Hash;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LNOnionHelperImpl implements LNOnionHelper {
@@ -21,6 +30,7 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         System.arraycopy(unencrypted, 0, payload, 0, OnionObject.DATA_LENGTH);
 
         OnionObject nextObject = getMessageForNextHop(keySet, unencrypted);
+        nextObject.dataFinalReceiver = encryptedOnionObject.dataFinalReceiver;
 
         return new PeeledOnion(nextObject, payload);
     }
@@ -74,6 +84,10 @@ public class LNOnionHelperImpl implements LNOnionHelper {
             throw new RuntimeException("Too many nodes in nodeList");
         }
 
+        if (payload != null && payload.length % OnionObject.TOTAL_LENGTH != 0) {
+            throw new RuntimeException("Payload not a multiple of OnionObject.TOTAL_LENGTH");
+        }
+
         int byteCount = OnionObject.MAX_HOPS * OnionObject.TOTAL_LENGTH;
         byte[] data = Tools.getRandomByte(byteCount);
 
@@ -106,5 +120,185 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         }
 
         return new OnionObject(data);
+    }
+
+    private static OnionObject addOnionLayer (OnionObject core, PeeledOnion layerToAdd, ECKey keyNode) {
+        int byteCount = core.data.length;
+        byte[] temp = new byte[byteCount];
+        byte[] inner = core.data;
+        byte[] dataToSign = new byte[OnionObject.DATA_LENGTH];
+
+        //Shifting the inner core by DATA_LENGTH
+        System.arraycopy(inner, 0, temp, OnionObject.DATA_LENGTH, inner.length - OnionObject.DATA_LENGTH);
+
+        byte[] data = layerToAdd.getData();
+        System.arraycopy(data, 0, dataToSign, 0, data.length);
+        System.arraycopy(data, 0, temp, 0, data.length);
+
+        ECKey keyServer = CryptoTools.getEphemeralKey();
+        ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, keyNode);
+
+        byte[] hmac = CryptoTools.getHMAC(dataToSign, keySet.hmacKey);
+        byte[] encryptedTemp = CryptoTools.encryptAES_CTR(temp, keySet.encryptionKey, keySet.ivClient, 0);
+
+        data = new byte[byteCount];
+
+        System.arraycopy(keyServer.getPubKey(), 0, data, 0, OnionObject.KEY_LENGTH);
+        System.arraycopy(hmac, 0, data, OnionObject.KEY_LENGTH, hmac.length);
+        System.arraycopy(encryptedTemp, 0, data,
+                OnionObject.KEY_LENGTH + OnionObject.HMAC_LENGTH, encryptedTemp.length - OnionObject.KEY_LENGTH - OnionObject.HMAC_LENGTH);
+
+        OnionObject onionObject = new OnionObject(data);
+        onionObject.dataFinalReceiver = core.dataFinalReceiver;
+        return onionObject;
+    }
+
+    @Override
+    public OnionObject createOnionObject (List<ChannelStatusObject> route,
+                                          NodeKey finalReceiver,
+                                          int timeout,
+                                          long amount,
+                                          @Nullable PaymentSecret paymentSecret) {
+        List<ChannelStatusObject> routeInvers = Lists.reverse(new ArrayList<>(route));
+        List<Fee> feeList = Tools.getFeeList(route, finalReceiver);
+        PeeledOnion peeledOnion = new PeeledOnion();
+        int byteCount = OnionObject.MAX_HOPS * OnionObject.TOTAL_LENGTH;
+        byte[] data = Tools.getRandomByte(byteCount);
+        OnionObject onionObject = new OnionObject(data);
+
+        peeledOnion.isLastHop = true;
+        if (paymentSecret != null) {
+            peeledOnion.containsSecret = true;
+            peeledOnion.paymentSecret = paymentSecret;
+        } else {
+            peeledOnion.containsSecret = false;
+        }
+        peeledOnion.timeoutRemoved = 0;
+        peeledOnion.timeout = timeout - route.stream().mapToInt(o -> o.minTimeout * 2).sum();
+        peeledOnion.fee = 0;
+        peeledOnion.amount = amount - Tools.calculateFee(amount, feeList);
+
+        ECKey key = finalReceiver.getECKey();
+        onionObject = addOnionLayer(onionObject, peeledOnion, key);
+
+        NodeKey nextNode = new NodeKey(key);
+
+        for (ChannelStatusObject c : routeInvers) {
+
+            key = ECKey.fromPublicOnly(c.getOtherNode(key.getPubKey()));
+
+            peeledOnion = new PeeledOnion();
+            peeledOnion.isLastHop = false;
+            peeledOnion.nextHop = nextNode;
+            peeledOnion.containsSecret = false;
+            peeledOnion.onionObject = onionObject;
+            peeledOnion.amount = amount - Tools.calculateFee(amount, feeList);
+            peeledOnion.fee = feeList.get(feeList.size() - 1).calculateFee(peeledOnion.amount);
+            peeledOnion.timeoutRemoved = (short) (c.minTimeout * 2);
+            peeledOnion.timeout = timeout - route.subList(0, route.size() - 1).stream().mapToInt(o -> o.minTimeout * 2).sum();
+
+            onionObject = addOnionLayer(onionObject, peeledOnion, key);
+
+            nextNode = new NodeKey(key);
+
+            route.remove(route.size() - 1);
+            feeList.remove(feeList.size() - 1);
+        }
+
+        return onionObject;
+    }
+
+    @Override
+    public OnionObject createOnionObject (List<ChannelStatusObject> route,
+                                          NodeKey rpNode,
+                                          OnionObject rpObject,
+                                          long amount,
+                                          @Nullable PaymentSecret paymentSecret,
+                                          @Nullable ECKey ephemeralReceiver) {
+        route = new ArrayList<>(route);
+        List<ChannelStatusObject> routeInvers = Lists.reverse(new ArrayList<>(route));
+        List<Fee> feeList = Tools.getFeeList(route, rpNode);
+
+        byte[] fullOnion = new byte[OnionObject.TOTAL_LENGTH * OnionObject.MAX_HOPS];
+        System.arraycopy(rpObject.data, 0, fullOnion, 0, rpObject.data.length);
+        OnionObject onionObject = new OnionObject(fullOnion);
+
+        if (paymentSecret != null && ephemeralReceiver != null) {
+            DecryptedReceiverObject receiverObject = new DecryptedReceiverObject();
+            receiverObject.secret = paymentSecret;
+            receiverObject.amount = amount - Tools.calculateFee(amount, feeList);
+
+            ECKey keyServer = CryptoTools.getEphemeralKey();
+            ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, ephemeralReceiver);
+            EncryptedReceiverObject encryptedReceiverObject = new EncryptedReceiverObject();
+            encryptedReceiverObject.ephemeralPubKeyHashReceiver = Sha256Hash.hash(ephemeralReceiver.getPubKey());
+            encryptedReceiverObject.ephemeralPubKeySender = keyServer.getPubKey();
+            encryptedReceiverObject.data = CryptoTools.encryptAES_CTR(
+                    receiverObject.getData(),
+                    keySet.encryptionKey,
+                    keySet.ivClient,
+                    0);
+
+            encryptedReceiverObject.hmac = CryptoTools.getHMAC(receiverObject.getData(), keySet.hmacKey);
+            onionObject.dataFinalReceiver = encryptedReceiverObject;
+        }
+
+        PeeledOnion peeledOnion = new PeeledOnion();
+        ECKey key = rpNode.getECKey();
+        NodeKey nextNode = new NodeKey(key);
+        peeledOnion.nextHop = rpNode;
+
+        for (ChannelStatusObject c : routeInvers) {
+            key = ECKey.fromPublicOnly(c.getOtherNode(key.getPubKey()));
+            peeledOnion = new PeeledOnion();
+            peeledOnion.isLastHop = false;
+            peeledOnion.containsSecret = false;
+            peeledOnion.onionObject = onionObject;
+            peeledOnion.amount = 0;
+            peeledOnion.fee = 0;
+            peeledOnion.timeoutRemoved = 0;
+            peeledOnion.timeout = 0;
+            peeledOnion.nextHop = nextNode;
+
+            onionObject = addOnionLayer(onionObject, peeledOnion, key);
+            nextNode = new NodeKey(key);
+
+            route.remove(route.size() - 1);
+            feeList.remove(feeList.size() - 1);
+        }
+        return onionObject;
+    }
+
+    @Override
+    public OnionObject createRPObject (List<ChannelStatusObject> route, NodeKey keyServer) {
+        route = new ArrayList<>(route);
+        PeeledOnion peeledOnion = new PeeledOnion();
+        peeledOnion.isLastHop = true;
+        byte[] randomData = Tools.getRandomByte((route.size() + 1) * OnionObject.TOTAL_LENGTH);
+        OnionObject onionObject = new OnionObject(randomData);
+        onionObject = addOnionLayer(onionObject, peeledOnion, keyServer.getECKey());
+
+        List<ChannelStatusObject> routeInvers = Lists.reverse(new ArrayList<>(route));
+        ECKey key = keyServer.getECKey();
+        NodeKey nextNode = new NodeKey(key);
+
+        for (ChannelStatusObject c : routeInvers) {
+            key = ECKey.fromPublicOnly(c.getOtherNode(key.getPubKey()));
+
+            peeledOnion = new PeeledOnion();
+            peeledOnion.isLastHop = false;
+            peeledOnion.containsSecret = false;
+            peeledOnion.onionObject = onionObject;
+            peeledOnion.amount = 0;
+            peeledOnion.fee = 0;
+            peeledOnion.timeoutRemoved = 0;
+            peeledOnion.timeout = 0;
+            peeledOnion.nextHop = nextNode;
+
+            onionObject = addOnionLayer(onionObject, peeledOnion, key);
+            nextNode = new NodeKey(key);
+            route.remove(route.size() - 1);
+        }
+        return onionObject;
     }
 }
