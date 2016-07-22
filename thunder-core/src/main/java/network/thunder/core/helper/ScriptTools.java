@@ -2,14 +2,19 @@ package network.thunder.core.helper;
 
 import com.google.common.primitives.UnsignedBytes;
 import com.google.gson.internal.LinkedTreeMap;
+import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Utils;
+import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,7 +78,7 @@ public class ScriptTools {
      *      (3) revocation delay
      *      (4) public key of owner of that output
      */
-    public static final byte[] CHANNEL_TX_OUTPUT_REVOCATION = scriptStringToByte(
+    public static final byte[] REVOCATION_OUTPUT = scriptStringToByte(
             "HASH160 FF EQUAL " +
                     "IF" +
                     "FF" +
@@ -84,10 +89,10 @@ public class ScriptTools {
 
     public static Script getChannelTxOutputRevocation (RevocationHash revocationHash, ECKey revocableKey, ECKey counterpartyKey, int revocationDelay) {
         return produceScript(
-                CHANNEL_TX_OUTPUT_REVOCATION,
+                REVOCATION_OUTPUT,
                 revocationHash.secretHash,
                 counterpartyKey.getPubKey(),
-                integerToByteArray(revocationDelay),
+                bigIntToByteArray(revocationDelay),
                 revocableKey.getPubKey());
     }
 
@@ -119,7 +124,7 @@ public class ScriptTools {
     public static Script getChannelTxOutputPaymentSending (ECKey revocableKey, ECKey counterpartyKey,
                                                            RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
         return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONE, revocationHash.secretHash, secret.hash,
-                counterpartyKey.getPubKey(), integerToByteArray(refundTimeout), revocableKey.getPubKey(), counterpartyKey.getPubKey());
+                counterpartyKey.getPubKey(), bigIntToByteArray(refundTimeout), revocableKey.getPubKey(), counterpartyKey.getPubKey());
     }
 
     //TODO not very efficient yet with 3 times client pubkey...
@@ -131,11 +136,11 @@ public class ScriptTools {
     //      the CLTV timeout is over
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE =
             scriptStringToByte(
-                    "HASH160 FF EQUAL " +
+                    "HASH160 DUP FF EQUAL " +
                             "IF " + //If revocation or payment hash is supplied, allow taking directly
-                            "FF CHECKSIG " +
+                            "DROP FF CHECKSIG " +
                             "ELSE " +
-                            "HASH160 FF EQUAL" +
+                            "FF EQUAL" +
                             "IF " + //Pay to redeem tx if payment hash is supplied
                             "OP_2 FF FF OP_2 CHECKMULTISIG " +
                             "ELSE " + //Pay to sender directly after timeout
@@ -146,28 +151,65 @@ public class ScriptTools {
     public static Script getChannelTxOutputPaymentReceiving (ECKey revocableKey, ECKey counterpartyKey,
                                                              RevocationHash revocationHash, PaymentSecret secret, int refundTimeout) {
         return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_RECEIVING_ONE, revocationHash.secretHash, counterpartyKey.getPubKey(),
-                secret.hash, revocableKey.getPubKey(), counterpartyKey.getPubKey(), integerToByteArray(refundTimeout), counterpartyKey.getPubKey());
+                secret.hash, revocableKey.getPubKey(), counterpartyKey.getPubKey(), bigIntToByteArray(refundTimeout), counterpartyKey.getPubKey());
     }
 
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_TIMEOUT = scriptStringToByte("00 FF FF");
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_REDEEM = scriptStringToByte("FF FF");
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_STEAL = scriptStringToByte("FF FF");
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_TIMEOUT = scriptStringToByte("00 00 FF");
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_REDEEM = scriptStringToByte("00 FF FF");
-    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_STEAL = scriptStringToByte("FF FF");
+    public static Script getChannelTxOutputPayment (Channel channel, PaymentData paymentData) {
+        return getChannelTxOutputPayment(channel, paymentData, channel.revoHashServerNext);
+    }
 
-    public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_TWO =
-            scriptStringToByte(
-                    "HASH160 FF EQUAL " +
-                            "IF " +
-                            "FF CHECKSIG " +
-                            "ELSE " +
-                            "FF CSV DROP FF CHECKSIG " +
-                            "ENDIF");
+    public static Script getChannelTxOutputPayment (Channel channel, PaymentData paymentData, RevocationHash revocationHash) {
+        Script script;
+        if (paymentData.sending) {
+            script = ScriptTools.getChannelTxOutputPaymentSending(
+                    channel.keyServer, channel.keyClient,
+                    revocationHash,
+                    paymentData.secret,
+                    paymentData.timestampRefund);
+        } else {
+            script = ScriptTools.getChannelTxOutputPaymentReceiving(
+                    channel.keyServer, channel.keyClient,
+                    revocationHash,
+                    paymentData.secret,
+                    paymentData.timestampRefund);
+        }
+        return script;
+    }
+
+    public static PaymentSecret retrievePaymentSecret (Script script, PaymentSecret target) {
+        for (ScriptChunk s : script.getChunks()) {
+            if (s.isPushData()) {
+                byte[] data = s.data;
+                if (data.length == 20 && Arrays.equals(Tools.hashSecret(data), target.hash)) {
+                    return new PaymentSecret(data);
+                }
+            }
+        }
+        return null;
+    }
+
+    public static Script scriptToP2SH (Script script) {
+        Script translated = ScriptBuilder.createP2SHOutputScript(script);
+        return translated;
+    }
+
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_TIMEOUT = scriptStringToByte("00 FF FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_REDEEM = scriptStringToByte("FF FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_SENDING_STEAL = scriptStringToByte("FF FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_TIMEOUT = scriptStringToByte("00 00 FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_REDEEM = scriptStringToByte("00 FF FF FF");
+    public static final byte[] CHANNEL_TX_INPUT_PAYMENT_RECEIVING_STEAL = scriptStringToByte("FF FF FF");
+
+    public static final byte[] INPUT_ENCUMBERED_CLAIM = scriptStringToByte("00 FF FF FF");
+    public static final byte[] INPUT_ENCUMBERED_TIMEOUT = scriptStringToByte("00 FF FF FF");
+
+    public static Script getChannelTxOutputPaymentSteal (RevocationHash revocationHash, TransactionSignature transactionSignature, Script redeemingScript) {
+        return produceScript(revocationHash.secret, transactionSignature.encodeToBitcoin(), redeemingScript.getProgram());
+    }
 
     public static Script getPaymentTxOutput (ECKey keyReceiver, ECKey keyRevocation, RevocationHash revocationHash, int revocationTimeout) {
-        return produceScript(CHANNEL_TX_OUTPUT_PAYMENT_TWO, revocationHash.secretHash, keyRevocation.getPubKey(),
-                integerToByteArray(revocationTimeout), keyReceiver.getPubKey());
+        return produceScript(REVOCATION_OUTPUT, revocationHash.secretHash, keyRevocation.getPubKey(),
+                bigIntToByteArray(revocationTimeout), keyReceiver.getPubKey());
     }
 
     public static final byte[] CHANNEL_TX_OUTPUT_PAYMENT_SENDING_ONEa = Tools.hexStringToByteArray("A9 FF 87 63 FF AC 67 B1 FF 75 52 FF FF 52 AE 68");
@@ -187,7 +229,7 @@ public class ScriptTools {
     }
 
     public static Script getAnchorOutputScriptP2SH (ECKey keyClient, ECKey keyServer) {
-        return ScriptBuilder.createP2SHOutputScript(getAnchorOutputScript(keyClient, keyServer));
+        return ScriptTools.scriptToP2SH(getAnchorOutputScript(keyClient, keyServer));
     }
 
     /*
@@ -206,6 +248,13 @@ public class ScriptTools {
         } else {
             return produceScript(COMMIT_INPUT_SCRIPT, signatureServer, signatureClient, redeemscript);
         }
+    }
+
+    public static Script getVersionReturnScript (int version) {
+        ScriptBuilder scriptBuilder = new ScriptBuilder();
+        scriptBuilder.op(106);
+        scriptBuilder.data(integerToByteArray(version));
+        return scriptBuilder.build();
     }
 
     //Script for the encumbered change payment of the commitment
@@ -282,11 +331,26 @@ public class ScriptTools {
         return true;
     }
 
+    public static byte[] bigIntToByteArray (int i) {
+        BigInteger integer = BigInteger.valueOf(i);
+
+        return Utils.reverseBytes(Utils.bigIntegerToBytes(integer, 5));
+    }
+
     public static byte[] integerToByteArray (int i) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.putInt(i);
         buffer.flip();
         return buffer.array();
+    }
+
+    public static int getVersionOutOfReturnOutput (Script script) {
+        return byteToInteger(script.getChunks().get(1).data);
+    }
+
+    public static int byteToInteger (byte[] data) {
+        ByteBuffer buffer = ByteBuffer.wrap(data);
+        return buffer.getInt();
     }
 
     public static byte[] scriptStringToByte (String script) {

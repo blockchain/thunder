@@ -3,7 +3,10 @@ package network.thunder.core.database;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
-import network.thunder.core.communication.layer.high.*;
+import network.thunder.core.communication.layer.high.AckableMessage;
+import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.NumberedMessage;
+import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
 import network.thunder.core.communication.layer.high.payments.LNOnionHelperImpl;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
@@ -14,6 +17,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Channe
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.database.objects.PaymentStatus;
 import network.thunder.core.database.objects.PaymentWrapper;
 import network.thunder.core.etc.Constants;
@@ -57,6 +61,8 @@ public class InMemoryDBHandler implements DBHandler {
     Map<NodeKey, List<AckableMessage>> unAckedMessageMap = new ConcurrentHashMap<>();
 
     LNOnionHelper onionHelper = new LNOnionHelperImpl();
+
+    Map<Sha256Hash, List<ChannelSettlement>> settlementMap = new ConcurrentHashMap<>();
 
     public InMemoryDBHandler () {
         for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
@@ -652,6 +658,11 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
+    public List<PaymentData> getAllPayments (Sha256Hash channelHash) {
+        return null;
+    }
+
+    @Override
     public List<PaymentWrapper> getOpenPayments () {
         return new ArrayList<>();
     }
@@ -723,6 +734,34 @@ public class InMemoryDBHandler implements DBHandler {
         } else {
             secrets.add(secret);
         }
+    }
+
+    @Override
+    public List<ChannelSettlement> getSettlements (Sha256Hash channelHash) {
+        settlementMap.putIfAbsent(channelHash, new ArrayList<>());
+
+        List<ChannelSettlement> channelSettlements = new ArrayList<>(settlementMap.get(channelHash));
+
+        return channelSettlements;
+    }
+
+    @Override
+    public void addPaymentSettlement (ChannelSettlement settlement) {
+        settlementMap.putIfAbsent(settlement.channelHash, new ArrayList<>());
+        settlement.settlementId = settlementMap.get(settlement.channelHash).size();
+        settlementMap.get(settlement.channelHash).add(settlement);
+
+    }
+
+    @Override
+    public void updatePaymentSettlement (ChannelSettlement settlement) {
+        settlementMap.get(settlement.channelHash).replaceAll(s -> {
+            if (s.settlementId == settlement.settlementId) {
+                return settlement;
+            } else {
+                return s;
+            }
+        });
     }
 
     @Override

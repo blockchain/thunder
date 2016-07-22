@@ -13,6 +13,7 @@ import network.thunder.core.communication.layer.high.payments.messages.ChannelUp
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -53,6 +54,9 @@ public interface DBHandler {
     void insertChannel (Channel channel);
     void updateChannelStatus (NodeKey nodeKey, @NotNull Sha256Hash channelHash, ECKey keyServer,
                               Channel channel, ChannelUpdate update, List<RevocationHash> revocationHash, NumberedMessage request, NumberedMessage response);
+    void updateChannel (Channel channel);
+
+    RevocationHash retrieveRevocationHash (Sha256Hash channelHash, int shaChainDepth);
 
     List<PubkeyIPObject> getIPObjectsWithActiveChannel ();
     List<ChannelStatusObject> getTopology ();
@@ -73,8 +77,14 @@ public interface DBHandler {
     PaymentSecret getPaymentSecret (PaymentSecret secret);
     void addPaymentSecret (PaymentSecret secret);
 
+    //On-Chain Settlement
+    List<ChannelSettlement> getSettlements (Sha256Hash channelHash);
+    void addPaymentSettlement (ChannelSettlement settlement);
+    void updatePaymentSettlement (ChannelSettlement settlement);
+
     //GUI
     List<PaymentWrapper> getAllPayments ();
+    List<PaymentData> getAllPayments (Sha256Hash channelHash);
     List<PaymentWrapper> getOpenPayments ();
     List<PaymentWrapper> getRefundedPayments ();
     List<PaymentWrapper> getRedeemedPayments ();

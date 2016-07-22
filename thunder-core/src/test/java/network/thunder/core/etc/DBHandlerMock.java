@@ -14,6 +14,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Channe
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -145,6 +146,10 @@ public class DBHandlerMock implements DBHandler {
 
     }
 
+    @Override
+    public RevocationHash retrieveRevocationHash (Sha256Hash channelHash, int shaChainDepth) {
+        return null;
+    }
 
     @Override
     public List<PubkeyIPObject> getIPObjectsWithActiveChannel () {
@@ -207,12 +212,32 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
+    public List<ChannelSettlement> getSettlements (Sha256Hash channelHash) {
+        return null;
+    }
+
+    @Override
+    public void addPaymentSettlement (ChannelSettlement settlement) {
+
+    }
+
+    @Override
+    public void updatePaymentSettlement (ChannelSettlement settlement) {
+
+    }
+
+    @Override
     public PaymentSecret getPaymentSecret (PaymentSecret secret) {
         return null;
     }
 
     @Override
     public List<PaymentWrapper> getAllPayments () {
+        return null;
+    }
+
+    @Override
+    public List<PaymentData> getAllPayments (Sha256Hash channelHash) {
         return null;
     }
 

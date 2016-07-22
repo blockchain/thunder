@@ -4,11 +4,12 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 
 public interface BlockchainHelper {
-    public boolean broadcastTransaction (Transaction tx);
+    boolean broadcastTransaction (Transaction tx);
 
-    public void addTxListener (OnTxCommand executor);
+    void addTxListener (OnTxCommand executor);
 
-    public void addBlockListener (OnBlockCommand executor);
+    void addBlockListener (OnBlockCommand executor);
+    Transaction getTransaction (Sha256Hash hash);
+    int getHeight ();
 
-    public Transaction getTransaction (Sha256Hash hash);
 }

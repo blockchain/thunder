@@ -1,21 +1,17 @@
 package network.thunder.core.helper.blockchain;
 
-import network.thunder.core.communication.layer.*;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
 import org.bitcoinj.core.*;
-import org.bitcoinj.core.Message;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.net.discovery.DnsDiscovery;
 import org.bitcoinj.store.BlockStore;
 import org.bitcoinj.store.BlockStoreException;
 import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
-import org.bitcoinj.utils.Threading;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -94,6 +90,11 @@ public class BlockchainHelperImpl implements BlockchainHelper {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public int getHeight () {
+        return blockChain.getBestChainHeight();
     }
 
     public void init () {

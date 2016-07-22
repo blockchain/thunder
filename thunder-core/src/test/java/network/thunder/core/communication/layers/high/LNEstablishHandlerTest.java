@@ -83,8 +83,9 @@ public class LNEstablishHandlerTest {
         TestTools.exchangeMessagesDuplex(channel1, channel2);
         TestTools.exchangeMessagesDuplex(channel1, channel2);
 
+        Thread.sleep(500);
         //TODO somehow test inclusion in block as well...
-        assertTrue(mockBlockchainHelper.broadcastedTransaction.contains(processor1.establishProgress.channel.anchorTxHash));
+        assertTrue(mockBlockchainHelper.broadcastedTransactionHashes.contains(processor1.establishProgress.channel.anchorTxHash));
 
         //TODO check all properties of the broadcasted objects..
         assertEquals(4, broadcastHelper.broadcastedObjects.size());
