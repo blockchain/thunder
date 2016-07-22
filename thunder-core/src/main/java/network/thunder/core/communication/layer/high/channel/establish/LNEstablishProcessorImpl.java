@@ -428,6 +428,8 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         statusObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
         statusObject.pubkeyB = node.nodeKey.getPubKey();
         statusObject.timestamp = Tools.currentTime();
+        statusObject.feeA = Fee.ZERO_FEE;
+        statusObject.feeB = Fee.ZERO_FEE;
 
         broadcastHelper.broadcastNewObject(channelObject);
         broadcastHelper.broadcastNewObject(statusObject);

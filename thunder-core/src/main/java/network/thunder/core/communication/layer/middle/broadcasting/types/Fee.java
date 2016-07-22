@@ -4,6 +4,8 @@ public class Fee {
     public int fix;
     public int perc;
 
+    public static final Fee ZERO_FEE = new Fee(0, 0);
+
     public Fee () {
     }
 
