@@ -7,7 +7,7 @@ import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.payments.*;
-import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
@@ -100,22 +100,21 @@ public class ThunderContext {
             LNOnionHelper onionHelper = contextFactory.getOnionHelper();
             LNRoutingHelper routingHelper = contextFactory.getLNRoutingHelper();
 
-            List<byte[]> route = routingHelper.getRoute(node.pubKeyServer.getPubKey(), receiver, 1000L, 1f, 1f, 1f);
+            List<ChannelStatusObject> route = routingHelper.getRoute(node.pubKeyServer.getPubKey(), receiver, 1000L, 1f, 1f, 1f);
             if (route.size() == 0) {
                 throw new LNPaymentException("No route found..");
             }
-
-            OnionObject object = onionHelper.createOnionObject(route, null);
 
             LNPaymentHelper paymentHelper = contextFactory.getPaymentHelper();
 
             PaymentData paymentData = new PaymentData();
             paymentData.amount = amount;
-            paymentData.onionObject = object;
             paymentData.secret = secret;
             paymentData.timestampOpen = Tools.currentTime();
             paymentData.timestampRefund = Tools.currentTime() + route.size()
                     * configuration.MAX_REFUND_DELAY * configuration.MAX_OVERLAY_REFUND;
+
+            paymentData.onionObject = onionHelper.createOnionObject(route, new NodeKey(receiver), paymentData.timestampRefund, amount, null);
 
             paymentHelper.makePayment(paymentData);
         } catch (Exception e) {
