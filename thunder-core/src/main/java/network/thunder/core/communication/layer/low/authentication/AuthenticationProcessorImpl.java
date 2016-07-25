@@ -9,16 +9,20 @@ import network.thunder.core.communication.layer.MessageExecutor;
 import network.thunder.core.communication.layer.low.authentication.messages.Authentication;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessage;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessageFactory;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.crypto.CryptoTools;
 import network.thunder.core.helper.events.LNEventHelper;
 import org.bitcoinj.core.ECKey;
+import org.slf4j.Logger;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
 
 public class AuthenticationProcessorImpl extends AuthenticationProcessor {
+
+    private static final Logger log = Tools.getLogger();
 
     AuthenticationMessageFactory messageFactory;
     LNEventHelper eventHelper;
@@ -139,7 +143,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             //Must be an outgoing connection, check if the nodeKey is what we expect it to be
             if (!Arrays.equals(ecKey.getPubKey(), node.nodeKey.getPubKey())) {
                 //We connected to the wrong node?
-                System.out.println("Connected to wrong node? Expected: " + node.nodeKey.getPubKeyHex() + ". Is: " + ecKey.getPublicKeyAsHex());
+                log.error("Connected to wrong node? Expected: " + node.nodeKey.getPubKeyHex() + ". Is: " + ecKey.getPublicKeyAsHex());
                 authenticationFailed();
             }
         }
@@ -152,7 +156,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
         System.arraycopy(pubKeyTempServer.getPubKey(), 0, data, ecKey.getPubKey().length, pubKeyTempServer.getPubKey().length);
 
         if (!CryptoTools.verifySignature(ecKey, data, authentication.signature)) {
-            System.out.println("Node was not able to authenticate..");
+            log.error("Node was not able to authenticate..");
             authenticationFailed();
         }
     }

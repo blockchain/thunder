@@ -12,12 +12,14 @@ import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.results.NullResultCommand;
 import network.thunder.core.helper.wallet.MockWallet;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
+import org.slf4j.Logger;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.GuiUtils;
 import wallettemplate.utils.TextFieldValidator;
@@ -26,7 +28,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static wallettemplate.utils.GuiUtils.*;
@@ -37,6 +38,8 @@ import static wallettemplate.utils.GuiUtils.*;
  * The rest of the functionality is hidden inside the ThunderContext and wired to the buttons.
  */
 public class Main extends Application {
+    private static final Logger log = Tools.getLogger();
+
     public static final String APP_NAME = "ThunderWallet";
 
     public static Main instance;
@@ -79,27 +82,27 @@ public class Main extends Application {
         if (Constants.USE_MOCK_BLOCKCHAIN) {
             wallet = new MockWallet(Constants.getNetwork());
         } else {
-            System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
+            log.info("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
             walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), "wallet_" + CLIENTID);
             walletAppKit.startAsync().awaitRunning();
             wallet = walletAppKit.wallet();
             wallet.allowSpendingUnconfirmedTransactions();
             wallet.reset();
             wallet.addCoinsReceivedEventListener((Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) -> {
-                System.out.println("wallet = " + wallet);
-                System.out.println("tx = " + tx);
-                System.out.println("prevBalance = " + prevBalance);
-                System.out.println("newBalance = " + newBalance);
+                log.info("wallet = " + wallet);
+                log.info("tx = " + tx);
+                log.info("prevBalance = " + prevBalance);
+                log.info("newBalance = " + newBalance);
             });
             wallet.addCoinsSentEventListener((Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) -> {
-                System.out.println("wallet = " + wallet);
-                System.out.println("tx = " + tx);
-                System.out.println("prevBalance = " + prevBalance);
-                System.out.println("newBalance = " + newBalance);
+                log.info("wallet = " + wallet);
+                log.info("tx = " + tx);
+                log.info("prevBalance = " + prevBalance);
+                log.info("newBalance = " + newBalance);
             });
-            System.out.println(wallet.getKeyChainSeed());
+            log.info(wallet.getKeyChainSeed().toString());
         }
-        System.out.println(wallet);
+        log.info(wallet.toString());
         thunderContext = new ThunderContext(wallet, dbHandler, node);
 
         mainWindow.show();

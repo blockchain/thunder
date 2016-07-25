@@ -13,6 +13,7 @@ import network.thunder.core.communication.layer.high.channel.establish.messages.
 import network.thunder.core.communication.layer.high.payments.LNPaymentLogic;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.processor.exceptions.LNEstablishException;
@@ -25,6 +26,7 @@ import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
 import org.bitcoinj.core.Transaction;
+import org.slf4j.Logger;
 
 import java.util.Collections;
 import java.util.List;
@@ -132,6 +134,8 @@ import static network.thunder.core.communication.layer.high.Channel.Phase.OPEN;
  */
 
 public class LNEstablishProcessorImpl extends LNEstablishProcessor implements ChannelOpener {
+    private static final Logger log = Tools.getLogger();
+
     public static final double PERCENTAGE_OF_FUNDS_PER_CHANNEL = 0.1;
 
     WalletHelper walletHelper;
@@ -233,7 +237,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     public void openChannel (Channel channel, ChannelOpenListener callback) {
         //Only support one channel per connection for now..
         if (dbHandler.getOpenChannel(node.nodeKey).size() > 0) {
-            System.out.println("LNEstablishProcessorImpl.openChannel - already connected!");
+            log.error("LNEstablishProcessorImpl.openChannel - already connected!");
             callback.onSuccess.execute();
             return;
         }

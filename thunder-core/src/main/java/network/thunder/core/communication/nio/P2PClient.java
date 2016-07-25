@@ -24,11 +24,14 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import network.thunder.core.communication.ClientObject;
 import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.PipelineInitialiser;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ConnectionListener;
+import org.slf4j.Logger;
 
 /**
  */
 public final class P2PClient {
+    private static final Logger log = Tools.getLogger();
 
     ContextFactory contextFactory;
 
@@ -62,7 +65,7 @@ public final class P2PClient {
     private void connect (ClientObject node, ConnectionListener connectionListener) {
         boolean successfulConnection = false;
         try {
-            System.out.println("Connect to " + node.host + ":" + node.port + " - " + node.intent);
+            log.info("Connect to " + node.host + ":" + node.port + " - " + node.intent);
             Channel ch = createChannel(node);
             if (ch.isOpen()) {
                 successfulConnection = true;
@@ -70,7 +73,7 @@ public final class P2PClient {
             }
             ch.closeFuture().sync();
 
-            System.out.println("Connection to " + node.host + " closed..");
+            log.info("Connection to " + node.host + " closed..");
         } catch (Exception e) {
             if (!successfulConnection) {
                 //Don't notify a previously successful connection again..

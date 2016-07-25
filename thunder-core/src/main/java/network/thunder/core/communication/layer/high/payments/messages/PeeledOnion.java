@@ -4,11 +4,14 @@ import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 public class PeeledOnion {
+    private static final Logger log = Tools.getLogger();
+
     static final int TEST_LAST_HOP_BYTE_AMOUNT = 10;
     static final byte[] emptyData = new byte[TEST_LAST_HOP_BYTE_AMOUNT];
 
@@ -58,7 +61,7 @@ public class PeeledOnion {
             }
 
         } else {
-            System.out.println("PeeledOnion.parseMessage "+ Tools.bytesToHex(pubkeyOfNextHop));
+            log.debug("PeeledOnion.parseMessage "+ Tools.bytesToHex(pubkeyOfNextHop));
             nextHop = new NodeKey(ECKey.fromPublicOnly(pubkeyOfNextHop));
         }
         byte[] metaDataByteArray = new byte[data.length - OnionObject.KEY_LENGTH];
@@ -90,7 +93,7 @@ public class PeeledOnion {
         byteBuffer.putInt(fee);
         byteBuffer.putInt(timeout);
         byteBuffer.putShort(timeoutRemoved);
-        System.out.println("PeeledOnion.getData "+Tools.bytesToHex(byteBuffer.array()));
+        log.debug("PeeledOnion.getData "+Tools.bytesToHex(byteBuffer.array()));
         return byteBuffer.array();
     }
 }

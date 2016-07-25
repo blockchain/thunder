@@ -29,6 +29,7 @@ import org.bitcoinj.core.listeners.DownloadProgressTracker;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.utils.MonetaryFormat;
 import org.fxmisc.easybind.EasyBind;
+import org.slf4j.Logger;
 import wallettemplate.controls.NotificationBarPane;
 import wallettemplate.utils.BitcoinUIModel;
 import wallettemplate.utils.GuiUtils;
@@ -41,6 +42,8 @@ import java.util.ResourceBundle;
  * after. This class handles all the updates and event handling for the main UI.
  */
 public class MainController {
+    private static final Logger log = Tools.getLogger();
+
     public HBox controlsBox;
 
     @FXML
@@ -152,17 +155,17 @@ public class MainController {
         Main.thunderContext.getSyncData(new SyncListener() {
             @Override
             public void onSegmentSynced (int segment) {
-                System.out.println("Segment synced: " + segment);
+                log.debug("Segment synced: " + segment);
             }
 
             @Override
             public void onSyncFinished () {
-                System.out.println("MainController.onSyncFinished");
+                log.debug("MainController.onSyncFinished");
             }
 
             @Override
             public void onSyncFailed () {
-                System.out.println("MainController.onSyncFailed");
+                log.error("MainController.onSyncFailed");
             }
         });
     }

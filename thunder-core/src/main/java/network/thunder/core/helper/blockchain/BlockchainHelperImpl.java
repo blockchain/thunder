@@ -1,6 +1,7 @@
 package network.thunder.core.helper.blockchain;
 
 import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
 import org.bitcoinj.core.*;
 import org.bitcoinj.core.listeners.DownloadProgressTracker;
@@ -11,6 +12,7 @@ import org.bitcoinj.store.MemoryBlockStore;
 import org.bitcoinj.store.SPVBlockStore;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.*;
@@ -26,6 +28,7 @@ import java.util.concurrent.TimeUnit;
  * to greatly improve privacy and reduce dependency on third parties.
  */
 public class BlockchainHelperImpl implements BlockchainHelper {
+    private static final Logger log = Tools.getLogger();
 
     PeerGroup peerGroup;
     BlockStore blockStore;
@@ -54,16 +57,15 @@ public class BlockchainHelperImpl implements BlockchainHelper {
 
     @Override
     public boolean broadcastTransaction (Transaction tx) {
-        System.out.println("Broadcast transaction: ");
-        System.out.println(tx);
+        log.debug("Broadcast transaction: {1}", tx);
         try {
             TransactionBroadcast broadcast = peerGroup.broadcastTransaction(tx);
             broadcast.future().get(10, TimeUnit.SECONDS);
-            System.out.println(tx.getHash() + " broadcasted successfully!");
+            log.info(tx.getHash() + " broadcasted successfully!");
             wallet.addWalletTransaction(new WalletTransaction(WalletTransaction.Pool.PENDING, tx));
             return true;
         } catch (Exception e) {
-            System.out.println("e.getMessage() = " + e.getMessage());
+            log.debug("e.getMessage() = " + e.getMessage());
         }
         return false;
     }

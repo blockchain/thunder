@@ -37,6 +37,8 @@ import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
 import java.io.*;
@@ -49,6 +51,7 @@ import java.util.*;
  * The Class Tools.
  */
 public class Tools {
+    private static final Logger log = Tools.getLogger();
 
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
@@ -69,6 +72,12 @@ public class Tools {
         b.put(array);
         b.flip();
         return b.getInt();
+    }
+
+    public static Logger getLogger () {
+        String callingClassName =
+                Thread.currentThread().getStackTrace()[2].getClassName();
+        return LoggerFactory.getLogger(callingClassName);
     }
 
     public static List<Fee> getFeeList (List<ChannelStatusObject> route, NodeKey lastNode) {
@@ -335,7 +344,7 @@ public class Tools {
                 return true;
             }
         }
-        System.out.println("Fee not correct. Total Fee: " + diff + " Per Byte: " + f + " Size: " + size);
+        log.error("Fee not correct. Total Fee: " + diff + " Per Byte: " + f + " Size: " + size);
         return false;
     }
 
@@ -348,7 +357,7 @@ public class Tools {
      */
     public static boolean checkTransactionLockTime (Transaction transaction, int locktime) {
         if (Math.abs(transaction.getLockTime() - locktime) > 5 * 60) {
-            System.out.println("Locktime not correct. Should be: " + locktime + " Is: " + transaction.getLockTime() + " Diff: " + Math.abs(transaction
+            log.error("Locktime not correct. Should be: " + locktime + " Is: " + transaction.getLockTime() + " Diff: " + Math.abs(transaction
                     .getLockTime() - locktime));
             return false;
         }
@@ -362,7 +371,7 @@ public class Tools {
                 return true;
             }
         }
-        System.out.println("No Sequence Number is 0..");
+        log.error("No Sequence Number is 0..");
         return false;
     }
 

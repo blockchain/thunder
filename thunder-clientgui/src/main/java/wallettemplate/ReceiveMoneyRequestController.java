@@ -17,6 +17,7 @@ import net.glxn.qrgen.QRCode;
 import net.glxn.qrgen.image.ImageType;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.PaymentRequest;
+import org.slf4j.Logger;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -25,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.util.ResourceBundle;
 
 public class ReceiveMoneyRequestController {
+    private static final Logger log = Tools.getLogger();
 
     public Main.OverlayUI overlayUI;
 
@@ -75,10 +77,9 @@ public class ReceiveMoneyRequestController {
 
     public void update () {
 
-        if(amount.getText().equals("")) {
+        if (amount.getText().equals("")) {
             amount.setText("0");
         }
-
 
         try {
             PaymentRequest paymentRequest = Main.thunderContext.receivePayment(getAmount());
@@ -88,7 +89,7 @@ public class ReceiveMoneyRequestController {
             FieldAddress.setText(Tools.bytesToHex(payload));
             FieldHash.setText(Tools.bytesToHex(paymentRequest.paymentSecret.hash));
 
-            System.out.println(Tools.bytesToHex(payload));
+            log.debug(Tools.bytesToHex(payload));
 
             final byte[] imageBytes = QRCode
                     .from(Tools.bytesToHex(payload))

@@ -13,12 +13,14 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.slf4j.Logger;
 
 import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_ON_CHAIN;
 import static network.thunder.core.database.objects.ChannelSettlement.SettlementPhase.SETTLED;
 import static network.thunder.core.database.objects.ChannelSettlement.SettlementPhase.UNSETTLED;
 
 public class ChainSettlementHelper {
+    private static final Logger log = Tools.getLogger();
 
     //Call this method whenever a block contains a transaction which spends the channel transaction
     //This method then creates the respective ChannelSettlement objects and saves them in the database
@@ -50,7 +52,7 @@ public class ChainSettlementHelper {
 
         if (cheated && ourTx) {
             //TODO maybe implement claiming funds after cheating..
-            System.out.println("We cheated? Can'transaction claim any of these funds now..");
+            log.error("We cheated? Can'transaction claim any of these funds now..");
             return;
         }
 

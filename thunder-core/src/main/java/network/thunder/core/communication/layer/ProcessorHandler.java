@@ -3,8 +3,11 @@ package network.thunder.core.communication.layer;
 import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import network.thunder.core.etc.Tools;
+import org.slf4j.Logger;
 
 public class ProcessorHandler extends ChannelDuplexHandler {
+    private static final Logger log = Tools.getLogger();
 
     Processor processor;
     String layerName = "";
@@ -36,7 +39,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
         try {
             checkIfMessage(msg);
             if (msg instanceof FailureMessage) {
-                System.out.println("In Failure: " + ((FailureMessage) msg).getFailure());
+                log.error("In Failure: " + ((FailureMessage) msg).getFailure());
             } else {
 
                 Message message = (Message) msg;
@@ -58,7 +61,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
     public void write (ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         promise.setSuccess();
         if (msg instanceof FailureMessage) {
-            System.out.println("Out Failure: " + ((FailureMessage) msg).getFailure());
+            log.error("Out Failure: " + ((FailureMessage) msg).getFailure());
         }
         try {
             checkIfMessage(msg);

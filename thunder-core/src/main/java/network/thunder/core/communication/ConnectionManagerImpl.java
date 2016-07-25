@@ -18,7 +18,7 @@ import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.SyncListener;
 import network.thunder.core.helper.callback.results.*;
 import network.thunder.core.helper.events.LNEventHelper;
-import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +42,8 @@ import static network.thunder.core.communication.processor.ConnectionIntent.*;
  * TODO: Think about how we want to close channels again once we removed the ChannelIntent object in ClientObject (maybe prune connection pool?)
  */
 public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegistry {
+    private static final Logger log = Tools.getLogger();
+
     public final static int CHANNELS_TO_OPEN = 5;
     public final static int MINIMUM_AMOUNT_OF_IPS = 5;
     public final static int MINIMUM_AMOUNT_NODES_FETCH_IPS_FROM = 5;
@@ -61,7 +63,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
     LNEventHelper eventHelper;
     ChannelManager channelManager;
 
-    ExecutorService executorService = new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new BlockingArrayQueue<>());
+    ExecutorService executorService = new ThreadPoolExecutor(1, 1, 30, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
 
     public ConnectionManagerImpl (ContextFactory contextFactory, DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -241,7 +243,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
 
                 PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
 
-                System.out.println("BUILD CHANNEL WITH: " + randomNode);
+                log.info("BUILD CHANNEL WITH: " + randomNode);
 
                 ClientObject node = ipObjectToNode(randomNode, OPEN_CHANNEL);
                 channelManager.openChannel(node.nodeKey, new ChannelOpenListener());

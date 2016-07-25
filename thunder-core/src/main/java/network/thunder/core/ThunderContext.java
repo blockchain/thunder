@@ -23,16 +23,14 @@ import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventHelperImpl;
 import network.thunder.core.helper.events.LNEventListener;
 import org.bitcoinj.wallet.Wallet;
-import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.slf4j.Logger;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class ThunderContext {
+    private static final Logger log = Tools.getLogger();
 
     Wallet wallet;
     DBHandler dbHandler;
@@ -43,7 +41,7 @@ public class ThunderContext {
 
     LNConfiguration configuration = new LNConfiguration();
 
-    ExecutorService executorService = new ThreadPoolExecutor(1, 4, 10, TimeUnit.MINUTES, new BlockingArrayQueue<>());
+    ExecutorService executorService = new ThreadPoolExecutor(1, 4, 10, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
 
     public ThunderContext (Wallet wallet, DBHandler dbHandler, ServerObject node) {
         this.wallet = wallet;
@@ -141,7 +139,7 @@ public class ThunderContext {
     }
 
     public Future getSyncData (SyncListener syncListener) {
-        System.out.println("ThunderContext.getSyncData");
+        log.debug("ThunderContext.getSyncData");
         return executorService.submit(new Runnable() {
             @Override
             public void run () {

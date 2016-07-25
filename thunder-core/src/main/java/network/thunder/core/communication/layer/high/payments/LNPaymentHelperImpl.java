@@ -7,13 +7,16 @@ import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.events.LNEventListener;
+import org.slf4j.Logger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LNPaymentHelperImpl implements LNPaymentHelper {
+    private static final Logger log = Tools.getLogger();
 
     LNOnionHelper onionHelper;
     DBHandler dbHandler;
@@ -50,7 +53,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
                 if (senderOfPayment != null) {
                     pingProcessor(senderOfPayment);
                 } else {
-                    System.out.println("LNPaymentHelperImpl.onPaymentRefunded - we were the sender?");
+                    log.debug("LNPaymentHelperImpl.onPaymentRefunded - we were the sender?");
                 }
             }
         });

@@ -4,13 +4,10 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDat
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.SyncListener;
-import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.slf4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Structure for synchronizing new nodes.
@@ -19,6 +16,8 @@ import java.util.concurrent.TimeUnit;
  * If the topography after the complete sync is not good enough, we can always add further queries to it.
  */
 public class SynchronizationHelper {
+    private static final Logger log = Tools.getLogger();
+
     public final static int TIME_TO_SYNC_ONE_FRAGMENT = 1000;
     private final static int MAXIMUM_TRIES_SYNCING = P2PDataObject.NUMBER_OF_FRAGMENTS * 50;
     private DBHandler dbHandler;
@@ -37,7 +36,7 @@ public class SynchronizationHelper {
 
     private SyncListener syncListener;
 
-    private ExecutorService executorService = new ThreadPoolExecutor(1, 1, 5, TimeUnit.MINUTES, new BlockingArrayQueue<>());
+    private ExecutorService executorService = new ThreadPoolExecutor(1, 1, 5, TimeUnit.MINUTES, new LinkedBlockingQueue<>());
 
     public SynchronizationHelper (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -142,7 +141,7 @@ public class SynchronizationHelper {
         try {
             //TODO: Probably a bottleneck here, maybe we can trust the data?
             if (index != object.getFragmentIndex()) {
-                System.out.println("Object should not be in that index.. Is in: " + index + " Should be: " + object.getFragmentIndex());
+                log.error("Object should not be in that index.. Is in: " + index + " Should be: " + object.getFragmentIndex());
             }
             object.verify();
             return true;

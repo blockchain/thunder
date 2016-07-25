@@ -1,7 +1,9 @@
 package wallettemplate;
 
+import network.thunder.core.etc.Tools;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class PaymentProtocolServerSocket {
+    private static final Logger log = Tools.getLogger();
 
     public static void init () {
 
@@ -36,14 +39,14 @@ public class PaymentProtocolServerSocket {
                             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
                             String request = in.readLine();
-                            System.out.println("Payment Request received: " + request);
+                            log.info("Payment Request received: " + request);
 
                             request = request.substring(8);
 
                             List<NameValuePair> params = URLEncodedUtils.parse(request, Charset.defaultCharset());
                             HashMap<String, String> list = new HashMap<String, String>();
                             for (NameValuePair param : params) {
-                                System.out.println(param.getName() + "  " + param.getValue());
+                                log.info(param.getName() + "  " + param.getValue());
                                 list.put(param.getName(), param.getValue());
                             }
 

@@ -18,9 +18,11 @@
  */
 package network.thunder.core.etc;
 
+import org.slf4j.Logger;
 import org.spongycastle.util.Arrays;
 
 public class PerformanceLogger {
+    private static final Logger log = Tools.getLogger();
 
     long time1;
     long time2;
@@ -38,7 +40,7 @@ public class PerformanceLogger {
     public void measure (String event) {
         time2 = System.currentTimeMillis();
         if (Arrays.contains(Constants.LOG_LEVELS, 1)) {
-            System.out.println((time2 - time1) + "		" + event);
+            log.debug((time2 - time1) + "		" + event);
         }
         time1 = System.currentTimeMillis();
     }

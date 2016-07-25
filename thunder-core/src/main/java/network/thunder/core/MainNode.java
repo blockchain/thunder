@@ -12,10 +12,12 @@ import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ResultCommandExt;
 import network.thunder.core.helper.wallet.MockWallet;
-import org.bitcoinj.core.*;
+import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
 import org.bitcoinj.kits.WalletAppKit;
-import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
+import org.slf4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -38,6 +40,7 @@ import java.util.concurrent.TimeUnit;
  * On startup it tries to read from `config.json`, if that fails it creates a new configuration with a new private nodekey.
  */
 public class MainNode {
+    private static final Logger log = Tools.getLogger();
 
     static final String CONFIG_FILE = "config.json";
 
@@ -113,21 +116,21 @@ public class MainNode {
             return new MockWallet(Constants.getNetwork());
         } else {
             //TODO somehow allow sending money out of the node again..
-            System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
+            log.info("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
             WalletAppKit walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), new String("node_"));
             walletAppKit.startAsync().awaitRunning();
             Wallet wallet = walletAppKit.wallet();
             wallet.allowSpendingUnconfirmedTransactions();
             wallet.reset();
-            System.out.println("wallet = " + wallet);
-            System.out.println("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
+            log.info("wallet = " + wallet);
+            log.info("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
             wallet.addCoinsReceivedEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> {
-                System.out.println("wallet = " + w);
-                System.out.println("tx = " + tx);
+                log.info("wallet = " + w);
+                log.info("tx = " + tx);
             });
             wallet.addCoinsSentEventListener((Wallet w, Transaction tx, Coin prevBalance, Coin newBalance) -> {
-                System.out.println("wallet = " + wallet);
-                System.out.println("tx = " + tx);
+                log.info("wallet = " + wallet);
+                log.info("tx = " + tx);
             });
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
@@ -143,7 +146,7 @@ public class MainNode {
     static void writeConfigurationFile (Configuration configuration) throws IOException {
         Path file = Paths.get(CONFIG_FILE);
         String config = new GsonBuilder().setPrettyPrinting().create().toJson(configuration);
-        System.out.println(config);
+        log.info(config);
         Files.write(file, config.getBytes(), StandardOpenOption.CREATE_NEW);
     }
 
@@ -151,7 +154,7 @@ public class MainNode {
         ResultCommandExt listener = new ResultCommandExt();
         context.startListening(listener);
         listener.await();
-        System.out.println("MainNode.startListening");
+        log.info("MainNode.startListening");
     }
 
     static void fetchNetworkIPs (ThunderContext context) {
@@ -165,7 +168,7 @@ public class MainNode {
 
     static void buildPaymentChannels (ThunderContext context, Configuration configuration) {
         for (String s : configuration.nodesToBuildChannelWith) {
-            System.out.println("MainNode.buildPaymentChannels " + s);
+            log.info("MainNode.buildPaymentChannels " + s);
             ResultCommandExt buildChannelListener = new ResultCommandExt();
             byte[] nodeKey = Tools.hexStringToByteArray(s);
             context.openChannel(nodeKey, buildChannelListener);

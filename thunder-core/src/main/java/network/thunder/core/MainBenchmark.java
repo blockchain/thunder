@@ -19,6 +19,7 @@ import org.bitcoinj.kits.WalletAppKit;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.listeners.WalletEventListener;
+import org.slf4j.Logger;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Scanner;
 
 public class MainBenchmark {
+    private static final Logger log = Tools.getLogger();
 
     public static void main (String[] args) throws Exception {
 
@@ -52,7 +54,7 @@ public class MainBenchmark {
         //New configuration, ask the user which nodes he wants to connect to..
         String node = showIntroductionAndGetNodeList(dbHandler1);
 
-        System.out.println("MainNode.buildPaymentChannels " + node);
+        log.info("MainNode.buildPaymentChannels " + node);
         byte[] nodeKey = Tools.hexStringToByteArray(node);
         context1.openChannel(nodeKey, new NullResultCommand());
         Thread.sleep(100);
@@ -77,8 +79,8 @@ public class MainBenchmark {
                 double diff = (endTime - startTime);
 
                 double tps = TOTAL_PAYMENTS / (diff / 1000);
-                System.out.println("diff = " + diff);
-                System.out.println("tps = " + tps);
+                log.info("diff = " + diff);
+                log.info("tps = " + tps);
                 System.exit(0);
             }
             Thread.sleep(100);
@@ -91,25 +93,25 @@ public class MainBenchmark {
             return new MockWallet(Constants.getNetwork());
         } else {
             //TODO somehow allow sending money out of the node again..
-            System.out.println("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
+            log.info("Setting up wallet and downloading blockheaders. This can take up to two minutes on first startup");
             WalletAppKit walletAppKit = new WalletAppKit(Constants.getNetwork(), new File("wallet"), new String("node_"));
             walletAppKit.startAsync().awaitRunning();
             Wallet wallet = walletAppKit.wallet();
             wallet.allowSpendingUnconfirmedTransactions();
             wallet.reset();
-            System.out.println("wallet = " + wallet);
-            System.out.println("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
+            log.info("wallet = " + wallet);
+            log.info("wallet.getKeyChainSeed() = " + wallet.getKeyChainSeed());
             wallet.addEventListener(new WalletEventListener() {
                 @Override
                 public void onCoinsReceived (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
+                    log.info("wallet = " + wallet);
+                    log.info("tx = " + tx);
                 }
 
                 @Override
                 public void onCoinsSent (Wallet wallet, Transaction tx, Coin prevBalance, Coin newBalance) {
-                    System.out.println("wallet = " + wallet);
-                    System.out.println("tx = " + tx);
+                    log.info("wallet = " + wallet);
+                    log.info("tx = " + tx);
                 }
 
                 @Override
@@ -160,9 +162,9 @@ public class MainBenchmark {
     }
 
     static String showIntroductionAndGetNodeList (DBHandler dbHandler) {
-        System.out.println("Thunder.Network Benchmarking");
-        System.out.println();
-        System.out.println("Nodes currently online: ");
+        log.info("Thunder.Network Benchmarking");
+        log.info("");
+        log.info("Nodes currently online: ");
 
         List<PubkeyIPObject> ipObjects = dbHandler.getIPObjects();
 
@@ -171,12 +173,12 @@ public class MainBenchmark {
         }
 
         if (ipObjects.size() == 1) {
-            System.out.println(ipObjects.get(0));
+            log.info(ipObjects.get(0).toString());
             return Tools.bytesToHex(ipObjects.get(0).pubkey);
         }
 
-        System.out.println();
-        System.out.println("Choose pubkeys of node to connect to:");
+        log.info("");
+        log.info("Choose pubkeys of node to connect to:");
 
         List<String> nodeList = new ArrayList<>();
         while (true) {
@@ -185,17 +187,17 @@ public class MainBenchmark {
             String s = sc.nextLine();
 
             if (nodeList.contains(s)) {
-                System.out.println("Pubkey already added to the list..");
+                log.info("Pubkey already added to the list..");
             } else {
                 ECKey key;
                 try {
                     key = ECKey.fromPublicOnly(Tools.hexStringToByteArray(s));
                 } catch (Exception e) {
-                    System.out.println("Invalid pubkey..");
+                    log.info("Invalid pubkey..");
                     continue;
                 }
 
-                System.out.println(key.getPublicKeyAsHex() + " added to list..");
+                log.info(key.getPublicKeyAsHex() + " added to list..");
                 return s;
             }
 

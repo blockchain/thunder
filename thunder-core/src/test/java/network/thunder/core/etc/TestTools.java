@@ -10,6 +10,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -20,6 +21,8 @@ import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
 
 public class TestTools {
+    private static final Logger log = Tools.getLogger();
+
     public static TransactionSignature corruptSignature (TransactionSignature signature) {
         byte[] sig = signature.encodeToBitcoin();
         Tools.copyRandomByteInByteArray(sig, 40, 4);
@@ -28,7 +31,7 @@ public class TestTools {
 
     public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to) {
         Object message = from.readOutbound();
-        System.out.println(message);
+        log.debug("Exchanged {1} ", message);
         if (message != null) {
             to.writeInbound(message);
         }

@@ -25,6 +25,7 @@ import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -37,6 +38,8 @@ import static network.thunder.core.communication.layer.high.Channel.Phase.OPEN;
 import static network.thunder.core.database.objects.PaymentStatus.*;
 
 public class InMemoryDBHandler implements DBHandler {
+    private static final Logger log = Tools.getLogger();
+
     public final List<Channel> channelList = Collections.synchronizedList(new ArrayList<>());
 
     public final List<PubkeyIPObject> pubkeyIPList = Collections.synchronizedList(new ArrayList<>());
@@ -319,7 +322,7 @@ public class InMemoryDBHandler implements DBHandler {
                             paymentWrapper.paymentData.secret = getPaymentSecret(payment.secret);
                             paymentWrapper.statusSender = TO_BE_REDEEMED;
                         } else if (onion.isLastHop) {
-                            System.out.println("Don't have the payment secret - refund..");
+                            log.error("Don't have the payment secret - refund..");
                             paymentWrapper.statusSender = TO_BE_REFUNDED;
                         } else {
 
@@ -329,7 +332,7 @@ public class InMemoryDBHandler implements DBHandler {
                                 paymentWrapper.receiver = nextHop;
                                 payment.onionObject = onion.onionObject;
                             } else {
-                                System.out.println("InMemoryDBHandler.updateChannelStatus to be refunded?");
+                                log.info("InMemoryDBHandler.updateChannelStatus to be refunded?");
                                 paymentWrapper.statusSender = TO_BE_REFUNDED;
                             }
                         }
@@ -433,7 +436,7 @@ public class InMemoryDBHandler implements DBHandler {
             boolean sender,
             PaymentStatus searchFor,
             PaymentStatus
-            replaceWith) {
+                    replaceWith) {
         List<PaymentData> paymentList = new ArrayList<>();
         for (PaymentWrapper p : payments) {
             if (sender) {

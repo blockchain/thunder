@@ -9,6 +9,7 @@ import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.implementations.management.BlockchainWatcher;
 import network.thunder.core.communication.processor.implementations.management.ChannelBlockchainWatcher;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.ChannelFailureAction;
 import network.thunder.core.helper.callback.ChannelOpenListener;
@@ -16,6 +17,7 @@ import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.FailureResult;
+import org.slf4j.Logger;
 
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ChannelManagerImpl implements ChannelManager {
+    private static final Logger log = Tools.getLogger();
 
     ConnectionManager connectionManager;
     ConnectionRegistry connectionRegistry;
@@ -95,7 +98,7 @@ public class ChannelManagerImpl implements ChannelManager {
             channelOpener.openChannel(null, channelOpenListener);
         } else {
             //Should never happen, the call to addChannelOpener happens before this one here..
-            System.out.println("channelOpener = null?");
+            log.error("channelOpener = null?");
         }
     }
 

@@ -18,6 +18,7 @@ import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
 
 import java.beans.PropertyVetoException;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ import java.util.*;
 import static junit.framework.TestCase.assertEquals;
 
 public class ChainSettlementHelperTest {
+    private static final Logger log = Tools.getLogger();
 
     LNPaymentLogic paymentLogic = new LNPaymentLogicImpl();
     LNConfiguration configuration = TestTools.getZeroFeeConfiguration();
@@ -171,8 +173,7 @@ public class ChainSettlementHelperTest {
     public void broadcastSpendingTransaction () {
         channelTransaction.getInputs().forEach(in -> in.setScriptSig(Tools.getDummyScript()));
 
-        System.out.println("ChainSettlementHelperTest.broadcastSpendingTransaction");
-        System.out.println(channelTransaction);
+        log.debug("ChainSettlementHelperTest.broadcastSpendingTransaction: {1}", channelTransaction);
 
         channel1.applyNextRevoHash();
         channel2.applyNextRevoHash();
@@ -222,7 +223,7 @@ public class ChainSettlementHelperTest {
                     input.getScriptSig().correctlySpends(t, i, output.getScriptPubKey(), flags);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    System.out.println("Invalid tx = " + t.getHash());
+                    log.debug("Invalid tx = " + t.getHash());
                     invalidTx.add(t);
                 }
                 i++;
@@ -234,26 +235,26 @@ public class ChainSettlementHelperTest {
     public void validateOutputs () {
         //At the end there should be two outputs for each party paying directly the payments,
         // and another one for each paying the channel balance
-        System.out.println("ChainSettlementHelperTest.validateOutputs outputs1");
+        log.debug("ChainSettlementHelperTest.validateOutputs outputs1");
         long outputs1 = totalTx.stream()
                 .map(Transaction::getOutputs)
                 .flatMap(Collection::stream)
                 .filter(output -> channel1.addressServer.equals(output.getAddressFromP2PKHScript(Constants.getNetwork())))
-                .peek(output -> System.out.println(output.getOutPointFor()))
+                .peek(output -> log.debug(output.getOutPointFor().toString()))
                 .mapToLong(output -> output.getValue().value)
                 .sum();
 
-        System.out.println("ChainSettlementHelperTest.validateOutputs outputs2");
+        log.debug("ChainSettlementHelperTest.validateOutputs outputs2");
         long outputs2 = totalTx.stream()
                 .map(Transaction::getOutputs)
                 .flatMap(Collection::stream)
                 .filter(output -> channel1.addressClient.equals(output.getAddressFromP2PKHScript(Constants.getNetwork())))
-                .peek(output -> System.out.println(output.getOutPointFor()))
+                .peek(output -> log.debug(output.getOutPointFor().toString()))
                 .mapToLong(output -> output.getValue().value)
                 .sum();
 
-        System.out.println("outputs1 = " + outputs1);
-        System.out.println("outputs2 = " + outputs2);
+        log.debug("outputs1 = " + outputs1);
+        log.debug("outputs2 = " + outputs2);
 
         assertEquals(startBalance1 + diffBalance1, outputs1);
         assertEquals(startBalance2 + diffBalance2, outputs2);

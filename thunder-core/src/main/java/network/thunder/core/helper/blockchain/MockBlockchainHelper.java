@@ -1,15 +1,19 @@
 package network.thunder.core.helper.blockchain;
 
 import network.thunder.core.etc.Constants;
+import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Block;
 import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.wallet.Wallet;
 import org.bitcoinj.wallet.WalletTransaction;
+import org.slf4j.Logger;
 
 import java.util.*;
 
 public class MockBlockchainHelper implements BlockchainHelper {
+    private static final Logger log = Tools.getLogger();
+
     public Set<Sha256Hash> broadcastedTransactionHashes = new HashSet<>();
     public Set<Transaction> broadcastedTransaction = new HashSet<>();
 
@@ -54,8 +58,8 @@ public class MockBlockchainHelper implements BlockchainHelper {
     @Override
     public boolean broadcastTransaction (Transaction tx) {
         if (broadcastedTransactionHashes.add(tx.getHash())) {
-            System.out.println(" MockBlockchainHelper.broadcastTransaction " + height);
-            System.out.println("tx = " + tx.toString());
+            log.info(" MockBlockchainHelper.broadcastTransaction " + height);
+            log.info("tx = " + tx.toString());
         }
         newTransactions.add(tx);
         broadcastedTransaction.add(tx);

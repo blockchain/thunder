@@ -13,8 +13,11 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.messa
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.crypto.ECDH;
 import org.bitcoinj.core.ECKey;
+import org.slf4j.Logger;
 
 public class EncryptionProcessorImpl extends EncryptionProcessor {
+    private static final Logger log = Tools.getLogger();
+
     public static final boolean OUTPUT_MESSAGE = true;
     public static final boolean OUTPUT_GOSSIP = false;
     EncryptionMessageFactory messageFactory;
@@ -50,7 +53,7 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("EncryptionProcessorImpl.onInboundMessage closing connection..");
+            log.debug("EncryptionProcessorImpl.onInboundMessage closing connection..");
             executor.closeConnection();
         }
     }
@@ -93,10 +96,10 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
         if (OUTPUT_MESSAGE) {
             if (decryptedMessage instanceof Gossip) {
                 if (OUTPUT_GOSSIP) {
-                    System.out.println("I: " + getClientName() + " " + decryptedMessage);
+                    log.debug("I: " + getClientName() + " " + decryptedMessage);
                 }
             } else {
-                System.out.println("I: " +
+                log.debug("I: " +
                         getMessageNumber(decryptedMessage) + " " +
                         getAckedMessageNumber(decryptedMessage) + " " +
                         getClientName() + " " +
@@ -130,11 +133,10 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
         if (OUTPUT_MESSAGE) {
             if (message instanceof Gossip) {
                 if (OUTPUT_GOSSIP) {
-                    System.out.println("O: " + getClientName() + " " + message + "[" + (encryptedMessage.payload.length / 1024) + "]");
+                    log.debug("O: " + getClientName() + " " + message + "[" + (encryptedMessage.payload.length / 1024) + "]");
                 }
             } else {
-                System.out.println("O: " +
-                        System.currentTimeMillis() + " " +
+                log.debug("O: " +
                         getMessageNumber(message) + " " +
                         getAckedMessageNumber(message) + " " +
                         getClientName() + " " +
@@ -144,8 +146,8 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
         executor.sendMessageUpwards(encryptedMessage);
     }
 
-    private void logIncomingMessage(Message decryptedMessage, EncryptedMessage message) {
-        System.out.println("I: " +
+    private void logIncomingMessage (Message decryptedMessage, EncryptedMessage message) {
+        log.debug("I: " +
                 getMessageNumber(decryptedMessage) + " " +
                 getAckedMessageNumber(decryptedMessage) + " " +
                 getClientName() + " " +
