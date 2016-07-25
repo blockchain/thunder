@@ -23,6 +23,12 @@ import java.util.List;
 
 public interface DBHandler {
 
+    //Meta-Information
+    int getLastBlockHeight ();
+    void updateLastBlockHeight (int blockHeight);
+    String getNetwork ();
+    void setNetwork (String network);
+
     //Messages
     List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c);
     List<AckableMessage> getUnackedMessageList (NodeKey nodeKey);

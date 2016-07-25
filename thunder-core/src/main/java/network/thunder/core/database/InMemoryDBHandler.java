@@ -1,5 +1,6 @@
 package network.thunder.core.database;
 
+import com.google.common.base.Preconditions;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
@@ -66,6 +67,9 @@ public class InMemoryDBHandler implements DBHandler {
     LNOnionHelper onionHelper = new LNOnionHelperImpl();
 
     Map<Sha256Hash, List<ChannelSettlement>> settlementMap = new ConcurrentHashMap<>();
+
+    int blockHeight;
+    String network;
 
     public InMemoryDBHandler () {
         for (int i = 0; i < P2PDataObject.NUMBER_OF_FRAGMENTS + 1; i++) {
@@ -499,6 +503,27 @@ public class InMemoryDBHandler implements DBHandler {
         synchronized (channelList) {
             return channelList.stream().filter(channel -> channel.phase == OPEN).collect(Collectors.toList());
         }
+    }
+
+    @Override
+    public int getLastBlockHeight () {
+        return blockHeight;
+    }
+
+    @Override
+    public void updateLastBlockHeight (int blockHeight) {
+        this.blockHeight = blockHeight;
+    }
+
+    @Override
+    public String getNetwork () {
+        return network != null ? network : "";
+    }
+
+    @Override
+    public void setNetwork (String network) {
+        Preconditions.checkArgument(this.network == null); //Only allow setting the network once
+        this.network = network;
     }
 
     @Override

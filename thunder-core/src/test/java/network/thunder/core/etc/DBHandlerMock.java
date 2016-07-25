@@ -24,6 +24,26 @@ import java.util.List;
 
 public class DBHandlerMock implements DBHandler {
     @Override
+    public int getLastBlockHeight () {
+        return 0;
+    }
+
+    @Override
+    public void updateLastBlockHeight (int blockHeight) {
+
+    }
+
+    @Override
+    public String getNetwork () {
+        return null;
+    }
+
+    @Override
+    public void setNetwork (String network) {
+
+    }
+
+    @Override
     public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c) {
         return null;
     }
