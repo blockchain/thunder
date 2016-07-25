@@ -28,11 +28,9 @@ public class ByteToMessageObjectHandler extends ByteToMessageDecoder {
                 Message message = serializater.deserializeMessage(data);
 
                 out.add(message);
-//                log.debug("Incoming: " + message);
-
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
     }
 }

@@ -106,7 +106,7 @@ public class AuthenticationProcessorImpl extends AuthenticationProcessor {
             messageExecutor.sendNextLayerActive();
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("Error in authentication?", e);
             throw new RuntimeException(e);
         }
     }

@@ -208,7 +208,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 alreadyFetched.add(randomNode);
                 ipList = dbHandler.getIPObjects();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("", e);
             }
         } while (ipList.size() < MINIMUM_AMOUNT_OF_IPS || alreadyFetched.size() < MINIMUM_AMOUNT_NODES_FETCH_IPS_FROM);
         ipList = dbHandler.getIPObjects();
@@ -306,7 +306,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
             P2PClient client = new P2PClient(contextFactory);
             client.connectBlocking(node, new ConnectionListener());
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
     }
 
@@ -357,7 +357,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                     connect(nodeKey, intent, connectionListener);
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                log.warn("", e);
                 throw new RuntimeException(e);
             }
         }

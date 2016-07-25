@@ -146,7 +146,7 @@ public class SynchronizationHelper {
             object.verify();
             return true;
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
         return false;
     }

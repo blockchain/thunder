@@ -13,6 +13,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.bitcoinj.script.ScriptChunk;
+import org.slf4j.Logger;
 
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ScriptTools {
-
+    private static final Logger log = Tools.getLogger();
     final static Map<String, String> scriptMap = new LinkedTreeMap<>();
 
     static {
@@ -289,7 +290,7 @@ public class ScriptTools {
             return new Script(s.getProgram());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             return null;
         }
     }

@@ -16,6 +16,7 @@ import network.thunder.core.database.DBHandler
 import network.thunder.core.etc.Constants
 import network.thunder.core.etc.Tools
 import network.thunder.core.helper.events.LNEventHelper
+import org.slf4j.Logger
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
@@ -51,6 +52,8 @@ class LNPaymentProcessorImpl(
         contextFactory: ContextFactory,
         var dbHandler: DBHandler,
         var node: ClientObject) : LNPaymentProcessor() {
+
+    val log: Logger = Tools.getLogger()
 
     val paymentLogic: LNPaymentLogic
     val paymentHelper: LNPaymentHelper
@@ -241,9 +244,9 @@ class LNPaymentProcessorImpl(
         statusT.applyUpdate(update)
         statusT.applyNextRevoHash()
 
-        println("Sending update: ")
-        println("Old statusSender: " + state.channel)
-        println("New statusSender: " + statusT)
+        log.debug("Sending update: ")
+        log.debug("Old statusSender: " + state.channel)
+        log.debug("New statusSender: " + statusT)
 
         channel = status
 
@@ -279,9 +282,9 @@ class LNPaymentProcessorImpl(
         }
         paymentLogic.checkUpdate(serverObject.configuration, state.channel, message.channelUpdate.cloneReversed)
 
-        println("Receiving update:")
-        println("Old statusSender: " + state.channel)
-        println("New statusSender: " + channel)
+        log.debug("Receiving update:")
+        log.debug("Old statusSender: " + state.channel)
+        log.debug("New statusSender: " + channel)
 
         checkNewRevocationMessage(channel, message)
         checkSignatureMessage(channel, message)
@@ -373,7 +376,7 @@ class LNPaymentProcessorImpl(
     }
 
     fun sendMessage(message: Message) {
-        println("${node.nodeKey} O message = ${message}")
+        log.debug("${node.nodeKey} O message = ${message}")
         messageExecutor.sendMessageUpwards(message)
     }
 

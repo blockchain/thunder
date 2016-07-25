@@ -50,7 +50,7 @@ public final class P2PClient {
                 try {
                     connect(node, connectionListener);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.warn("", e);
                 }
 
             }

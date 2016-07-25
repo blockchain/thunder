@@ -3,6 +3,7 @@ package network.thunder.core.communication.layer.middle.broadcasting.types;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.crypto.CryptoTools;
 import org.bitcoinj.core.ECKey;
+import org.slf4j.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
@@ -13,6 +14,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 public class PubkeyIPObject extends P2PDataObject {
+    private static final Logger log = Tools.getLogger();
     public String hostname;
     public int port;
     public byte[] pubkey;
@@ -77,7 +79,7 @@ public class PubkeyIPObject extends P2PDataObject {
         try {
             byteBuffer.put(hostname.getBytes("UTF-8"));
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
         byteBuffer.putInt(port);
         byteBuffer.put(pubkey);

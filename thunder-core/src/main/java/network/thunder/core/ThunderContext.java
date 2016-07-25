@@ -161,7 +161,7 @@ public class ThunderContext {
                 try {
                     contextFactory.getConnectionManager().startBuildingRandomChannel(resultCallback);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.warn("", e);
                 }
             }
         }).start();

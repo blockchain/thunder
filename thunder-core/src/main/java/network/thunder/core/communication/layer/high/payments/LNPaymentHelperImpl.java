@@ -94,7 +94,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             LNPaymentProcessor senderProcessor = processorList.get(sender);
             if (senderProcessor != null) {
                 senderProcessor.ping();
@@ -117,7 +117,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             throw new LNPaymentException(e);
         }
     }

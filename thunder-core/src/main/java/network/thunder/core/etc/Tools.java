@@ -184,18 +184,18 @@ public class Tools {
             }
             qry = new String(out.toByteArray());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.warn("", e);
         } finally {
             try {
                 in.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                log.warn("", e);
             }
         }
         try {
             return java.net.URLDecoder.decode(qry, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
         return qry;
     }

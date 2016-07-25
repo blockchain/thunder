@@ -145,7 +145,7 @@ public class MainBenchmark {
                     try {
                         walletAppKit.stopAsync().awaitTerminated();
                     } catch (Exception e) {
-                        e.printStackTrace();
+                        log.warn("", e);
                     }
                 }
             }));

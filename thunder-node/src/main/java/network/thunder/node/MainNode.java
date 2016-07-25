@@ -137,7 +137,7 @@ public class MainNode {
                 try {
                     walletAppKit.stopAsync().awaitTerminated();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.warn("", e);
                 }
             }));
             return wallet;

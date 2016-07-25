@@ -4,8 +4,11 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import network.thunder.core.communication.layer.Message;
+import network.thunder.core.etc.Tools;
+import org.slf4j.Logger;
 
 public class MessageObjectToByteHandler extends MessageToByteEncoder {
+    private static final Logger log = Tools.getLogger();
 
     MessageSerializer serializater;
 
@@ -29,7 +32,7 @@ public class MessageObjectToByteHandler extends MessageToByteEncoder {
             out.writeBytes(data);
             ctx.flush();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
 
     }

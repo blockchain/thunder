@@ -222,7 +222,7 @@ public class ChainSettlementHelperTest {
                 try {
                     input.getScriptSig().correctlySpends(t, i, output.getScriptPubKey(), flags);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.warn("", e);
                     log.debug("Invalid tx = " + t.getHash());
                     invalidTx.add(t);
                 }

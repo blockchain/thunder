@@ -8,6 +8,7 @@ import javafx.scene.control.TextField;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.wallet.Wallet;
+import org.slf4j.Logger;
 import org.spongycastle.crypto.params.KeyParameter;
 import wallettemplate.utils.GuiUtils;
 
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 public class SendMoneyController {
+    private static final Logger log = Tools.getLogger();
     public Button sendBtn;
     public Button cancelBtn;
     public TextField address;
@@ -45,7 +47,7 @@ public class SendMoneyController {
             address.setText(data);
 
         } catch (UnsupportedFlavorException | IOException e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
 
         address.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -62,7 +64,7 @@ public class SendMoneyController {
             amount = byteBuffer.getLong();
             amountEdit.setText(String.valueOf(amount));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
     }
 

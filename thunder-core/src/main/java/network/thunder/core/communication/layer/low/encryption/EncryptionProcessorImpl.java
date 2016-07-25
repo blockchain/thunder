@@ -52,7 +52,7 @@ public class EncryptionProcessorImpl extends EncryptionProcessor {
                 processEncryptionInitialMessage(message);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             log.debug("EncryptionProcessorImpl.onInboundMessage closing connection..");
             executor.closeConnection();
         }

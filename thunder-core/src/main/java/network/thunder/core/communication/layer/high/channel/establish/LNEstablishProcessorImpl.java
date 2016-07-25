@@ -176,7 +176,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         try {
             consumeMessage(message);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             node.resultCallback.execute(new FailureResult(e.getMessage()));
             throw e;
         }
@@ -228,7 +228,7 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
                 throw new UnsupportedOperationException("Don't know this LNEstablish Message: " + message);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             messageExecutor.closeConnection();
         }
     }

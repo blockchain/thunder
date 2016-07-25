@@ -255,7 +255,7 @@ public class Main extends Application {
                 walletAppKit.stopAsync().awaitTerminated(10, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
         }
 
         // Forcibly terminate the JVM because Orchid likes to spew non-daemon threads everywhere.

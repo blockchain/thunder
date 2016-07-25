@@ -29,7 +29,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             messageExecutor = new MessageExecutorImpl(ctx, layerName);
             processor.onLayerActive(messageExecutor);
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             throw e;
         }
     }
@@ -51,8 +51,8 @@ public class ProcessorHandler extends ChannelDuplexHandler {
                     messageExecutor.sendMessageDownwards(message);
                 }
             }
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } catch (Exception e) {
+            log.warn("", e);
             ctx.close();
         }
     }
@@ -75,7 +75,7 @@ public class ProcessorHandler extends ChannelDuplexHandler {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            log.warn("", e);
             ctx.close();
         }
     }

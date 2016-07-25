@@ -163,7 +163,7 @@ public class BlockchainHelperImpl implements BlockchainHelper {
             try {
                 shutdown();
             } catch (BlockStoreException e) {
-                e.printStackTrace();
+                log.warn("", e);
             }
         }));
     }
