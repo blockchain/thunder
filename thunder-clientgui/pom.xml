@@ -114,5 +114,11 @@
             <artifactId>netty-all</artifactId>
             <version>4.0.33.Final</version>
         </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.0.13</version>
+            <scope>runtime</scope>
+        </dependency>
     </dependencies>
 </project>
