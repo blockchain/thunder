@@ -1,5 +1,6 @@
-package network.thunder.core;
+package network.thunder.node;
 
+import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.Channel;

@@ -1,4 +1,4 @@
-package network.thunder.core;
+package network.thunder.node;
 
 import com.google.gson.Gson;
 import network.thunder.core.communication.ConnectionManager;
@@ -14,7 +14,7 @@ import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
-import network.thunder.core.etc.Configuration;
+import network.thunder.node.etc.Configuration;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ChannelOpenListener;

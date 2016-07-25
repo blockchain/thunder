@@ -18,6 +18,7 @@
 
     <modules>
         <module>thunder-core</module>
+        <module>thunder-node</module>
         <module>thunder-clientgui</module>
     </modules>
 

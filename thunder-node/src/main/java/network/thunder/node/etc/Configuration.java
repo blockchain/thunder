@@ -1,4 +1,4 @@
-package network.thunder.core.etc;
+package network.thunder.node.etc;
 
 import java.util.HashSet;
 import java.util.Set;
