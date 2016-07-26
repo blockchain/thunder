@@ -61,7 +61,7 @@ public class PeeledOnion {
             }
 
         } else {
-            log.debug("PeeledOnion.parseMessage "+ Tools.bytesToHex(pubkeyOfNextHop));
+            log.trace("PeeledOnion.parseMessage {}", Tools.bytesToHex(pubkeyOfNextHop));
             nextHop = new NodeKey(ECKey.fromPublicOnly(pubkeyOfNextHop));
         }
         byte[] metaDataByteArray = new byte[data.length - OnionObject.KEY_LENGTH];
@@ -74,11 +74,11 @@ public class PeeledOnion {
         timeoutRemoved = byteBuffer.getShort();
     }
 
-    public byte[] getData() {
+    public byte[] getData () {
         ByteBuffer byteBuffer = ByteBuffer.allocate(OnionObject.DATA_LENGTH);
-        if(isLastHop) {
+        if (isLastHop) {
             byteBuffer.put(emptyData);
-            if(containsSecret) {
+            if (containsSecret) {
                 byte flag = 1;
                 byteBuffer.put(flag);
                 byteBuffer.put(paymentSecret.secret);
@@ -93,7 +93,7 @@ public class PeeledOnion {
         byteBuffer.putInt(fee);
         byteBuffer.putInt(timeout);
         byteBuffer.putShort(timeoutRemoved);
-        log.debug("PeeledOnion.getData "+Tools.bytesToHex(byteBuffer.array()));
+        log.trace("PeeledOnion.getData {}", Tools.bytesToHex(byteBuffer.array()));
         return byteBuffer.array();
     }
 }
