@@ -596,10 +596,10 @@ public class Tools {
     }
 
     public static Transaction setTransactionLockTime (Transaction transaction, int locktime) {
-        transaction.setLockTime(locktime);
         for (TransactionInput input : transaction.getInputs()) {
             input.setSequenceNumber(0);
         }
+        transaction.setLockTime(locktime);
         return transaction;
     }
 
