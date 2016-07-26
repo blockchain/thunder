@@ -1,5 +1,6 @@
 package network.thunder.core.helper.blockchain;
 
+import network.thunder.core.etc.BlockWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.bciapi.BlockExplorer;
@@ -95,6 +96,33 @@ public class BlockchainHelperImpl implements BlockchainHelper {
     }
 
     @Override
+    public BlockWrapper getBlock (Sha256Hash hash) {
+        try {
+            int height = blockStore.get(hash).getHeight();
+            Block block = peerGroup.getDownloadPeer().getBlock(hash).get();
+            return new BlockWrapper(block, height);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public List<BlockWrapper> getBlocksSince (int blockHeight) {
+        try {
+            StoredBlock chainHead = blockStore.getChainHead();
+            List<BlockWrapper> blockWrapperList = new ArrayList<>();
+            do {
+                blockWrapperList.add(getBlock(chainHead.getHeader().getHash()));
+                chainHead = blockStore.get(chainHead.getHeader().getPrevBlockHash());
+            } while (chainHead.getHeight() > blockHeight);
+            blockWrapperList.sort((b1, b2) -> (b1.height - b2.height));
+            return blockWrapperList;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public int getHeight () {
         return blockChain.getBestChainHeight();
     }
@@ -121,24 +149,25 @@ public class BlockchainHelperImpl implements BlockchainHelper {
                         if (m instanceof Block || m instanceof Transaction) {
                             if (processedMessages.add(m.getHash())) {
                                 poolExecutor.submit((Runnable) () -> {
-                                    if (m instanceof Block) {
-                                        Iterator<OnBlockCommand> iterator = blockListener.iterator();
-                                        while (iterator.hasNext()) {
-                                            OnBlockCommand onBlockCommand = iterator.next();
-                                            if (onBlockCommand.execute((Block) m)) {
-                                                iterator.remove();
+                                    try {
+                                        if (m instanceof Block) {
+                                            for (OnBlockCommand onBlockCommand : blockListener) {
+                                                Block block = (Block) m;
+                                                onBlockCommand.execute(new BlockWrapper(block, blockStore.get(block.getHash()).getHeight()));
+                                            }
+                                        } else {
+                                            Transaction transaction = (Transaction) m;
+                                            Iterator<OnTxCommand> iterator = txListener.iterator();
+                                            while (iterator.hasNext()) {
+                                                OnTxCommand onTxCommand = iterator.next();
+                                                if (onTxCommand.compare(transaction)) {
+                                                    onTxCommand.execute(transaction);
+                                                    iterator.remove();
+                                                }
                                             }
                                         }
-                                    } else {
-                                        Transaction transaction = (Transaction) m;
-                                        Iterator<OnTxCommand> iterator = txListener.iterator();
-                                        while (iterator.hasNext()) {
-                                            OnTxCommand onTxCommand = iterator.next();
-                                            if (onTxCommand.compare(transaction)) {
-                                                onTxCommand.execute(transaction);
-                                                iterator.remove();
-                                            }
-                                        }
+                                    } catch (Exception e) {
+                                        log.warn("", e);
                                     }
                                 });
                             }

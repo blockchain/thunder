@@ -1,5 +1,6 @@
 package network.thunder.core.helper.blockchain;
 
+import network.thunder.core.etc.BlockWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Block;
@@ -10,6 +11,8 @@ import org.bitcoinj.wallet.WalletTransaction;
 import org.slf4j.Logger;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class MockBlockchainHelper implements BlockchainHelper {
     private static final Logger log = Tools.getLogger();
@@ -26,6 +29,10 @@ public class MockBlockchainHelper implements BlockchainHelper {
 
     int height = 0;
 
+    Map<Sha256Hash, Block> blockHashMap = new ConcurrentHashMap<>();
+    Map<Sha256Hash, Integer> blockHeightMap = new ConcurrentHashMap<>();
+    List<BlockWrapper> blockList = new ArrayList<>();
+
     public MockBlockchainHelper () {
     }
 
@@ -41,6 +48,10 @@ public class MockBlockchainHelper implements BlockchainHelper {
         return broadcastedTransaction;
     }
 
+    public List<BlockWrapper> getBlockList () {
+        return blockList;
+    }
+
     public void mockNewBlock (List<Transaction> transactions, boolean includeOthers) {
         broadcastedTransaction.addAll(transactions);
         List<Transaction> txToBroadcast = new ArrayList<>(transactions);
@@ -52,7 +63,12 @@ public class MockBlockchainHelper implements BlockchainHelper {
         txToBroadcast.forEach(block::addTransaction);
         height++;
         txListener.forEach(listener -> txToBroadcast.forEach(listener::execute));
-        blockListener.forEach(listener -> listener.execute(block));
+
+        BlockWrapper b = new BlockWrapper(block, height);
+        blockList.add(b);
+        blockHeightMap.put(block.getHash(), height);
+        blockHashMap.put(block.getHash(), block);
+        blockListener.forEach(listener -> listener.execute(b));
     }
 
     @Override
@@ -91,6 +107,16 @@ public class MockBlockchainHelper implements BlockchainHelper {
     @Override
     public Transaction getTransaction (Sha256Hash hash) {
         return null;
+    }
+
+    @Override
+    public BlockWrapper getBlock (Sha256Hash hash) {
+        return new BlockWrapper(blockHashMap.get(hash), blockHeightMap.get(hash));
+    }
+
+    @Override
+    public List<BlockWrapper> getBlocksSince (int blockHeight) {
+        return blockList.stream().filter(b -> b.height > blockHeight).sorted((b1, b2) -> (b1.height - b2.height)).collect(Collectors.toList());
     }
 
     @Override

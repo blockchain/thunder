@@ -1,7 +1,7 @@
 package network.thunder.core.helper.blockchain;
 
-import org.bitcoinj.core.Block;
+import network.thunder.core.etc.BlockWrapper;
 
 public interface OnBlockCommand {
-    boolean execute (Block block);
+    void execute (BlockWrapper blockWrapper);
 }
