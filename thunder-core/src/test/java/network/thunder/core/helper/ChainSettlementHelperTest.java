@@ -3,19 +3,25 @@ package network.thunder.core.helper;
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.layer.ContextFactoryImpl;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.channel.ChannelManager;
+import network.thunder.core.communication.layer.high.channel.ChannelManagerImpl;
 import network.thunder.core.communication.layer.high.payments.*;
-import network.thunder.core.communication.processor.implementations.management.ChannelBlockchainWatcher;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.MockChannelManager;
 import network.thunder.core.etc.TestTools;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
+import network.thunder.core.helper.events.LNEventHelper;
+import network.thunder.core.helper.events.LNEventHelperImpl;
+import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.core.*;
 import org.bitcoinj.script.Script;
+import org.bitcoinj.wallet.Wallet;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -44,8 +50,8 @@ public class ChainSettlementHelperTest {
     Channel channel1 = TestTools.getMockChannel(configuration);
     Channel channel2 = TestTools.getMockChannel(configuration);
 
-    ChannelBlockchainWatcher blockchainWatcher1;
-    ChannelBlockchainWatcher blockchainWatcher2;
+    ChannelManager channelManager1;
+    ChannelManager channelManager2;
 
     Set<Script.VerifyFlag> flags = TestTools.getVerifyFlags();
 
@@ -79,15 +85,29 @@ public class ChainSettlementHelperTest {
         dbHandler1.insertChannel(channel1);
         dbHandler2.insertChannel(channel2);
 
-        blockchainWatcher1 = new ChannelBlockchainWatcher(blockchainHelper1, new MockChannelManager(), channel1, dbHandler1, paymentLogic);
-        blockchainWatcher2 = new ChannelBlockchainWatcher(blockchainHelper2, new MockChannelManager(), channel2, dbHandler2, paymentLogic);
+        channelManager1 = new ChannelManagerImpl(
+                new MockContextFactory(
+                        serverObject1,
+                        dbHandler1,
+                        new MockWallet(Constants.getNetwork()),
+                        new LNEventHelperImpl(),
+                        blockchainHelper1),
+                dbHandler1);
 
-        blockchainWatcher1.start();
-        blockchainWatcher2.start();
+        channelManager2 = new ChannelManagerImpl(
+                new MockContextFactory(
+                        serverObject2,
+                        dbHandler2,
+                        new MockWallet(Constants.getNetwork()),
+                        new LNEventHelperImpl(),
+                        blockchainHelper2),
+                dbHandler2);
     }
 
     @Test
     public void correctlyClaimRedeemOverSecondTransaction () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel1, channel2, dbHandler2, false);
         diffBalance1 = -paymentValue;
         diffBalance2 = +paymentValue;
@@ -97,6 +117,8 @@ public class ChainSettlementHelperTest {
 
     @Test
     public void correctlyClaimRefundOverSecondTransaction () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel2, channel1, dbHandler2, true);
         diffBalance1 = 0;
         diffBalance2 = 0;
@@ -106,6 +128,8 @@ public class ChainSettlementHelperTest {
 
     @Test
     public void correctlyClaimRedeemDirectly () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel2, channel1, dbHandler2, false);
         diffBalance1 = +paymentValue;
         diffBalance2 = -paymentValue;
@@ -115,6 +139,8 @@ public class ChainSettlementHelperTest {
 
     @Test
     public void correctlyClaimRefundDirectly () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel1, channel2, dbHandler2, true);
         diffBalance1 = 0;
         diffBalance2 = 0;
@@ -124,6 +150,8 @@ public class ChainSettlementHelperTest {
 
     @Test
     public void cheatedClaimRefundDirectly () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel1, channel2, dbHandler2, true);
         diffBalance1 = -startBalance1;
         diffBalance2 = +startBalance1;
@@ -133,11 +161,51 @@ public class ChainSettlementHelperTest {
 
     @Test
     public void cheatedClaimRedeemDirectly () throws InterruptedException {
+        channelManager1.setup();
+        channelManager2.setup();
         addPayment(channel2, channel1, dbHandler2, true);
         diffBalance1 = -startBalance1;
         diffBalance2 = +startBalance1;
 
         invalidChannelClose();
+    }
+
+    @Test
+    public void cheatedClaimRefundSecond () throws InterruptedException {
+        channelManager1.setup();
+        addPayment(channel1, channel2, dbHandler2, true);
+        diffBalance1 = -startBalance1;
+        diffBalance2 = +startBalance1;
+
+        exchangeChannelSignatures();
+        moveRevocationHashFoward();
+        channelTransaction = paymentLogic.getSignedChannelTransaction(channel1);
+        broadcastSpendingTransaction();
+        broadcastBlocks(1000);
+        channelManager2.setup();
+        broadcastBlocks(3000);
+
+        validateTransactions();
+        validateOutputs();
+    }
+
+    @Test
+    public void cheatedClaimRedeemSecond () throws InterruptedException {
+        channelManager1.setup();
+        addPayment(channel2, channel1, dbHandler1, false);
+        diffBalance1 = -startBalance1;
+        diffBalance2 = +startBalance1;
+
+        exchangeChannelSignatures();
+        moveRevocationHashFoward();
+        channelTransaction = paymentLogic.getSignedChannelTransaction(channel1);
+        broadcastSpendingTransaction();
+        broadcastBlocks(1000);
+        channelManager2.setup();
+        broadcastBlocks(3000);
+
+        validateTransactions();
+        validateOutputs();
     }
 
     private void correctChannelClose () {
@@ -149,7 +217,6 @@ public class ChainSettlementHelperTest {
     private void invalidChannelClose () {
         exchangeChannelSignatures();
         moveRevocationHashFoward();
-
         channelTransaction = paymentLogic.getSignedChannelTransaction(channel1);
         channelClose();
     }
@@ -173,7 +240,7 @@ public class ChainSettlementHelperTest {
     public void broadcastSpendingTransaction () {
         channelTransaction.getInputs().forEach(in -> in.setScriptSig(Tools.getDummyScript()));
 
-        log.debug("ChainSettlementHelperTest.broadcastSpendingTransaction: {1}", channelTransaction);
+        log.debug("ChainSettlementHelperTest.broadcastSpendingTransaction: \n{}", channelTransaction);
 
         channel1.applyNextRevoHash();
         channel2.applyNextRevoHash();
@@ -188,6 +255,9 @@ public class ChainSettlementHelperTest {
     public void broadcastBlocks (int amount) {
         List<Transaction> txList = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
+            if (txList.size() > 0) {
+                log.debug(i + " ----------------------------------------------------------------------");
+            }
             txList.clear();
             txList.addAll(blockchainHelper1.getNewTransactions());
             txList.addAll(blockchainHelper2.getNewTransactions());
@@ -309,6 +379,20 @@ public class ChainSettlementHelperTest {
         channel1.channelSignatures = paymentLogic.getSignatureObject(channel2);
         channel2.channelSignatures = paymentLogic.getSignatureObject(channel1);
 
+    }
+
+    public static class MockContextFactory extends ContextFactoryImpl {
+        BlockchainHelper blockchainHelper;
+
+        public MockContextFactory (ServerObject node, DBHandler dbHandler, Wallet wallet, LNEventHelper eventHelper, BlockchainHelper blockchainHelper) {
+            super(node, dbHandler, wallet, eventHelper);
+            this.blockchainHelper = blockchainHelper;
+        }
+
+        @Override
+        public BlockchainHelper getBlockchainHelper () {
+            return blockchainHelper;
+        }
     }
 
 }

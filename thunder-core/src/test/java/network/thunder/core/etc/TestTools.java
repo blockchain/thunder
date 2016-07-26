@@ -31,7 +31,7 @@ public class TestTools {
 
     public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to) {
         Object message = from.readOutbound();
-        log.debug("Exchanged {1} ", message);
+        log.debug("Exchanged {} ", message);
         if (message != null) {
             to.writeInbound(message);
         }

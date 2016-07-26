@@ -181,7 +181,7 @@ public class LNPaymentHandlerTest {
     public void sendWrongMessageShouldDisconnect () throws NoSuchProviderException, NoSuchAlgorithmException, InterruptedException {
         paymentHelper1.makePayment(getMockPaymentData(serverObject1.pubKeyServer, serverObject2.pubKeyServer));
 
-        Thread.sleep(100);
+        Thread.sleep(500);
         LNPaymentAMessage messageA = (LNPaymentAMessage) channel12.readOutbound();
         channel21.writeInbound(messageA);
         LNPaymentBMessage messageB = (LNPaymentBMessage) channel21.readOutbound();

@@ -190,6 +190,8 @@ public class GossipHandlerTest {
         sendMessage(channel32, channel23);
         sendMessage(channel23, channel32);
 
+        Thread.sleep(200);
+
         sendMessage(channel34, channel43);
         sendMessage(channel43, channel34);
         sendMessage(channel34, channel43);
