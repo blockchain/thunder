@@ -53,6 +53,7 @@ public interface DBHandler {
     Channel getChannel (int id);
     Channel getChannel (Sha256Hash hash);
 
+    List<Channel> getChannel ();
     List<Channel> getChannel (NodeKey nodeKey);
     List<Channel> getOpenChannel (NodeKey nodeKey);
     List<Channel> getOpenChannel ();

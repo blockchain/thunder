@@ -137,6 +137,11 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
+    public List<Channel> getChannel () {
+        return null;
+    }
+
+    @Override
     public List<Channel> getChannel (NodeKey nodeKey) {
         return null;
     }

@@ -246,6 +246,11 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
+    public List<Channel> getChannel () {
+        return new ArrayList<>(channelList);
+    }
+
+    @Override
     public List<Channel> getChannel (NodeKey nodeKey) {
         synchronized (channelList) {
             return channelList.stream().filter(channel1 -> channel1.nodeKeyClient.equals(nodeKey)).collect(Collectors.toList());
@@ -257,7 +262,6 @@ public class InMemoryDBHandler implements DBHandler {
         synchronized (channelList) {
             return getChannel(nodeKey).stream().filter(channel -> channel.phase == OPEN).collect(Collectors.toList());
         }
-
     }
 
     @Override
