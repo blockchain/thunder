@@ -7,16 +7,19 @@ import network.thunder.core.communication.layer.ContextFactory;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.communication.processor.implementations.management.BlockchainWatcher;
-import network.thunder.core.communication.processor.implementations.management.ChannelBlockchainWatcher;
 import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.objects.ChannelSettlement;
+import network.thunder.core.etc.BlockWrapper;
 import network.thunder.core.etc.Tools;
+import network.thunder.core.helper.ChainSettlementHelper;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
-import network.thunder.core.helper.blockchain.ChannelFailureAction;
 import network.thunder.core.helper.callback.ChannelOpenListener;
 import network.thunder.core.helper.callback.Command;
 import network.thunder.core.helper.callback.ConnectionListener;
 import network.thunder.core.helper.callback.ResultCommand;
 import network.thunder.core.helper.callback.results.FailureResult;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 
 import java.util.HashMap;
@@ -26,6 +29,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+
+import static network.thunder.core.communication.layer.high.Channel.Phase.*;
+import static network.thunder.core.communication.layer.high.channel.ChannelOpener.NullChannelOpener;
+import static network.thunder.core.database.objects.ChannelSettlement.SettlementPhase.UNSETTLED;
 
 public class ChannelManagerImpl implements ChannelManager {
     private static final Logger log = Tools.getLogger();
@@ -35,8 +45,10 @@ public class ChannelManagerImpl implements ChannelManager {
     BlockchainHelper blockchainHelper;
     DBHandler dbHandler;
 
-    Map<Channel, BlockchainWatcher> watcherMap = new HashMap<>();
-    Map<Channel, Command> successMap = new HashMap<>();
+    Map<Sha256Hash, BlockchainWatcher> watcherMap = new HashMap<>();
+    Map<Sha256Hash, Command> successMap = new HashMap<>();
+
+    Map<Sha256Hash, Lock> channelLockMap = new ConcurrentHashMap<>();
 
     Map<NodeKey, ChannelOpener> channelOpenerMap = new ConcurrentHashMap<>();
     Map<NodeKey, ChannelCloser> channelCloserMap = new ConcurrentHashMap<>();
@@ -49,37 +61,87 @@ public class ChannelManagerImpl implements ChannelManager {
         this.connectionManager = contextFactory.getConnectionManager();
         this.connectionRegistry = contextFactory.getConnectionRegistry();
 
+    }
+
+    @Override
+    public void setup () {
         scheduler.scheduleAtFixedRate(new ChannelWatcherThread(), 10, 10, TimeUnit.SECONDS);
+        List<Channel> channelList = dbHandler.getChannel();
+
+        //Catch up with existing blocks
+        List<BlockWrapper> blockList = blockchainHelper.getBlocksSince(dbHandler.getLastBlockHeight());
+        List<Lock> lockList = channelList.stream().map(channel -> getChannelLock(channel.getHash())).collect(Collectors.toList());
+        try {
+            lockList.forEach(Lock::lock);
+
+            for (Channel channel : channelList) {
+                for (BlockWrapper blockWrapper : blockList) {
+
+                    if (channel.phase == ESTABLISH_REQUESTED) {
+                        if (blockWrapper.block.getTransactions().stream().map(Transaction::getHash).filter(channel.anchorTxHash::equals).count() > 0) {
+                            channel.anchorBlockHeight = blockWrapper.height;
+                            channel.phase = ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION;
+                        }
+                    }
+
+                    if (channel.phase == ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION) {
+                        int confirmations = blockWrapper.height - channel.anchorBlockHeight;
+                        if (confirmations > channel.minConfirmationAnchor) {
+                            channel.phase = OPEN;
+                        }
+                    }
+
+                    ChainSettlementHelper.onBlock(blockWrapper, dbHandler, channel);
+                    ChainSettlementHelper.onBlockSave(blockWrapper, dbHandler, channel);
+                }
+                //TODO directly take action once synced up through previous blocks if necessary and don't wait for the next block
+            }
+
+        } finally {
+            lockList.forEach(Lock::unlock);
+        }
+
+        blockchainHelper.addBlockListener(blockWrapper -> {
+            for (Channel channel : dbHandler.getChannel()) {
+                getChannelLock(channel.getHash()).lock();
+                if (channel.phase == ESTABLISH_REQUESTED) {
+                    if (channel.minConfirmationAnchor == 0 ||
+                            blockWrapper.block.getTransactions().stream().map(Transaction::getHash).filter(channel.anchorTxHash::equals).count() > 0) {
+                        channel.anchorBlockHeight = blockWrapper.height;
+                        channel.phase = ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION;
+                    }
+                }
+
+                if (channel.phase == ESTABLISH_WAITING_FOR_BLOCKCHAIN_CONFIRMATION) {
+                    int confirmations = blockWrapper.height - channel.anchorBlockHeight;
+                    if (confirmations >= channel.minConfirmationAnchor) {
+                        channel.phase = OPEN;
+                        channelOpenerMap.getOrDefault(channel.nodeKeyClient, new NullChannelOpener()).onAnchorConfirmed(channel.getHash());
+                    }
+                }
+
+                ChainSettlementHelper.onBlock(blockWrapper, dbHandler, channel);
+                ChainSettlementHelper.onBlockSave(blockWrapper, dbHandler, channel);
+                List<ChannelSettlement> settlements = dbHandler.getSettlements(channel.getHash());
+                for (ChannelSettlement settlement : settlements) {
+                    if (settlement.phase == UNSETTLED && settlement.timeToSettle <= blockWrapper.height) {
+                        ChainSettlementHelper.onBlockAction(
+                                blockchainHelper,
+                                channel,
+                                settlement
+                        );
+                    }
+                }
+                getChannelLock(channel.getHash()).unlock();
+            }
+        });
+
     }
 
     @Override
-    public void onExchangeDone (Channel channel, Command successCommand) {
-        BlockchainWatcher blockchainWatcher = new ChannelBlockchainWatcher(blockchainHelper, this, channel);
-        watcherMap.put(channel, blockchainWatcher);
-        successMap.put(channel, successCommand);
-
-        blockchainWatcher.start();
-    }
-
-    @Override
-    public void onAnchorDone (Channel channel) {
-        successMap.get(channel).execute();
-    }
-
-    @Override
-    public void onAnchorFailure (Channel channel, ChannelFailureAction failureAction) {
-        //TODO
-    }
-
-    @Override
-    public boolean queryChannelReady (Channel channel) {
-        //TODO
-        return false;
-    }
-
-    @Override
-    public void onChannelClosed (Channel channel) {
-        //TODO
+    public Lock getChannelLock (Sha256Hash channelHash) {
+        channelLockMap.putIfAbsent(channelHash, new ReentrantLock());
+        return channelLockMap.get(channelHash);
     }
 
     @Override

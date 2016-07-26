@@ -52,7 +52,6 @@ public class Channel {
 
     public int csvDelay;
 
-
     /*
      * Revocation 'master hashes' for creating new revocation hashes for new payments.
      */
@@ -78,6 +77,7 @@ public class Channel {
      */
     public Sha256Hash anchorTxHash;
     public Transaction anchorTx;
+    public int anchorBlockHeight;
     public int minConfirmationAnchor;
     public Transaction spendingTx;
 
@@ -151,7 +151,6 @@ public class Channel {
         channel.revoHashServerNextNext = revoHashServerNextNext == null ? null : revoHashServerNextNext.copy();
 
         channel.paymentList = new ArrayList<>(this.paymentList.stream().map(PaymentData::cloneObject).collect(Collectors.toList()));
-
 
         return channel;
     }

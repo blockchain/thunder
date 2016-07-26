@@ -25,6 +25,7 @@ import network.thunder.core.helper.callback.results.FailureResult;
 import network.thunder.core.helper.callback.results.SuccessResult;
 import network.thunder.core.helper.events.LNEventHelper;
 import network.thunder.core.helper.wallet.WalletHelper;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.slf4j.Logger;
 
@@ -252,6 +253,11 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         sendEstablishMessageA();
     }
 
+    @Override
+    public void onAnchorConfirmed (Sha256Hash channelHash) {
+        this.onEnoughConfirmations();
+    }
+
     private void prepareOpenChannel () {
         this.establishProgress = new EstablishProgress();
         this.establishProgress.channel = new Channel();
@@ -346,8 +352,12 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         dbHandler.insertChannel(establishProgress.channel);
         blockchainHelper.broadcastTransaction(establishProgress.channel.anchorTx);
 
-//        channelManager.onExchangeDone(channel, this::onEnoughConfirmations);
-        this.onEnoughConfirmations();
+        if (establishProgress.channel.minConfirmationAnchor == 0) {
+            //TODO In production one never wants to start the channel without a confirmation
+            establishProgress.channel.phase = OPEN;
+            dbHandler.updateChannel(establishProgress.channel);
+            this.onEnoughConfirmations();
+        }
 
         if (channelOpenListener != null) {
             channelOpenListener.onStart(new SuccessResult());
@@ -355,18 +365,6 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
     }
 
     private void onEnoughConfirmations () {
-        establishProgress.channel.phase = OPEN;
-
-        dbHandler.updateChannelStatus(
-                getNode(),
-                establishProgress.channel.getHash(),
-                serverObject.pubKeyServer,
-                establishProgress.channel,
-                null,
-                null,
-                null,
-                null);
-
         sendNextLayerActiveIfOpenChannelExists();
         eventHelper.onChannelOpened(establishProgress.channel);
 

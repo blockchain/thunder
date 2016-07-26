@@ -6,6 +6,7 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.ChannelSettlement;
+import network.thunder.core.etc.BlockWrapper;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
@@ -14,6 +15,8 @@ import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
 import org.slf4j.Logger;
+
+import java.util.List;
 
 import static network.thunder.core.communication.layer.high.Channel.Phase.CLOSE_ON_CHAIN;
 import static network.thunder.core.database.objects.ChannelSettlement.SettlementPhase.SETTLED;
@@ -24,71 +27,77 @@ public class ChainSettlementHelper {
 
     //Call this method whenever a block contains a transaction which spends the channel transaction
     //This method then creates the respective ChannelSettlement objects and saves them in the database
-    public static void onChannelTransaction (
-            int blockHeight,
-            Transaction transaction,
+    public static void onBlock (
+            BlockWrapper blockWrapper,
             DBHandler dbHandler,
             Channel channel) {
 
-        channel.spendingTx = transaction;
-        channel.phase = CLOSE_ON_CHAIN;
-        channel.timestampForceClose = 0;
-        dbHandler.updateChannel(channel);
+        for (Transaction transaction : blockWrapper.block.getTransactions()) {
+            for (TransactionInput input : transaction.getInputs()) {
+                if (input.getOutpoint().getHash().equals(channel.anchorTxHash) && input.getOutpoint().getIndex() == 0) {
 
-        int version = ScriptTools.getVersionOutOfReturnOutput(transaction.getOutput(transaction.getOutputs().size() - 1).getScriptPubKey());
-        boolean cheated = version < channel.shaChainDepthCurrent;
-        boolean ourTx = transaction.getOutput(1).getAddressFromP2PKHScript(Constants.getNetwork()).equals(channel.addressClient);
+                    channel.spendingTx = transaction;
+                    channel.phase = CLOSE_ON_CHAIN;
+                    channel.timestampForceClose = 0;
+                    dbHandler.updateChannel(channel);
 
-        RevocationHash revocationHash;
-        if (cheated && !ourTx) {
-            revocationHash = dbHandler.retrieveRevocationHash(channel.getHash(), version);
-        } else {
-            if (ourTx) {
-                revocationHash = channel.revoHashServerCurrent;
-            } else {
-                revocationHash = channel.revoHashClientCurrent;
-            }
-        }
+                    int version = ScriptTools.getVersionOutOfReturnOutput(transaction.getOutput(transaction.getOutputs().size() - 1).getScriptPubKey());
+                    boolean cheated = version < channel.shaChainDepthCurrent;
+                    boolean ourTx = transaction.getOutput(1).getAddressFromP2PKHScript(Constants.getNetwork()).equals(channel.addressClient);
 
-        if (cheated && ourTx) {
-            //TODO maybe implement claiming funds after cheating..
-            log.error("We cheated? Can'transaction claim any of these funds now..");
-            return;
-        }
-
-        int i = 0;
-        for (TransactionOutput output : transaction.getOutputs()) {
-            ChannelSettlement settlement = new ChannelSettlement();
-            //We can'transaction claim P2PKH outputs
-            if (output.getAddressFromP2PKHScript(Constants.getNetwork()) == null && output.getValue().value > 0) {
-                settlement.channelTx = transaction;
-                settlement.channelOutput = output;
-                settlement.channelHash = channel.getHash();
-                settlement.cheated = cheated;
-                settlement.ourChannelTx = ourTx;
-                settlement.revocationHash = revocationHash;
-                settlement.phase = UNSETTLED;
-                settlement.channelTxHeight = blockHeight;
-                if (i > 1) {
-                    settlement.paymentData = channel.paymentList.get(i - 2);
-                    settlement.payment = true;
-                }
-                if (settlement.cheated) {
-                    settlement.timeToSettle = 0; //Can claim all cheated outputs directly..
-                } else {
-                    if (settlement.payment) {
-                        if (settlement.paymentData.sending) {
-                            settlement.timeToSettle = settlement.paymentData.timestampRefund;
-                        } else {
-                            settlement.timeToSettle = 0;
-                        }
+                    RevocationHash revocationHash;
+                    if (cheated && !ourTx) {
+                        revocationHash = dbHandler.retrieveRevocationHash(channel.getHash(), version);
                     } else {
-                        settlement.timeToSettle = settlement.channelTxHeight + channel.csvDelay;
+                        if (ourTx) {
+                            revocationHash = channel.revoHashServerCurrent;
+                        } else {
+                            revocationHash = channel.revoHashClientCurrent;
+                        }
+                    }
+
+                    if (cheated && ourTx) {
+                        //TODO maybe implement claiming funds after cheating..
+                        log.error("We cheated? Can'transaction claim any of these funds now..");
+                        return;
+                    }
+
+                    int i = 0;
+                    for (TransactionOutput output : transaction.getOutputs()) {
+                        ChannelSettlement settlement = new ChannelSettlement();
+                        //We can'transaction claim P2PKH outputs
+                        if (output.getAddressFromP2PKHScript(Constants.getNetwork()) == null && output.getValue().value > 0) {
+                            settlement.channelTx = transaction;
+                            settlement.channelOutput = output;
+                            settlement.channelHash = channel.getHash();
+                            settlement.cheated = cheated;
+                            settlement.ourChannelTx = ourTx;
+                            settlement.revocationHash = revocationHash;
+                            settlement.phase = UNSETTLED;
+                            settlement.channelTxHeight = blockWrapper.height;
+                            if (i > 1) {
+                                settlement.paymentData = channel.paymentList.get(i - 2);
+                                settlement.payment = true;
+                            }
+                            if (settlement.cheated) {
+                                settlement.timeToSettle = 0; //Can claim all cheated outputs directly..
+                            } else {
+                                if (settlement.payment) {
+                                    if (settlement.paymentData.sending) {
+                                        settlement.timeToSettle = settlement.paymentData.timestampRefund;
+                                    } else {
+                                        settlement.timeToSettle = 0;
+                                    }
+                                } else {
+                                    settlement.timeToSettle = settlement.channelTxHeight + channel.csvDelay;
+                                }
+                            }
+                            dbHandler.addPaymentSettlement(settlement);
+                        }
+                        i++;
                     }
                 }
-                dbHandler.addPaymentSettlement(settlement);
             }
-            i++;
         }
 
     }
@@ -96,19 +105,21 @@ public class ChainSettlementHelper {
     //Call this method whenever a block comes in for each channel
     //This method only updates the settlement objects based on what we found in this block
     public static void onBlockSave (
-            Block block,
-            int blockHeight,
+            BlockWrapper blockWrapper,
             DBHandler dbHandler,
-            Channel channel,
-            ChannelSettlement settlement
+            Channel channel
     ) {
-
-        for (Transaction transaction : block.getTransactions()) {
-            for (TransactionInput input : transaction.getInputs()) {
-                if (input.getOutpoint().equals(settlement.channelOutput.getOutPointFor())) {
-                    saveSecondTx(channel, transaction, blockHeight, dbHandler, settlement);
-                } else if (settlement.secondOutput != null && input.getOutpoint().equals(settlement.secondOutput.getOutPointFor())) {
-                    saveThirdTx(channel, transaction, blockHeight, dbHandler, settlement);
+        if (channel.spendingTx != null) {
+            List<ChannelSettlement> settlements = dbHandler.getSettlements(channel.getHash());
+            for (ChannelSettlement settlement : settlements) {
+                for (Transaction transaction : blockWrapper.block.getTransactions()) {
+                    for (TransactionInput input : transaction.getInputs()) {
+                        if (input.getOutpoint().equals(settlement.channelOutput.getOutPointFor())) {
+                            saveSecondTx(channel, transaction, blockWrapper.height, dbHandler, settlement);
+                        } else if (settlement.secondOutput != null && input.getOutpoint().equals(settlement.secondOutput.getOutPointFor())) {
+                            saveThirdTx(channel, transaction, blockWrapper.height, dbHandler, settlement);
+                        }
+                    }
                 }
             }
         }

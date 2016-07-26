@@ -267,7 +267,6 @@ public class LNCloseProcessorImpl extends LNCloseProcessor implements ChannelClo
     private void onChannelClose () {
         eventHelper.onChannelClosed(channel);
         callback.execute(new SuccessResult());
-        channelManager.onChannelClosed(channel);
         messageExecutor.closeConnection();
     }
 
