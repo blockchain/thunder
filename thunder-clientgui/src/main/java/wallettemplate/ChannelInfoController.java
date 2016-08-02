@@ -9,6 +9,7 @@ import javafx.scene.layout.HBox;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Coin;
+import org.bitcoinj.core.Sha256Hash;
 
 import java.sql.SQLException;
 import java.util.Date;
@@ -73,7 +74,7 @@ public class ChannelInfoController {
         assert cancelBtn != null : "fx:id=\"cancelBtn\" was not injected: check your FXML file 'channel_info.fxml'.";
         assert cancelBtn1 != null : "fx:id=\"cancelBtn1\" was not injected: check your FXML file 'channel_info.fxml'.";
 
-        Channel channel = Main.dbHandler.getChannel(0);
+        Channel channel = Main.dbHandler.getChannel(Sha256Hash.ZERO_HASH); //TODO
 
         balanceClient.setText(Coin.valueOf(channel.amountClient).toFriendlyString());
         balanceServer.setText(Coin.valueOf(channel.amountServer).toFriendlyString());

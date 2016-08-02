@@ -41,7 +41,6 @@ public interface DBHandler {
 
     //Syncing / Gossiping
     List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex);
-    List<P2PDataObject> getSyncDataIPObjects ();
     void insertIPObjects (List<P2PDataObject> ipList);
     List<PubkeyIPObject> getIPObjects ();
     P2PDataObject getP2PDataObjectByHash (byte[] hash);
@@ -50,7 +49,6 @@ public interface DBHandler {
     void syncDatalist (List<P2PDataObject> dataList);
 
     //Channels
-    Channel getChannel (int id);
     Channel getChannel (Sha256Hash hash);
 
     List<Channel> getChannel ();

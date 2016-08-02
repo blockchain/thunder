@@ -17,10 +17,10 @@ public class SeedDBHandlerMock extends DBHandlerMock {
 
     public void fillWithRandomData () {
         for (int i = 1; i < 1000; i++) {
-            PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
-            PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
+            PubkeyChannelObject pubkeyChannelObject = TestTools.getRandomObjectChannelObject();
+            PubkeyIPObject pubkeyIPObject1 = TestTools.getRandomObjectIpObject();
 
-            pubkeyIPObject1.pubkey = pubkeyChannelObject.pubkeyA;
+            pubkeyIPObject1.pubkey = pubkeyChannelObject.nodeKeyA;
 
             pubkeyIPObjectArrayList.add(pubkeyIPObject1);
         }

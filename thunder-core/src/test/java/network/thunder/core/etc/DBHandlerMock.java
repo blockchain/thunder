@@ -90,10 +90,6 @@ public class DBHandlerMock implements DBHandler {
         return null;
     }
 
-    @Override
-    public List<P2PDataObject> getSyncDataIPObjects () {
-        return null;
-    }
 
     @Override
     public void insertIPObjects (List<P2PDataObject> ipList) {
@@ -125,11 +121,6 @@ public class DBHandlerMock implements DBHandler {
 
     }
 
-
-    @Override
-    public Channel getChannel (int id) {
-        return null;
-    }
 
     @Override
     public Channel getChannel (Sha256Hash hash) {

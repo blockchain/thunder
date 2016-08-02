@@ -42,7 +42,6 @@ public class Channel {
 
     public int id;
     public NodeKey nodeKeyClient;
-    private Sha256Hash hash;
     /*
      * Pubkeys for the anchor transactions
      * The 'A' ones will receive payments in case we want to exit the anchor prematurely.
@@ -83,6 +82,9 @@ public class Channel {
 
     public ChannelSignatures channelSignatures = new ChannelSignatures();
 
+    /*
+     * Data used to construct the channel transactions
+     */
     public long amountClient;
     public long amountServer;
 
@@ -126,7 +128,6 @@ public class Channel {
         channel.anchorTx = this.anchorTx == null ? null : new Transaction(Constants.getNetwork(), this.anchorTx.bitcoinSerialize());
         channel.anchorTxHash = this.anchorTxHash;
         channel.closingSignatures = closingSignatures == null ? null : new ArrayList<>(this.closingSignatures);
-        channel.hash = this.hash;
         channel.id = this.id;
         channel.keyClient = this.keyClient;
         channel.keyServer = this.keyServer;
@@ -275,6 +276,8 @@ public class Channel {
         return getAnchorScriptOutput();
     }
 
+    public Sha256Hash hash;
+
     public Sha256Hash getHash () {
         if (hash != null) {
             return hash;
@@ -288,7 +291,7 @@ public class Channel {
         ByteBuffer byteBuffer = ByteBuffer.allocate(list.get(0).length + list.get(1).length);
         byteBuffer.put(list.get(0));
         byteBuffer.put(list.get(1));
-        hash = Sha256Hash.of(byteBuffer.array());
+        this.hash = Sha256Hash.of(byteBuffer.array());
         return hash;
     }
 

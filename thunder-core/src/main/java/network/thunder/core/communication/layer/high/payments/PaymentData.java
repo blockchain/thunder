@@ -18,8 +18,10 @@ package network.thunder.core.communication.layer.high.payments;/*
  */
 
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.database.objects.PaymentStatus;
 
 public class PaymentData implements Cloneable {
+    public int paymentId;
 
     public boolean sending;
     public long amount;
@@ -27,6 +29,9 @@ public class PaymentData implements Cloneable {
     public PaymentSecret secret;
     public int timestampOpen;
     public int timestampRefund; //timestamp at which the other party will consider this payment refunded
+    public int timestampSettled;
+
+    public PaymentStatus status;
 
     public OnionObject onionObject;
 

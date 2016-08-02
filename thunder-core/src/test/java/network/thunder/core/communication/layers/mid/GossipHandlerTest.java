@@ -10,8 +10,8 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.Gossi
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.GossipProcessorImpl;
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.*;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
-import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.persistent.SQLDBHandler;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.TestTools;
@@ -41,10 +41,10 @@ public class GossipHandlerTest {
     ServerObject serverObject3 = new ServerObject();
     ServerObject serverObject4 = new ServerObject();
 
-    InMemoryDBHandler dbHandler1 = new InMemoryDBHandler();
-    InMemoryDBHandler dbHandler2 = new InMemoryDBHandler();
-    InMemoryDBHandler dbHandler3 = new InMemoryDBHandler();
-    InMemoryDBHandler dbHandler4 = new InMemoryDBHandler();
+    DBHandler dbHandler1 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
+    DBHandler dbHandler2 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
+    DBHandler dbHandler3 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
+    DBHandler dbHandler4 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
 
     ContextFactory contextFactory1 = new MockContextFactory(serverObject1, dbHandler1);
     ContextFactory contextFactory2 = new MockContextFactory(serverObject2, dbHandler2);
@@ -191,16 +191,27 @@ public class GossipHandlerTest {
         sendMessage(channel32, channel23);
         sendMessage(channel23, channel32);
 
-        Thread.sleep(200);
+        Thread.sleep(1000);
 
         sendMessage(channel34, channel43);
         sendMessage(channel43, channel34);
         sendMessage(channel34, channel43);
 
-        assertTrue(dbHandler2.totalList.containsAll(dataList));
-        assertTrue(dbHandler3.totalList.containsAll(dataList));
-        assertTrue(dbHandler4.totalList.containsAll(dataList));
+        List<P2PDataObject> l = getTotalSyncData(dbHandler2);
+
+
+        assertTrue(getTotalSyncData(dbHandler2).containsAll(dataList));
+        assertTrue(getTotalSyncData(dbHandler3).containsAll(dataList));
+        assertTrue(getTotalSyncData(dbHandler4).containsAll(dataList));
         after();
+    }
+
+    private List<P2PDataObject> getTotalSyncData(DBHandler dbHandler) {
+        List<P2PDataObject> list = new ArrayList<>();
+        for(int i=0; i<=P2PDataObject.NUMBER_OF_FRAGMENTS; ++i) {
+            list.addAll(dbHandler.getSyncDataByFragmentIndex(i));
+        }
+        return list;
     }
 
     private void clearOutput () {

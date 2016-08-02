@@ -186,4 +186,13 @@ public class TestTools {
 
         return list;
     }
+
+    public static DataSource getH2InMemoryDataSource () {
+        String randomDatabaseName = Tools.bytesToHex(Tools.getRandomByte(6));
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:"+randomDatabaseName+";DB_CLOSE_DELAY=-1;MODE=MySQL;ALIAS_COLUMN_NAME=TRUE");
+        ds.setUser("sa");
+        ds.setPassword("sa");
+        return ds;
+    }
 }
