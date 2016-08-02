@@ -3,7 +3,7 @@ package network.thunder.core.etc;
 import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.inmemory.InMemoryDBHandler;
 import network.thunder.core.helper.wallet.MockWallet;
 import org.bitcoinj.wallet.Wallet;
 

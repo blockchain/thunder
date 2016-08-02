@@ -10,7 +10,7 @@ import network.thunder.core.communication.layer.high.channel.ChannelManager;
 import network.thunder.core.communication.layer.high.channel.ChannelManagerImpl;
 import network.thunder.core.communication.layer.high.payments.*;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.inmemory.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.TestTools;
 import network.thunder.core.etc.Tools;

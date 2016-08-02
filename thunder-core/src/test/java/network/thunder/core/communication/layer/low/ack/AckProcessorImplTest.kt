@@ -9,7 +9,7 @@ import network.thunder.core.communication.layer.ProcessorHandler
 import network.thunder.core.communication.layer.high.AckMessageImpl
 import network.thunder.core.communication.layer.high.AckableMessage
 import network.thunder.core.database.DBHandler
-import network.thunder.core.database.InMemoryDBHandler
+import network.thunder.core.database.inmemory.InMemoryDBHandler
 import network.thunder.core.etc.Constants
 import network.thunder.core.helper.events.LNEventHelperImpl
 import network.thunder.core.helper.wallet.MockWallet

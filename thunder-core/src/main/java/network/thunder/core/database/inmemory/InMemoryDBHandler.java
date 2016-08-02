@@ -1,4 +1,4 @@
-package network.thunder.core.database;
+package network.thunder.core.database.inmemory;
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.NodeKey;
@@ -18,6 +18,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Channe
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.database.objects.PaymentStatus;
 import network.thunder.core.database.objects.PaymentWrapper;
@@ -33,8 +34,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static network.thunder.core.communication.layer.DIRECTION.RECEIVED;
-import static network.thunder.core.communication.layer.DIRECTION.SENT;
 import static network.thunder.core.communication.layer.high.Channel.Phase.OPEN;
 import static network.thunder.core.database.objects.PaymentStatus.*;
 
@@ -222,18 +221,6 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public Channel getChannel (int id) {
-        synchronized (channelList) {
-            Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.id == id).findAny();
-            if (optional.isPresent()) {
-                return optional.get();
-            } else {
-                throw new RuntimeException("Channel not found..");
-            }
-        }
-    }
-
-    @Override
     public Channel getChannel (Sha256Hash hash) {
         synchronized (channelList) {
             Optional<Channel> optional = channelList.stream().filter(channel1 -> channel1.getHash().equals(hash)).findAny();
@@ -280,7 +267,7 @@ public class InMemoryDBHandler implements DBHandler {
             setMessageProcessed(nodeKey, request);
         }
         if (response != null) {
-            long messageId = saveMessage(nodeKey, response, SENT);
+            long messageId = saveMessage(nodeKey, response, DIRECTION.SENT);
             response.setMessageNumber(messageId);
             if (request != null) {
                 linkResponse(nodeKey, request.getMessageNumber(), response.getMessageNumber());
@@ -303,6 +290,9 @@ public class InMemoryDBHandler implements DBHandler {
                     if (c.getHash().equals(channel.getHash())) {
                         iterator.remove();
                         channelList.add(channel);
+                        System.out.println("InMemoryDBHandler.updateChannelStatus");
+                        System.out.println("old one = " + c);
+                        System.out.println("new one = " + channel);
                         updated = true;
                         break;
                     }
@@ -546,7 +536,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void setMessageProcessed (NodeKey nodeKey, NumberedMessage message) {
-        saveMessage(nodeKey, message, RECEIVED);
+        saveMessage(nodeKey, message, DIRECTION.RECEIVED);
     }
 
     @Override
@@ -554,7 +544,7 @@ public class InMemoryDBHandler implements DBHandler {
         List<MessageWrapper> messageWrappers = messageList.get(nodeKey);
         if (messageWrappers != null) {
             Optional<Long> o = messageWrappers.stream()
-                    .filter(w -> w.getDirection() == RECEIVED)
+                    .filter(w -> w.getDirection() == DIRECTION.RECEIVED)
                     .filter(w -> w.getMessage() instanceof NumberedMessage)
                     .map(MessageWrapper::getMessage)
                     .map(m -> (NumberedMessage) m)
@@ -570,7 +560,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public synchronized long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
-        if (direction == SENT) {
+        if (direction == DIRECTION.SENT) {
             Long i = messageCountList.get(nodeKey);
             if (i == null) {
                 i = 1L;
@@ -664,11 +654,6 @@ public class InMemoryDBHandler implements DBHandler {
         fragmentToListMap.get(fragmentIndex).removeIf(
                 p -> (Tools.currentTime() - p.getTimestamp() > P2PDataObject.MAXIMUM_AGE_SYNC_DATA));
         return fragmentToListMap.get(fragmentIndex);
-    }
-
-    @Override
-    public List<P2PDataObject> getSyncDataIPObjects () {
-        return null;
     }
 
     @Override

@@ -13,7 +13,7 @@ import network.thunder.core.communication.layer.high.channel.close.messages.LNCl
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.inmemory.InMemoryDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.MockBroadcastHelper;
 import network.thunder.core.etc.MockLNEventHelper;

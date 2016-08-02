@@ -3,7 +3,7 @@ package network.thunder.core.etc;
 import network.thunder.core.communication.LNConfiguration;
 import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
-import network.thunder.core.database.InMemoryDBHandler;
+import network.thunder.core.database.inmemory.InMemoryDBHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,6 @@ public class LNPaymentDBHandlerMock extends InMemoryDBHandler {
 
     LNConfiguration configuration = new LNConfiguration();
 
-    @Override
     public Channel getChannel (int id) {
         Channel channel = new Channel();
         channel.id = id;
