@@ -3,67 +3,36 @@ package network.thunder.core.communication.layer.middle.broadcasting.types;
 import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 
 public class PubkeyChannelObject extends P2PDataObject {
 
-    public byte[] pubkeyB;
-    public byte[] pubkeyB1;
-    public byte[] pubkeyA;
-    public byte[] pubkeyA1;
+    public byte[] nodeKeyA;
+    public byte[] channelKeyA;
+
+    public byte[] nodeKeyB;
+    public byte[] channelKeyB;
+
     public byte[] txidAnchor;
+    public int timestamp;
+
     public byte[] signatureA;
     public byte[] signatureB;
 
-    public int timestamp;
-
     public PubkeyChannelObject () {
-    }
-
-    public PubkeyChannelObject (ResultSet set) throws SQLException {
-        this.pubkeyB1 = set.getBytes("pubkey_b1");
-        this.pubkeyA1 = set.getBytes("pubkey_a1");
-        this.txidAnchor = set.getBytes("txid_anchor");
-        this.signatureA = set.getBytes("signature_a");
-        this.signatureB = set.getBytes("signature_b");
-
-        this.pubkeyA = set.getBytes("nodes_a_table.pubkey");
-        this.pubkeyB = set.getBytes("nodes_b_table.pubkey");
-    }
-
-    public static PubkeyChannelObject getRandomObject () {
-        PubkeyChannelObject obj = new PubkeyChannelObject();
-
-
-        obj.pubkeyB = Tools.getRandomByte(33);
-        obj.pubkeyB1 = Tools.getRandomByte(33);
-
-        obj.pubkeyA = Tools.getRandomByte(33);
-        obj.pubkeyA1 = Tools.getRandomByte(33);
-
-        obj.txidAnchor = Tools.getRandomByte(32);
-
-        obj.signatureA = Tools.getRandomByte(65);
-        obj.signatureB = Tools.getRandomByte(65);
-
-        obj.timestamp = Tools.currentTime();
-
-        return obj;
     }
 
     @Override
     public byte[] getData () {
         //TODO: Have some proper summary here..
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + pubkeyB.length + pubkeyB1.length + pubkeyA
-                .length + pubkeyA1.length + txidAnchor.length);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + nodeKeyB.length + channelKeyB.length + nodeKeyA
+                .length + channelKeyA.length + txidAnchor.length);
 
         byteBuffer.putInt(timestamp);
-        byteBuffer.put(pubkeyB);
-        byteBuffer.put(pubkeyB1);
-        byteBuffer.put(pubkeyA);
-        byteBuffer.put(pubkeyA1);
+        byteBuffer.put(nodeKeyB);
+        byteBuffer.put(channelKeyB);
+        byteBuffer.put(nodeKeyA);
+        byteBuffer.put(channelKeyA);
         byteBuffer.put(txidAnchor);
 
         return byteBuffer.array();
@@ -95,8 +64,8 @@ public class PubkeyChannelObject extends P2PDataObject {
     public boolean isSimilarObject (P2PDataObject object) {
         if (object instanceof PubkeyChannelObject) {
             PubkeyChannelObject channel = (PubkeyChannelObject) object;
-            return (Arrays.equals(channel.pubkeyA, this.pubkeyA) && Arrays.equals(channel.pubkeyB, this.pubkeyB)) ||
-                    (Arrays.equals(channel.pubkeyA, this.pubkeyB) && Arrays.equals(channel.pubkeyB, this.pubkeyA));
+            return (Arrays.equals(channel.nodeKeyA, this.nodeKeyA) && Arrays.equals(channel.nodeKeyB, this.nodeKeyB)) ||
+                    (Arrays.equals(channel.nodeKeyA, this.nodeKeyB) && Arrays.equals(channel.nodeKeyB, this.nodeKeyA));
 
         }
         return false;
@@ -116,16 +85,16 @@ public class PubkeyChannelObject extends P2PDataObject {
         if (timestamp != that.timestamp) {
             return false;
         }
-        if (!Arrays.equals(pubkeyB, that.pubkeyB)) {
+        if (!Arrays.equals(nodeKeyB, that.nodeKeyB)) {
             return false;
         }
-        if (!Arrays.equals(pubkeyB1, that.pubkeyB1)) {
+        if (!Arrays.equals(channelKeyB, that.channelKeyB)) {
             return false;
         }
-        if (!Arrays.equals(pubkeyA, that.pubkeyA)) {
+        if (!Arrays.equals(nodeKeyA, that.nodeKeyA)) {
             return false;
         }
-        if (!Arrays.equals(pubkeyA1, that.pubkeyA1)) {
+        if (!Arrays.equals(channelKeyA, that.channelKeyA)) {
             return false;
         }
         return Arrays.equals(txidAnchor, that.txidAnchor);
@@ -134,10 +103,10 @@ public class PubkeyChannelObject extends P2PDataObject {
 
     @Override
     public int hashCode () {
-        int result = Arrays.hashCode(pubkeyB);
-        result = 31 * result + Arrays.hashCode(pubkeyB1);
-        result = 31 * result + Arrays.hashCode(pubkeyA);
-        result = 31 * result + Arrays.hashCode(pubkeyA1);
+        int result = Arrays.hashCode(nodeKeyB);
+        result = 31 * result + Arrays.hashCode(channelKeyB);
+        result = 31 * result + Arrays.hashCode(nodeKeyA);
+        result = 31 * result + Arrays.hashCode(channelKeyA);
         result = 31 * result + Arrays.hashCode(txidAnchor);
         result = 31 * result + timestamp;
         return result;

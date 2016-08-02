@@ -14,6 +14,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import network.thunder.core.database.InMemoryDBHandler;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
+import network.thunder.core.etc.TestTools;
 import network.thunder.core.helper.events.LNEventHelper;
 import org.junit.Before;
 import org.junit.Test;
@@ -158,7 +159,7 @@ public class GossipHandlerTest {
         }
         List<P2PDataObject> dataList = new ArrayList<>();
         for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 1; i++) {
-            dataList.add(PubkeyChannelObject.getRandomObject());
+            dataList.add(TestTools.getRandomObjectIpObject());
         }
 
         List<P2PDataObject> dataList1 = dataList.subList(0, GossipProcessor.OBJECT_AMOUNT_TO_SEND - 10);
@@ -179,8 +180,8 @@ public class GossipHandlerTest {
     @Test
     public void shouldSendDataToNextPeer () throws Exception {
         List<P2PDataObject> dataList = new ArrayList<>();
-        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 100; i++) {
-            dataList.add(PubkeyChannelObject.getRandomObject());
+        for (int i = 0; i < GossipProcessor.OBJECT_AMOUNT_TO_SEND + 5; i++) {
+            dataList.add(TestTools.getRandomObjectIpObject());
         }
         GossipSendMessage sendDataObject = messageFactory.getGossipSendMessage(dataList);
 

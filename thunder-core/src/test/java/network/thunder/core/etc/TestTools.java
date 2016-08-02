@@ -6,16 +6,17 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
+import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
+import org.h2.jdbcx.JdbcDataSource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import javax.sql.DataSource;
+import java.util.*;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertThat;
@@ -83,7 +84,23 @@ public class TestTools {
         return channel;
     }
 
-    public static ChannelStatusObject getRandomObject () {
+    public static PubkeyIPObject getRandomObjectIpObject () {
+        PubkeyIPObject obj = new PubkeyIPObject();
+
+        Random random = new Random();
+
+        obj.hostname = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
+
+        obj.pubkey = Tools.getRandomByte(33);
+        obj.timestamp = Tools.currentTime();
+        obj.port = 8992;
+
+        obj.signature = Tools.getRandomByte(65);
+
+        return obj;
+    }
+
+    public static ChannelStatusObject getRandomObjectStatusObject () {
         ChannelStatusObject obj = new ChannelStatusObject();
 
         obj.pubkeyA = Tools.getRandomByte(33);
@@ -99,6 +116,26 @@ public class TestTools {
 
         obj.feeA = new Fee(1, 1);
         obj.feeB = new Fee(1, 1);
+
+        return obj;
+    }
+
+    public static PubkeyChannelObject getRandomObjectChannelObject () {
+        PubkeyChannelObject obj = new PubkeyChannelObject();
+
+
+        obj.nodeKeyB = Tools.getRandomByte(33);
+        obj.channelKeyB = Tools.getRandomByte(33);
+
+        obj.nodeKeyA = Tools.getRandomByte(33);
+        obj.channelKeyA = Tools.getRandomByte(33);
+
+        obj.txidAnchor = Tools.getRandomByte(32);
+
+        obj.signatureA = Tools.getRandomByte(65);
+        obj.signatureB = Tools.getRandomByte(65);
+
+        obj.timestamp = Tools.currentTime();
 
         return obj;
     }

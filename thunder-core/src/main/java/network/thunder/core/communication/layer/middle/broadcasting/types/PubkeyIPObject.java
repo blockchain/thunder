@@ -9,8 +9,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.*;
 
 public class PubkeyIPObject extends P2PDataObject {
@@ -20,33 +18,6 @@ public class PubkeyIPObject extends P2PDataObject {
     public byte[] pubkey;
     public byte[] signature;
     public int timestamp;
-
-    public PubkeyIPObject () {
-    }
-
-    public PubkeyIPObject (ResultSet set) throws SQLException {
-        this.hostname = set.getString("host");
-        this.port = set.getInt("port");
-        this.timestamp = set.getInt("timestamp");
-        this.signature = set.getBytes("signature");
-        this.pubkey = set.getBytes("pubkey");
-    }
-
-    public static PubkeyIPObject getRandomObject () {
-        PubkeyIPObject obj = new PubkeyIPObject();
-
-        Random random = new Random();
-
-        obj.hostname = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
-
-        obj.pubkey = Tools.getRandomByte(33);
-        obj.timestamp = Tools.currentTime();
-        obj.port = 8992;
-
-        obj.signature = Tools.getRandomByte(65);
-
-        return obj;
-    }
 
     @Override
     public boolean equals (Object o) {

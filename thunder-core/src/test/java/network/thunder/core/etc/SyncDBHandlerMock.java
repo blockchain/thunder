@@ -28,16 +28,16 @@ public class SyncDBHandlerMock extends DBHandlerMock {
             fragmentToListMap.put(i, new ArrayList<>());
         }
         for (int i = 1; i < 1000; i++) {
-            PubkeyChannelObject pubkeyChannelObject = PubkeyChannelObject.getRandomObject();
-            PubkeyIPObject pubkeyIPObject1 = PubkeyIPObject.getRandomObject();
-            PubkeyIPObject pubkeyIPObject2 = PubkeyIPObject.getRandomObject();
-            ChannelStatusObject channelStatusObject = TestTools.getRandomObject();
+            PubkeyChannelObject pubkeyChannelObject = TestTools.getRandomObjectChannelObject();
+            PubkeyIPObject pubkeyIPObject1 = TestTools.getRandomObjectIpObject();
+            PubkeyIPObject pubkeyIPObject2 = TestTools.getRandomObjectIpObject();
+            ChannelStatusObject channelStatusObject = TestTools.getRandomObjectStatusObject();
 
-            pubkeyIPObject1.pubkey = pubkeyChannelObject.pubkeyA;
-            pubkeyIPObject2.pubkey = pubkeyChannelObject.pubkeyB;
+            pubkeyIPObject1.pubkey = pubkeyChannelObject.nodeKeyA;
+            pubkeyIPObject2.pubkey = pubkeyChannelObject.nodeKeyB;
 
-            channelStatusObject.pubkeyA = pubkeyChannelObject.pubkeyA;
-            channelStatusObject.pubkeyB = pubkeyChannelObject.pubkeyB;
+            channelStatusObject.pubkeyA = pubkeyChannelObject.nodeKeyA;
+            channelStatusObject.pubkeyB = pubkeyChannelObject.nodeKeyB;
 
             pubkeyChannelObjectArrayList.add(pubkeyChannelObject);
             pubkeyIPObjectArrayList.add(pubkeyIPObject1);
@@ -59,15 +59,6 @@ public class SyncDBHandlerMock extends DBHandlerMock {
     @Override
     public List<P2PDataObject> getSyncDataByFragmentIndex (int fragmentIndex) {
         return fragmentToListMap.get(fragmentIndex);
-    }
-
-    @Override
-    public List<P2PDataObject> getSyncDataIPObjects () {
-        List<P2PDataObject> ipList = new ArrayList<>();
-        for (int i = 0; i < 100; i++) {
-            ipList.add(pubkeyIPObjectArrayList.get(i));
-        }
-        return ipList;
     }
 
     @Override

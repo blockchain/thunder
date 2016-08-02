@@ -22,8 +22,6 @@ package network.thunder.core.communication.layer.high;
 import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Arrays;
 
 import static network.thunder.core.etc.Tools.hashSecret;
@@ -53,12 +51,6 @@ public class RevocationHash {
         this.secret = hashSecret(byteBuffer.array());
         this.secretHash = hashSecret(this.secret);
 
-    }
-
-    public RevocationHash (ResultSet set) throws SQLException {
-        this.secretHash = set.getBytes("secretHash");
-        this.secret = set.getBytes("secret");
-        this.index = set.getInt("index");
     }
 
     public RevocationHash copy () {

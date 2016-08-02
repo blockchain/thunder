@@ -418,10 +418,10 @@ public class LNEstablishProcessorImpl extends LNEstablishProcessor implements Ch
         }
         Channel channel = establishProgress.channel;
         PubkeyChannelObject channelObject = new PubkeyChannelObject();
-        channelObject.pubkeyA = serverObject.pubKeyServer.getPubKey();
-        channelObject.pubkeyB = node.nodeKey.getPubKey();
-        channelObject.pubkeyA1 = channel.keyServer.getPubKey();
-        channelObject.pubkeyB1 = channel.keyClient.getPubKey();
+        channelObject.nodeKeyA = serverObject.pubKeyServer.getPubKey();
+        channelObject.nodeKeyB = node.nodeKey.getPubKey();
+        channelObject.channelKeyA = channel.keyServer.getPubKey();
+        channelObject.channelKeyB = channel.keyClient.getPubKey();
         channelObject.timestamp = Tools.currentTime();
         channelObject.txidAnchor = channel.anchorTxHash.getBytes();
 
