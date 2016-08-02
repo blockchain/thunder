@@ -11,6 +11,9 @@ import network.thunder.core.communication.layer.MessageWrapper
 import network.thunder.core.communication.layer.high.*
 import network.thunder.core.communication.layer.high.payments.LNPaymentLogic.SIDE.SERVER
 import network.thunder.core.communication.layer.high.payments.messages.*
+import network.thunder.core.communication.layer.high.payments.updates.PaymentNew
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRedeem
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRefund
 import network.thunder.core.communication.processor.exceptions.LNPaymentException
 import network.thunder.core.database.DBHandler
 import network.thunder.core.etc.Constants
@@ -147,15 +150,18 @@ class LNPaymentProcessorImpl(
 
                 sendMessage(response)
 
-                if (newUpdate != null) {
-                    for (paymentData in newUpdate.newPayments.filter { !it.sending }) {
-                        eventHelper.onPaymentAdded(node.nodeKey, paymentData);
+                if (newUpdate != null && newChannel != null) {
+                    for(i in newUpdate.newPayments.size..0) {
+                        val paymentData = newChannel.paymentList.get(newChannel.paymentList.size - i);
+                        if(paymentData.sending) {
+                            eventHelper.onPaymentAdded(node.nodeKey, paymentData);
+                        }
                     }
                     for (paymentData in newUpdate.redeemedPayments) {
-                        eventHelper.onPaymentRedeemed(paymentData);
+                        eventHelper.onPaymentRedeemed(channel.paymentList.get(paymentData.paymentIndex));
                     }
                     for (paymentData in newUpdate.refundedPayments) {
-                        eventHelper.onPaymentRefunded(paymentData);
+                        eventHelper.onPaymentRefunded(channel.paymentList.get(paymentData.paymentIndex));
                     }
                 }
 
@@ -187,8 +193,14 @@ class LNPaymentProcessorImpl(
             return null;
         }
 
+        val paymentsRefundMapped = paymentsRefund.map { it.paymentId }.map { id -> state.channel.paymentList.indexOfFirst { it.paymentId == id } }.map { PaymentRefund(it) }
+        val paymentsRedeemMapped = paymentsRedeem.map { payment -> {
+            val id = state.channel.paymentList.indexOfFirst { it.paymentId == payment.paymentId }
+            PaymentRedeem(payment.secret, id);
+        } }.map {it.invoke()}
+
         if (paymentsNew.size + paymentsRedeem.size + paymentsRefund.size > 0) {
-            val messageA = createMessageA(state, paymentsNew, paymentsRefund, paymentsRedeem)
+            val messageA = createMessageA(state, paymentsNew.map { it.paymentNew }, paymentsRefundMapped, paymentsRedeemMapped)
             dbHandler.saveMessage(node.nodeKey, messageA, SENT)
             return messageA;
         } else {
@@ -197,9 +209,9 @@ class LNPaymentProcessorImpl(
     }
 
     fun createMessageA(state: PaymentState,
-                       paymentsNew: List<PaymentData>,
-                       paymentsRefund: List<PaymentData>,
-                       paymentsRedeem: List<PaymentData>): LNPaymentAMessage {
+                       paymentsNew: List<PaymentNew>,
+                       paymentsRefund: List<PaymentRefund>,
+                       paymentsRedeem: List<PaymentRedeem>): LNPaymentAMessage {
 
         //Let's add all redeems and refunds first, since they will always succeed
         var channel = state.channel
@@ -207,20 +219,20 @@ class LNPaymentProcessorImpl(
         val update = ChannelUpdate()
         update.applyConfiguration(serverObject.configuration)
         for (data in paymentsRefund) {
-            if (statusTemp.paymentList.remove(data)) {
-                statusTemp.amountClient += data.amount
+            val paymentData = channel.paymentList.get(data.paymentIndex);
+            if (paymentData != null) {
+                statusTemp.amountClient += paymentData.amount
                 update.refundedPayments.add(data)
-                data.sending = false;
             } else {
                 throw RuntimeException("Want to refund a payment not included in current statusSender..");
             }
         }
 
         for (data in paymentsRedeem) {
-            if (statusTemp.paymentList.remove(data)) {
-                statusTemp.amountServer += data.amount
+            val paymentData = channel.paymentList.get(data.paymentIndex);
+            if (paymentData != null) {
+                statusTemp.amountServer += paymentData.amount
                 update.redeemedPayments.add(data)
-                data.sending = false;
             } else {
                 throw RuntimeException("Want to redeem a payment not included in current statusSender..");
             }
@@ -229,8 +241,6 @@ class LNPaymentProcessorImpl(
         //Okay, now we can try to squeeze in as many payments as possible
         for (data in paymentsNew) {
             if (statusTemp.amountServer > data.amount) {
-                data.timestampOpen = Tools.currentTime()
-                data.sending = true;
                 statusTemp.amountServer -= data.amount
                 update.newPayments.add(data)
             }
@@ -240,8 +250,8 @@ class LNPaymentProcessorImpl(
         }
         val status = channel.copy()
         val statusT = channel.copy()
-        status.applyUpdate(update)
-        statusT.applyUpdate(update)
+        status.applyUpdate(update, true)
+        statusT.applyUpdate(update, true)
         statusT.applyNextRevoHash()
 
         log.debug("Sending update: ")
@@ -280,7 +290,7 @@ class LNPaymentProcessorImpl(
                 }
             }
         }
-        paymentLogic.checkUpdate(serverObject.configuration, state.channel, message.channelUpdate.cloneReversed)
+        paymentLogic.checkUpdate(serverObject.configuration, state.channel, message.channelUpdate)
 
         log.debug("Receiving update:")
         log.debug("Old statusSender: " + state.channel)
@@ -328,7 +338,7 @@ class LNPaymentProcessorImpl(
         channel.applyNextRevoHash()
         channel.applyNextNextRevoHash()
 
-        return PaymentResponse(channel, messageA.channelUpdate.cloneReversed, message.oldRevocation, null)
+        return PaymentResponse(channel, messageA.channelUpdate, message.oldRevocation, null)
     }
 
     fun addNewRevocationToMessage(channel: Channel, message: LNRevokeNewMessage) {
@@ -430,11 +440,7 @@ class LNPaymentProcessorImpl(
         }
 
         if (messageA.message is LNPaymentAMessage) {
-            if (messageA.direction == RECEIVED) {
-                channel.applyUpdate(messageA.message.channelUpdate.cloneReversed)
-            } else {
-                channel.applyUpdate(messageA.message.channelUpdate)
-            }
+            channel.applyUpdate(messageA.message.channelUpdate, messageA.direction != RECEIVED)
         }
 
         channel.timestampForceClose = channel.paymentList.map { it.timestampRefund }.min() ?: 0

@@ -14,6 +14,8 @@ import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.communication.layer.high.payments.messages.PeeledOnion;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRedeem;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRefund;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
@@ -304,7 +306,8 @@ public class InMemoryDBHandler implements DBHandler {
         }
         synchronized (payments) {
             if (update != null) {
-                for (PaymentData payment : update.newPayments) {
+                for (int i=update.newPayments.size(); i>0; --i) {
+                    PaymentData payment = channel.paymentList.get(i);
                     PaymentWrapper paymentWrapper;
                     if (!payment.sending) {
                         paymentWrapper = new PaymentWrapper();
@@ -340,7 +343,7 @@ public class InMemoryDBHandler implements DBHandler {
                     }
                 }
 
-                for (PaymentData payment : update.redeemedPayments) {
+                for (PaymentRedeem payment : update.redeemedPayments) {
                     addPaymentSecret(payment.secret);
                     PaymentWrapper paymentWrapper = getPayment(payment.secret);
                     if (paymentWrapper == null) {
@@ -358,20 +361,21 @@ public class InMemoryDBHandler implements DBHandler {
                     }
                 }
 
-                for (PaymentData payment : update.refundedPayments) {
-                    PaymentWrapper paymentWrapper = getPayment(payment.secret);
-                    if (paymentWrapper == null) {
-                        throw new RuntimeException("Refunded an unknown payment?");
-                    }
+                for (PaymentRefund payment : update.refundedPayments) {
 
-                    if (Objects.equals(paymentWrapper.receiver, nodeKey)) {
-                        paymentWrapper.statusReceiver = REFUNDED;
-                        paymentWrapper.statusSender = TO_BE_REFUNDED;
-                    } else if (Objects.equals(paymentWrapper.sender, nodeKey)) {
-                        paymentWrapper.statusSender = REFUNDED;
-                    } else {
-                        throw new RuntimeException("Neither of the parties involved in payment is the one who got here?");
-                    }
+//                    PaymentWrapper paymentWrapper = getPayment(payment.secret);
+//                    if (paymentWrapper == null) {
+//                        throw new RuntimeException("Refunded an unknown payment?");
+//                    }
+//
+//                    if (Objects.equals(paymentWrapper.receiver, nodeKey)) {
+//                        paymentWrapper.statusReceiver = REFUNDED;
+//                        paymentWrapper.statusSender = TO_BE_REFUNDED;
+//                    } else if (Objects.equals(paymentWrapper.sender, nodeKey)) {
+//                        paymentWrapper.statusSender = REFUNDED;
+//                    } else {
+//                        throw new RuntimeException("Neither of the parties involved in payment is the one who got here?");
+//                    }
                 }
                 unlockPayments(nodeKey, payments.stream().map(p -> p.paymentData).collect(Collectors.toList()));
             }

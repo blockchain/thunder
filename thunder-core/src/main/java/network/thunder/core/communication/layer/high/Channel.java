@@ -24,6 +24,9 @@ import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
 import network.thunder.core.communication.layer.high.payments.PaymentData;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentNew;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRedeem;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRefund;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.ScriptTools;
@@ -34,7 +37,6 @@ import org.bitcoinj.script.Script;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -195,42 +197,42 @@ public class Channel {
         return paymentDataList;
     }
 
-    public void applyUpdate (ChannelUpdate update) {
-        for (PaymentData refund : update.refundedPayments) {
-            if (refund.sending) {
-                amountServer += refund.amount;
+    public void applyUpdate (ChannelUpdate update, boolean ourUpdate) {
+        for (PaymentRefund refund : update.refundedPayments) {
+            PaymentData paymentData = paymentList.get(refund.paymentIndex);
+            if (paymentData.sending) {
+                amountServer += paymentData.amount;
             } else {
-                amountClient += refund.amount;
+                amountClient += paymentData.amount;
             }
         }
-        for (PaymentData redeem : update.redeemedPayments) {
-            if (redeem.sending) {
-                amountClient += redeem.amount;
+        for (PaymentRedeem redeem : update.redeemedPayments) {
+            PaymentData paymentData = paymentList.get(redeem.paymentIndex);
+            if (paymentData.sending) {
+                amountClient += paymentData.amount;
             } else {
-                amountServer += redeem.amount;
+                amountServer += paymentData.amount;
             }
         }
-        for (PaymentData payment : update.newPayments) {
-            if (payment.sending) {
+        for (PaymentNew payment : update.newPayments) {
+            if (ourUpdate) {
                 amountServer -= payment.amount;
             } else {
                 amountClient -= payment.amount;
             }
         }
 
-        List<PaymentData> removedPayments = new ArrayList<>();
-        removedPayments.addAll(update.redeemedPayments);
-        removedPayments.addAll(update.refundedPayments);
+        List<Integer> removedIndexes = update.getRemovedPaymentIndexes();
 
-        paymentList.addAll(update.newPayments);
-        Iterator<PaymentData> iterator = paymentList.iterator();
-        while (iterator.hasNext()) {
-            PaymentData paymentData = iterator.next();
+        //Sort in descending order, such that we can remove the payments in the list without side effects
+        removedIndexes.sort((i1, i2) -> (i2 - i1));
 
-            if (removedPayments.contains(paymentData)) {
-                removedPayments.remove(paymentData);
-                iterator.remove();
-            }
+        for (Integer removedIndex : removedIndexes) {
+            paymentList.remove(removedIndex.intValue());
+        }
+
+        for (PaymentNew payment : update.newPayments) {
+            paymentList.add(new PaymentData(payment, ourUpdate));
         }
 
         this.feePerByte = update.feePerByte;

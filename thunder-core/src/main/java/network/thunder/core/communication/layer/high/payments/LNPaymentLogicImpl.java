@@ -5,6 +5,9 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
 import network.thunder.core.communication.layer.high.payments.messages.ChannelUpdate;
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentNew;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRedeem;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRefund;
 import network.thunder.core.communication.processor.exceptions.LNPaymentException;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
@@ -114,24 +117,20 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         //We can have a lot of operations here, like adding/removing payments. We need to verify if they are correct.
         Channel oldStatus = channel;
         Channel newStatus = oldStatus.copy();
-        newStatus.applyUpdate(channelUpdate);
+        newStatus.applyUpdate(channelUpdate, true);
 
         //Check if the update is allowed..
         checkPaymentsInNewStatus(oldStatus, channelUpdate);
-        checkRefundedPayments(channelUpdate);
-        checkRedeemedPayments(channelUpdate);
+        checkRefundedPayments(oldStatus, channelUpdate);
+        checkRedeemedPayments(oldStatus, channelUpdate);
 
         if (newStatus.amountClient < 0 || newStatus.amountServer < 0) {
             throw new LNPaymentException("Amount is negative: " + newStatus.amountServer + " " + newStatus.amountClient);
         }
 
         //Sufficient to test new payments
-        for (PaymentData payment : channelUpdate.newPayments) {
-            int diff = Math.abs(Tools.currentTime() - payment.timestampOpen);
-            if (diff > configuration.MAX_DIFF_TIMESTAMPS) {
-                throw new LNPaymentException("timestampOpen is too far off. Calibrate your system clock. Diff: " + diff);
-            }
-            diff = payment.timestampRefund - payment.timestampOpen;
+        for (PaymentNew payment : channelUpdate.newPayments) {
+            int diff = payment.timestampRefund - Tools.currentTime();
             if (diff > configuration.MAX_OVERLAY_REFUND * configuration.MAX_REFUND_DELAY * OnionObject.MAX_HOPS) {
                 throw new LNPaymentException("Refund timeout is too large. Is: " + diff);
             }
@@ -266,17 +265,16 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         oldStatus = oldStatus.copy();
         channelUpdate = channelUpdate.getClone();
 
-        for (PaymentData paymentData : channelUpdate.getRemovedPayments()) {
-            //All of these should be in the remaining payments
-            if (oldStatus.paymentList.remove(paymentData)) {
-                continue;
-            }
+        int maxRemoved = channelUpdate.getRemovedPaymentIndexes().stream().mapToInt(Integer::intValue).max().getAsInt();
+
+        if (maxRemoved > oldStatus.paymentList.size()) {
             throw new LNPaymentException("Removed payment that wasn't part of the remaining payments previously");
         }
     }
 
-    private static void checkRefundedPayments (ChannelUpdate newStatus) {
-        for (PaymentData paymentData : newStatus.refundedPayments) {
+    private static void checkRefundedPayments (Channel oldStatus, ChannelUpdate newStatus) {
+        for (PaymentRefund refund : newStatus.refundedPayments) {
+            PaymentData paymentData = oldStatus.paymentList.get(refund.paymentIndex);
             //We reversed the Channel, so if we are receiving, he is sending
             if (!paymentData.sending) {
                 throw new LNPaymentException("Trying to refund a sent payment");
@@ -284,12 +282,14 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         }
     }
 
-    private static void checkRedeemedPayments (ChannelUpdate newStatus) {
-        for (PaymentData paymentData : newStatus.redeemedPayments) {
+    private static void checkRedeemedPayments (Channel oldStatus, ChannelUpdate newStatus) {
+        for (PaymentRedeem redeem : newStatus.redeemedPayments) {
+            PaymentData paymentData = oldStatus.paymentList.get(redeem.paymentIndex);
+
             if (!paymentData.sending) {
                 throw new LNPaymentException("Trying to redeem a sent payment?");
             }
-            if (!paymentData.secret.verify()) {
+            if (!paymentData.secret.equals(redeem.secret) || !redeem.secret.verify()) {
                 throw new LNPaymentException("Trying to redeem but failed to verify secret.");
             }
         }

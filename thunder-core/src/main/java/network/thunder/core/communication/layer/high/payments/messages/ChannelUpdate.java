@@ -1,15 +1,20 @@
 package network.thunder.core.communication.layer.high.payments.messages;
 
 import network.thunder.core.communication.LNConfiguration;
-import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentNew;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRedeem;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentRefund;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class ChannelUpdate implements Cloneable {
-    public List<PaymentData> newPayments = new ArrayList<>();
-    public List<PaymentData> refundedPayments = new ArrayList<>();
-    public List<PaymentData> redeemedPayments = new ArrayList<>();
+    public List<PaymentNew> newPayments = new ArrayList<>();
+    public Set<PaymentRefund> refundedPayments = new HashSet<>();
+    public Set<PaymentRedeem> redeemedPayments = new HashSet<>();
 
     public int feePerByte;
     public int csvDelay;
@@ -22,9 +27,9 @@ public class ChannelUpdate implements Cloneable {
     public ChannelUpdate getClone () {
         try {
             ChannelUpdate status = (ChannelUpdate) this.clone();
-            status.newPayments = clonePaymentList(this.newPayments);
-            status.redeemedPayments = clonePaymentList(this.redeemedPayments);
-            status.refundedPayments = clonePaymentList(this.refundedPayments);
+            status.newPayments = this.newPayments.stream().map(PaymentNew::copy).collect(Collectors.toList());
+            status.redeemedPayments = new HashSet<>(this.redeemedPayments);
+            status.refundedPayments = new HashSet<>(this.refundedPayments);
 
             status.csvDelay = this.csvDelay;
             status.feePerByte = this.feePerByte;
@@ -35,40 +40,11 @@ public class ChannelUpdate implements Cloneable {
         }
     }
 
-    public List<PaymentData> getRemovedPayments () {
-        List<PaymentData> payments = new ArrayList<>();
-        payments.addAll(redeemedPayments);
-        payments.addAll(refundedPayments);
+    public List<Integer> getRemovedPaymentIndexes () {
+        List<Integer> payments = new ArrayList<>();
+        payments.addAll(refundedPayments.stream().map(r -> r.paymentIndex).collect(Collectors.toList()));
+        payments.addAll(redeemedPayments.stream().map(r -> r.paymentIndex).collect(Collectors.toList()));
         return payments;
-    }
-
-    public ChannelUpdate getCloneReversed () {
-        ChannelUpdate status = getClone();
-
-        reverseSending(status.newPayments);
-        reverseSending(status.redeemedPayments);
-        reverseSending(status.refundedPayments);
-
-        return status;
-    }
-
-    private List<PaymentData> reverseSending (List<PaymentData> paymentDataList) {
-        for (PaymentData payment : paymentDataList) {
-            payment.sending = !payment.sending;
-        }
-        return paymentDataList;
-    }
-
-    private List<PaymentData> clonePaymentList (Iterable<PaymentData> paymentList) {
-        List<PaymentData> list = new ArrayList<>();
-        for (PaymentData data : paymentList) {
-            try {
-                list.add((PaymentData) data.clone());
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return list;
     }
 
     @Override

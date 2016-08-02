@@ -18,6 +18,16 @@ engine=innodb
 DEFAULT charset=utf8;
 
 
+CREATE TABLE IF NOT EXISTS `payment_links`
+  (
+     `payment_id_sender`       INT(11) NOT NULL,
+     `payment_id_receiver`       INT(11) NOT NULL,
+     PRIMARY KEY (`payment_id_sender`,`payment_id_receiver+6
+  `)
+  )
+engine=innodb
+DEFAULT charset=utf8;
+
 CREATE TABLE IF NOT EXISTS `payment_secrets`
   (
      `hash`       BINARY(20) NOT NULL,

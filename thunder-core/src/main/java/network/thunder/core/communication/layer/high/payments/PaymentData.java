@@ -18,6 +18,7 @@ package network.thunder.core.communication.layer.high.payments;/*
  */
 
 import network.thunder.core.communication.layer.high.payments.messages.OnionObject;
+import network.thunder.core.communication.layer.high.payments.updates.PaymentNew;
 import network.thunder.core.database.objects.PaymentStatus;
 
 public class PaymentData implements Cloneable {
@@ -34,6 +35,26 @@ public class PaymentData implements Cloneable {
     public PaymentStatus status;
 
     public OnionObject onionObject;
+
+    public PaymentData () {
+    }
+
+    public PaymentData (PaymentNew paymentNew, boolean ourPayment) {
+        this.amount = paymentNew.amount;
+        this.secret = paymentNew.secret;
+        this.onionObject = paymentNew.onionObject;
+
+        this.sending = ourPayment;
+    }
+
+    public PaymentNew getPaymentNew () {
+        PaymentNew paymentNew = new PaymentNew();
+        paymentNew.timestampRefund = this.timestampRefund;
+        paymentNew.onionObject = this.onionObject;
+        paymentNew.amount = this.amount;
+        paymentNew.secret = this.secret;
+        return paymentNew;
+    }
 
     @Override
     public boolean equals (Object o) {
