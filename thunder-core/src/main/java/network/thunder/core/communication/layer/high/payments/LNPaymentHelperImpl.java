@@ -110,7 +110,7 @@ public class LNPaymentHelperImpl implements LNPaymentHelper {
             NodeKey nextHop = peeledOnion.nextHop;
 
             if (processorList.containsKey(nextHop)) {
-                dbHandler.addPayment(nextHop, paymentData);
+                dbHandler.insertPayment(nextHop, paymentData);
                 pingProcessor(nextHop);
             } else {
                 throw new LNPaymentException("Not connected to next hop " + nextHop);

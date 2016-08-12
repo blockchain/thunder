@@ -15,6 +15,8 @@ public class PeeledOnion {
     static final int TEST_LAST_HOP_BYTE_AMOUNT = 10;
     static final byte[] emptyData = new byte[TEST_LAST_HOP_BYTE_AMOUNT];
 
+    public boolean failedDecrypted;
+
     //If last hop, the first 10B will be zeros
     //We could have a simple flag somewhere, but the onion object is constant size anyways, so that would actually
     //increase the total size.
@@ -36,6 +38,11 @@ public class PeeledOnion {
     public OnionObject onionObject;
 
     public PeeledOnion () {
+    }
+
+    public PeeledOnion (OnionObject onionObject) {
+        this.onionObject = onionObject;
+        this.failedDecrypted = true;
     }
 
     public PeeledOnion (OnionObject onionObject, byte[] data) {

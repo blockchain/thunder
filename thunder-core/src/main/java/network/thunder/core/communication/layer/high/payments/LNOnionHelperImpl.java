@@ -15,24 +15,31 @@ import network.thunder.core.helper.crypto.ECDHKeySet;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class LNOnionHelperImpl implements LNOnionHelper {
+    private static final Logger log = Tools.getLogger();
 
     @Override
     public PeeledOnion loadMessage (ECKey key, OnionObject encryptedOnionObject) {
-        ECDHKeySet keySet = getKeySet(key, encryptedOnionObject);
+        try {
+            ECDHKeySet keySet = getKeySet(key, encryptedOnionObject);
 
-        byte[] unencrypted = decryptMessage(keySet, encryptedOnionObject);
-        byte[] payload = new byte[OnionObject.DATA_LENGTH];
-        System.arraycopy(unencrypted, 0, payload, 0, OnionObject.DATA_LENGTH);
+            byte[] unencrypted = decryptMessage(keySet, encryptedOnionObject);
+            byte[] payload = new byte[OnionObject.DATA_LENGTH];
+            System.arraycopy(unencrypted, 0, payload, 0, OnionObject.DATA_LENGTH);
 
-        OnionObject nextObject = getMessageForNextHop(keySet, unencrypted);
-        nextObject.dataFinalReceiver = encryptedOnionObject.dataFinalReceiver;
+            OnionObject nextObject = getMessageForNextHop(keySet, unencrypted);
+            nextObject.dataFinalReceiver = encryptedOnionObject.dataFinalReceiver;
 
-        return new PeeledOnion(nextObject, payload);
+            return new PeeledOnion(nextObject, payload);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new PeeledOnion(encryptedOnionObject);
+        }
     }
 
     private static OnionObject getMessageForNextHop (ECDHKeySet keySet, byte[] decryptedData) {
@@ -75,6 +82,9 @@ public class LNOnionHelperImpl implements LNOnionHelper {
 
         ECKey ephemeralKey = ECKey.fromPublicOnly(key);
         ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, ephemeralKey);
+
+        log.trace("LNOnionHelperImpl.loadMessage "+keyServer.getPublicKeyAsHex() + " " + ephemeralKey.getPublicKeyAsHex());
+
         return keySet;
     }
 
@@ -98,6 +108,8 @@ public class LNOnionHelperImpl implements LNOnionHelper {
 
             ECKey key = ECKey.fromPublicOnly(nodeList.get(nodeList.size() - 1 - i));
             ECKey keyServer = CryptoTools.getEphemeralKey();
+            log.trace("LNOnionHelperImpl.createOnionObject "+key.getPublicKeyAsHex()+" "+keyServer.getPublicKeyAsHex());
+
             ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, key);
 
             if (i > 0) {
@@ -136,6 +148,8 @@ public class LNOnionHelperImpl implements LNOnionHelper {
         System.arraycopy(data, 0, temp, 0, data.length);
 
         ECKey keyServer = CryptoTools.getEphemeralKey();
+        log.trace("LNOnionHelperImpl.addOnionLayer "+keyNode.getPublicKeyAsHex()+" "+keyServer.getPublicKeyAsHex());
+
         ECDHKeySet keySet = ECDH.getSharedSecret(keyServer, keyNode);
 
         byte[] hmac = CryptoTools.getHMAC(dataToSign, keySet.hmacKey);
