@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS `p2p_channel_static`
   (
      `id`             INT(11) NOT NULL auto_increment,
      `fragment_index` SMALLINT(6) NOT NULL,
-     `hash`           BINARY(20) NOT NULL,
+     `hash`           BINARY(20) NOT NULL UNIQUE,
      `node_id_a`      INT(11) NOT NULL,
      `node_id_b`      INT(11) NOT NULL,
      `pubkey_a`       BINARY(33) NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `p2p_channel_dynamic`
   (
      `id`             INT(11) NOT NULL auto_increment,
      `fragment_index` SMALLINT(6) NOT NULL,
-     `hash`           BINARY(20) NOT NULL,
+     `hash`           BINARY(20) NOT NULL UNIQUE,
      `channel_id`     INT(11) NOT NULL,
      `info_a`         TINYBLOB NOT NULL,
      `info_b`         TINYBLOB NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS `pubkey_ips`
   (
      `id`             INT(11) NOT NULL auto_increment,
      `fragment_index` SMALLINT(6) NOT NULL,
-     `hash`           BINARY(20) NOT NULL,
+     `hash`           BINARY(20) NOT NULL UNIQUE,
      `node_id`        INT(11) NOT NULL,
      `host`           TINYTEXT NOT NULL,
      `port`           INT(11) NOT NULL,

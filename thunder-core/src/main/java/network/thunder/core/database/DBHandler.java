@@ -1,6 +1,7 @@
 package network.thunder.core.database;
 
 import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
 import network.thunder.core.communication.layer.high.AckableMessage;
@@ -22,21 +23,22 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public interface DBHandler {
-
     //Meta-Information
     int getLastBlockHeight ();
     void updateLastBlockHeight (int blockHeight);
     String getNetwork ();
     void setNetwork (String network);
 
+    ServerObject getServerObject ();
+
     //Messages
-    List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c);
+    List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, String classType);
     List<AckableMessage> getUnackedMessageList (NodeKey nodeKey);
     NumberedMessage getMessageResponse (NodeKey nodeKey, long messageIdReceived);
     void setMessageAcked (NodeKey nodeKey, long messageId);
     void setMessageProcessed (NodeKey nodeKey, NumberedMessage message);
     long lastProcessedMessaged (NodeKey nodeKey);
-    long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction);
+    long insertMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction);
     void linkResponse (NodeKey nodeKey, long messageRequest, long messageResponse);
 
     //Syncing / Gossiping
@@ -71,14 +73,13 @@ public interface DBHandler {
     List<PaymentData> lockPaymentsToBeMade (NodeKey nodeKey);
     List<PaymentData> lockPaymentsToBeRedeemed (NodeKey nodeKey);
 
-    void checkPaymentsList ();
-    void unlockPayments (NodeKey nodeKey, List<PaymentData> paymentList);
+    void unlockPayments (Sha256Hash channelHash);
 
     NodeKey getSenderOfPayment (PaymentSecret paymentSecret);
 
-    void addPayment (NodeKey firstHop, PaymentData paymentWrapper);
-    void updatePayment (PaymentWrapper paymentWrapper);
-    PaymentWrapper getPayment (PaymentSecret paymentSecret);
+    int insertPayment (NodeKey firstHop, PaymentData paymentData);
+    void updatePayment (PaymentData paymentData);
+    PaymentData getPayment (int paymentId);
     PaymentSecret getPaymentSecret (PaymentSecret secret);
     void addPaymentSecret (PaymentSecret secret);
 
