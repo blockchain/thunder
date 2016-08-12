@@ -2,6 +2,7 @@ package network.thunder.core.database.inmemory;
 
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
 import network.thunder.core.communication.layer.high.AckableMessage;
@@ -24,7 +25,6 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.database.objects.PaymentStatus;
 import network.thunder.core.database.objects.PaymentWrapper;
-import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
@@ -269,7 +269,7 @@ public class InMemoryDBHandler implements DBHandler {
             setMessageProcessed(nodeKey, request);
         }
         if (response != null) {
-            long messageId = saveMessage(nodeKey, response, DIRECTION.SENT);
+            long messageId = insertMessage(nodeKey, response, DIRECTION.SENT);
             response.setMessageNumber(messageId);
             if (request != null) {
                 linkResponse(nodeKey, request.getMessageNumber(), response.getMessageNumber());
@@ -292,9 +292,6 @@ public class InMemoryDBHandler implements DBHandler {
                     if (c.getHash().equals(channel.getHash())) {
                         iterator.remove();
                         channelList.add(channel);
-                        System.out.println("InMemoryDBHandler.updateChannelStatus");
-                        System.out.println("old one = " + c);
-                        System.out.println("new one = " + channel);
                         updated = true;
                         break;
                     }
@@ -382,6 +379,10 @@ public class InMemoryDBHandler implements DBHandler {
         }
     }
 
+    private PaymentWrapper getPayment (PaymentSecret secret) {
+        return null;
+    }
+
     @Override
     public void updateChannel (Channel channel) {
 
@@ -394,20 +395,6 @@ public class InMemoryDBHandler implements DBHandler {
                 .filter(revocationHash -> revocationHash.index == shaChainDepth)
                 .findAny()
                 .get();
-    }
-
-    @Override
-    public void checkPaymentsList () {
-        synchronized (payments) {
-            for (PaymentWrapper payment : payments) {
-                if (payment.statusSender == EMBEDDED && payment.statusReceiver == TO_BE_EMBEDDED) {
-                    if (Tools.currentTime() - payment.paymentData.timestampOpen > Constants.PAYMENT_TIMEOUT) {
-                        payment.statusReceiver = UNKNOWN;
-                        payment.statusSender = TO_BE_REFUNDED;
-                    }
-                }
-            }
-        }
     }
 
     @Override
@@ -429,6 +416,11 @@ public class InMemoryDBHandler implements DBHandler {
         synchronized (payments) {
             return getPaymentDatas(nodeKey, payments, true, TO_BE_REDEEMED, CURRENTLY_REDEEMING);
         }
+    }
+
+    @Override
+    public void unlockPayments (Sha256Hash channelHash) {
+
     }
 
     @NotNull
@@ -460,7 +452,6 @@ public class InMemoryDBHandler implements DBHandler {
         return paymentList;
     }
 
-    @Override
     public void unlockPayments (NodeKey nodeKey, List<PaymentData> paymentList) {
         synchronized (payments) {
 
@@ -525,14 +516,19 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c) {
+    public ServerObject getServerObject () {
+        return new ServerObject();
+    }
+
+    @Override
+    public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, String c) {
         List<MessageWrapper> wrapper = messageList.get(nodeKey);
         if (wrapper == null) {
             return Collections.emptyList();
         }
         List<MessageWrapper> total =
                 wrapper.stream()
-                        .filter(message -> c.isAssignableFrom(message.getMessage().getClass()))
+                        .filter(message -> c.equals(message.getMessage().getMessageType()))
                         .collect(Collectors.toList());
 
         return total;
@@ -540,7 +536,7 @@ public class InMemoryDBHandler implements DBHandler {
 
     @Override
     public void setMessageProcessed (NodeKey nodeKey, NumberedMessage message) {
-        saveMessage(nodeKey, message, DIRECTION.RECEIVED);
+        insertMessage(nodeKey, message, DIRECTION.RECEIVED);
     }
 
     @Override
@@ -563,7 +559,7 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public synchronized long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
+    public synchronized long insertMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
         if (direction == DIRECTION.SENT) {
             Long i = messageCountList.get(nodeKey);
             if (i == null) {
@@ -704,7 +700,7 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public void addPayment (NodeKey nodeKey, PaymentData paymentData) {
+    public int insertPayment (NodeKey nodeKey, PaymentData paymentData) {
         PaymentWrapper paymentWrapper = new PaymentWrapper();
         paymentWrapper.receiver = nodeKey;
         paymentWrapper.statusReceiver = TO_BE_EMBEDDED;
@@ -712,9 +708,14 @@ public class InMemoryDBHandler implements DBHandler {
         synchronized (payments) {
             payments.add(paymentWrapper);
         }
+        return payments.size();
     }
 
     @Override
+    public void updatePayment (PaymentData paymentData) {
+
+    }
+
     public void updatePayment (PaymentWrapper paymentWrapper) {
         synchronized (payments) {
             for (PaymentWrapper p : payments) {
@@ -732,19 +733,20 @@ public class InMemoryDBHandler implements DBHandler {
     }
 
     @Override
-    public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
-        synchronized (payments) {
-            Optional<PaymentWrapper> paymentWrapper = payments.stream()
-                    .filter(p -> !isPaymentComplete(p))
-                    .filter(p -> Objects.equals(p.paymentData.secret, paymentSecret))
-                    .findAny();
-
-            if (paymentWrapper.isPresent()) {
-                return paymentWrapper.get();
-            } else {
-                return null;
-            }
-        }
+    public PaymentData getPayment (int paymentId) {
+//        synchronized (payments) {
+//            Optional<PaymentWrapper> paymentWrapper = payments.stream()
+//                    .filter(p -> !isPaymentComplete(p))
+//                    .filter(p -> Objects.equals(p.paymentData.secret, paymentSecret))
+//                    .findAny();
+//
+//            if (paymentWrapper.isPresent()) {
+//                return paymentWrapper.get();
+//            } else {
+//                return null;
+//            }
+//        }
+        return null;
     }
 
     private boolean isPaymentComplete (PaymentWrapper paymentWrapper) {
