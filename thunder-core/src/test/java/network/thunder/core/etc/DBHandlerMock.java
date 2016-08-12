@@ -1,6 +1,7 @@
 package network.thunder.core.etc;
 
 import network.thunder.core.communication.NodeKey;
+import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.DIRECTION;
 import network.thunder.core.communication.layer.MessageWrapper;
 import network.thunder.core.communication.layer.high.AckableMessage;
@@ -44,7 +45,12 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, Class c) {
+    public ServerObject getServerObject () {
+        return null;
+    }
+
+    @Override
+    public List<MessageWrapper> getMessageList (NodeKey nodeKey, Sha256Hash channelHash, String classType) {
         return null;
     }
 
@@ -75,7 +81,7 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public long saveMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
+    public long insertMessage (NodeKey nodeKey, NumberedMessage message, DIRECTION direction) {
         return 0;
     }
 
@@ -193,12 +199,7 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public void checkPaymentsList () {
-
-    }
-
-    @Override
-    public void unlockPayments (NodeKey nodeKey, List<PaymentData> paymentList) {
+    public void unlockPayments (Sha256Hash channelHash) {
 
     }
 
@@ -208,17 +209,17 @@ public class DBHandlerMock implements DBHandler {
     }
 
     @Override
-    public void addPayment (NodeKey firstHop, PaymentData paymentWrapper) {
+    public int insertPayment (NodeKey firstHop, PaymentData paymentData) {
+        return 0;
+    }
+
+    @Override
+    public void updatePayment (PaymentData paymentData) {
 
     }
 
     @Override
-    public void updatePayment (PaymentWrapper paymentWrapper) {
-
-    }
-
-    @Override
-    public PaymentWrapper getPayment (PaymentSecret paymentSecret) {
+    public PaymentData getPayment (int paymentId) {
         return null;
     }
 

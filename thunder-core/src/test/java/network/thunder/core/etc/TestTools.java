@@ -2,20 +2,25 @@ package network.thunder.core.etc;
 
 import io.netty.channel.embedded.EmbeddedChannel;
 import network.thunder.core.communication.LNConfiguration;
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.RevocationHash;
+import network.thunder.core.communication.layer.high.payments.LNOnionHelper;
+import network.thunder.core.communication.layer.high.payments.LNOnionHelperImpl;
+import network.thunder.core.communication.layer.high.payments.PaymentData;
+import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.Fee;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyChannelObject;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
+import network.thunder.core.database.DBHandler;
+import network.thunder.core.database.persistent.SQLDBHandler;
 import org.bitcoinj.core.*;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
-import org.h2.jdbcx.JdbcDataSource;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
-import javax.sql.DataSource;
 import java.util.*;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -23,6 +28,29 @@ import static org.junit.Assert.assertThat;
 
 public class TestTools {
     private static final Logger log = Tools.getLogger();
+
+    public static PaymentData getMockPaymentData (ECKey key1, ECKey key2) {
+        LNConfiguration configuration = new LNConfiguration();
+        PaymentData paymentData = new PaymentData();
+        paymentData.sending = true;
+        paymentData.amount = 10000;
+        paymentData.secret = new PaymentSecret(Tools.getRandomByte(20));
+        paymentData.timestampOpen = Tools.currentTime();
+        paymentData.timestampRefund = paymentData.timestampOpen + configuration.DEFAULT_REFUND_DELAY * 10;
+
+        LNOnionHelper onionHelper = new LNOnionHelperImpl();
+        List<byte[]> route = new ArrayList<>();
+        route.add(key1.getPubKey());
+        route.add(key2.getPubKey());
+
+        paymentData.onionObject = onionHelper.createOnionObject(route, null);
+
+        return paymentData;
+    }
+
+    public static DBHandler getTestDBHandler() {
+        return new SQLDBHandler(Tools.getH2InMemoryDataSource());
+    }
 
     public static TransactionSignature corruptSignature (TransactionSignature signature) {
         byte[] sig = signature.encodeToBitcoin();
@@ -32,7 +60,6 @@ public class TestTools {
 
     public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to) {
         Object message = from.readOutbound();
-        log.debug("Exchanged {} ", message);
         if (message != null) {
             to.writeInbound(message);
         }
@@ -46,6 +73,23 @@ public class TestTools {
         }
     }
 
+    public static void exchangeMessages (EmbeddedChannel from, EmbeddedChannel to, Class expectedMessage, long timeout) throws InterruptedException {
+        long timeNow = System.currentTimeMillis();
+        while(true) {
+            long timeDiff = System.currentTimeMillis() - timeNow;
+            Object message = from.readOutbound();
+
+            if(message != null || timeDiff > timeout) {
+                assertThat(message, instanceOf(expectedMessage));
+                if (message != null) {
+                    to.writeInbound(message);
+                }
+                return;
+            }
+            Thread.sleep(10);
+        }
+    }
+
     public static void exchangeMessagesDuplex (EmbeddedChannel from, EmbeddedChannel to) {
         exchangeMessages(from, to);
         exchangeMessages(to, from);
@@ -53,6 +97,10 @@ public class TestTools {
 
     public static Channel getMockChannel (LNConfiguration configuration) {
         Channel channel = new Channel();
+
+        channel.keyClient = new ECKey();
+
+        channel.nodeKeyClient = new NodeKey(new ECKey());
 
         Transaction anchor = new Transaction(Constants.getNetwork());
         anchor.addInput(Sha256Hash.wrap(Tools.getRandomByte(32)), 0, Tools.getDummyScript());
@@ -68,6 +116,7 @@ public class TestTools {
         channel.csvDelay = configuration.DEFAULT_REVOCATION_DELAY;
         channel.feePerByte = configuration.DEFAULT_FEE_PER_BYTE;
         channel.masterPrivateKeyServer = Tools.getRandomByte(20);
+        channel.masterPrivateKeyClient = Tools.getRandomByte(20);
         channel.shaChainDepthCurrent = 1;
         channel.revoHashServerCurrent = new RevocationHash(1, channel.masterPrivateKeyServer);
         channel.revoHashClientCurrent = new RevocationHash(1, Tools.getRandomByte(20));
@@ -187,12 +236,4 @@ public class TestTools {
         return list;
     }
 
-    public static DataSource getH2InMemoryDataSource () {
-        String randomDatabaseName = Tools.bytesToHex(Tools.getRandomByte(6));
-        JdbcDataSource ds = new JdbcDataSource();
-        ds.setURL("jdbc:h2:mem:"+randomDatabaseName+";DB_CLOSE_DELAY=-1;MODE=MySQL;ALIAS_COLUMN_NAME=TRUE");
-        ds.setUser("sa");
-        ds.setPassword("sa");
-        return ds;
-    }
 }

@@ -6,7 +6,7 @@ import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.inmemory.InMemoryDBHandler;
+import network.thunder.core.database.persistent.SQLDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.PaymentRequest;
@@ -31,14 +31,12 @@ public class MainBenchmark {
     private static final Logger log = Tools.getLogger();
 
     public static void main (String[] args) throws Exception {
-
-        //Let's create a ServerObject that holds the general configuration, it will get passed into each Layer of each Connection later.
-        ServerObject server1 = new ServerObject();
-        ServerObject server2 = new ServerObject();
-
         //Currently we are only using an in-memory implementation of the DBHandler and a Wallet that is not holding real bitcoin
-        DBHandler dbHandler1 = new InMemoryDBHandler();
-        DBHandler dbHandler2 = new InMemoryDBHandler();
+        DBHandler dbHandler1 = new SQLDBHandler(Tools.getH2SavedDataSource("db_benchmark_1"));
+        DBHandler dbHandler2 = new SQLDBHandler(Tools.getH2SavedDataSource("db_benchmark_2"));
+
+        ServerObject server1 = dbHandler1.getServerObject();
+        ServerObject server2 = dbHandler2.getServerObject();
 
         //Setup bitcoin testnet wallet
         Wallet wallet1 = setupWallet();
@@ -62,7 +60,7 @@ public class MainBenchmark {
         context2.openChannel(nodeKey, new NullResultCommand());
         Thread.sleep(2000);
 
-        int TOTAL_PAYMENTS = 2000;
+        int TOTAL_PAYMENTS = 1000;
 
         long startTime = System.currentTimeMillis();
 

@@ -37,10 +37,12 @@ import org.bitcoinj.core.Transaction.SigHash;
 import org.bitcoinj.crypto.TransactionSignature;
 import org.bitcoinj.script.Script;
 import org.bitcoinj.script.ScriptBuilder;
+import org.h2.jdbcx.JdbcDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 
+import javax.sql.DataSource;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -55,8 +57,35 @@ public class Tools {
 
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
+    public static DataSource getH2InMemoryDataSource () {
+        String randomDatabaseName = bytesToHex(getRandomByte(6));
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:mem:"+randomDatabaseName+";DB_CLOSE_DELAY=-1;MODE=MySQL;ALIAS_COLUMN_NAME=TRUE;TRACE_LEVEL_SYSTEM_OUT=1;DB_CLOSE_ON_EXIT=FALSE");
+        ds.setUser("sa");
+        ds.setPassword("sa");
+        return ds;
+    }
+
+    public static DataSource getH2SavedDataSource (String databaseFile) {
+        JdbcDataSource ds = new JdbcDataSource();
+        ds.setURL("jdbc:h2:~/"+databaseFile+";MODE=MySQL;ALIAS_COLUMN_NAME=TRUE;TRACE_LEVEL_SYSTEM_OUT=1;DB_CLOSE_ON_EXIT=TRUE");
+        ds.setUser("sa");
+        ds.setPassword("sa");
+        return ds;
+    }
+
     public static int getRandom (int min, int max) {
         return new Random().nextInt(max + 1 - min) + min;
+    }
+
+    public static <T extends Object> List<T> sortMapByKey (Map<Integer, T> map) {
+        List<Integer> list = new ArrayList<>(map.keySet());
+        list.sort((i1, i2) -> i1 - i2);
+        List<T> sortedList = new ArrayList<>();
+        for (Integer i : list) {
+            sortedList.add(map.get(i));
+        }
+        return sortedList;
     }
 
     public static long calculateFee (long paymentAmount, List<Fee> feeList) {
@@ -207,7 +236,7 @@ public class Tools {
         MessageWrapper message = messageList.get(index);
 
         if (!message.getMessage().getClass().equals(c)) {
-            throw new LNPaymentException("Wrong message type");
+            throw new LNPaymentException("Wrong message type. Should be: "+c+". Is: "+message.getMessage().getClass());
         }
         if (message.getDirection() == direction && weStartedExchange) {
             return;

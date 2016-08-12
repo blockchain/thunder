@@ -7,7 +7,7 @@ import network.thunder.core.communication.ServerObject;
 import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.middle.broadcasting.types.PubkeyIPObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.inmemory.InMemoryDBHandler;
+import network.thunder.core.database.persistent.SQLDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.ResultCommandExt;
@@ -71,9 +71,9 @@ public class MainNode {
         server.hostServer = configuration.hostnameServer;
         server.pubKeyServer = ECKey.fromPrivate(Tools.hexStringToByteArray(configuration.serverKey));
 
-        //Currently we are only using an in-memory implementation of the DBHandler and a Wallet that is not holding real bitcoin
-        DBHandler dbHandler = new InMemoryDBHandler();
+        DBHandler dbHandler = new SQLDBHandler(Tools.getH2SavedDataSource("node_1"));
 
+        //Currently we are only using a Wallet that is not holding real bitcoin
         //Setup bitcoin testnet wallet
         Wallet wallet = setupWallet();
 

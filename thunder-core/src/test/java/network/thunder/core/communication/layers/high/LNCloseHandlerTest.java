@@ -13,11 +13,7 @@ import network.thunder.core.communication.layer.high.channel.close.messages.LNCl
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.BroadcastHelper;
 import network.thunder.core.communication.processor.ConnectionIntent;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.inmemory.InMemoryDBHandler;
-import network.thunder.core.etc.Constants;
-import network.thunder.core.etc.MockBroadcastHelper;
-import network.thunder.core.etc.MockLNEventHelper;
-import network.thunder.core.etc.Tools;
+import network.thunder.core.etc.*;
 import network.thunder.core.helper.blockchain.BlockchainHelper;
 import network.thunder.core.helper.blockchain.MockBlockchainHelper;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -29,9 +25,7 @@ import org.junit.Test;
 import java.beans.PropertyVetoException;
 import java.sql.SQLException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 public class LNCloseHandlerTest {
 
@@ -53,8 +47,8 @@ public class LNCloseHandlerTest {
     LNCloseProcessorImpl processor1;
     LNCloseProcessorImpl processor2;
 
-    DBHandler dbHandler1 = new InMemoryDBHandler();
-    DBHandler dbHandler2 = new InMemoryDBHandler();
+    DBHandler dbHandler1 = TestTools.getTestDBHandler();
+    DBHandler dbHandler2 = TestTools.getTestDBHandler();
 
     MockBlockchainHelper mockBlockchainHelper = new MockBlockchainHelper();
     MockBroadcastHelper broadcastHelper = new MockBroadcastHelper();

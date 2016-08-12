@@ -10,7 +10,7 @@ import javafx.stage.Stage;
 import network.thunder.core.ThunderContext;
 import network.thunder.core.communication.ServerObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.inmemory.InMemoryDBHandler;
+import network.thunder.core.database.persistent.SQLDBHandler;
 import network.thunder.core.etc.Constants;
 import network.thunder.core.etc.Tools;
 import network.thunder.core.helper.callback.results.NullResultCommand;
@@ -46,8 +46,8 @@ public class Main extends Application {
     public static Wallet wallet;
 
     public static ThunderContext thunderContext;
-    public static DBHandler dbHandler = new InMemoryDBHandler();
-    public static ServerObject node = new ServerObject();
+    public static DBHandler dbHandler = new SQLDBHandler(Tools.getH2InMemoryDataSource());
+    public static ServerObject node = dbHandler.getServerObject();
 
     private StackPane uiStack;
     private Pane mainUI;
@@ -74,10 +74,6 @@ public class Main extends Application {
         instance = this;
         prepareUI(mainWindow);
 
-        //Initiate the ThunderContext with a ServerObject
-        //For now create a new node key every time. Want to read it from disk here once we have a storage engine
-        node.init();
-
         //TODO move somewhere more central..
         if (Constants.USE_MOCK_BLOCKCHAIN) {
             wallet = new MockWallet(Constants.getNetwork());
@@ -103,7 +99,7 @@ public class Main extends Application {
             log.info(wallet.getKeyChainSeed().toString());
         }
         log.info(wallet.toString());
-        thunderContext = new ThunderContext(wallet, dbHandler, node);
+        thunderContext = new ThunderContext(wallet, dbHandler, dbHandler.getServerObject());
 
         mainWindow.show();
         controller.onBitcoinSetup();
@@ -263,11 +259,12 @@ public class Main extends Application {
     }
 
     public static void main (String[] args) {
-
         try {
             int id = Integer.parseInt(args[0]);
             CLIENTID = id;
+            dbHandler = new SQLDBHandler(Tools.getH2SavedDataSource("db"+id));
         } catch (Exception e) {
+            e.printStackTrace();
             try {
                 REQUEST = args[0];
             } catch (Exception f) {

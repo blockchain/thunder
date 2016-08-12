@@ -23,6 +23,11 @@ public class RandomDataMessage implements Message {
     }
 
     @Override
+    public String getMessageType () {
+        return "Random";
+    }
+
+    @Override
     public boolean equals (Object o) {
         if (this == o) {
             return true;

@@ -9,8 +9,8 @@ import network.thunder.core.communication.layer.ProcessorHandler
 import network.thunder.core.communication.layer.high.AckMessageImpl
 import network.thunder.core.communication.layer.high.AckableMessage
 import network.thunder.core.database.DBHandler
-import network.thunder.core.database.inmemory.InMemoryDBHandler
 import network.thunder.core.etc.Constants
+import network.thunder.core.etc.TestTools
 import network.thunder.core.helper.events.LNEventHelperImpl
 import network.thunder.core.helper.wallet.MockWallet
 import org.junit.Assert.assertEquals
@@ -28,8 +28,8 @@ class AckProcessorImplTest {
     val node1 = ClientObject(serverObject2)
     val node2 = ClientObject(serverObject1)
 
-    val dbHandler1: DBHandler = InMemoryDBHandler()
-    val dbHandler2: DBHandler = InMemoryDBHandler()
+    val dbHandler1: DBHandler = TestTools.getTestDBHandler()
+    val dbHandler2: DBHandler = TestTools.getTestDBHandler()
 
     val contextFactory1 = ContextFactoryImpl(serverObject1, dbHandler1, MockWallet(Constants.getNetwork()), LNEventHelperImpl());
     val contextFactory2 = ContextFactoryImpl(serverObject2, dbHandler2, MockWallet(Constants.getNetwork()), LNEventHelperImpl());
@@ -54,15 +54,15 @@ class AckProcessorImplTest {
 
     @Test
     fun shouldNotSendMessageBecauseTimeoutNotReachedYet() {
-        dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
         Thread.sleep((Constants.MESSAGE_RESEND_TIME / 2).toLong())
         assertNull(channel1.readOutbound());
     }
 
     @Test
     fun shouldResendAllMessageAfterTimeout() {
-        dbHandler1.saveMessage(node2.nodeKey,  AckableMessageMock(1), DIRECTION.SENT)
-        dbHandler1.saveMessage(node2.nodeKey,  AckableMessageMock(2), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey,  AckableMessageMock(1), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey,  AckableMessageMock(2), DIRECTION.SENT)
         Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
         assertEquals(1L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
@@ -70,8 +70,8 @@ class AckProcessorImplTest {
 
     @Test
     fun shouldResendUnackedMessageAfterTimeout() {
-        dbHandler1.saveMessage(node2.nodeKey,  AckableMessageMock(1), DIRECTION.SENT)
-        dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey,  AckableMessageMock(1), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
         channel1.writeInbound(AckMessageImpl(1))
         Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.1).toLong())
         assertEquals(2L, (channel1.readOutbound() as AckableMessage).getMessageNumber());
@@ -80,8 +80,8 @@ class AckProcessorImplTest {
 
     @Test
     fun shouldResendNoMessageAfterTimeout() {
-        dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
-        dbHandler1.saveMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey, AckableMessageMock(1), DIRECTION.SENT)
+        dbHandler1.insertMessage(node2.nodeKey, AckableMessageMock(2), DIRECTION.SENT)
         channel1.writeInbound(AckMessageImpl(1))
         channel1.writeInbound(AckMessageImpl(2))
         Thread.sleep((Constants.MESSAGE_RESEND_TIME * 1.5).toLong())
@@ -97,6 +97,9 @@ class AckProcessorImplTest {
 }
 
 class AckableMessageMock(var number: Long = 1L) : AckableMessage() {
+    override fun getMessageType(): String? {
+        return "AckableMessage"
+    }
 
 
     override fun verify() {

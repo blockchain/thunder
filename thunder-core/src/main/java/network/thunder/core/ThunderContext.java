@@ -57,6 +57,7 @@ public class ThunderContext {
     }
 
     public void startUp (ResultCommand resultCallback) {
+        contextFactory.getChannelManager().setup();
         startListening(
                 result -> fetchNetworkIPs(
                         result1 -> {
@@ -108,6 +109,7 @@ public class ThunderContext {
             PaymentData paymentData = new PaymentData();
             paymentData.amount = amount;
             paymentData.secret = secret;
+            paymentData.sending = true;
             paymentData.timestampOpen = Tools.currentTime();
             paymentData.timestampRefund = Tools.currentTime() + route.size()
                     * configuration.MAX_REFUND_DELAY * configuration.MAX_OVERLAY_REFUND;
@@ -116,6 +118,7 @@ public class ThunderContext {
 
             paymentHelper.makePayment(paymentData);
         } catch (Exception e) {
+            e.printStackTrace();
             resultCallback.execute(new FailureResult(e.getMessage()));
         }
     }

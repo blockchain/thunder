@@ -11,7 +11,6 @@ import network.thunder.core.communication.layer.middle.broadcasting.gossip.Gossi
 import network.thunder.core.communication.layer.middle.broadcasting.gossip.messages.*;
 import network.thunder.core.communication.layer.middle.broadcasting.types.P2PDataObject;
 import network.thunder.core.database.DBHandler;
-import network.thunder.core.database.persistent.SQLDBHandler;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.TestTools;
@@ -41,10 +40,10 @@ public class GossipHandlerTest {
     ServerObject serverObject3 = new ServerObject();
     ServerObject serverObject4 = new ServerObject();
 
-    DBHandler dbHandler1 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
-    DBHandler dbHandler2 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
-    DBHandler dbHandler3 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
-    DBHandler dbHandler4 = new SQLDBHandler(TestTools.getH2InMemoryDataSource());
+    DBHandler dbHandler1 = TestTools.getTestDBHandler();
+    DBHandler dbHandler2 = TestTools.getTestDBHandler();
+    DBHandler dbHandler3 = TestTools.getTestDBHandler();
+    DBHandler dbHandler4 = TestTools.getTestDBHandler();
 
     ContextFactory contextFactory1 = new MockContextFactory(serverObject1, dbHandler1);
     ContextFactory contextFactory2 = new MockContextFactory(serverObject2, dbHandler2);
@@ -199,16 +198,15 @@ public class GossipHandlerTest {
 
         List<P2PDataObject> l = getTotalSyncData(dbHandler2);
 
-
         assertTrue(getTotalSyncData(dbHandler2).containsAll(dataList));
         assertTrue(getTotalSyncData(dbHandler3).containsAll(dataList));
         assertTrue(getTotalSyncData(dbHandler4).containsAll(dataList));
         after();
     }
 
-    private List<P2PDataObject> getTotalSyncData(DBHandler dbHandler) {
+    private List<P2PDataObject> getTotalSyncData (DBHandler dbHandler) {
         List<P2PDataObject> list = new ArrayList<>();
-        for(int i=0; i<=P2PDataObject.NUMBER_OF_FRAGMENTS; ++i) {
+        for (int i = 0; i <= P2PDataObject.NUMBER_OF_FRAGMENTS; ++i) {
             list.addAll(dbHandler.getSyncDataByFragmentIndex(i));
         }
         return list;
