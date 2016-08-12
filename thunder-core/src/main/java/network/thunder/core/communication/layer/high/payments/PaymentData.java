@@ -32,7 +32,7 @@ public class PaymentData implements Cloneable {
     public int timestampRefund; //timestamp at which the other party will consider this payment refunded
     public int timestampSettled;
 
-    public PaymentStatus status;
+    public PaymentStatus status = PaymentStatus.UNKNOWN;
 
     public OnionObject onionObject;
 
@@ -43,6 +43,7 @@ public class PaymentData implements Cloneable {
         this.amount = paymentNew.amount;
         this.secret = paymentNew.secret;
         this.onionObject = paymentNew.onionObject;
+        this.timestampRefund = paymentNew.timestampRefund;
 
         this.sending = ourPayment;
     }
@@ -57,42 +58,21 @@ public class PaymentData implements Cloneable {
     }
 
     @Override
-    public boolean equals (Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        PaymentData that = (PaymentData) o;
-
-        if (amount != that.amount) {
-            return false;
-        }
-        return secret != null ? secret.equals(that.secret) : that.secret == null;
-
-    }
-
-    @Override
-    public int hashCode () {
-        int result = (int) (amount ^ (amount >>> 32));
-        result = 31 * result + (secret != null ? secret.hashCode() : 0);
-        return result;
-    }
-
-    @Override
     public String toString () {
         return "PaymentData{" +
                 "sending=" + sending +
                 ", amount=" + amount +
-                ", onion=" + onionObject +
+                ", secret=" + secret +
+                ", refund=" + timestampRefund+
+                ", status="+status+
                 '}';
     }
 
     @Override
     public Object clone () throws CloneNotSupportedException {
         PaymentData p = new PaymentData();
+        p.paymentId = paymentId;
+        p.status = status;
         p.onionObject = onionObject;
         p.sending = sending;
         p.amount = amount;
@@ -115,5 +95,58 @@ public class PaymentData implements Cloneable {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        PaymentData that = (PaymentData) o;
+
+        if (paymentId != that.paymentId) {
+            return false;
+        }
+        if (sending != that.sending) {
+            return false;
+        }
+        if (amount != that.amount) {
+            return false;
+        }
+        if (timestampOpen != that.timestampOpen) {
+            return false;
+        }
+        if (timestampRefund != that.timestampRefund) {
+            return false;
+        }
+        if (timestampSettled != that.timestampSettled) {
+            return false;
+        }
+        if (secret != null ? !secret.equals(that.secret) : that.secret != null) {
+            return false;
+        }
+        if (status != that.status) {
+            return false;
+        }
+        return onionObject != null ? onionObject.equals(that.onionObject) : that.onionObject == null;
+
+    }
+
+    @Override
+    public int hashCode () {
+        int result = paymentId;
+        result = 31 * result + (sending ? 1 : 0);
+        result = 31 * result + (int) (amount ^ (amount >>> 32));
+        result = 31 * result + (secret != null ? secret.hashCode() : 0);
+        result = 31 * result + timestampOpen;
+        result = 31 * result + timestampRefund;
+        result = 31 * result + timestampSettled;
+        result = 31 * result + (status != null ? status.hashCode() : 0);
+        result = 31 * result + (onionObject != null ? onionObject.hashCode() : 0);
+        return result;
     }
 }

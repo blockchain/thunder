@@ -37,6 +37,7 @@ import org.bitcoinj.script.Script;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -268,8 +269,6 @@ public class Channel {
                 ", amountServer=" + amountServer +
                 ", revoServer=" + revoHashServerCurrent +
                 ", revoClient=" + revoHashClientCurrent +
-                ", revoServerNext=" + revoHashServerNext +
-                ", revoClientNext=" + revoHashClientNext +
                 ", paymentList=" + paymentList.size() +
                 '}';
     }
@@ -278,8 +277,7 @@ public class Channel {
         return getAnchorScriptOutput();
     }
 
-    public Sha256Hash hash;
-
+    private Sha256Hash hash;
     public Sha256Hash getHash () {
         if (hash != null) {
             return hash;
@@ -351,6 +349,9 @@ public class Channel {
         anchorTxHash = Sha256Hash.wrap(Tools.getRandomByte(32));
 
         masterPrivateKeyServer = Tools.getRandomByte(20);
+        phase = Phase.NEUTRAL;
+        revoHashServerCurrent = new RevocationHash(0, masterPrivateKeyServer);
+        revoHashServerNext = new RevocationHash(1, masterPrivateKeyServer);
     }
 
     public Channel (byte[] nodeId, long amount) {
@@ -394,5 +395,134 @@ public class Channel {
 
     }
 
-    //endregion
+    @Override
+    public boolean equals (Object o) {
+        getHash();
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Channel channel = (Channel) o;
+        channel.getHash();
+
+        if (csvDelay != channel.csvDelay) {
+            return false;
+        }
+        if (shaChainDepthCurrent != channel.shaChainDepthCurrent) {
+            return false;
+        }
+        if (timestampOpen != channel.timestampOpen) {
+            return false;
+        }
+        if (timestampForceClose != channel.timestampForceClose) {
+            return false;
+        }
+        if (anchorBlockHeight != channel.anchorBlockHeight) {
+            return false;
+        }
+        if (minConfirmationAnchor != channel.minConfirmationAnchor) {
+            return false;
+        }
+        if (amountClient != channel.amountClient) {
+            return false;
+        }
+        if (amountServer != channel.amountServer) {
+            return false;
+        }
+        if (feePerByte != channel.feePerByte) {
+            return false;
+        }
+        if (nodeKeyClient != null ? !nodeKeyClient.equals(channel.nodeKeyClient) : channel.nodeKeyClient != null) {
+            return false;
+        }
+        if (keyClient != null ? !keyClient.getPublicKeyAsHex().equals(channel.keyClient.getPublicKeyAsHex()) : channel.keyClient != null) {
+            return false;
+        }
+        if (keyServer != null ? !keyServer.getPrivateKeyAsHex().equals(channel.keyServer.getPrivateKeyAsHex()) : channel.keyServer != null) {
+            return false;
+        }
+        if (!Arrays.equals(masterPrivateKeyClient, channel.masterPrivateKeyClient)) {
+            return false;
+        }
+        if (!Arrays.equals(masterPrivateKeyServer, channel.masterPrivateKeyServer)) {
+            return false;
+        }
+        if (anchorTxHash != null ? !anchorTxHash.equals(channel.anchorTxHash) : channel.anchorTxHash != null) {
+            return false;
+        }
+        if (spendingTx != null ? !spendingTx.equals(channel.spendingTx) : channel.spendingTx != null) {
+            return false;
+        }
+        if (channelSignatures != null ? !channelSignatures.equals(channel.channelSignatures) : channel.channelSignatures != null) {
+            return false;
+        }
+        if (paymentList != null ? !paymentList.equals(channel.paymentList) : channel.paymentList != null) {
+            return false;
+        }
+        if (revoHashClientCurrent != null ? !revoHashClientCurrent.equals(channel.revoHashClientCurrent) : channel.revoHashClientCurrent != null) {
+            return false;
+        }
+        if (revoHashServerCurrent != null ? !revoHashServerCurrent.equals(channel.revoHashServerCurrent) : channel.revoHashServerCurrent != null) {
+            return false;
+        }
+        if (revoHashClientNext != null ? !revoHashClientNext.equals(channel.revoHashClientNext) : channel.revoHashClientNext != null) {
+            return false;
+        }
+        if (revoHashServerNext != null ? !revoHashServerNext.equals(channel.revoHashServerNext) : channel.revoHashServerNext != null) {
+            return false;
+        }
+        if (addressClient != null ? !addressClient.equals(channel.addressClient) : channel.addressClient != null) {
+            return false;
+        }
+        if (addressServer != null ? !addressServer.equals(channel.addressServer) : channel.addressServer != null) {
+            return false;
+        }
+        if (phase != channel.phase) {
+            return false;
+        }
+        if (closingSignatures != null ? !closingSignatures.equals(channel.closingSignatures) : channel.closingSignatures != null) {
+            return false;
+        }
+        return hash != null ? hash.equals(channel.hash) : channel.hash == null;
+
+    }
+
+    @Override
+    public int hashCode () {
+        int result = id;
+        result = 31 * result + (nodeKeyClient != null ? nodeKeyClient.hashCode() : 0);
+        result = 31 * result + (keyClient != null ? keyClient.hashCode() : 0);
+        result = 31 * result + (keyServer != null ? keyServer.hashCode() : 0);
+        result = 31 * result + csvDelay;
+        result = 31 * result + Arrays.hashCode(masterPrivateKeyClient);
+        result = 31 * result + Arrays.hashCode(masterPrivateKeyServer);
+        result = 31 * result + shaChainDepthCurrent;
+        result = 31 * result + timestampOpen;
+        result = 31 * result + timestampForceClose;
+        result = 31 * result + (anchorTxHash != null ? anchorTxHash.hashCode() : 0);
+        result = 31 * result + (anchorTx != null ? anchorTx.hashCode() : 0);
+        result = 31 * result + anchorBlockHeight;
+        result = 31 * result + minConfirmationAnchor;
+        result = 31 * result + (spendingTx != null ? spendingTx.hashCode() : 0);
+        result = 31 * result + (channelSignatures != null ? channelSignatures.hashCode() : 0);
+        result = 31 * result + (int) (amountClient ^ (amountClient >>> 32));
+        result = 31 * result + (int) (amountServer ^ (amountServer >>> 32));
+        result = 31 * result + (paymentList != null ? paymentList.hashCode() : 0);
+        result = 31 * result + feePerByte;
+        result = 31 * result + (revoHashClientCurrent != null ? revoHashClientCurrent.hashCode() : 0);
+        result = 31 * result + (revoHashServerCurrent != null ? revoHashServerCurrent.hashCode() : 0);
+        result = 31 * result + (revoHashClientNext != null ? revoHashClientNext.hashCode() : 0);
+        result = 31 * result + (revoHashServerNext != null ? revoHashServerNext.hashCode() : 0);
+        result = 31 * result + (addressClient != null ? addressClient.hashCode() : 0);
+        result = 31 * result + (addressServer != null ? addressServer.hashCode() : 0);
+        result = 31 * result + (phase != null ? phase.hashCode() : 0);
+        result = 31 * result + (closingSignatures != null ? closingSignatures.hashCode() : 0);
+        result = 31 * result + (hash != null ? hash.hashCode() : 0);
+        return result;
+    }
+
+//endregion
 }
