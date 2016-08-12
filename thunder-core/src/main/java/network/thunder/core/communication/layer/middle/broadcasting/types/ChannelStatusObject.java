@@ -24,6 +24,8 @@ public class ChannelStatusObject extends P2PDataObject {
     public int timestamp;
 
     public ChannelStatusObject () {
+        feeA = Fee.ZERO_FEE;
+        feeB = Fee.ZERO_FEE;
     }
 
     @Override
@@ -35,10 +37,14 @@ public class ChannelStatusObject extends P2PDataObject {
         byteBuffer.put(pubkeyA);
         byteBuffer.put(pubkeyB);
         byteBuffer.putInt(latency);
-        byteBuffer.putInt(feeA.fix);
-        byteBuffer.putInt(feeB.perc);
-        byteBuffer.putInt(feeA.fix);
-        byteBuffer.putInt(feeB.perc);
+        if (feeA != null) {
+            byteBuffer.putInt(feeA.fix);
+            byteBuffer.putInt(feeA.perc);
+        }
+        if (feeB != null) {
+            byteBuffer.putInt(feeB.fix);
+            byteBuffer.putInt(feeB.perc);
+        }
         byteBuffer.putInt(minTimeout);
 
         return byteBuffer.array();
