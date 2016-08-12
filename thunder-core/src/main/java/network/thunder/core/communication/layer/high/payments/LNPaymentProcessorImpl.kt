@@ -20,6 +20,7 @@ import network.thunder.core.etc.Constants
 import network.thunder.core.etc.Tools
 import network.thunder.core.helper.events.LNEventHelper
 import org.slf4j.Logger
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 
@@ -80,7 +81,7 @@ class LNPaymentProcessorImpl(
         Thread(Runnable {
             while (connected) {
                 ping()
-                Thread.sleep(1000)
+                Thread.sleep(100)
             }
         }).start()
     }
@@ -88,10 +89,10 @@ class LNPaymentProcessorImpl(
     override fun ping() {
         if (executingLock.tryLock()) {
             try {
-                val channelList = dbHandler.getChannel(node.nodeKey)
+                val channelList = dbHandler.getOpenChannel(node.nodeKey)
                 for (channel in channelList) {
                     //TODO support multiple channels..
-                    val messages = dbHandler.getMessageList(node.nodeKey, channel.hash, LNPayment::class.java).toList()
+                    val messages = dbHandler.getMessageList(node.nodeKey, channel.hash, "LNPayment").toList()
                     val state = PaymentState(channel.copy(), messages)
                     if (messages.isEmpty() || messages.last().message is LNPaymentCMessage || messages.last().message is AckMessageImpl) {
                         val newMessage = startNewExchange(state, dbHandler)
@@ -111,7 +112,7 @@ class LNPaymentProcessorImpl(
         executingLock.tryLock(1, TimeUnit.MINUTES)
         try {
             if (message is LNPayment) {
-                val messages = dbHandler.getMessageList(node.nodeKey, message.channelHash, LNPayment::class.java).toList()
+                val messages = dbHandler.getMessageList(node.nodeKey, message.channelHash, "LNPayment").toList()
                 val channel = dbHandler.getChannel(message.channelHash).copy()
                 val state = PaymentState(channel, messages)
 
@@ -123,6 +124,14 @@ class LNPaymentProcessorImpl(
                         } else {
                             readMessageC(state, message as LNPaymentCMessage)
                         }
+
+                if (newUpdate != null) {
+                    log.debug("New Update finalized: \n " + state.channel.toString() + " \n " + newChannel)
+                }
+
+                if (newMessage == null) {
+                    dbHandler.unlockPayments(channel.hash);
+                }
 
                 var response: NumberedMessage? = null;
                 if (newMessage != null) {
@@ -151,9 +160,9 @@ class LNPaymentProcessorImpl(
                 sendMessage(response)
 
                 if (newUpdate != null && newChannel != null) {
-                    for(i in newUpdate.newPayments.size..0) {
-                        val paymentData = newChannel.paymentList.get(newChannel.paymentList.size - i);
-                        if(paymentData.sending) {
+                    for ((i, p) in newUpdate.newPayments.withIndex()) {
+                        val paymentData = newChannel.paymentList.get(newChannel.paymentList.size - i - 1);
+                        if (!paymentData.sending) {
                             eventHelper.onPaymentAdded(node.nodeKey, paymentData);
                         }
                     }
@@ -183,8 +192,8 @@ class LNPaymentProcessorImpl(
         //The ones that did not make it into this update will get released automatically upon completion
         //This prevents accidentally refunding the payment on the other side while adding it here..
         val paymentsNew = dbHandler.lockPaymentsToBeMade(node.nodeKey)
-        val paymentsRefund = dbHandler.lockPaymentsToBeRefunded(node.nodeKey)
         val paymentsRedeem = dbHandler.lockPaymentsToBeRedeemed(node.nodeKey)
+        val paymentsRefund = dbHandler.lockPaymentsToBeRefunded(node.nodeKey)
 
         //TODO once we have multiple channels, we have to separate refunds/redemptions to their respective channels
 
@@ -194,16 +203,19 @@ class LNPaymentProcessorImpl(
         }
 
         val paymentsRefundMapped = paymentsRefund.map { it.paymentId }.map { id -> state.channel.paymentList.indexOfFirst { it.paymentId == id } }.map { PaymentRefund(it) }
-        val paymentsRedeemMapped = paymentsRedeem.map { payment -> {
-            val id = state.channel.paymentList.indexOfFirst { it.paymentId == payment.paymentId }
-            PaymentRedeem(payment.secret, id);
-        } }.map {it.invoke()}
 
-        if (paymentsNew.size + paymentsRedeem.size + paymentsRefund.size > 0) {
-            val messageA = createMessageA(state, paymentsNew.map { it.paymentNew }, paymentsRefundMapped, paymentsRedeemMapped)
-            dbHandler.saveMessage(node.nodeKey, messageA, SENT)
+        val paymentsRedeemMapped = ArrayList<PaymentRedeem>()
+        for (payment in paymentsRedeem) {
+            val index = state.channel.paymentList.indexOfFirst { it.paymentId == payment.paymentId }
+            paymentsRedeemMapped.add(PaymentRedeem(payment.secret, index))
+        }
+
+        val messageA = createMessageA(state, paymentsNew.map { it.paymentNew }, paymentsRefundMapped, paymentsRedeemMapped)
+        if (messageA != null) {
+            dbHandler.insertMessage(node.nodeKey, messageA, SENT)
             return messageA;
         } else {
+            dbHandler.unlockPayments(state.channel.hash)
             return null
         }
     }
@@ -211,7 +223,7 @@ class LNPaymentProcessorImpl(
     fun createMessageA(state: PaymentState,
                        paymentsNew: List<PaymentNew>,
                        paymentsRefund: List<PaymentRefund>,
-                       paymentsRedeem: List<PaymentRedeem>): LNPaymentAMessage {
+                       paymentsRedeem: List<PaymentRedeem>): LNPaymentAMessage? {
 
         //Let's add all redeems and refunds first, since they will always succeed
         var channel = state.channel
@@ -248,15 +260,18 @@ class LNPaymentProcessorImpl(
                 break;
             }
         }
+        if (update.newPayments.size + update.redeemedPayments.size + update.refundedPayments.size == 0) {
+            return null;
+        }
+
         val status = channel.copy()
         val statusT = channel.copy()
         status.applyUpdate(update, true)
         statusT.applyUpdate(update, true)
         statusT.applyNextRevoHash()
 
-        log.debug("Sending update: ")
-        log.debug("Old statusSender: " + state.channel)
-        log.debug("New statusSender: " + statusT)
+        log.debug("Sending update: " + update)
+
 
         channel = status
 
@@ -292,9 +307,7 @@ class LNPaymentProcessorImpl(
         }
         paymentLogic.checkUpdate(serverObject.configuration, state.channel, message.channelUpdate)
 
-        log.debug("Receiving update:")
-        log.debug("Old statusSender: " + state.channel)
-        log.debug("New statusSender: " + channel)
+        log.debug("Receiving update: " + message.channelUpdate)
 
         checkNewRevocationMessage(channel, message)
         checkSignatureMessage(channel, message)
@@ -386,7 +399,7 @@ class LNPaymentProcessorImpl(
     }
 
     fun sendMessage(message: Message) {
-        log.debug("${node.nodeKey} O message = ${message}")
+        log.trace("${node.nodeKey} O message = ${message}")
         messageExecutor.sendMessageUpwards(message)
     }
 

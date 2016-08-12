@@ -265,10 +265,12 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
         oldStatus = oldStatus.copy();
         channelUpdate = channelUpdate.getClone();
 
-        int maxRemoved = channelUpdate.getRemovedPaymentIndexes().stream().mapToInt(Integer::intValue).max().getAsInt();
-
-        if (maxRemoved > oldStatus.paymentList.size()) {
-            throw new LNPaymentException("Removed payment that wasn't part of the remaining payments previously");
+        List<Integer> removedPaymentIndexes = channelUpdate.getRemovedPaymentIndexes();
+        if (removedPaymentIndexes.size() > 0) {
+            int maxRemoved = removedPaymentIndexes.stream().mapToInt(Integer::intValue).max().getAsInt();
+            if (maxRemoved > oldStatus.paymentList.size()) {
+                throw new LNPaymentException("Removed payment that wasn't part of the remaining payments previously");
+            }
         }
     }
 
@@ -287,7 +289,7 @@ public class LNPaymentLogicImpl implements LNPaymentLogic {
             PaymentData paymentData = oldStatus.paymentList.get(redeem.paymentIndex);
 
             if (!paymentData.sending) {
-                throw new LNPaymentException("Trying to redeem a sent payment?");
+                throw new LNPaymentException("Trying to redeem a sent payment? "+paymentData);
             }
             if (!paymentData.secret.equals(redeem.secret) || !redeem.secret.verify()) {
                 throw new LNPaymentException("Trying to redeem but failed to verify secret.");
