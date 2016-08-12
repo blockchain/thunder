@@ -1,6 +1,7 @@
 package network.thunder.core.communication.layer.high.channel;
 
 import com.google.gson.Gson;
+import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.ArrayList;
@@ -32,5 +33,31 @@ public class ChannelSignatures {
 
     public static ChannelSignatures deserialise (String json) {
         return GSON.fromJson(json, ChannelSignatures.class);
+    }
+
+    @Override
+    public String toString () {
+        return "ChannelSignatures{"+ Sha256Hash.of(serialize().getBytes())+"}";
+    }
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ChannelSignatures that = (ChannelSignatures) o;
+
+        return this.serialize().equals(that.serialize());
+    }
+
+    @Override
+    public int hashCode () {
+        int result = channelSignatures != null ? channelSignatures.hashCode() : 0;
+        result = 31 * result + (paymentSignatures != null ? paymentSignatures.hashCode() : 0);
+        return result;
     }
 }
