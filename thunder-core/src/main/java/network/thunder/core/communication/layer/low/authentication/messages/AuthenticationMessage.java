@@ -3,7 +3,7 @@ package network.thunder.core.communication.layer.low.authentication.messages;
 import com.google.common.base.Preconditions;
 import network.thunder.core.etc.Tools;
 
-public class AuthenticationMessage implements Authentication {
+public class AuthenticationMessage extends Authentication {
 
     public byte[] pubKeyServer;
     public byte[] signature;

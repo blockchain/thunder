@@ -3,7 +3,7 @@ package network.thunder.core.communication.layer.low.encryption.messages;
 import com.google.common.base.Preconditions;
 import network.thunder.core.etc.Tools;
 
-public class EncryptionInitialMessage implements Encryption {
+public class EncryptionInitialMessage extends Encryption {
     public byte[] key;
 
     public EncryptionInitialMessage (byte[] key) {

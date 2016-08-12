@@ -9,7 +9,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 import java.util.ArrayList;
 import java.util.List;
 
-public class SyncSendMessage implements Sync {
+public class SyncSendMessage extends Sync {
     public List<PubkeyIPObject> pubkeyIPList;
     public List<PubkeyChannelObject> pubkeyChannelList;
     public List<ChannelStatusObject> channelStatusList;

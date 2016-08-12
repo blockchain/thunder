@@ -10,7 +10,7 @@ import org.bitcoinj.core.Address;
 import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Transaction;
 
-public class LNEstablishAMessage implements LNEstablish {
+public class LNEstablishAMessage extends LNEstablish {
     //Data about the anchor
     public byte[] channelKeyServer;
     public long amountClient;

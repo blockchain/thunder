@@ -7,4 +7,9 @@ public class Pong implements Message {
     public void verify () {
 
     }
+
+    @Override
+    public String getMessageType () {
+        return "Pong";
+    }
 }

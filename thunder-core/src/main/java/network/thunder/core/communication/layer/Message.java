@@ -20,5 +20,5 @@ package network.thunder.core.communication.layer;
 
 public interface Message {
     void verify ();
-
+    String getMessageType ();
 }

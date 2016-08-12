@@ -1,6 +1,6 @@
 package network.thunder.core.communication.layer.middle.peerseed.messages;
 
-public class PeerSeedGetMessage implements PeerSeedMessage {
+public class PeerSeedGetMessage extends PeerSeedMessage {
     @Override
     public void verify () {
 

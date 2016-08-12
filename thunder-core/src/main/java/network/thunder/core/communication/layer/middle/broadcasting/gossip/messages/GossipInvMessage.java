@@ -5,7 +5,7 @@ import network.thunder.core.etc.Tools;
 
 import java.util.List;
 
-public class GossipInvMessage implements Gossip {
+public class GossipInvMessage extends Gossip {
     public List<byte[]> inventoryList;
 
     public GossipInvMessage (List<byte[]> inventoryList) {

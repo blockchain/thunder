@@ -7,4 +7,9 @@ public class Ping implements Message {
     public void verify () {
 
     }
+
+    @Override
+    public String getMessageType () {
+        return "Ping";
+    }
 }

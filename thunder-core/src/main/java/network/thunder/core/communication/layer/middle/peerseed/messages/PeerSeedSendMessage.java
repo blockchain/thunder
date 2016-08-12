@@ -4,7 +4,7 @@ import network.thunder.core.communication.layer.middle.broadcasting.types.Pubkey
 
 import java.util.List;
 
-public class PeerSeedSendMessage implements PeerSeedMessage {
+public class PeerSeedSendMessage extends PeerSeedMessage {
 
     public List<PubkeyIPObject> ipObjectList;
 

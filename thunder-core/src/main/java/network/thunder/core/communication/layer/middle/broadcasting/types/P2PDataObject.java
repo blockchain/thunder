@@ -41,4 +41,9 @@ public abstract class P2PDataObject implements Message {
         List<P2PDataObject> generalList = new ArrayList<>(list);
         return generalList;
     }
+
+    @Override
+    public String getMessageType () {
+        return "P2PDataObject";
+    }
 }

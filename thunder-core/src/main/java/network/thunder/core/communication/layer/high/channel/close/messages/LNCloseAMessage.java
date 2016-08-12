@@ -8,7 +8,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class LNCloseAMessage implements LNClose {
+public class LNCloseAMessage extends LNClose {
     public byte[] channelHash;
     public List<byte[]> signatureList;
     public float feePerByte;

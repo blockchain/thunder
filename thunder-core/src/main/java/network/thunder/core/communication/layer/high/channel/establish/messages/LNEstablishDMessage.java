@@ -2,7 +2,7 @@ package network.thunder.core.communication.layer.high.channel.establish.messages
 
 import network.thunder.core.communication.layer.high.Channel;
 
-public class LNEstablishDMessage implements LNEstablish {
+public class LNEstablishDMessage extends LNEstablish {
 
     public LNEstablishDMessage () {
     }

@@ -1,5 +1,10 @@
 package network.thunder.core.communication.layer;
 
-public interface FailureMessage extends Message {
-    String getFailure ();
+public abstract class FailureMessage implements Message {
+    public abstract String getFailure ();
+
+    @Override
+    public String getMessageType () {
+        return "FailureMessage";
+    }
 }

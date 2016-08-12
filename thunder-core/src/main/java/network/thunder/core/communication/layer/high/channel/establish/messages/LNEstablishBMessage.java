@@ -6,7 +6,7 @@ import org.bitcoinj.crypto.TransactionSignature;
 
 import java.util.Collections;
 
-public class LNEstablishBMessage implements LNEstablish {
+public class LNEstablishBMessage extends LNEstablish {
     public byte[] channelSignature;
 
     public LNEstablishBMessage (TransactionSignature signature) {

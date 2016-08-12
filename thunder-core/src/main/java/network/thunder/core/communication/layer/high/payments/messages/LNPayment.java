@@ -41,4 +41,9 @@ public abstract class LNPayment extends AckableMessage implements Message, AckMe
     public void setChannelHash (Sha256Hash hash) {
         this.channelHash = hash.getBytes();
     }
+
+    @Override
+    public String getMessageType () {
+        return "LNPayment";
+    }
 }

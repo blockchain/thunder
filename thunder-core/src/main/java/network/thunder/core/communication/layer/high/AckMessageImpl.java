@@ -36,6 +36,11 @@ public class AckMessageImpl implements AckMessage, NumberedMessage {
     }
 
     @Override
+    public String getMessageType () {
+        return "AckMessage";
+    }
+
+    @Override
     public String toString () {
         return "AckMessageImpl{" +
                 "messageNumberToAck=" + messageNumberToAck +

@@ -5,7 +5,7 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.etc.Constants;
 import org.bitcoinj.core.Transaction;
 
-public class LNEstablishCMessage implements LNEstablish {
+public class LNEstablishCMessage extends LNEstablish {
     public byte[] anchorSigned;
 
     public LNEstablishCMessage (Transaction transaction) {

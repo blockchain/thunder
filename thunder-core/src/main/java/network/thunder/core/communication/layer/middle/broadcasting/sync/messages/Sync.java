@@ -2,5 +2,9 @@ package network.thunder.core.communication.layer.middle.broadcasting.sync.messag
 
 import network.thunder.core.communication.layer.Message;
 
-public interface Sync extends Message {
+public abstract class Sync implements Message {
+    @Override
+    public String getMessageType () {
+        return "Sync";
+    }
 }
