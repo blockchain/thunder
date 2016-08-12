@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS `channels`
+CREATE TABLE IF NOT EXISTS `channel`
   (
      `id`                     INT(11) NOT NULL auto_increment,
      `hash`                   BINARY(32) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `channels`
      `anchor_tx_blockheight`  INT(11) NOT NULL,
      `anchor_tx_min_conf`     INT(11) NOT NULL,
      `channel_tx_on_chain`    BLOB,
-     `channel_tx_signatures`  BLOB NOT NULL,
+     `channel_tx_signatures`  TEXT NOT NULL,
      `csv_delay`              INT(11) NOT NULL,
      `fee_per_byte`           INT(11) NOT NULL,
      `phase`                  TEXT NOT NULL,

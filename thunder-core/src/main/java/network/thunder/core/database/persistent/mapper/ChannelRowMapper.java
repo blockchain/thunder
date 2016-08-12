@@ -5,6 +5,7 @@ import network.thunder.core.communication.layer.high.Channel;
 import network.thunder.core.communication.layer.high.Channel.Phase;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.channel.ChannelSignatures;
+import org.bitcoinj.core.ECKey;
 import org.bitcoinj.core.Sha256Hash;
 import org.skife.jdbi.v2.StatementContext;
 import org.skife.jdbi.v2.Update;
@@ -24,10 +25,9 @@ public class ChannelRowMapper implements ResultSetMapper<Channel> {
         Channel channel = new Channel();
 
         channel.id = r.getInt(CHANNEL + ".id");
-//        channel.hash = Sha256Hash.wrap(r.getBytes(CHANNEL + ".hash"));
 
-        channel.keyClient = ECKeyColumnMapper.INSTANCE.mapColumn(r, CHANNEL + ".key_client", ctx);
-        channel.keyServer = ECKeyColumnMapper.INSTANCE.mapColumn(r, CHANNEL + ".key_server", ctx);
+        channel.keyClient = ECKey.fromPublicOnly(r.getBytes("key_client"));
+        channel.keyServer = ECKey.fromPrivate(r.getBytes("key_server"));
 
         channel.addressClient = AddressColumnMapper.INSTANCE.mapColumn(r, CHANNEL + ".address_client", ctx);
         channel.addressServer = AddressColumnMapper.INSTANCE.mapColumn(r, CHANNEL + ".address_server", ctx);
@@ -48,7 +48,7 @@ public class ChannelRowMapper implements ResultSetMapper<Channel> {
         channel.anchorBlockHeight = r.getInt(CHANNEL + ".anchor_tx_blockheight");
         channel.minConfirmationAnchor = r.getInt(CHANNEL + ".anchor_tx_min_conf");
 
-        channel.spendingTx = TransactionColumnMapper.INSTANCE.mapColumn(r, CHANNEL + "channel_tx_on_chain", ctx);
+        channel.spendingTx = TransactionColumnMapper.INSTANCE.mapColumn(r, CHANNEL + ".channel_tx_on_chain", ctx);
 
         channel.channelSignatures = ChannelSignatures.deserialise(r.getString(CHANNEL + ".channel_tx_signatures"));
 
@@ -57,10 +57,10 @@ public class ChannelRowMapper implements ResultSetMapper<Channel> {
         channel.phase = Phase.valueOf(r.getString(CHANNEL + ".phase"));
 
         //JOINED PARAMETERS
-        channel.nodeKeyClient = new NodeKey(r.getBytes(NODE + "key"));
+        channel.nodeKeyClient = new NodeKey(r.getBytes(NODE + ".pubkey"));
 
-        channel.revoHashClientCurrent = RevocationHashRowMapper.map(r, "r_client_current");
-        channel.revoHashClientNext = RevocationHashRowMapper.map(r, "r_client_current");
+        channel.revoHashClientCurrent = RevocationHashRowMapper.map(r, "client_current_");
+        channel.revoHashClientNext = RevocationHashRowMapper.map(r, "client_next_");
 
         //CALCULATED FIELDS
         channel.revoHashServerCurrent = new RevocationHash(channel.shaChainDepthCurrent, channel.masterPrivateKeyServer);
@@ -69,13 +69,13 @@ public class ChannelRowMapper implements ResultSetMapper<Channel> {
         return channel;
     }
 
-    public static void bindChannelToQuery (Update query, Channel channel) {
-        query
+    public static Update bindChannelToQuery (Update query, Channel channel) {
+        return query
                 .bind("hash", channel.getHash().getBytes())
                 .bind("key_client", channel.keyClient.getPubKey())
                 .bind("key_server", channel.keyServer.getPrivKeyBytes())
                 .bind("address_client", channel.addressClient.toString())
-                .bind("address_server", channel.addressClient.toString())
+                .bind("address_server", channel.addressServer.toString())
                 .bind("master_priv_key_client", channel.masterPrivateKeyClient)
                 .bind("master_priv_key_server", channel.masterPrivateKeyServer)
                 .bind("sha_chain_depth", channel.shaChainDepthCurrent)

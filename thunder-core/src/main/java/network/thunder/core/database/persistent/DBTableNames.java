@@ -4,8 +4,9 @@ public class DBTableNames {
     public static String CHANNEL = "channel";
     public static String NODE = "nodes";
     public static String PAYMENT = "payments";
-    public static String SECRET = "secrets";
-    public static String REVO_HASH = "revo_hash";
+    public static String PAYMENT_LINKS = "payment_links";
+    public static String SECRET = "payment_secrets";
+    public static String REVO_HASH = "revocation_hashes";
     public static String SETTLEMENT = "settlements";
     public static String ONION = "payment_onion_objects";
     public static String MESSAGE = "messages";

@@ -19,11 +19,11 @@ public class P2PChannelDynamicObjectColumnMapper implements ResultSetMapper<Chan
         //H2 does not support table aliases
         channelObject.pubkeyA = set.getBytes("node_b_pubkey");
         channelObject.pubkeyB = set.getBytes("node_a_pubkey");
-        channelObject.infoA = set.getBytes(DBTableNames.P2P_CHANNEL_STATIC + ".info_a");
-        channelObject.infoB = set.getBytes(DBTableNames.P2P_CHANNEL_STATIC + ".info_b");
-        channelObject.signatureA = set.getBytes(DBTableNames.P2P_CHANNEL_STATIC + ".signature_a");
-        channelObject.signatureB = set.getBytes(DBTableNames.P2P_CHANNEL_STATIC + ".signature_b");
-        channelObject.timestamp = set.getInt(DBTableNames.P2P_CHANNEL_STATIC + ".timestamp");
+        channelObject.infoA = set.getBytes(DBTableNames.P2P_CHANNEL_DYNAMIC + ".info_a");
+        channelObject.infoB = set.getBytes(DBTableNames.P2P_CHANNEL_DYNAMIC + ".info_b");
+        channelObject.signatureA = set.getBytes(DBTableNames.P2P_CHANNEL_DYNAMIC + ".signature_a");
+        channelObject.signatureB = set.getBytes(DBTableNames.P2P_CHANNEL_DYNAMIC + ".signature_b");
+        channelObject.timestamp = set.getInt(DBTableNames.P2P_CHANNEL_DYNAMIC + ".timestamp");
 
         return channelObject;
     }

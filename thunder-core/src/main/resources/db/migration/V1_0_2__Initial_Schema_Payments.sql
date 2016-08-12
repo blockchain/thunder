@@ -4,9 +4,10 @@ CREATE TABLE IF NOT EXISTS `payments`
      `channel_hash`      BINARY(32) NOT NULL,
      `sending`           SMALLINT(5) NOT NULL,
      `amount`            BIGINT(20) NOT NULL,
-     `phase`             TINYINT(4) NOT NULL,
-     `secret_id`         INT(11) NOT NULL,
-     `onion_id`          INT(11) NOT NULL,
+     `phase`             VARCHAR(20) NOT NULL,
+     `locked`            SMALLINT(5) NOT NULL,
+     `secret_hash`         BINARY(20) NOT NULL,
+     `onion_hash`          BINARY(20) NOT NULL,
      `timestamp_added`   INT(11) NOT NULL,
      `timestamp_refund`  INT(11) NOT NULL,
      `timestamp_settled` INT(11) NOT NULL,
@@ -20,10 +21,9 @@ DEFAULT charset=utf8;
 
 CREATE TABLE IF NOT EXISTS `payment_links`
   (
-     `payment_id_sender`       INT(11) NOT NULL,
-     `payment_id_receiver`       INT(11) NOT NULL,
-     PRIMARY KEY (`payment_id_sender`,`payment_id_receiver+6
-  `)
+     `sender`       INT(11) NOT NULL,
+     `receiver`       INT(11) NOT NULL,
+     PRIMARY KEY (`sender`,`receiver`)
   )
 engine=innodb
 DEFAULT charset=utf8;
@@ -39,9 +39,9 @@ DEFAULT charset=utf8;
 
 CREATE TABLE IF NOT EXISTS `payment_onion_objects`
   (
-     `id`         INT(11) NOT NULL auto_increment,
+     `hash`       BINARY(20) NOT NULL,
      `data`       BLOB NOT NULL,
-     PRIMARY KEY (`id`)
+     PRIMARY KEY (`hash`)
   )
 engine=innodb
 DEFAULT charset=utf8;

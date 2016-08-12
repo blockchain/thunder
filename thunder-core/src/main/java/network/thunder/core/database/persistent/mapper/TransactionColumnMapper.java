@@ -12,7 +12,7 @@ public class TransactionColumnMapper implements ResultColumnMapper<Transaction> 
     public static TransactionColumnMapper INSTANCE = new TransactionColumnMapper();
 
     public static Transaction getTransaction (byte[] tx) {
-        return new Transaction(Constants.getNetwork(), tx);
+        return tx == null ? null : new Transaction(Constants.getNetwork(), tx);
     }
 
     @Override

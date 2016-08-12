@@ -3,17 +3,18 @@ package network.thunder.core.database.persistent.mapper;
 import network.thunder.core.database.objects.ChannelSettlement;
 import network.thunder.core.etc.Tools;
 import org.bitcoinj.core.Sha256Hash;
-import org.skife.jdbi.v2.Query;
 import org.skife.jdbi.v2.StatementContext;
+import org.skife.jdbi.v2.Update;
 import org.skife.jdbi.v2.tweak.ResultSetMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Map;
 
 import static network.thunder.core.database.persistent.DBTableNames.SETTLEMENT;
 
 public class SettlementRowMapper implements ResultSetMapper<ChannelSettlement> {
+    public final static SettlementRowMapper INSTANCE = new SettlementRowMapper();
+
     @Override
     public ChannelSettlement map (int index, ResultSet r, StatementContext ctx) throws SQLException {
         ChannelSettlement channelSettlement = new ChannelSettlement();
@@ -58,26 +59,26 @@ public class SettlementRowMapper implements ResultSetMapper<ChannelSettlement> {
         return channelSettlement;
     }
 
-    public Query<Map<String, Object>> bindChannelToQuery (Query<Map<String, Object>> query, ChannelSettlement settlement) {
+    public static Update bindChannelToQuery (Update query, ChannelSettlement settlement) {
         return query
-                .bind(SETTLEMENT+".id", settlement.settlementId)
-                .bind(SETTLEMENT+".channel_hash", settlement.channelHash)
-                .bind(SETTLEMENT+".phase", Tools.boolToInt(settlement.phase == ChannelSettlement.SettlementPhase.SETTLED))
-                .bind(SETTLEMENT+".timestamp_to_settle", settlement.timeToSettle)
-                .bind(SETTLEMENT+".our_channel_tx", Tools.boolToInt(settlement.ourChannelTx))
-                .bind(SETTLEMENT+".cheated", Tools.boolToInt(settlement.cheated))
-                .bind(SETTLEMENT+".is_payment", Tools.boolToInt(settlement.payment))
-                .bind(SETTLEMENT+".revocation_hash", settlement.revocationHash.secretHash)
-                .bind(SETTLEMENT+".payment_id", settlement.paymentData.paymentId)
-                .bind(SETTLEMENT+".channel_tx", settlement.channelTx.bitcoinSerialize())
-                .bind(SETTLEMENT+".second_tx", settlement.secondTx.bitcoinSerialize())
-                .bind(SETTLEMENT+".third_tx", settlement.thirdTx.bitcoinSerialize())
-                .bind(SETTLEMENT+".channel_tx_height", settlement.channelTxHeight)
-                .bind(SETTLEMENT+".second_tx_height", settlement.secondTxHeight)
-                .bind(SETTLEMENT+".third_tx_height", settlement.thirdTxHeight)
-                .bind(SETTLEMENT+".channel_tx_output", settlement.channelOutput.getIndex())
-                .bind(SETTLEMENT+".second_tx_output", settlement.secondOutput.getIndex())
-                .bind(SETTLEMENT+".third_tx_output", settlement.thirdOutput.getIndex());
+                .bind(SETTLEMENT + ".id", settlement.settlementId)
+                .bind(SETTLEMENT + ".channel_hash", settlement.channelHash)
+                .bind(SETTLEMENT + ".phase", Tools.boolToInt(settlement.phase == ChannelSettlement.SettlementPhase.SETTLED))
+                .bind(SETTLEMENT + ".timestamp_to_settle", settlement.timeToSettle)
+                .bind(SETTLEMENT + ".our_channel_tx", Tools.boolToInt(settlement.ourChannelTx))
+                .bind(SETTLEMENT + ".cheated", Tools.boolToInt(settlement.cheated))
+                .bind(SETTLEMENT + ".is_payment", Tools.boolToInt(settlement.payment))
+                .bind(SETTLEMENT + ".revocation_hash", settlement.revocationHash.secretHash)
+                .bind(SETTLEMENT + ".payment_id", settlement.paymentData.paymentId)
+                .bind(SETTLEMENT + ".channel_tx", settlement.channelTx.bitcoinSerialize())
+                .bind(SETTLEMENT + ".second_tx", settlement.secondTx.bitcoinSerialize())
+                .bind(SETTLEMENT + ".third_tx", settlement.thirdTx.bitcoinSerialize())
+                .bind(SETTLEMENT + ".channel_tx_height", settlement.channelTxHeight)
+                .bind(SETTLEMENT + ".second_tx_height", settlement.secondTxHeight)
+                .bind(SETTLEMENT + ".third_tx_height", settlement.thirdTxHeight)
+                .bind(SETTLEMENT + ".channel_tx_output", settlement.channelOutput.getIndex())
+                .bind(SETTLEMENT + ".second_tx_output", settlement.secondOutput.getIndex())
+                .bind(SETTLEMENT + ".third_tx_output", settlement.thirdOutput.getIndex());
     }
 
 }

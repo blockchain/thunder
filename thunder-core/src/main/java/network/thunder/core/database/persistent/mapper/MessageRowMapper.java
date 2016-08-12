@@ -71,7 +71,8 @@ public class MessageRowMapper implements ResultSetMapper<MessageWrapper> {
 
         update
                 .bind("timestamp", messageWrapper.getTimestamp())
-                .bind("sent", Tools.boolToInt(messageWrapper.getDirection() == DIRECTION.SENT));
+                .bind("sent", Tools.boolToInt(messageWrapper.getDirection() == DIRECTION.SENT))
+                .bind("message_class", messageWrapper.getMessage().getMessageType());
     }
 
 }
