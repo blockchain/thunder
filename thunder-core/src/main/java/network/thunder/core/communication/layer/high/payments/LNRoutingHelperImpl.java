@@ -1,10 +1,10 @@
 package network.thunder.core.communication.layer.high.payments;
 
+import network.thunder.core.communication.NodeKey;
 import network.thunder.core.communication.layer.middle.broadcasting.types.ChannelStatusObject;
 import network.thunder.core.communication.processor.exceptions.LNRoutingException;
 import network.thunder.core.database.DBHandler;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -14,17 +14,17 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 
     DBHandler dbHandler;
 
-    List<ByteBuffer> nodes = new ArrayList<>();
-    Map<ByteBuffer, List<ChannelStatusObject>> network = new HashMap<>();
+    List<NodeKey> nodes = new ArrayList<>();
+    Map<NodeKey, List<ChannelStatusObject>> network = new HashMap<>();
 
-    Map<ByteBuffer, Double> latencyTo = new HashMap<>();
-    Map<ByteBuffer, Double> costTo = new HashMap<>();
-    Map<ByteBuffer, Double> distancesTo = new HashMap<>();
+    Map<NodeKey, Double> latencyTo = new HashMap<>();
+    Map<NodeKey, Double> costTo = new HashMap<>();
+    Map<NodeKey, Double> distancesTo = new HashMap<>();
 
-    Map<ByteBuffer, Boolean> onQueue = new HashMap<>();
-    List<ByteBuffer> queue = new ArrayList<>();
+    Map<NodeKey, Boolean> onQueue = new HashMap<>();
+    List<NodeKey> queue = new ArrayList<>();
 
-    Map<ByteBuffer, List<ChannelStatusObject>> routeList = new HashMap<>();
+    Map<NodeKey, List<ChannelStatusObject>> routeList = new HashMap<>();
 
     public LNRoutingHelperImpl (DBHandler dbHandler) {
         this.dbHandler = dbHandler;
@@ -32,7 +32,7 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 
     int cost;
     
-    ByteBuffer source;
+    NodeKey source;
 
     private float weightPrivacy;
     private float weightLatency;
@@ -42,12 +42,10 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
 
     @Override
     public List<ChannelStatusObject> getRoute (byte[] source, byte[] destination, long amount, float weightPrivacy, float weightCost, float weightLatency) {
-
         List<ChannelStatusObject> channelList = dbHandler.getTopology();
         for (ChannelStatusObject channel : channelList) {
-
-            ByteBuffer nodeA = ByteBuffer.wrap(channel.pubkeyA);
-            ByteBuffer nodeB = ByteBuffer.wrap(channel.pubkeyB);
+            NodeKey nodeA = new NodeKey(channel.pubkeyA);
+            NodeKey nodeB = new NodeKey(channel.pubkeyB);
 
             if (!nodes.contains(nodeA)) {
                 nodes.add(nodeA);
@@ -79,13 +77,15 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
                 network.put(nodeB, connectedEdges);
             }
         }
-        this.source = ByteBuffer.wrap(source);
+        this.source = new NodeKey(source);
         execute();
-        return pathTo(ByteBuffer.wrap(destination));
+        return pathTo(new NodeKey(destination));
     }
 
+
+
     private void execute () {
-        for (ByteBuffer node : nodes) {
+        for (NodeKey node : nodes) {
 
             distancesTo.put(node, Double.MAX_VALUE);
             latencyTo.put(node, 0.0);
@@ -100,16 +100,16 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
         queue.add(source);
 
         while (queue.size() > 0 && !hasNegativeCycle()) {
-            ByteBuffer v = queue.remove(0);
+            NodeKey v = queue.remove(0);
             onQueue.put(v, Boolean.FALSE);
             relax(v);
         }
     }
 
-    private void relax (ByteBuffer node) {
+    private void relax (NodeKey node) {
         List<ChannelStatusObject> connectedNodes = network.get(node);
         for (ChannelStatusObject channel : connectedNodes) {
-            ByteBuffer otherNode = getOtherNode(channel, node);
+            NodeKey otherNode = getOtherNode(channel, node);
 
             //Only use a node once for each route (against negative cycling)..
             if (routeList.get(node).contains(channel)) {
@@ -119,11 +119,11 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
             double balance = amount - costTo.get(node);
 
             double distanceT = distancesTo.get(otherNode);
-            double distanceC = distancesTo.get(node) + channel.getWeight(otherNode.array(), weightPrivacy, weightLatency, weightCost);
+            double distanceC = distancesTo.get(node) + channel.getWeight(otherNode.getPubKey(), weightPrivacy, weightLatency, weightCost);
 
             if (distanceT > distanceC) {
                 distancesTo.put(otherNode, distanceC);
-                costTo.put(otherNode, costTo.get(node) + channel.getFee(otherNode.array()).fix); //TODO use percentage fee as well
+                costTo.put(otherNode, costTo.get(node) + channel.getFee(otherNode.getPubKey()).fix); //TODO use percentage fee as well
                 latencyTo.put(otherNode, latencyTo.get(node) + channel.latency);
 
                 List<ChannelStatusObject> currentRoute = new ArrayList<>(routeList.get(node));
@@ -135,16 +135,14 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
                 }
             }
             //TODO: Cycle detection..
-
         }
-
     }
 
     public boolean hasNegativeCycle () {
         return false; //TODO negative cycle detection not yet implemented
     }
 
-    public boolean hasPathTo (ByteBuffer v) {
+    public boolean hasPathTo (NodeKey v) {
         if (!distancesTo.containsKey(v)) {
             throw new LNRoutingException("No route found..");
         }
@@ -156,10 +154,10 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
         if (hasNegativeCycle()) {
             throw new UnsupportedOperationException("Negative cost cycle exists");
         }
-        return distancesTo.get(ByteBuffer.wrap(v));
+        return distancesTo.get(new NodeKey(v));
     }
 
-    public List<ChannelStatusObject> pathTo (ByteBuffer v) {
+    public List<ChannelStatusObject> pathTo (NodeKey v) {
         if (hasNegativeCycle()) {
             throw new UnsupportedOperationException("Negative cost cycle exists");
         }
@@ -168,15 +166,15 @@ public class LNRoutingHelperImpl implements LNRoutingHelper {
         }
 
         List<byte[]> path = new ArrayList<>();
-        path.add(source.array());
+        path.add(source.getPubKey());
         return routeList.get(v);
     }
 
-    public ByteBuffer getOtherNode (ChannelStatusObject channelStatusObject, ByteBuffer node) {
-        if (ByteBuffer.wrap(channelStatusObject.pubkeyA).equals(node)) {
-            return ByteBuffer.wrap(channelStatusObject.pubkeyB);
+    public NodeKey getOtherNode (ChannelStatusObject channelStatusObject, NodeKey node) {
+        if (new NodeKey(channelStatusObject.pubkeyA).equals(node)) {
+            return new NodeKey(channelStatusObject.pubkeyB);
         } else {
-            return ByteBuffer.wrap(channelStatusObject.pubkeyA);
+            return new NodeKey(channelStatusObject.pubkeyA);
         }
     }
 }
