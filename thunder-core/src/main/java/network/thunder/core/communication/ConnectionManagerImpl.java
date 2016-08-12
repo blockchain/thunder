@@ -75,6 +75,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
 
     @Override
     public void onConnected (NodeKey node, Connection connection) {
+        log.info("ConnectionManagerImpl.onConnected "+node);
         //Check if there is already an open connection and close it..
         if (connectedNodes.contains(node)) {
             //closeConnection will automatically call onDisconnected..
@@ -97,6 +98,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
 
     @Override
     public void onDisconnected (NodeKey node) {
+        log.info("ConnectionManagerImpl.onDisconnected "+node);
         connectedNodes.remove(node);
         currentlyConnecting.remove(node);
     }
@@ -203,7 +205,7 @@ public class ConnectionManagerImpl implements ConnectionManager, ConnectionRegis
                 PubkeyIPObject randomNode = Tools.getRandomItemFromList(ipList);
                 ClientObject client = ipObjectToNode(randomNode, GET_IPS);
                 client.resultCallback = new NullResultCommand();
-                connect(client, new ConnectionListener());
+                connect(client.nodeKey, GET_IPS, new ConnectionListener());
                 Thread.sleep(300);
                 alreadyFetched.add(randomNode);
                 ipList = dbHandler.getIPObjects();
