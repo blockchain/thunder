@@ -65,7 +65,7 @@ public class ChannelManagerImpl implements ChannelManager {
 
     @Override
     public void setup () {
-        scheduler.scheduleAtFixedRate(new ChannelWatcherThread(), 10, 10, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(new ChannelWatcherThread(), 1, 10, TimeUnit.SECONDS);
         List<Channel> channelList = dbHandler.getChannel();
 
         //Catch up with existing blocks
@@ -210,6 +210,7 @@ public class ChannelManagerImpl implements ChannelManager {
         List<Channel> openChannel = dbHandler.getOpenChannel();
         for (Channel channel : openChannel) {
             NodeKey node = channel.nodeKeyClient;
+            log.debug("ChannelManagerImpl.maintainChannel open channel "+channel+" with "+node+" is "+ connectionRegistry.isConnected(node)+" connected..");
             if (!connectionRegistry.isConnected(node)) {
                 connectionManager.connect(node, ConnectionIntent.MAINTAIN_CHANNEL, new ConnectionListener());
             }
