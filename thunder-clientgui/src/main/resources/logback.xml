@@ -8,15 +8,11 @@
         </encoder>
     </appender>
 
-    <root level="warn">
-        <appender-ref ref="STDOUT"/>
-    </root>
-
     <logger name="org.bitcoinj" level="warn">
         <appender-ref ref="STDOUT" />
     </logger>
 
-    <logger name="network.thunder" level="info">
+    <logger name="network.thunder" level="debug">
         <appender-ref ref="STDOUT" />
     </logger>
 
