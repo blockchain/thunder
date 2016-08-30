@@ -23,7 +23,7 @@ To learn more, visit www.blockchain.com/thunder
 - [X] Closing a Channel
 - [ ] Hardening against various DDoS attacks
 - [ ] Backing Database Implementation (currently only in memory)
-- [ ] Restoring state after restart - cheking old TX for cheating
+- [ ] Restoring state after restart - checking old TX for cheating
 - [ ] Claiming funds after counterparty cheated
 
 
