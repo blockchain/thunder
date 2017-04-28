@@ -12,7 +12,6 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
-import java.util.Arrays;
 
 public class CryptoTools {
 
@@ -48,7 +47,8 @@ public class CryptoTools {
             mac.init(keySpec);
             byte[] result = mac.doFinal(rest);
 
-            if (!Arrays.equals(result, hmac)) {
+
+            if (!MessageDigest.isEqual(result, hmac)){
                 throw new RuntimeException("HMAC does not match..");
             }
         } catch (Exception e) {
