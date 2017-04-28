@@ -12,9 +12,9 @@ import network.thunder.core.database.DBHandler;
 import network.thunder.core.etc.Tools;
 
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +61,7 @@ public class GossipProcessorImpl extends GossipProcessor {
 
     @Override
     public void onLayerActive (MessageExecutor messageExecutor) {
-        this.randomNumber = new Random().nextInt();
+        this.randomNumber = new SecureRandom().nextInt();
         this.messageExecutor = messageExecutor;
         subject.registerObserver(this);
 

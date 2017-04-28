@@ -1,24 +1,25 @@
 package network.thunder.core.communication.layers.low;
 
 import io.netty.channel.embedded.EmbeddedChannel;
+import network.thunder.core.communication.ClientObject;
+import network.thunder.core.communication.ServerObject;
+import network.thunder.core.communication.layer.ContextFactory;
+import network.thunder.core.communication.layer.FailureMessage;
 import network.thunder.core.communication.layer.Message;
 import network.thunder.core.communication.layer.ProcessorHandler;
 import network.thunder.core.communication.layer.low.authentication.messages.AuthenticationMessage;
-import network.thunder.core.communication.layer.ContextFactory;
-import network.thunder.core.helper.events.LNEventHelper;
-import network.thunder.core.communication.layer.FailureMessage;
 import network.thunder.core.etc.MockContextFactory;
 import network.thunder.core.etc.MockLNEventHelper;
 import network.thunder.core.etc.RandomDataMessage;
 import network.thunder.core.helper.crypto.ECDH;
-import network.thunder.core.communication.ClientObject;
-import network.thunder.core.communication.ServerObject;
+import network.thunder.core.helper.events.LNEventHelper;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.beans.PropertyVetoException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.security.Security;
 import java.sql.SQLException;
 import java.util.Random;
@@ -76,7 +77,7 @@ public class AuthenticationHandlerTest {
 
         byte[] sig = authenticationMessage.signature;
         byte[] b = new byte[4];
-        Random r = new Random();
+        Random r = new SecureRandom();
         r.nextBytes(b);
         System.arraycopy(b, 0, sig, 10, 4);
 

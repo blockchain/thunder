@@ -2,6 +2,7 @@ package network.thunder.core.etc;
 
 import network.thunder.core.communication.layer.Message;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -10,7 +11,7 @@ public class RandomDataMessage implements Message {
     public RandomDataMessage () {
         //Create some gibberish to parse through them
         byte[] message = new byte[1024];
-        Random r = new Random();
+        Random r = new SecureRandom();
         r.nextBytes(message);
         data = message;
     }

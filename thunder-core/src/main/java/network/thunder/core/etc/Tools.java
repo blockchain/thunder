@@ -36,6 +36,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.util.*;
 
 /**
@@ -46,7 +47,7 @@ public class Tools {
     final protected static char[] hexArray = "0123456789abcdef".toCharArray();
 
     public static int getRandom (int min, int max) {
-        return new Random().nextInt(max + 1 - min) + min;
+        return new SecureRandom().nextInt(max + 1 - min) + min;
     }
 
     /**
@@ -173,12 +174,12 @@ public class Tools {
     }
 
     public static <T extends Object> T getRandomItemFromList (List<T> list) {
-        int randomNumber = new Random().nextInt(list.size());
+        int randomNumber = new SecureRandom().nextInt(list.size());
         return list.get(randomNumber);
     }
 
     public static <T> List<T> getRandomSubList (List<T> input, int subsetSize) {
-        Random r = new Random();
+        Random r = new SecureRandom();
         int inputSize = input.size();
         for (int i = 0; i < subsetSize; i++) {
             int indexToSwap = i + r.nextInt(inputSize - i);
@@ -353,7 +354,7 @@ public class Tools {
 
     public static byte[] getRandomByte (int amount) {
         byte[] b = new byte[amount];
-        Random r = new Random();
+        Random r = new SecureRandom();
         r.nextBytes(b);
         return b;
     }

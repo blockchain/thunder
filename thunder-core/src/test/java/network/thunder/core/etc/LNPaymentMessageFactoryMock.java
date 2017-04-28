@@ -11,13 +11,14 @@ import org.bitcoinj.core.Sha256Hash;
 import org.bitcoinj.core.Transaction;
 import org.bitcoinj.crypto.TransactionSignature;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 public class LNPaymentMessageFactoryMock extends MesssageFactoryImpl implements LNPaymentMessageFactory {
-    Random random = new Random();
+    Random random = new SecureRandom();
 
     @Override
     public LNPaymentAMessage getMessageA (Channel channel, ChannelUpdate statusTemp) {

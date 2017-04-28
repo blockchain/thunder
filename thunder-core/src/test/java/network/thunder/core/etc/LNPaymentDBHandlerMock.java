@@ -1,15 +1,15 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.Channel;
+import network.thunder.core.communication.layer.high.ChannelStatus;
 import network.thunder.core.communication.layer.high.RevocationHash;
 import network.thunder.core.communication.layer.high.payments.PaymentSecret;
 import network.thunder.core.database.objects.PaymentWrapper;
 import org.bitcoinj.core.ECKey;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 
 public class LNPaymentDBHandlerMock extends DBHandlerMock {
     public static final long INITIAL_AMOUNT_CHANNEL = 10000000;
@@ -141,7 +141,7 @@ public class LNPaymentDBHandlerMock extends DBHandlerMock {
     @Override
     public RevocationHash createRevocationHash (Channel channel) {
         byte[] secret = new byte[20];
-        new Random().nextBytes(secret);
+        new SecureRandom().nextBytes(secret);
         byte[] secretHash = Tools.hashSecret(secret);
         RevocationHash hash = new RevocationHash(1, 1, secret, secretHash);
         return hash;

@@ -7,6 +7,7 @@ import org.bitcoinj.wallet.KeyChainGroup;
 import org.bitcoinj.wallet.WalletTransaction;
 
 import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +29,7 @@ public class MockWallet extends Wallet {
         super(params);
         //
 
-        Random random = new Random();
+        Random random = new SecureRandom();
 
         for (int i = 1; i < 101; i++) {
             Transaction transaction = new Transaction(Constants.getNetwork());

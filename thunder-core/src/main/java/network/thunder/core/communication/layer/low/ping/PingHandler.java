@@ -19,6 +19,7 @@ import io.netty.channel.ChannelDuplexHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 
+import java.security.SecureRandom;
 import java.util.Random;
 
 public class PingHandler extends ChannelDuplexHandler {
@@ -35,7 +36,7 @@ public class PingHandler extends ChannelDuplexHandler {
 
     ChannelHandlerContext ctx;
 
-    Random random = new Random();
+    Random random = new SecureRandom();
 
     @Override
     public void channelActive (ChannelHandlerContext ctx) throws Exception {

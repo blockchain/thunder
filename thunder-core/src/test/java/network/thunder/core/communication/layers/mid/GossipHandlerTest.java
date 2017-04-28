@@ -19,11 +19,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.beans.PropertyVetoException;
+import java.security.SecureRandom;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.*;
@@ -130,7 +130,7 @@ public class GossipHandlerTest {
         ArrayList<byte[]> invList = new ArrayList<>();
         for (int i = 0; i < 20; i++) {
             byte[] b = new byte[20];
-            new Random().nextBytes(b);
+            new SecureRandom().nextBytes(b);
             invList.add(b);
         }
 
@@ -227,7 +227,7 @@ public class GossipHandlerTest {
 
     private void prepareNode (ServerObject node) {
         node.init();
-        node.portServer = new Random().nextInt(65555);
+        node.portServer = new SecureRandom().nextInt(65555);
         node.hostServer = "localhost";
     }
 

@@ -3,7 +3,7 @@ package network.thunder.core.communication.layer.high.payments.messages;
 import com.google.common.base.Preconditions;
 import network.thunder.core.communication.layer.high.RevocationHash;
 
-import java.util.Random;
+import java.security.SecureRandom;
 
 public class LNPaymentAMessage implements LNPayment {
 
@@ -12,7 +12,7 @@ public class LNPaymentAMessage implements LNPayment {
     public RevocationHash newRevocation;
 
     public LNPaymentAMessage (ChannelUpdate channelUpdate, RevocationHash newRevocation) {
-        this.dice = new Random().nextInt(Integer.MAX_VALUE);
+        this.dice = new SecureRandom().nextInt(Integer.MAX_VALUE);
 
         this.channelStatus = channelUpdate;
         this.newRevocation = newRevocation;

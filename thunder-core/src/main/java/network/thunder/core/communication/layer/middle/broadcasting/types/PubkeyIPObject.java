@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.SecureRandom;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -33,7 +34,7 @@ public class PubkeyIPObject extends P2PDataObject {
     public static PubkeyIPObject getRandomObject () {
         PubkeyIPObject obj = new PubkeyIPObject();
 
-        Random random = new Random();
+        Random random = new SecureRandom();
 
         obj.hostname = random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255) + "." + random.nextInt(255);
 
