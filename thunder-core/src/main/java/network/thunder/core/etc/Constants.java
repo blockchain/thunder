@@ -19,15 +19,15 @@
 package network.thunder.core.etc;
 
 import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.params.TestNet3Params;
+import org.bitcoinj.params.MainNetParams;
 
 public class Constants {
 
     public static NetworkParameters getNetwork () {
-        return TestNet3Params.get();
+        return MainNetParams.get();
     }
 
-    public static boolean USE_MOCK_BLOCKCHAIN = true;
+    public static boolean USE_MOCK_BLOCKCHAIN = false;
 
     public static final int STANDARD_PORT = 2204;
     public static final int ESCAPE_REVOCATION_TIME = 24 * 60 * 60 / 10 * 60; //In blocks..
