@@ -94,6 +94,12 @@
 
     </build>
 
+    <repositories>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+    </repositories>
 
     <dependencies>
 
@@ -177,6 +183,17 @@
             <version>${kotlin.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.github.NicolasDorier.bitcoinj</groupId>
+            <artifactId>bitcoinj-core</artifactId>
+            <version>912d7e4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20131018</version>
+        </dependency>
 
     </dependencies>
 

@@ -1,15 +1,14 @@
 package network.thunder.core.etc;
 
-import network.thunder.core.helper.ScriptTools;
-import org.bitcoinj.core.*;
-import org.bitcoinj.crypto.TransactionSignature;
-import org.bitcoinj.script.Script;
+import org.bitcoinj.core.Context;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.Transaction;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.security.NoSuchAlgorithmException;
 
 //TODO need to rewrite the tests for wrong signatures / parameters after switching to 2-of-2 anchor
+//TODO rewrite all tests once bitcoinJ is able to verify witnesses
 public class ScriptToolsTest {
 
     ECKey keyServer = ECKey.fromPrivate(Tools.hexStringToByteArray("95b9ba99ce547d0346ae69adeef116b51c77f3285fe8941c9bfe83a0857d606e"));
@@ -31,22 +30,4 @@ public class ScriptToolsTest {
         transactionInput = new Transaction(Constants.getNetwork());
     }
 
-    @Test
-    public void shouldCreateSpendableAnchorTransactionWithCommitmentTransaction () {
-
-        Script outputScript = ScriptTools.getAnchorOutputScript(keyClient, keyServer);
-        Script outputScriptP2SH = ScriptTools.getAnchorOutputScriptP2SH(keyClient, keyServer);
-
-        transactionInput.addInput(Sha256Hash.wrap("6d651fd23456606298348f7e750321cba2e3e752d433aa537ea289593645d2e4"), 0, Tools.getDummyScript());
-        transactionInput.addOutput(Coin.valueOf(999000), Tools.getDummyScript());
-
-        TransactionSignature signatureClient = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyClient);
-        TransactionSignature signatureServer = Tools.getSignature(transactionInput, 0, outputScript.getProgram(), keyServer);
-
-        Script inputScript = ScriptTools.getCommitInputScript(signatureClient.encodeToBitcoin(), signatureServer.encodeToBitcoin(), keyClient, keyServer);
-
-        transactionInput.getInput(0).setScriptSig(inputScript);
-
-        inputScript.correctlySpends(transactionInput, 0, outputScriptP2SH);
-    }
 }
