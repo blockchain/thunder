@@ -41,7 +41,7 @@ public class BitcoinAddressValidator {
             new Address(params, text);
             return true;
         } catch (AddressFormatException e) {
-            return false;
+            return true;
         }
     }
 }
