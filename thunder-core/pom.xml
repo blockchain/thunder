@@ -23,7 +23,7 @@
     <artifactId>thunder-core</artifactId>
     <version>0.1</version>
     <properties>
-        <kotlin.version>1.0.0</kotlin.version>
+        <kotlin.version>1.6.0</kotlin.version>
     </properties>
     <packaging>jar</packaging>
     <name>ThunderNetwork Core Library</name>
